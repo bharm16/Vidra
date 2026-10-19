@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-16",
+  "status": "complete",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "scope": "The composer's Generate button was an instance of Vidra Fresh / Compact full-width submit (1155:88145): a hard-coded pill (radius 999, 9px sides, 6px gap, no tokens) with no state variants and a 14px arrow. It was replaced with Vidra Fresh / Button (v2 set 1959:7702) Tone=Primary in the three Vidra Fresh / Composer controls layouts, the arrow was dropped, every screen instance was reset to the system states, and the old component was deleted.",
+  "approach": [
+    "Read-only census first on all 20 pages: every nested submit (ids ending ;1236:91194, ;1236:91110, ;1482:89569) with its label, Show label, opacity, fills, strokes, override fields and prototype links, plus a search for detached look-alikes.",
+    "The three placements were swapped in place with swapComponent, so node ids, and therefore screen-level prototype links, were preserved.",
+    "Screen-level text-property overrides did not survive the swap (Label#1155:2 and Label#884:0 are different properties). Opacity, fill, stroke and reaction overrides on the instance root did survive. Each affected screen instance was reset with removeOverrides, then given its recorded label and state, and its captured links were re-applied.",
+    "Writes were one page at a time, each verified in the same script against the recorded label, state, fill token, opacity, strokes and links.",
+    "Application code is out of scope. This record is the only repository file added; no existing record was edited."
+  ],
+  "related": {
+    "disabledLookItReplaces": "archive-restoration-2026-10-15.json currentDesignFixes.disabledSubmit (hand-built disabled recipe on seven submits)",
+    "raisedMode": "design-system-v2-rollout-2026-10-15.json designSystem['Raised mode 1993:0']"
+  },
+  "changes": {
+    "Placements (page 01, Vidra Fresh / Composer controls 1236:91199)": {
+      "Layout=Inline 1236:91194": "Button Tone=Primary, label Generate, fixed 112x32 (was hug 94x32 pill)",
+      "Layout=Stacked 1236:91110": "Button Tone=Primary, label Generate, fill width x 32",
+      "Layout=Touch 1482:89569": "Button Tone=Primary, label Generate, fill width x 44 (min height 44 kept)"
+    },
+    "Screen instances": "189 nested instances on 13 pages (01:5, 03:15, 04:42, 05:11, 06:65, 07:23, 08:1, 09:1, 11:1, 12:2, 13:3, 14:1, 16:19). 93 were reset; 96 had no overrides beyond an empty link override and needed nothing.",
+    "Labels restored": "Edit image 40, Choose action 10, Make image 8; the rest stay Generate.",
+    "Disabled": "49 instances now use State=Disabled: 36 that faked it with 0.42 opacity and 13 that used the hand-built panel, border and muted-label recipe.",
+    "Icon-only": "22 icon-only submits (21 on 07 · Model settings, 1 in the 03 · Component reviews board on page 01) became labeled Generate buttons. No settings row overflows (rows are 864 wide on 07).",
+    "Prototype links": "20 kept: 19 on button roots, plus one moved from the deleted label text to the button root on I888:85331;1175:109170;1236:91110 (to 890:85685).",
+    "Raised mode": "Vidra Fresh / Interface set to Raised (1993:0) on the composer's surface/raised frame 'Prompt and generation controls' (1175:109082 in Vidra Fresh / Composer · canonical) and on the detached copy of that frame in 03 · Component reviews > Composer reuse · checked instances (1891:6436). In Dark mode control/disabled (#242424) equals surface/raised (#242424), so the Disabled button had no visible shape; in Raised mode it resolves to #2e2e2e. Nothing else inside these frames binds the five Raised-sensitive tokens."
+  },
+  "deleted": {
+    "Components": "Vidra Fresh / Compact full-width submit 1155:88145 (zero instances confirmed in the deleting script). It contained the only instance of Vidra Fresh / Icon / arrow-up outside the icon set, so no detached copies existed."
+  },
+  "verification": [
+    "Independent sweep of all 13 pages: 192 of 192 instances (189 nested plus 3 placements) are Vidra Fresh / Button v2; 0 with opacity, stroke, fill or size overrides; labels and state counts match the census per page.",
+    "Links: 20 of 20 present with their original destinations.",
+    "Visual: the original composer 1213:197456, the disabled Edit image composer 930:105760 (before and after Raised mode) and the mobile Touch composer 1177:114595."
+  ],
+  "notFixed": [
+    "Vidra Fresh / Toolbar / Editor (2090:87882) overrides its Export button with a toolbar/primary fill (#f7f7f7) and a surface/canvas label at the definition level. Those overrides win over every Button state, so the 9 page-10 editor screens that set Export to State=Disabled (including E04, E22 and E23) still show it bright. This predates both passes. Fixing it changes Export on the 42 enabled screens too, so it was left for the owner.",
+    "The composer copy in 03 · Component reviews > Composer reuse · checked instances is a detached frame, not an instance. It was given Raised mode but not replaced.",
+    "Disabled-on-raised is intentionally subtle (#2e2e2e on #242424, label text/disabled #525252), as elsewhere in the system.",
+    "Vidra Fresh / Field (1973:8267) and Vidra Fresh / Segment (2038:9650) descriptions are double-escaped (&amp;#39;, &amp;amp;quot;) and show the entities literally; not part of this pass."
+  ],
+  "followUp": {
+    "date": "2026-10-16",
+    "scope": "Same-session follow-up: retire the v1 Vidra Fresh / Button set, which this record first listed as still present.",
+    "finding": "The v1 sets were already deleted on 2026-10-15 (design-system-v2-rollout-2026-10-15.json, deleted.Components: Button 884:84518, Icon button 884:84552 and six other controls). getNodeByIdAsync still resolves deleted components by id, with parent null and no page; that is what the earlier note misread. All 18 v1 Button variants have 0 direct instances.",
+    "sweep": "All 20 pages, every instance (23,511 total), checked against the eight deleted control sets and against any main component that is no longer on a page. The only hits were 10 nested overrides on page 10, inside the Toolbar slot content of five Editor stage instances: E03, E04, E22, E23 and E52.",
+    "changes": {
+      "Page 10 overrides": "Swapped in place to the same-named v2 variant, keeping each screen's tone, state, label, icon and visibility: Add to Button Tone=Secondary, State=Default (5); Export to Button Tone=Primary, State=Disabled (3); Undo to Icon button State=Disabled (2). Property ids match between v1 and v2 (Label#884:0, Icon#884:19), so nothing needed re-applying.",
+      "Descriptions": "Removed the stale 'Will replace Vidra Fresh / <name> once the file-wide swap is approved.' sentence from Button 1959:7702, Icon button 1959:117637, Toggle 1959:117670, Checkbox 1959:117685 and Tooltip 1972:118432. Fixed the double-escaped apostrophe in Button, and added: 'On surface/raised frames, set Vidra Fresh / Interface to Raised so Disabled keeps a visible shape.'"
+    },
+    "verification": "Page 10 re-swept: 0 instances of deleted v1 sets and 0 uses of deleted main components in 3,193 instances. The other 19 pages were already clean. Toolbar screenshot of E22 checked."
+  }
+}

@@ -3,7 +3,13 @@
   "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
   "pageId": "1026:84247",
   "status": "unfinished_design_review",
-  "frozenPages": [
+  "approvedComposerSource": {
+    "nodeId": "390:1287",
+    "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=390-1287",
+    "vidraMediaActionTileNodeId": "1145:90969",
+    "adaptation": "35 two-tier composers with qualified Vidra controls and media-action tiles; runtime acceptance not run"
+  },
+  "sourcePagesRetained": [
     "883:84247",
     "887:85295",
     "956:84247"
@@ -60,16 +66,6 @@
       "runtimeAcceptance": "not_run"
     },
     {
-      "key": "G06",
-      "title": "Review a coupled setting change",
-      "nodeId": "1030:84822",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84822",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
       "key": "G07",
       "title": "Duration fixed by the selected resolution",
       "nodeId": "1030:84929",
@@ -110,70 +106,10 @@
       "runtimeAcceptance": "not_run"
     },
     {
-      "key": "G11",
-      "title": "An image-only model cannot run from words alone",
-      "nodeId": "1032:84980",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-84980",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
       "key": "G12",
       "title": "Image-derived shape with model-specific duration",
       "nodeId": "1032:85077",
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85077",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G13",
-      "title": "An audio reference is an input, not a music track",
-      "nodeId": "1032:85170",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85170",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G14",
-      "title": "Audio reference limits block an invalid input",
-      "nodeId": "1032:85269",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85269",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G15",
-      "title": "Changing model explicitly reviews discarded capabilities",
-      "nodeId": "1032:85369",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85369",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G16",
-      "title": "A compatible capability refresh preserves the draft",
-      "nodeId": "1032:85483",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85483",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G17",
-      "title": "A saved model is no longer available",
-      "nodeId": "1032:85580",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85580",
       "sourceAlignment": "updated",
       "structuralCheck": "passed",
       "prototype": "not_wired",
@@ -190,50 +126,10 @@
       "runtimeAcceptance": "not_run"
     },
     {
-      "key": "G19",
-      "title": "Unverified capabilities never get generic defaults",
-      "nodeId": "1032:85736",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85736",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G20",
-      "title": "Changed capabilities require review before a new submission",
-      "nodeId": "1032:85814",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85814",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G21",
-      "title": "An unconfirmed submission keeps its captured model settings",
-      "nodeId": "1032:85910",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85910",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
       "key": "G22",
       "title": "Choose a model by its actual capabilities",
       "nodeId": "1032:85991",
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85991",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G23",
-      "title": "Reusing old settings does not bypass current model limits",
-      "nodeId": "1032:86106",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86106",
       "sourceAlignment": "updated",
       "structuralCheck": "passed",
       "prototype": "not_wired",
@@ -328,36 +224,6 @@
       "structuralCheck": "passed",
       "prototype": "not_wired",
       "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G33",
-      "title": "Input-derived values wait for verified image metadata",
-      "nodeId": "1037:87629",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87629",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G34",
-      "title": "A rejected image does not get an invented shape",
-      "nodeId": "1037:87734",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87734",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
-    },
-    {
-      "key": "G35",
-      "title": "Provider support alone does not enable an unwired audio input",
-      "nodeId": "1037:87835",
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87835",
-      "sourceAlignment": "updated",
-      "structuralCheck": "passed",
-      "prototype": "not_wired",
-      "runtimeAcceptance": "not_run"
     }
   ],
   "remaining": {
@@ -367,5 +233,65 @@
     "interactions": "not_wired_on_page_27",
     "providerQualification": "not_performed",
     "applicationImplementation": "not_started"
+  },
+  "screenRemoval20261014": {
+    "status": "applied",
+    "record": "../screen-removal-execution-2026-10-14.json",
+    "policy": "The October 14 approved removal supersedes earlier presentation requirements for the 39 retired screens. Do not rebuild draft comparison/management/discard screens, context or coupled-setting approval gates, technical attachment/storage/renderer repair screens, billing/checkout/credit receipts, extra retry confirmation, or the retired result notices. Unfinished work is reached through conversation history. Retry is a direct deliberate action with a new execution identity; uncertain acceptance still reconciles the original identity. Data retention, conflict detection, media ownership, idempotency and internal recovery remain required. The retirement record, not older screenshots or state-model labels, determines active UI scope.",
+    "historicalValidation": "Earlier complete-coverage and prototype validation claims predate the approved removal; retired references are not active UI acceptance evidence.",
+    "retiredReferences": [
+      {
+        "path": "$.generation[5]",
+        "record": {
+          "key": "G06",
+          "title": "Review a coupled setting change",
+          "nodeId": "1030:84822",
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84822",
+          "sourceAlignment": "updated",
+          "structuralCheck": "passed",
+          "prototype": "not_wired",
+          "runtimeAcceptance": "not_run"
+        }
+      }
+    ]
+  },
+  "screenRemoval20261015": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-15.json",
+    "policy": "The second October 15 pass deleted screens, state variants and status components whose only purpose was to show a backend or contract state or to restate an invariant as a screen (cancellation races, reconciliation, provider status, storage and metadata internals, capability-rule demos, lane and ownership assertions, upload/download/profile outcome screens). Do not redraw them; their behavior stays in backend contracts and tests. Real surfaces: AuthGateDialog \"Sign in to continue\", RequireAuth redirect to /signin, the AccountPopover, inline messages and toasts.",
+    "retiredNodeCount": 11
+  },
+  "screenRemoval20261016": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-16.json",
+    "policy": "G13 and G14 drew an audio reference input for Wan 2.5 and its file limits. The Wan 2.5 profile accepts only a start frame and the adapter drops audio references, so no current model can produce either screen. They were also the last screens with the 336px compact composer outside a Conversation panel. Do not redraw audio-reference input until a profile accepts it.",
+    "retiredReferences": [
+      {
+        "path": "$.generation[10]",
+        "record": {
+          "key": "G13",
+          "title": "An audio reference is an input, not a music track",
+          "nodeId": "1032:85170",
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85170",
+          "sourceAlignment": "updated",
+          "structuralCheck": "passed",
+          "prototype": "not_wired",
+          "runtimeAcceptance": "not_run"
+        }
+      },
+      {
+        "path": "$.generation[11]",
+        "record": {
+          "key": "G14",
+          "title": "Audio reference limits block an invalid input",
+          "nodeId": "1032:85269",
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85269",
+          "sourceAlignment": "updated",
+          "structuralCheck": "passed",
+          "prototype": "not_wired",
+          "runtimeAcceptance": "not_run"
+        }
+      }
+    ]
   }
 }

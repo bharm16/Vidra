@@ -1,0 +1,259 @@
+{
+  "date": "2026-10-14",
+  "status": "complete",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "scope": "Fix the defects verified by the October 14 read-only critique of Pages 24-29, using copies only.",
+  "policy": [
+    "Every change was made on a new page. Pages 16 and 24-29 were not edited.",
+    "Components were forked with clone(); copied screens were re-pointed at the forks, so each fix lives in one forked component.",
+    "Every write was guarded to refuse any node outside the new page.",
+    "No existing repository file was changed; this record is a new file."
+  ],
+  "newPage": {
+    "id": "1591:84247",
+    "name": "Page 30 - Critique fixes (copies)",
+    "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1591-84247",
+    "sections": {
+      "readMe": "1591:84248",
+      "forkedComponents": "1591:84249",
+      "fixedScreens": "1591:84250"
+    },
+    "readMeFrame": "1604:86905"
+  },
+  "forkedComponents": [
+    {
+      "id": "1591:84251",
+      "name": "Vidra Fresh Fixes / Composer · canonical",
+      "source": "1175:109219",
+      "change": "Outer fill bound to color/panel, inner fill to color/raised, both strokes to color/border; controls slot uses the forked Stacked controls."
+    },
+    {
+      "id": "1591:84256",
+      "name": "Vidra Fresh Fixes / Composer controls",
+      "source": "1236:91199",
+      "change": "27 Page 16 icon instances replaced with Fresh icons or Fresh-named forks; submit arrow strokes bound to color/black so the arrow shows on the white button."
+    },
+    {
+      "id": "1591:84290",
+      "name": "Vidra Fresh Fixes / Compact input · removable",
+      "source": "905:85648",
+      "change": "156px chip with a 24px remove control inside the trailing edge; title and role truncate to one line each; identity hugs at 32px."
+    },
+    {
+      "id": "1591:84302",
+      "name": "Vidra Fresh Fixes / Compact media action",
+      "source": "1155:88139",
+      "change": "Icon surface bound to color/hover and label bound to color/muted, replacing hardcoded #363636 and #9b9b9b."
+    },
+    {
+      "id": "1591:84306",
+      "name": "Vidra Fresh Fixes / Composer content / Media / D01 family",
+      "source": "1234:120538",
+      "change": "Uses the removable chip; the standalone remove control that extended 11px past the composer was removed."
+    },
+    {
+      "id": "1591:84311",
+      "name": "Vidra Fresh Fixes / Composer content / Media / M12",
+      "source": "1238:385694",
+      "change": "8px bottom padding so the inputs no longer touch the prompt container."
+    },
+    {
+      "id": "1591:84318",
+      "name": "Vidra Fresh Fixes / Composer content / Media / W05",
+      "source": "1177:116510",
+      "change": "One-line truncating identity and a 24px remove target inside the 140px chip."
+    },
+    {
+      "id": "1591:84328",
+      "name": "Vidra Fresh Fixes / Icon / model",
+      "source": "419:409",
+      "change": "Fresh-named copy of the Page 16 glyph."
+    },
+    {
+      "id": "1591:84331",
+      "name": "Vidra Fresh Fixes / Icon / ratio",
+      "source": "419:394",
+      "change": "Fresh-named copy of the Page 16 glyph."
+    },
+    {
+      "id": "1591:84334",
+      "name": "Vidra Fresh Fixes / Icon / clock",
+      "source": "419:397",
+      "change": "Fresh-named copy of the Page 16 glyph."
+    },
+    {
+      "id": "1591:84338",
+      "name": "Vidra Fresh Fixes / Unified media bar · Public / Desktop",
+      "source": "1347:84307",
+      "change": "Playback only: no divider, no Use menu, no download inside the bar."
+    },
+    {
+      "id": "1591:84354",
+      "name": "Vidra Fresh Fixes / Unified media bar · Public / Compact",
+      "source": "1347:84309",
+      "change": "Playback only; playback row hugs its 44px controls."
+    },
+    {
+      "id": "1591:84369",
+      "name": "Vidra Fresh Fixes / States / Model settings / Inline feedback",
+      "source": "1440:141545",
+      "change": "G17, G18, G20 and G30 wrap the recovery action below a full-width message instead of squeezing the message to 112px."
+    }
+  ],
+  "fixedScreens": [
+    {
+      "id": "1596:84696",
+      "screen": "D01",
+      "source": "903:96851",
+      "change": "Remove control inside the attachment chip."
+    },
+    {
+      "id": "1596:85467",
+      "screen": "R04",
+      "source": "900:95138",
+      "change": "Discard and leave moved into the dialog footer as a danger action after a spacer; header close button added; dialog hugs its content; prototype hotspot follows the moved button."
+    },
+    {
+      "id": "1596:85835",
+      "screen": "C34",
+      "source": "911:325784",
+      "change": "Remove control inside the attachment chip."
+    },
+    {
+      "id": "1596:86169",
+      "screen": "C35",
+      "source": "911:325961",
+      "change": "Remove control inside the chip, so it no longer draws over the open request menu."
+    },
+    {
+      "id": "1596:86569",
+      "screen": "M12",
+      "source": "897:93132",
+      "change": "8px gap between the explicit inputs and the prompt."
+    },
+    {
+      "id": "1596:86929",
+      "screen": "E40",
+      "source": "932:112097",
+      "change": "Public desktop media bar; the page keeps one Download button."
+    },
+    {
+      "id": "1596:87002",
+      "screen": "W05",
+      "source": "1071:91277",
+      "change": "Chip label truncates; Start frame no longer renders below the chip into the prompt."
+    },
+    {
+      "id": "1596:87380",
+      "screen": "W07",
+      "source": "1071:91916",
+      "change": "Read-only composer: Reference, Sketch, remove, setting chevrons and the more-settings control hidden; prompt and settings at full opacity."
+    },
+    {
+      "id": "1596:87773",
+      "screen": "W44",
+      "source": "1075:95711",
+      "change": "Output 2 retry uses the Secondary Loading button labelled Retrying... instead of offering a second retry."
+    },
+    {
+      "id": "1596:88185",
+      "screen": "N147",
+      "source": "1003:98442",
+      "change": "Public compact media bar; Centered playback hugs the 52px bar instead of cropping it to 36px."
+    },
+    {
+      "id": "1596:88329",
+      "screen": "Inline feedback example G17",
+      "source": "1440:141546",
+      "change": "Uses the wrapped G17 variant."
+    },
+    {
+      "id": "1596:88343",
+      "screen": "Inline feedback example G20",
+      "source": "1440:141546",
+      "change": "Uses the wrapped G20 variant."
+    }
+  ],
+  "rebinding": {
+    "variableBindingsRemapped": {
+      "Current UI color/muted-foreground -> color/muted": 38,
+      "Current UI color/popover -> color/hover": 29,
+      "Vidra Model alias -> color/secondary": 53,
+      "Vidra Model alias -> color/white": 25,
+      "Vidra Model alias -> color/warning": 24,
+      "Vidra Model alias -> color/control": 10,
+      "Vidra Model alias -> color/panel": 5,
+      "Vidra Editing alias -> phrase subject, motion, lighting, environment": 8
+    },
+    "hardcodedPaintsBound": {
+      "#363636 fill -> color/hover": 2,
+      "#9b9b9b fill -> color/muted": 2,
+      "#f7f7f7 fill -> color/white": 4,
+      "#111111 text -> color/black": 4,
+      "#111111 fill -> color/canvas": 2
+    },
+    "textStylesRemapped": {
+      "Vidra Model / Source prompt -> Vidra Fresh / Prompt": 18,
+      "Vidra Model / Caption -> Vidra Fresh / Caption": 18,
+      "Vidra Model / Body -> Vidra Fresh / Body": 9
+    },
+    "note": "The remapped text styles have identical metrics, so the remap changes ownership, not appearance."
+  },
+  "verification": {
+    "newPage": {
+      "paintBindings": {
+        "Vidra Fresh / Interface": 1260,
+        "otherCollections": 0,
+        "hardcodedNeutrals": 0
+      },
+      "textRuns": { "Vidra Fresh styles": 270, "unstyled": 8 },
+      "autoLayoutOverflow": 0,
+      "chipSiblingOverlapOrEscape": 0,
+      "method": "Layout boxes for frames and instances, ink bounds for text, checked against every auto-layout parent; chip children checked for overlap and for leaving the chip. Effects such as drop shadows are excluded."
+    },
+    "originalsUnchanged": {
+      "method": "Fingerprints (node count, geometry, text, paints and bindings) taken before any write and recomputed after all writes; page section counts compared.",
+      "screens": [
+        "D01",
+        "R04",
+        "C34",
+        "C35",
+        "M12",
+        "E40",
+        "W05",
+        "W07",
+        "W44",
+        "N147"
+      ],
+      "components": [
+        "1175:109219",
+        "1236:91199",
+        "905:85648",
+        "1155:88139",
+        "1234:120538",
+        "1238:385694",
+        "1177:116510",
+        "419:409",
+        "419:394",
+        "419:397",
+        "1440:141545",
+        "1440:141546"
+      ],
+      "mediaBarSet": "1347:84311 has 14 variants; the Desktop and Compact paused variant trees match the pre-change record.",
+      "result": "unchanged",
+      "fileTotals": {
+        "variableCollections": 26,
+        "variables": 963,
+        "textStyles": 210
+      }
+    },
+    "visual": "Each fixed screen was cropped from a full-resolution section render and inspected; forked chips were inspected at 3x."
+  },
+  "notInScope": [
+    "The originals still bind the legacy Model, Editing and Current UI collections. Adopting the fixes means swapping instances on the original pages, which this pass did not do.",
+    "Copied screens keep their prototype reactions, which still navigate to frames on the original pages.",
+    "C34's unavailable Remove background menu item still uses 40% opacity for its disabled state.",
+    "The Centered full toolbar frames are 40px while the toolbar drop shadow extends further; this is shadow ink, not layout overflow, and is unchanged from the originals.",
+    "The remaining critique findings (editor overlays, area editing, icon semantics, copy, docs content, file organisation) were not part of this fix list."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-15",
+  "status": "complete",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "scope": "Rename the video timeline's Text track label to Captions so it matches the editor's Captions toolbar button and the Caption panel title. The layer names already said Captions; only the visible label read Text.",
+  "approach": [
+    "Measured 'Captions' at the label style (Inter Regular 12) at 51px; the label column was 38px, so the labels became 52px wide and everything to their right moved 14px.",
+    "In all 8 variants, every non-label child (track icon buttons, time ruler, clips, caption cue, audio tracks, playhead, output marker) shifted 14px right; the time ruler was shortened by 14px (its seven 136px slots left 64px spare), so the component stays 1100x218 and no instance changes size.",
+    "Screen hotspots over the lanes were checked: E01's 'Prototype · Timeline clip → E54' covered the first clip and would have drifted, so its reaction moved onto the clip instance and the hotspot was deleted; E01's 'Prototype · Move later → E51' targets a separate Timing controls panel and stayed aligned."
+  ],
+  "related": ["docs/design/caption-picker-fixes-2026-10-15.json"],
+  "componentChanges": {
+    "Vidra Fresh / Timeline 893:85239 (all 8 variants)": "Track label · Captions reads 'Captions'; all four Track label texts 38 -> 52px wide (HEIGHT auto-resize, Clip sound keeps its line break); icon buttons x 40 -> 54; lanes, ruler, playhead and output marker +14px (lanes start at 90); Time ruler width 1016 -> 1002, ending at 1092 as before."
+  },
+  "screenChanges": {
+    "E01 · Assemble and trim a video": "Clip instance I894:88496;893:85282 carries ON_CLICK NAVIGATE -> E54 (copied from hotspot 997:120028, which was deleted)."
+  },
+  "unchanged": [
+    "Vidra Fresh / Assembly timeline 929:88279 uses icon-only track headers, with no text labels.",
+    "Vidra Fresh / Mobile timeline 938:87452 uses icon-only headers; its View=Zoom variant nests the desktop Timeline and shows the new label."
+  ],
+  "verification": [
+    "All 8 variants read back: width 1100, label width 52, icon x 54, lane start 90, ruler 90..1092, rightmost content 1092.",
+    "No instance overrides the track labels; the 48 Timeline instances (38 on Page 25) keep their size.",
+    "Visual checks with node.screenshot(): Timeline State=Valid, E01, E14 and Mobile timeline View=Zoom show 'Captions' on one line with no clipping or overlap; E15's 720px Timeline viewport clips as before."
+  ]
+}

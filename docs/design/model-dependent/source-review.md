@@ -1,16 +1,16 @@
 # Page 27 source review
 
-Reviewed 2026-10-10. Existing Pages 24–26 are preserved. New work lives only on [Page 27 — Model-dependent creation](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1026-84247) and its independent components and variables.
+Reference-source review: 2026-10-10. Current layout reconciliation: 2026-10-14. The model-dependent study is on [Page 27 — Model-dependent creation](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1026-84247). Follow-up corrections also updated shared components and dependent screens on Pages 24–26.
 
-## What was corrected
+## Current layout — 2026-10-14
 
-The first Page 27 pass extrapolated too far from limited source inspection. Its extra action row, persistent save labels and left-aligned heading weakened the visual direction. The source was then reopened visibly, its live model controls inspected, and the generation family rebuilt around the observed composition.
+The [critique remediation](../design-critique-remediation-2026-10-14.json) replaces the separate labeled navigation, large model heading, wide model composer and icon-only submit presentation. The three retained screens and 31 reusable composer states now use the canonical 56px rail, Inter typography and the 336px-wide composer. Generate is named and full-width. Explicit inputs remain above the prompt; extra input rows have the height they need. Model, shape, duration, resolution and sound appear in a consistent order. The migration preserved the original model, input and setting values and their blocked/derived states.
 
-The 35 generation frames now have a centered model heading, a compact rounded composer, one desktop control strip and a round Generate control. The ordinary composer is 112px high before attachments; inputs add only the space they require. Errors and recovery messages appear below the composer. Fixed and derived values have no dropdown arrow or menu action. Unsupported generated sound controls are absent.
+G13 (audio reference input) and G14 (its file limits) were deleted on 2026-10-16: the Wan 2.5 adapter drops audio references, so no current profile can produce them. The [model-state family](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-141490), [input combinations](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-141643), and [capability limits](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-141820) retain the parameterized cases.
 
-Start review with [Veo](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84410), [image-conditioned Wan](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85077), and [silent Wan](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86305).
+The earlier October 10 pass used the inspected Page 14 two-tier composition and `419:415` chips as references. Its 35-frame, 198px-high composer and round-submit descriptions are historical. The saved [Veo](veo-composer-review.png) and [Wan](wan-composer-review.png) renders also predate the current correction. They are not current visual-parity evidence.
 
-The checked renders are saved as [Veo](veo-composer-review.png) and [Wan](wan-composer-review.png). They are review exports of editable Figma layers, not flattened UI embedded into the design file.
+The current layout preserves qualified controls rather than importing capabilities from a reference product. Errors remain beside the relevant work. Fixed and derived values have no fake menu action. This visual migration does not qualify a provider or adapter.
 
 ## Sources actually seen
 
@@ -28,8 +28,8 @@ Krea's visible audio toggle is not authority for Vidra's provider parameters. Th
 
 ## Validation and remaining work
 
-- Structural inspection passed for all 35 generation frames: no control-row overflow, wrapped chip labels, or visible top-level content outside the frame.
-- Representative composition screenshots were inspected for G02, G07, G12, G25, G21, G22, G15 and G33 across the initial and corrected passes. A chip wrapping defect was repaired before propagation.
+- The historical October 10 structural inspection covered 35 generation frames: no control-row overflow, wrapped chip labels, or visible top-level content outside the frame.
+- Representative composition screenshots were inspected for G02, G07, G12, G25 and G22 across the initial and corrected passes. A chip wrapping defect was repaired before propagation.
 - R01–R10 and E01–E12 remain existing Page 27 studies. They have not received the same source-alignment approval. Their earlier creation is not evidence that a matching Krea video editor was inspected.
 - The video assembly timeline had no visually verified counterpart in the Krea sources opened during this correction. The user subsequently accepted the existing timeline as-is on 2026-10-10 and requested additive visibility states. [Page 28](../prompt-editing/README.md) uses that inspected existing design as its source. This does not relabel Krea's image editor as a video-timeline reference.
 - Page 27's interaction wiring, mobile layouts, complete result/editor visual review, and full journey review remain open. A collection of state frames does not close these checks.

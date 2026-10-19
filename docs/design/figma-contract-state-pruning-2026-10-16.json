@@ -1,0 +1,2363 @@
+{
+  "date": "2026-10-16",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "policy": "The October 16 pass deleted the request-context surfaces that showed the admission snapshot as UI: the Context panel (\"Directions for this request\" with the input version, earlier words and \"Project instructions · version N\"), its only screen C12, the \"Inputs and directions\" sheet with \"Review directions\" on C24, and a hidden note about copied directions on M08. Do not redraw them. The composer already shows the inputs and words a request will send; Reuse setup restores an earlier setup from the History menu, the viewer's Use menu and W37. The exact context stays an immutable backend snapshot. The Project menu's \"Project instructions\" item opened nothing and was removed too, so project instructions have no UI. Later the same day, the Download status component (idle, resolving, started, failed), its review board and E37 \"Export download started\" were deleted. Download hands the file to the browser, which shows the transfer, so the app draws no download status, and E36's Download button no longer links to another screen. The Dialog component was deleted too: it had no instances, its three kinds showed the same copy, and the leave guards (R04, B42, K18) draw their own dialogs. The same day the Clarification component lost its answering, proposal_ready, stale_proposal, applied and dismissed variants and its Review / Clarification board. Studio sends a chosen quick pick as the next message, so those lifecycle cards never appear; only the question card (now State=Default, used twice on C16) remains. Do not redraw them. Later on October 16 the Request status component (queued, running, succeeded, partial, failed), its Review / Request status board, its one screen use beside C09's result grid and C30's copied \"2 ready · 1 failed · 1 still running\" line were deleted. Each output slot already shows its own state (In the queue, Making your image, a ready result, or Could not make this image with Try again), and video requests keep their one-line status in conversation history, so the card only repeated the slots. Its Cancel and Cancel remaining buttons had no server route or UI control behind them, and View results pointed at results already on screen. The Project card component (local, creating, ready, load_failed, inaccessible, trashing, trashed) was deleted with it: no screen used it, and the server's project status is only active or trashed. Do not redraw them. W14 (\"Cancel this generation?\") was deleted after that: with the card's Cancel buttons gone nothing in the design opened it, and the app has no cancel route or control. Cancellation stays an internal contract; do not redraw a cancel dialog. Later on October 16, C16 (\"Answer a specific question\") and the Clarification component (its last variant, State=Default) were deleted. C16 showed the workspace answering \"Use the second one.\" with image choices (\"Which image should I change?\"). The project workspace never asks a clarifying question, and Studio's first-turn clarify is a text question with quick-pick buttons, not an image chooser. Do not redraw them. Later on October 16, G13 (\"An audio reference is an input, not a music track\") and G14 (\"Audio reference limits block an invalid input\") were deleted with their two composer media shelves, and G12 and G24 lost their Audio action. They drew an audio reference input for Wan 2.5, but its profile accepts only a start frame and the adapter drops audio references, so no current model produces them. G13/G14 were also the last screens with the 336px compact composer floating outside a Conversation panel. The Input tile State=Audio attached variant lost its only use and was deleted. Do not redraw audio-reference input until a profile accepts it. Composer settings pass (Bryce approved the mockups): the icon-only ··· chip opened Model settings / Video settings popovers that repeated the chips beside them (3 of 4 and 5 of 6 rows) plus a Seed row no capability profile supports. The chip, both components, C55, C56 and their links were deleted; each chip opens its own Menu (C03 Images, C23 Duration, B13 Shape sheet). An unavailable model shows on its own chip (Setting chip State=Invalid) with one Field error in Composer controls (Show error); C14 lost its viewer notice and the line baked into its prompt content. The fixed \"1 video\" chip was dropped because video makes one clip, and \"audio on\" became \"Sound on\". Do not reintroduce an overflow settings menu, a seed control or count chips that cannot change. Page 07 follow-up: the hand-built Duration, Aspect ratio, Resolution and Video models menus (G03, G04, G05, G22) were replaced by Menu and Model picker instances without headers. Menu item gained Caption + Show caption (12/16 text/secondary) for second lines such as \"8 seconds required\", and Menu gained a Row 3 boolean for two-option menus. G-series chips now follow the composer order used elsewhere (model, shape, duration, resolution, sound, then Advanced) with one glyph per role: ratio for shape, clock for duration, sliders-horizontal for resolution. Veo shape chips show a chevron except on G29, where an extension inherits its shape. Later the same day Bryce asked whether every auth state on page 14 was needed. 39 of the 54 desktop auth screens and their 39 mobile twins on page 16 were deleted: they repeated a kept screen with different words, showed a form with text typed in, or drew a state that cannot happen. The Check verification action and its result screens went too. See authStatePruning. Later on October 16 Bryce asked what \"In the queue\" meant on C49. It was the server's queued job status: accepted, not yet started on the model. Every queued screen matched its running twin except for that line, so C40, C49, E34, W06 and W54, Output State=Waiting, Export panel State=Queued and the unused Output Received, Saving, Stored and Lost variants were deleted, and E32's Export now opens E35. Do not redraw queued, waiting or saving states. See queueStatePruning.",
+  "deletedFrames": [
+    {
+      "key": "C12",
+      "nodeId": "891:86518"
+    },
+    {
+      "key": "E37",
+      "nodeId": "932:111431"
+    },
+    {
+      "key": "Review / Clarification",
+      "nodeId": "914:86277"
+    },
+    {
+      "key": "Review / Request status",
+      "nodeId": "914:85897"
+    },
+    {
+      "key": "W14",
+      "nodeId": "1072:92151"
+    },
+    {
+      "key": "C16",
+      "nodeId": "891:87226"
+    },
+    {
+      "key": "G13",
+      "nodeId": "1032:85170"
+    },
+    {
+      "key": "G14",
+      "nodeId": "1032:85269"
+    },
+    {
+      "key": "C55",
+      "nodeId": "936:110561"
+    },
+    {
+      "key": "C56",
+      "nodeId": "936:110669"
+    },
+    {
+      "key": "A02",
+      "nodeId": "960:88852"
+    },
+    {
+      "key": "A06",
+      "nodeId": "960:89023"
+    },
+    {
+      "key": "A07",
+      "nodeId": "960:89071"
+    },
+    {
+      "key": "A08",
+      "nodeId": "960:89116"
+    },
+    {
+      "key": "A09",
+      "nodeId": "960:89162"
+    },
+    {
+      "key": "A10",
+      "nodeId": "960:89208"
+    },
+    {
+      "key": "A11",
+      "nodeId": "960:89254"
+    },
+    {
+      "key": "A12",
+      "nodeId": "960:89300"
+    },
+    {
+      "key": "A13",
+      "nodeId": "960:89346"
+    },
+    {
+      "key": "A15",
+      "nodeId": "960:89435"
+    },
+    {
+      "key": "A17",
+      "nodeId": "960:89531"
+    },
+    {
+      "key": "A18",
+      "nodeId": "960:89584"
+    },
+    {
+      "key": "A19",
+      "nodeId": "960:89634"
+    },
+    {
+      "key": "A20",
+      "nodeId": "960:89680"
+    },
+    {
+      "key": "A22",
+      "nodeId": "962:89466"
+    },
+    {
+      "key": "A27",
+      "nodeId": "962:89574"
+    },
+    {
+      "key": "A28",
+      "nodeId": "962:89598"
+    },
+    {
+      "key": "A29",
+      "nodeId": "962:89622"
+    },
+    {
+      "key": "A30",
+      "nodeId": "962:89646"
+    },
+    {
+      "key": "A32",
+      "nodeId": "962:89690"
+    },
+    {
+      "key": "A33",
+      "nodeId": "962:89714"
+    },
+    {
+      "key": "A35",
+      "nodeId": "962:89763"
+    },
+    {
+      "key": "A36",
+      "nodeId": "962:89794"
+    },
+    {
+      "key": "A39",
+      "nodeId": "962:89886"
+    },
+    {
+      "key": "A40",
+      "nodeId": "962:89928"
+    },
+    {
+      "key": "A43",
+      "nodeId": "962:90005"
+    },
+    {
+      "key": "A44",
+      "nodeId": "962:90027"
+    },
+    {
+      "key": "A51",
+      "nodeId": "962:90173"
+    },
+    {
+      "key": "A52",
+      "nodeId": "962:90197"
+    },
+    {
+      "key": "A53",
+      "nodeId": "962:90242"
+    },
+    {
+      "key": "A54",
+      "nodeId": "962:90288"
+    },
+    {
+      "key": "A55",
+      "nodeId": "962:90320"
+    },
+    {
+      "key": "A56",
+      "nodeId": "962:90344"
+    },
+    {
+      "key": "A57",
+      "nodeId": "962:90386"
+    },
+    {
+      "key": "A58",
+      "nodeId": "990:95299"
+    },
+    {
+      "key": "A59",
+      "nodeId": "990:95323"
+    },
+    {
+      "key": "A60",
+      "nodeId": "990:95339"
+    },
+    {
+      "key": "A61",
+      "nodeId": "990:95361"
+    },
+    {
+      "key": "A62",
+      "nodeId": "990:95383"
+    },
+    {
+      "key": "N37",
+      "nodeId": "968:94470"
+    },
+    {
+      "key": "N43",
+      "nodeId": "969:94200"
+    },
+    {
+      "key": "N45",
+      "nodeId": "969:94265"
+    },
+    {
+      "key": "N46",
+      "nodeId": "969:94285"
+    },
+    {
+      "key": "N47",
+      "nodeId": "969:94308"
+    },
+    {
+      "key": "N48",
+      "nodeId": "969:94344"
+    },
+    {
+      "key": "N49",
+      "nodeId": "969:94380"
+    },
+    {
+      "key": "N52",
+      "nodeId": "969:94457"
+    },
+    {
+      "key": "N53",
+      "nodeId": "969:94488"
+    },
+    {
+      "key": "N71",
+      "nodeId": "991:95966"
+    },
+    {
+      "key": "N72",
+      "nodeId": "991:95999"
+    },
+    {
+      "key": "N73",
+      "nodeId": "991:96032"
+    },
+    {
+      "key": "N74",
+      "nodeId": "991:96065"
+    },
+    {
+      "key": "N75",
+      "nodeId": "991:96098"
+    },
+    {
+      "key": "N76",
+      "nodeId": "991:96131"
+    },
+    {
+      "key": "N77",
+      "nodeId": "991:96164"
+    },
+    {
+      "key": "N78",
+      "nodeId": "991:96201"
+    },
+    {
+      "key": "N79",
+      "nodeId": "991:96238"
+    },
+    {
+      "key": "N80",
+      "nodeId": "991:96275"
+    },
+    {
+      "key": "N82",
+      "nodeId": "991:96317"
+    },
+    {
+      "key": "N83",
+      "nodeId": "991:96339"
+    },
+    {
+      "key": "N84",
+      "nodeId": "991:96361"
+    },
+    {
+      "key": "N85",
+      "nodeId": "991:96383"
+    },
+    {
+      "key": "N86",
+      "nodeId": "991:96401"
+    },
+    {
+      "key": "N87",
+      "nodeId": "991:96423"
+    },
+    {
+      "key": "N89",
+      "nodeId": "991:96469"
+    },
+    {
+      "key": "N91",
+      "nodeId": "991:96519"
+    },
+    {
+      "key": "N92",
+      "nodeId": "991:96539"
+    },
+    {
+      "key": "N111",
+      "nodeId": "991:96874"
+    },
+    {
+      "key": "N112",
+      "nodeId": "991:96898"
+    },
+    {
+      "key": "N113",
+      "nodeId": "991:96931"
+    },
+    {
+      "key": "N114",
+      "nodeId": "991:96964"
+    },
+    {
+      "key": "N115",
+      "nodeId": "991:96986"
+    },
+    {
+      "key": "N116",
+      "nodeId": "991:97008"
+    },
+    {
+      "key": "N117",
+      "nodeId": "991:97038"
+    },
+    {
+      "key": "N118",
+      "nodeId": "991:97062"
+    },
+    {
+      "key": "N119",
+      "nodeId": "991:97078"
+    },
+    {
+      "key": "N120",
+      "nodeId": "991:97100"
+    },
+    {
+      "key": "N121",
+      "nodeId": "991:97122"
+    },
+    {
+      "key": "K03",
+      "nodeId": "964:91559"
+    },
+    {
+      "key": "K23",
+      "nodeId": "990:95491"
+    },
+    {
+      "key": "K26",
+      "nodeId": "990:95757"
+    },
+    {
+      "key": "K28",
+      "nodeId": "990:95929"
+    },
+    {
+      "key": "K29",
+      "nodeId": "990:96014"
+    },
+    {
+      "key": "N99",
+      "nodeId": "991:96669"
+    },
+    {
+      "key": "N123",
+      "nodeId": "991:97164"
+    },
+    {
+      "key": "N126",
+      "nodeId": "991:97240"
+    },
+    {
+      "key": "N128",
+      "nodeId": "991:97284"
+    },
+    {
+      "key": "N129",
+      "nodeId": "991:97305"
+    },
+    {
+      "key": "C24",
+      "nodeId": "904:98282"
+    },
+    {
+      "key": "N135",
+      "nodeId": "994:97197"
+    },
+    {
+      "key": "N137",
+      "nodeId": "994:97227"
+    },
+    {
+      "key": "N138",
+      "nodeId": "994:97242"
+    },
+    {
+      "key": "N136",
+      "nodeId": "994:97212"
+    },
+    {
+      "key": "N154",
+      "nodeId": "1019:98558"
+    },
+    {
+      "key": "N155",
+      "nodeId": "1019:98600"
+    }
+  ],
+  "deletedComponents": [
+    "Context panel 886:84986",
+    "Download status 889:85267",
+    "Dialog 893:85698",
+    "Request status 889:85100",
+    "Project card 893:85550",
+    "Clarification 889:85351",
+    "Composer content / Media / 4bf2552f49af85f3 1177:144081",
+    "Composer content / Media / b08ab9ed800eafed 1177:144295",
+    "Model settings 886:84883",
+    "Video settings 902:85596",
+    "Input 885:84373",
+    "Composer content / Media / e7cdda37882bb055 1243:422115",
+    "Composer content / Prompt / cb1d3dcda404a9a 1243:422118"
+  ],
+  "deletedLayers": [
+    {
+      "screen": "C24",
+      "name": "Inputs and directions",
+      "nodeId": "904:98432"
+    },
+    {
+      "screen": "M08",
+      "name": "Hidden text: The original stays in its project. Private conversation directions are not copied.",
+      "nodeId": "897:92836"
+    },
+    {
+      "component": "Project menu",
+      "name": "Project instructions (menu item)",
+      "nodeId": "916:86867"
+    },
+    {
+      "section": "03 · Component reviews",
+      "name": "Review / Download status",
+      "nodeId": "914:86227"
+    },
+    {
+      "screen": "C09",
+      "name": "Request status (State=running instance beside the result grid)",
+      "nodeId": "890:86350"
+    },
+    {
+      "screen": "C30",
+      "name": "Text: 2 ready · 1 failed · 1 still running",
+      "nodeId": "904:99496"
+    },
+    {
+      "component": "Composer content / Media / e170ea2ec609a644 (G12)",
+      "name": "Audio action",
+      "nodeId": "1177:143826"
+    },
+    {
+      "component": "Composer content / Media / ae0593caca91e26 (G24)",
+      "name": "Audio action",
+      "nodeId": "1177:145650"
+    },
+    {
+      "component": "Composer content / Prompt / 2b39560dd779f5db (C14)",
+      "name": "This model is no longer available",
+      "nodeId": "1243:408802"
+    },
+    {
+      "screen": "C26",
+      "name": "Fresh seed",
+      "nodeId": "904:98807"
+    },
+    {
+      "screen": "C26",
+      "name": "Review image settings",
+      "nodeId": "904:98809"
+    },
+    {
+      "screen": "C03",
+      "name": "Model settings",
+      "nodeId": "890:85575"
+    },
+    {
+      "screen": "C23",
+      "name": "Video settings",
+      "nodeId": "904:98253"
+    },
+    {
+      "screen": "B13",
+      "name": "Model settings",
+      "nodeId": "936:111491"
+    },
+    {
+      "screen": "G03",
+      "name": "Duration (hand-built menu)",
+      "nodeId": "1040:88699"
+    },
+    {
+      "screen": "G04",
+      "name": "Aspect ratio (hand-built menu)",
+      "nodeId": "1040:88860"
+    },
+    {
+      "screen": "G05",
+      "name": "Resolution (hand-built menu)",
+      "nodeId": "1040:89020"
+    },
+    {
+      "screen": "G22",
+      "name": "Video models (hand-built menu)",
+      "nodeId": "1040:91258"
+    },
+    {
+      "screen": "K26",
+      "name": "Check verification",
+      "nodeId": "990:95842"
+    },
+    {
+      "screen": "K27",
+      "name": "Check verification",
+      "nodeId": "990:95927"
+    },
+    {
+      "screen": "K28",
+      "name": "Check verification",
+      "nodeId": "990:96012"
+    },
+    {
+      "screen": "N98",
+      "name": "Check verification",
+      "nodeId": "991:96665"
+    },
+    {
+      "screen": "N126",
+      "name": "Check verification",
+      "nodeId": "991:97259"
+    },
+    {
+      "screen": "N127",
+      "name": "Check verification",
+      "nodeId": "991:97279"
+    },
+    {
+      "screen": "N128",
+      "name": "Check verification",
+      "nodeId": "991:97300"
+    },
+    {
+      "screen": "K04",
+      "name": "Prototype · Billing → K23",
+      "nodeId": "1000:98486",
+      "note": "Hidden hotspot left from the removed Billing control; its only link opened K23."
+    },
+    {
+      "screen": "C26",
+      "name": "Another variation",
+      "nodeId": "904:98785",
+      "note": "424 x 844 side sheet over the viewer whose only content was the old Input pill (Desk · v1, Image to edit), repeating the picture already in the composer."
+    }
+  ],
+  "canvasReflow": {
+    "page": "05 · Inputs, reuse & versions",
+    "section": "1899:118747",
+    "note": "Remaining screens reflowed in reading order on the existing 7-column grid; node IDs unchanged."
+  },
+  "uiStateEvidenceScreens": {
+    "C12": {
+      "nodeId": "891:86518",
+      "name": "C12 · Reuse an earlier request with its original directions",
+      "width": 1440,
+      "height": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=891-86518"
+    },
+    "E37": {
+      "nodeId": "932:111431",
+      "name": "E37 · Export download started",
+      "width": 1440,
+      "height": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=932-111431"
+    },
+    "C16": {
+      "nodeId": "891:87226",
+      "name": "C16 · Answer a specific question",
+      "width": 1440,
+      "height": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=891-87226"
+    },
+    "C55": {
+      "nodeId": "936:110561",
+      "name": "C55 · Image settings preserve the current words",
+      "width": 1440,
+      "height": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=936-110561"
+    },
+    "C56": {
+      "nodeId": "936:110669",
+      "name": "C56 · Video settings preserve the current words",
+      "width": 1440,
+      "height": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=936-110669"
+    },
+    "C24": {
+      "nodeId": "904:98282",
+      "name": "C24 · Use references without importing their conversation history",
+      "width": 1440,
+      "height": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=904-98282"
+    }
+  },
+  "uiStateEvidenceComponents": {
+    "Context panel": {
+      "nodeId": "886:84986",
+      "variants": {},
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=886-84986"
+    },
+    "Download status": {
+      "nodeId": "889:85267",
+      "variants": {
+        "State=idle": "889:85263",
+        "State=resolving": "889:85264",
+        "State=started": "889:85265",
+        "State=failed": "889:85266"
+      },
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=889-85267"
+    },
+    "Dialog": {
+      "nodeId": "893:85698",
+      "variants": {
+        "Kind=Confirm": "893:85695",
+        "Kind=Unsaved": "893:85696",
+        "Kind=Destructive": "893:85697"
+      },
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=893-85698"
+    },
+    "Clarification": {
+      "nodeId": "889:85351",
+      "variants": {
+        "State=waiting": "889:85345",
+        "State=answering": "889:85346",
+        "State=proposal_ready": "889:85347",
+        "State=stale_proposal": "889:85348",
+        "State=applied": "889:85349",
+        "State=dismissed": "889:85350"
+      },
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=889-85351"
+    },
+    "Request status": {
+      "nodeId": "889:85100",
+      "variants": {
+        "State=queued": "889:85091",
+        "State=running": "889:85092",
+        "State=succeeded": "889:85095",
+        "State=partial": "889:85096",
+        "State=failed": "889:85097"
+      },
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=889-85100"
+    },
+    "Project card": {
+      "nodeId": "893:85550",
+      "variants": {
+        "State=local": "893:85543",
+        "State=creating": "893:85544",
+        "State=ready": "893:85545",
+        "State=load_failed": "893:85546",
+        "State=inaccessible": "893:85547",
+        "State=trashing": "893:85548",
+        "State=trashed": "893:85549"
+      },
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=893-85550"
+    },
+    "Model settings": {
+      "nodeId": "886:84883",
+      "variants": {},
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=886-84883"
+    },
+    "Video settings": {
+      "nodeId": "902:85596",
+      "variants": {},
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=902-85596"
+    },
+    "Input": {
+      "nodeId": "885:84373",
+      "variants": {
+        "State=Ready": "885:84368",
+        "State=Waiting": "885:84369",
+        "State=Choose": "885:84370",
+        "State=Unavailable": "885:84371",
+        "State=Removed": "885:84372"
+      },
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=885-84373"
+    }
+  },
+  "priorCaseCoverage": {
+    "HISTORY-06": {
+      "rules": [
+        "H07",
+        "C03",
+        "I02"
+      ],
+      "screens": [
+        "C35",
+        "C12"
+      ],
+      "given": "Request Q1 produced A; later Q2 and Q3 produced other results.",
+      "when": "Edit and run Q1 again with changed words.",
+      "then": "New Q4 records revisesRequestId Q1 and Q1's original parent context; Q1-Q3 and their outputs remain.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "CONTEXT-01": {
+      "rules": [
+        "C01",
+        "I08"
+      ],
+      "screens": [
+        "C13",
+        "C12"
+      ],
+      "given": "A-to-B-to-C edits exist; another branch from A requested blue lighting.",
+      "when": "Edit B with warmer lighting.",
+      "then": "Context contains B's ancestor path and new instruction; C's later edits and the blue sibling instruction are excluded.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "CONTEXT-03": {
+      "rules": [
+        "C03",
+        "C07"
+      ],
+      "screens": [
+        "C12",
+        "C27"
+      ],
+      "given": "An old request used project instruction revision N; project is now N+1.",
+      "when": "Reuse the old request.",
+      "then": "Draft retains N and shows the available update; N+1 is applied only explicitly.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "CONTEXT-05": {
+      "rules": [
+        "C04",
+        "I10"
+      ],
+      "screens": [
+        "C16"
+      ],
+      "given": "No unique media input is bound and several result batches exist.",
+      "when": "Enter Use the second one.",
+      "then": "A persisted clarification asks which request/slot; no media dispatch occurs.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "CONTEXT-11": {
+      "rules": [
+        "C09",
+        "I02"
+      ],
+      "screens": [
+        "C16"
+      ],
+      "given": "A clarification targets draft D revision 4.",
+      "when": "Answer after D advanced to revision 5.",
+      "then": "Save the answer as an immutable entry and stale proposal; only Apply as new draft or explicit resolution may use it.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "CONTEXT-12": {
+      "rules": [
+        "C09",
+        "I10"
+      ],
+      "screens": [
+        "C16"
+      ],
+      "given": "Two questions in the same conversation await answers.",
+      "when": "Send an answer without a unique question reference.",
+      "then": "Ask which question; neither target draft changes and neither request runs.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "HISTORY-08": {
+      "rules": [
+        "H09",
+        "I04"
+      ],
+      "screens": [
+        "P02",
+        "C24"
+      ],
+      "given": "Image A is owned in project P and referenced in conversations X and Y.",
+      "when": "Submit one edit from each conversation.",
+      "then": "Both requests reference exact A; histories remain distinct and no storage duplicate is required.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "CONTEXT-02": {
+      "rules": [
+        "C02",
+        "H04"
+      ],
+      "screens": [
+        "C24"
+      ],
+      "given": "A is primary base and B is a visual reference with unrelated history.",
+      "when": "Submit an image edit.",
+      "then": "Record both inputs and roles; B's conversation instructions are excluded unless explicitly selected as context.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    },
+    "MEDIA-04": {
+      "rules": [
+        "M03"
+      ],
+      "screens": [
+        "M04",
+        "C24"
+      ],
+      "given": "Two drafts reference one in-progress upload.",
+      "when": "Remove it from only draft A.",
+      "then": "Draft B and the upload continue; A's removed role does not return on completion.",
+      "designStatus": "mapped",
+      "applicationTestStatus": "planned",
+      "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
+    }
+  },
+  "retiredPrototypeLinks": [
+    {
+      "from": "C35",
+      "control": "Reuse setup",
+      "to": "C12",
+      "hotspotId": "943:113090",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "E36",
+      "control": "Download",
+      "to": "E37",
+      "hotspotId": "943:113232",
+      "trigger": "ON_CLICK",
+      "note": "Lived on the Download button inside E36's Export panel (I932:111421;892:85392); removed so Download stays on E36."
+    },
+    {
+      "from": "E37",
+      "control": "Share",
+      "to": "E38",
+      "hotspotId": "943:113236",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "W14",
+      "control": "Primary",
+      "to": "W59",
+      "hotspotId": "I1177:118264;1175:109170;1236:91110",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "C38",
+      "control": "Settings",
+      "to": "C55",
+      "hotspotId": "943:113144",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "C47",
+      "control": "Settings",
+      "to": "C56",
+      "hotspotId": "943:113160",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "C55",
+      "control": "Escape",
+      "to": "C38",
+      "hotspotId": "936:110561",
+      "trigger": "ON_KEY_DOWN"
+    },
+    {
+      "from": "C55",
+      "control": "Done",
+      "to": "C38",
+      "hotspotId": "943:113152",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "C55",
+      "control": "Recraft V4.1",
+      "to": "C39",
+      "hotspotId": "943:113154",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "C56",
+      "control": "Escape",
+      "to": "C47",
+      "hotspotId": "936:110669",
+      "trigger": "ON_KEY_DOWN"
+    },
+    {
+      "from": "C56",
+      "control": "Done",
+      "to": "C47",
+      "hotspotId": "943:113168",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "C56",
+      "control": "Sora 2",
+      "to": "C48",
+      "hotspotId": "943:113170",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A01",
+      "control": "Google",
+      "to": "A06",
+      "hotspotId": "I2171:95976;2170:93187;2171:96034;2171:21642",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A01",
+      "control": "Email",
+      "to": "A02",
+      "hotspotId": "I2171:95976;2170:93187;2171:96034;2171:21665",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A01",
+      "control": "Password",
+      "to": "A02",
+      "hotspotId": "I2171:95976;2170:93187;2171:96034;2171:21682",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A03",
+      "control": "Google",
+      "to": "A06",
+      "hotspotId": "I2171:96049;2170:93187;2171:96107;2171:21712",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A04",
+      "control": "Google",
+      "to": "A06",
+      "hotspotId": "I2171:96137;2170:93187;2171:96195;2171:21712",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A14",
+      "control": "Email",
+      "to": "A15",
+      "hotspotId": "I2173:8506;2170:93187;2173:8561;2171:21863",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A14",
+      "control": "Password",
+      "to": "A15",
+      "hotspotId": "I2173:8506;2170:93187;2173:8561;2171:21871",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A31",
+      "control": "Email",
+      "to": "A32",
+      "hotspotId": "I2173:94538;2170:93187;2173:94570;2171:22022",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A37",
+      "control": "Password",
+      "to": "A57",
+      "hotspotId": "I2173:94776;2170:93187;2173:94812;2171:22131",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "A21",
+      "control": "Check verification",
+      "to": "A59",
+      "hotspotId": "I2173:95300;2170:93187;2173:95321;2170:93179",
+      "trigger": "ON_CLICK",
+      "note": "Auth message Show tertiary turned off."
+    },
+    {
+      "from": "A23",
+      "control": "Check verification",
+      "to": "A59",
+      "hotspotId": "I2173:95431;2170:93187;2173:95452;2170:93179",
+      "trigger": "ON_CLICK",
+      "note": "Auth message Show tertiary turned off."
+    },
+    {
+      "from": "K26",
+      "control": "Check verification",
+      "to": "A59",
+      "hotspotId": "990:95842",
+      "trigger": "ON_CLICK",
+      "note": "Button deleted."
+    },
+    {
+      "from": "K27",
+      "control": "Check verification",
+      "to": "A59",
+      "hotspotId": "990:95927",
+      "trigger": "ON_CLICK",
+      "note": "Button deleted."
+    },
+    {
+      "from": "K28",
+      "control": "Check verification",
+      "to": "A59",
+      "hotspotId": "990:96012",
+      "trigger": "ON_CLICK",
+      "note": "Button deleted."
+    },
+    {
+      "from": "N08",
+      "control": "Google",
+      "to": "N47",
+      "hotspotId": "I2178:13546;2170:93187;2178:13631;2171:21642",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N08",
+      "control": "Email",
+      "to": "N43",
+      "hotspotId": "I2178:13546;2170:93187;2178:13631;2171:21665",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N08",
+      "control": "Password",
+      "to": "N43",
+      "hotspotId": "I2178:13546;2170:93187;2178:13631;2171:21682",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N09",
+      "control": "Google",
+      "to": "N47",
+      "hotspotId": "I2178:13705;2170:93187;2178:13790;2171:21712",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N10",
+      "control": "Email",
+      "to": "N48",
+      "hotspotId": "I2178:94754;2170:93187;2178:94809;2171:21863",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N10",
+      "control": "Password",
+      "to": "N48",
+      "hotspotId": "I2178:94754;2170:93187;2178:94809;2171:21871",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N12",
+      "control": "Check verification",
+      "to": "N118",
+      "hotspotId": "I2178:95645;2170:93187;2178:95666;2170:93179",
+      "trigger": "ON_CLICK",
+      "note": "Auth message Show tertiary turned off."
+    },
+    {
+      "from": "N14",
+      "control": "Email",
+      "to": "N45",
+      "hotspotId": "I2178:95155;2170:93187;2178:95187;2171:22022",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N16",
+      "control": "Password",
+      "to": "N37",
+      "hotspotId": "I2178:95356;2170:93187;2178:95392;2171:22131",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N70",
+      "control": "Google",
+      "to": "N47",
+      "hotspotId": "I2178:14081;2170:93187;2178:14139;2171:21712",
+      "trigger": "ON_CLICK"
+    },
+    {
+      "from": "N81",
+      "control": "Check verification",
+      "to": "N118",
+      "hotspotId": "I2178:95755;2170:93187;2178:95776;2170:93179",
+      "trigger": "ON_CLICK",
+      "note": "Auth message Show tertiary turned off."
+    },
+    {
+      "from": "N98",
+      "control": "Check verification",
+      "to": "N118",
+      "hotspotId": "991:96665",
+      "trigger": "ON_CLICK",
+      "note": "Button deleted."
+    },
+    {
+      "from": "K04",
+      "control": "Back to workspace",
+      "to": "K23",
+      "hotspotId": "I964:91708;2171:95042",
+      "note": "No other account screen links Back to workspace."
+    },
+    {
+      "from": "K04",
+      "control": "Prototype · Billing → K23",
+      "to": "K23",
+      "hotspotId": "1000:98486",
+      "note": "Hidden hotspot deleted."
+    },
+    {
+      "from": "N100",
+      "control": "Account menu",
+      "to": "N123",
+      "hotspotId": "991:96692",
+      "trigger": "ON_CLICK",
+      "note": "No other mobile account screen links Account menu."
+    }
+  ],
+  "resizedFrames": [
+    {
+      "screen": "B22",
+      "name": "Evening campaign (bottom sheet)",
+      "nodeId": "936:112685",
+      "from": {
+        "y": 482,
+        "height": 362
+      },
+      "to": {
+        "y": 522,
+        "height": 322
+      },
+      "reason": "Keeps the original 78px below the shortened Project menu."
+    },
+    {
+      "component": "Clarification",
+      "nodeId": "889:85351",
+      "from": {
+        "width": 1552,
+        "height": 620
+      },
+      "to": {
+        "width": 400,
+        "height": 280
+      },
+      "reason": "Fits the one remaining variant."
+    }
+  ],
+  "priorStateCoverage": {
+    "download.idle": {
+      "meaning": "No current file transfer requested.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Download status",
+          "nodeId": "889:85263",
+          "variant": "State=idle"
+        }
+      ],
+      "screens": [
+        "C05"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "download.resolving": {
+      "meaning": "Resolving an authorized URL for this stored version.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Download status",
+          "nodeId": "889:85264",
+          "variant": "State=resolving"
+        }
+      ],
+      "screens": [],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "download.started": {
+      "meaning": "Browser file transfer has started; no claim about writing to disk.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Download status",
+          "nodeId": "889:85265",
+          "variant": "State=started"
+        }
+      ],
+      "screens": [
+        "E37"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "download.failed": {
+      "meaning": "Resolve/transfer failed; original file/job remain intact.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Download status",
+          "nodeId": "889:85266",
+          "variant": "State=failed"
+        }
+      ],
+      "screens": [],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "clarification.answering": {
+      "meaning": "Answer submission is being saved under that question identity.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Clarification",
+          "nodeId": "889:85346",
+          "variant": "State=answering"
+        }
+      ],
+      "screens": [
+        "C16"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "clarification.proposal_ready": {
+      "meaning": "Answer saved and proposal based on the same current draft revision.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Clarification",
+          "nodeId": "889:85347",
+          "variant": "State=proposal_ready"
+        }
+      ],
+      "screens": [
+        "C16"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "clarification.stale_proposal": {
+      "meaning": "Target changed or became noneditable; retain proposal and require an authorized writable new draft or explicit resolution.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Clarification",
+          "nodeId": "889:85348",
+          "variant": "State=stale_proposal"
+        }
+      ],
+      "screens": [],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "clarification.applied": {
+      "meaning": "Proposal explicitly applied; no media dispatched.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Clarification",
+          "nodeId": "889:85349",
+          "variant": "State=applied"
+        }
+      ],
+      "screens": [
+        "C24"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "clarification.dismissed": {
+      "meaning": "Question/proposal closed; required missing information still blocks submission.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Clarification",
+          "nodeId": "889:85350",
+          "variant": "State=dismissed"
+        }
+      ],
+      "screens": [
+        "C16"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "request.queued": {
+      "meaning": "Accepted and queued; no outcome assumed.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Request status",
+          "nodeId": "889:85091",
+          "variant": "State=queued"
+        }
+      ],
+      "screens": [
+        "C07",
+        "C40",
+        "C49",
+        "E34"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "request.running": {
+      "meaning": "At least one required output slot is executing.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Request status",
+          "nodeId": "889:85092",
+          "variant": "State=running"
+        }
+      ],
+      "screens": [
+        "C09",
+        "C41",
+        "C50",
+        "E35",
+        "B18"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "request.succeeded": {
+      "meaning": "All required output slots are durable and deliverable.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Request status",
+          "nodeId": "889:85095",
+          "variant": "State=succeeded"
+        }
+      ],
+      "screens": [
+        "C57",
+        "C58",
+        "E36",
+        "B19"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "request.partial": {
+      "meaning": "At least one deliverable slot; remaining slots are terminal failures/cancellations.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Request status",
+          "nodeId": "889:85096",
+          "variant": "State=partial"
+        }
+      ],
+      "screens": [
+        "D10"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "request.failed": {
+      "meaning": "No deliverable slots and all slots definitively failed/lost.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Request status",
+          "nodeId": "889:85097",
+          "variant": "State=failed"
+        }
+      ],
+      "screens": [],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "project.local": {
+      "meaning": "New work exists only on this device; generation is unavailable.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Project card",
+          "nodeId": "893:85543",
+          "variant": "State=local"
+        }
+      ],
+      "screens": [
+        "C01"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "project.creating": {
+      "meaning": "An idempotent project-creation request is being reconciled.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Project card",
+          "nodeId": "893:85544",
+          "variant": "State=creating"
+        }
+      ],
+      "screens": [
+        "P03"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "project.ready": {
+      "meaning": "The owner can work in this project.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Project card",
+          "nodeId": "893:85545",
+          "variant": "State=ready"
+        }
+      ],
+      "screens": [
+        "P01",
+        "P02"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "project.load_failed": {
+      "meaning": "Project loading failed; retry the same identity.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Project card",
+          "nodeId": "893:85546",
+          "variant": "State=load_failed"
+        }
+      ],
+      "screens": [
+        "P04"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "project.inaccessible": {
+      "meaning": "Authorization is missing; cached private content is hidden.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Project card",
+          "nodeId": "893:85547",
+          "variant": "State=inaccessible"
+        }
+      ],
+      "screens": [
+        "P05"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "project.trashing": {
+      "meaning": "Trash is requested; new work is blocked while the server decides.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Project card",
+          "nodeId": "893:85548",
+          "variant": "State=trashing"
+        }
+      ],
+      "screens": [
+        "P06"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "project.trashed": {
+      "meaning": "Project and work are retained but read-only; public links are denied.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Project card",
+          "nodeId": "893:85549",
+          "variant": "State=trashed"
+        }
+      ],
+      "screens": [
+        "P07"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "clarification.waiting": {
+      "meaning": "Persisted question targets an exact draft revision; answer required.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Clarification",
+          "nodeId": "889:85345",
+          "variant": "State=Default"
+        }
+      ],
+      "screens": [
+        "C16"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "input_target.version": {
+      "meaning": "One explicitly bound, available version or validated input set.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Input",
+          "nodeId": "885:84368",
+          "variant": "State=Ready"
+        }
+      ],
+      "screens": [
+        "C05",
+        "C24",
+        "M12",
+        "C45",
+        "C57",
+        "B24",
+        "B26"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "input_target.pending": {
+      "meaning": "This draft explicitly waits for one named request slot.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Input",
+          "nodeId": "885:84369",
+          "variant": "State=Waiting"
+        }
+      ],
+      "screens": [
+        "C07",
+        "C40",
+        "C41",
+        "B25"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "input_target.choice_required": {
+      "meaning": "An output, primary input or context change must be chosen explicitly before submission.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Input",
+          "nodeId": "885:84370",
+          "variant": "State=Choose"
+        }
+      ],
+      "screens": [
+        "C09",
+        "C30"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    },
+    "input_target.unavailable": {
+      "meaning": "Bound source is failed, lost, unlinked or unauthorized.",
+      "status": "designed",
+      "components": [
+        {
+          "family": "Input",
+          "nodeId": "885:84371",
+          "variant": "State=Unavailable"
+        }
+      ],
+      "screens": [
+        "C22"
+      ],
+      "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
+    }
+  },
+  "priorReviewJourneyBranches": {
+    "assemble_export": {
+      "download": "E37"
+    },
+    "image_creation": {
+      "settings": "C55"
+    },
+    "video_creation": {
+      "settings": "C56"
+    }
+  },
+  "deletedStateVariants": [
+    {
+      "component": "Clarification",
+      "variant": "State=answering",
+      "nodeId": "889:85346"
+    },
+    {
+      "component": "Clarification",
+      "variant": "State=proposal_ready",
+      "nodeId": "889:85347"
+    },
+    {
+      "component": "Clarification",
+      "variant": "State=stale_proposal",
+      "nodeId": "889:85348"
+    },
+    {
+      "component": "Clarification",
+      "variant": "State=applied",
+      "nodeId": "889:85349"
+    },
+    {
+      "component": "Clarification",
+      "variant": "State=dismissed",
+      "nodeId": "889:85350"
+    },
+    {
+      "component": "Creation / Input tile",
+      "variant": "State=Audio attached",
+      "nodeId": "1568:95697"
+    }
+  ],
+  "renamedVariants": [
+    {
+      "component": "Clarification",
+      "nodeId": "889:85345",
+      "from": "State=waiting",
+      "to": "State=Default"
+    }
+  ],
+  "renamedFrames": [
+    {
+      "key": "C03",
+      "nodeId": "890:85488",
+      "from": "C03 · Review image settings",
+      "to": "C03 · Choose how many images"
+    },
+    {
+      "key": "N152",
+      "nodeId": "1019:98516",
+      "from": "N152 · Mobile pricing question expanded",
+      "to": "N152 · Mobile pricing questions expanded"
+    }
+  ],
+  "componentChanges": [
+    {
+      "component": "Setting chip",
+      "nodeId": "2269:36403",
+      "change": "Became a variant set: State=Default (1161:90895, the original component) and State=Invalid (2269:36399, status/danger outline like Field Invalid). Property keys are now Label#2269:0, Icon#2269:1, Chevron#2269:2, Show icon#2269:3, Show label#2269:4."
+    },
+    {
+      "component": "Composer controls",
+      "nodeId": "1236:91199",
+      "change": "Added Show error#2270:0 with an exposed Field error row (Error) in Stacked, Inline and Touch; Inline now wraps Settings and Primary in a Row above the error. Touch chips are bound to Show setting 1-8. The default Setting 5 changed from the icon-only ··· chip to Sound included."
+    },
+    {
+      "component": "Sheet",
+      "nodeId": "896:85608",
+      "change": "Kind=Menu and Kind=Timing use auto layout and hug their content (262 and 214 tall); only Close sheet stays absolute."
+    },
+    {
+      "component": "Menu item",
+      "nodeId": "884:84595",
+      "change": "Every variant wraps Label in a vertical Text frame with an optional Caption (Caption#2283:0, Show caption#2283:6, Figtree 12/16, text/secondary; text/muted when Disabled). Rows hug their height with a 36px minimum, so one-line rows are unchanged."
+    },
+    {
+      "component": "Menu",
+      "nodeId": "2038:9718",
+      "change": "Added Row 3#2283:12 (default on) so two-option menus need no hand-hidden rows."
+    },
+    {
+      "component": "Compact input",
+      "nodeId": "905:85648",
+      "change": "Edit-source redesign: the Role caption and its text property were deleted; the picture (or Mask thumbnail) fills the 72 x 48 tile and the Remove badge moved inside the top-right corner (52, 4). Variants are now Kind=Image|Mask x State: Ready (905:85646, 905:85647), Not ready (2352:10371, loader) and Unavailable (2352:10381, alert with status/danger edge). The edit shelves dropped their Reference and Sketch actions, and the area-edit shelf became one Mask tile. Record: edit-source-tile-redesign-2026-10-16.json."
+    },
+    {
+      "component": "Rail",
+      "nodeId": "1487:91133",
+      "change": "Projects linked to a deleted frame (900-93950) in all 7 variants; it now opens P02 · Project conversations (1872-51710), which every instance had been overriding by hand. The change merged with those overrides and doubled 204 Projects items on pages 03-14, which were deduplicated (page 12's four in-page NAVIGATE overrides kept). 72 Help items on pages 03-10 overrode their link to another deleted frame (909-324984) and were reset to the component's H01 · Documentation home. 84 other overrides that still resolve (in-page Media and Sketch navigation, equivalent Account and Help URLs) were left. Two other links to the deleted frame (one on page 00, one on page 12) now open P02."
+    }
+  ],
+  "authStatePruning": {
+    "request": "Are all of these states really needed? Delete any that aren't (page 14 section Sign in & sign up, 1899:118769). Judge them logically, not by the current client.",
+    "rule": "Keep one screen per step and one example of each card state. Delete a screen that repeats a kept screen with different words, shows a form with text typed in, or draws a state that cannot happen.",
+    "keptScreens": [
+      "A01",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A21",
+      "A23",
+      "A24",
+      "A25",
+      "A26",
+      "A31",
+      "A34",
+      "A37",
+      "A41",
+      "A42"
+    ],
+    "keptMobileScreens": [
+      "N08",
+      "N70",
+      "N09",
+      "N44",
+      "N10",
+      "N12",
+      "N81",
+      "N50",
+      "N51",
+      "N13",
+      "N14",
+      "N15",
+      "N16",
+      "N17",
+      "N90"
+    ],
+    "surfaces": {
+      "A02": "A01 with text typed in. A01's Sign in now opens A05.",
+      "A06": "A05's busy button. Google's own window does the rest, so the card shows no notice for it.",
+      "A07": "A01. Closing Google's window is the person's choice, so the card returns to the form without a message.",
+      "A08": "A04's notice: \"The Google window was blocked. Allow popups or use email.\"",
+      "A09": "A04's notice: \"Use email here, or open Vidra in your browser to continue with Google.\"",
+      "A10": "A04's notice: \"Google sign-in is unavailable right now. Use email or try again later.\"",
+      "A11": "A04's notice: \"Too many attempts. Wait a moment before trying again.\"",
+      "A12": "A04's notice: \"You are offline. Reconnect before signing in.\"",
+      "A13": "A04's notice: \"This account is disabled. Contact support for help.\"",
+      "A15": "A14 with text typed in. A14's Create account now opens A21.",
+      "A17": "A03's Field error, under Password: \"Use at least 6 characters.\"",
+      "A18": "A04's notice on Create account: \"This email already has an account. Sign in or reset your password.\"",
+      "A19": "A05's busy button (\"Creating account…\").",
+      "A20": "A04's notice: \"Your account could not be created. Check your connection and try again.\"",
+      "A22": "A05's busy button on A21 (\"Sending…\"). A21's Resend verification now opens A23.",
+      "A27": "A26: the same outcome and the same Send a new link action.",
+      "A28": "A26, or opening the link again. A connection failure needs no screen of its own.",
+      "A29": "Cannot happen: opening a verification link verifies the address it was sent to, whoever is signed in.",
+      "A30": "A25. Continue to Vidra goes through sign in when the person is signed out.",
+      "A32": "A31 with text typed in. A31's Send reset link now opens A34.",
+      "A33": "A05's busy button (\"Sending…\").",
+      "A35": "A04's notice on A31: \"We could not send the email. Check your connection and try again.\"",
+      "A36": "A24, whose \"Checking your link…\" covers both link types. T02's Choose a new password now opens A37.",
+      "A39": "A03's Field error, under New password: \"Use at least 6 characters.\"",
+      "A40": "A05's busy button (\"Saving…\").",
+      "A43": "A42: the same outcome and the same Request a new link action.",
+      "A44": "A04's notice on A37: \"We could not reset your password. Try again with this link.\"",
+      "A51": "A21. If the first email fails, Resend verification sends it again.",
+      "A52": "A04's notice: \"We could not sign you in. Try again, or contact support if this continues.\"",
+      "A53": "A04's notice: \"Email sign-in is unavailable right now. Continue with Google or try again later.\"",
+      "A54": "A04's notice on A31: \"Too many requests. Wait before requesting another email.\"",
+      "A55": "A23's Resend countdown; otherwise A04's notice.",
+      "A56": "A03's Field error, under New password: \"Enter a new password.\"",
+      "A57": "A37 with text typed in. A37's Save password now opens A41.",
+      "A58": "Removed with Check verification. Opening the emailed link verifies the address (A24, then A25).",
+      "A59": "Removed with Check verification.",
+      "A60": "Removed with Check verification.",
+      "A61": "A42: the same outcome and the same Request a new link action.",
+      "A62": "Cannot happen from a real email, because each email links to its own page. A42 covers a hand-edited link.",
+      "N37": "Mobile twin of A57.",
+      "N43": "Mobile twin of A02.",
+      "N45": "Mobile twin of A32.",
+      "N46": "Mobile twin of A33.",
+      "N47": "Mobile twin of A06.",
+      "N48": "Mobile twin of A15.",
+      "N49": "Mobile twin of A19.",
+      "N52": "Mobile twin of A40.",
+      "N53": "Mobile twin of A08.",
+      "N71": "Mobile twin of A07.",
+      "N72": "Mobile twin of A09.",
+      "N73": "Mobile twin of A10.",
+      "N74": "Mobile twin of A11.",
+      "N75": "Mobile twin of A12.",
+      "N76": "Mobile twin of A13.",
+      "N77": "Mobile twin of A17.",
+      "N78": "Mobile twin of A18.",
+      "N79": "Mobile twin of A20.",
+      "N80": "Mobile twin of A22.",
+      "N82": "Mobile twin of A27.",
+      "N83": "Mobile twin of A28.",
+      "N84": "Mobile twin of A29.",
+      "N85": "Mobile twin of A30.",
+      "N86": "Mobile twin of A35.",
+      "N87": "Mobile twin of A36.",
+      "N89": "Mobile twin of A39.",
+      "N91": "Mobile twin of A43.",
+      "N92": "Mobile twin of A44.",
+      "N111": "Mobile twin of A51.",
+      "N112": "Mobile twin of A52.",
+      "N113": "Mobile twin of A53.",
+      "N114": "Mobile twin of A54.",
+      "N115": "Mobile twin of A55.",
+      "N116": "Mobile twin of A56.",
+      "N117": "Mobile twin of A58.",
+      "N118": "Mobile twin of A59.",
+      "N119": "Mobile twin of A60.",
+      "N120": "Mobile twin of A61.",
+      "N121": "Mobile twin of A62."
+    },
+    "rewiredLinks": [
+      {
+        "from": "A21",
+        "control": "Resend verification",
+        "was": "A22",
+        "now": "A23",
+        "hotspotId": "I2173:95300;2170:93187;2173:95321;2170:93169"
+      },
+      {
+        "from": "T02",
+        "control": "Choose a new password",
+        "was": "A36",
+        "now": "A37",
+        "hotspotId": "971:94750"
+      },
+      {
+        "from": "N12",
+        "control": "Resend verification",
+        "was": "N80",
+        "now": "N81",
+        "hotspotId": "I2178:95645;2170:93187;2178:95666;2170:93169"
+      },
+      {
+        "from": "N13",
+        "control": "Send a new link",
+        "was": "N80",
+        "now": "N81",
+        "hotspotId": "I2178:95892;2170:93187;2178:95913;2170:93159"
+      }
+    ],
+    "addedLinks": [
+      {
+        "from": "A01",
+        "control": "Sign in",
+        "to": "A05",
+        "hotspotId": "I2171:95976;2170:93187;2171:96034;2171:21689"
+      },
+      {
+        "from": "A14",
+        "control": "Create account",
+        "to": "A21",
+        "hotspotId": "I2173:8506;2170:93187;2173:8561;2171:21878"
+      },
+      {
+        "from": "A31",
+        "control": "Send reset link",
+        "to": "A34",
+        "hotspotId": "I2173:94538;2170:93187;2173:94570;2171:22026"
+      },
+      {
+        "from": "A37",
+        "control": "Save password",
+        "to": "A41",
+        "hotspotId": "I2173:94776;2170:93187;2173:94812;2171:22138"
+      },
+      {
+        "from": "N08",
+        "control": "Sign in",
+        "to": "N44",
+        "hotspotId": "I2178:13546;2170:93187;2178:13631;2171:21689"
+      },
+      {
+        "from": "N10",
+        "control": "Create account",
+        "to": "N12",
+        "hotspotId": "I2178:94754;2170:93187;2178:94809;2171:21878"
+      },
+      {
+        "from": "N14",
+        "control": "Send reset link",
+        "to": "N15",
+        "hotspotId": "I2178:95155;2170:93187;2178:95187;2171:22026"
+      },
+      {
+        "from": "N16",
+        "control": "Save password",
+        "to": "N17",
+        "hotspotId": "I2178:95356;2170:93187;2178:95392;2171:22138"
+      }
+    ],
+    "instanceChanges": [
+      {
+        "screen": "A21",
+        "nodeId": "I2173:95300;2170:93187;2173:95321",
+        "change": "Auth message Show tertiary off (Check verification)."
+      },
+      {
+        "screen": "A23",
+        "nodeId": "I2173:95431;2170:93187;2173:95452",
+        "change": "Auth message Show tertiary off (Check verification)."
+      },
+      {
+        "screen": "N12",
+        "nodeId": "I2178:95645;2170:93187;2178:95666",
+        "change": "Auth message Show tertiary off (Check verification)."
+      },
+      {
+        "screen": "N81",
+        "nodeId": "I2178:95755;2170:93187;2178:95776",
+        "change": "Auth message Show tertiary off (Check verification)."
+      }
+    ],
+    "canvas": "Section Sign in & sign up (1899:118769) now holds the 15 kept screens in three rows (sign in and create account; verify email; reset password) at 7760x3520, and the Support section below moved up 6960px. Mobile site & account rows on page 16 were closed up so the deleted twins leave no gaps.",
+    "contracts": "docs/design/product/interaction-contract.md rows Validation, Loading, Sign-in / signup, Verification link, Resend, Password reset, UI-01 and UI-03 now cite only kept screens and drop the manual verification refresh. Workflow rule IDs A02, A06 and A07 (acceptance cases, ui-state-evidence caseCoverage) are contract rules, not these screens, and were not touched.",
+    "verification": "No dangling prototype links on page 14 or page 16 after the deletions."
+  },
+  "accountStatePruning": {
+    "request": "Review every state screen in page 14 section Account & usage (1899:118765, K01-K29) and its mobile twins in page 16 Mobile site & account (N98-N129). Delete the ones that aren't needed, judged logically, not by the current client.",
+    "rule": "Keep one screen per step and one example of each card state. Delete a screen that repeats a kept screen with different words, shows a form with text typed in, draws a state the person caused on purpose, or draws a state that cannot happen, and any control whose only job was to reach one.",
+    "keptScreens": [
+      "K01",
+      "K02",
+      "K27",
+      "K04",
+      "K22",
+      "K08",
+      "K24",
+      "K10",
+      "K25",
+      "K09",
+      "K11",
+      "K12",
+      "K16",
+      "K13",
+      "K14",
+      "K17",
+      "K18"
+    ],
+    "keptMobileScreens": [
+      "N98",
+      "N127",
+      "N100",
+      "N122",
+      "N124",
+      "N105",
+      "N125",
+      "N104",
+      "N106",
+      "N110",
+      "N107",
+      "N108"
+    ],
+    "cardStateExamples": {
+      "fieldError": "K22",
+      "requestErrorNotice": "K25",
+      "busy": "K24",
+      "countdown": "K27",
+      "loading": "K13",
+      "couldNotLoad": "K14"
+    },
+    "surfaces": {
+      "K03": "K13's loading pattern. The profile comes with the signed-in session, so the Profile panel never loads on its own; a page that is still loading is X02.",
+      "K23": "\"Discard your name change?\" with Keep editing and Discard changes. Cancel on K04 is the person's own choice to drop a one-field name edit, so it needs no confirmation. K04's Cancel and account links now open their destinations directly.",
+      "K26": "K24's busy button (\"Sending…\").",
+      "K28": "K25's notice, word for word: \"The email could not be requested. Check your connection and try again.\"",
+      "K29": "K14's could-not-load pattern (\"Your account could not load.\" with Try again). The profile comes with the signed-in session, so it never fails on its own; a page that fails to load is X03.",
+      "N99": "Mobile twin of K03.",
+      "N123": "Mobile twin of K23.",
+      "N126": "Mobile twin of K26.",
+      "N128": "Mobile twin of K28.",
+      "N129": "Mobile twin of K29."
+    },
+    "rewiredLinks": [
+      {
+        "from": "K04",
+        "control": "Profile",
+        "was": "K23",
+        "now": "K01",
+        "hotspotId": "I964:91708;2171:95029"
+      },
+      {
+        "from": "K04",
+        "control": "Security",
+        "was": "K23",
+        "now": "K08",
+        "hotspotId": "I964:91708;2171:95032"
+      },
+      {
+        "from": "K04",
+        "control": "Usage",
+        "was": "K23",
+        "now": "K11",
+        "hotspotId": "I964:91708;2171:95035"
+      },
+      {
+        "from": "K04",
+        "control": "Data and privacy",
+        "was": "K23",
+        "now": "K17",
+        "hotspotId": "I964:91708;2171:95038"
+      },
+      {
+        "from": "K04",
+        "control": "Cancel",
+        "was": "K23",
+        "now": "K01",
+        "hotspotId": "I964:91724;2172:96015"
+      },
+      {
+        "from": "K04",
+        "control": "Sign out",
+        "was": "K23",
+        "now": "K18",
+        "hotspotId": "964:91744"
+      },
+      {
+        "from": "N98",
+        "control": "Resend verification",
+        "was": "N126",
+        "now": "N127",
+        "hotspotId": "991:96663"
+      },
+      {
+        "from": "N100",
+        "control": "Cancel",
+        "was": "N123",
+        "now": "N23",
+        "hotspotId": "I2172:99230;2172:96105"
+      },
+      {
+        "from": "K02",
+        "control": "Verify email",
+        "was": "A21",
+        "now": "K27",
+        "hotspotId": "964:91554"
+      }
+    ],
+    "canvas": "Section Account & usage (1899:118765) now holds the 17 kept screens in four rows (profile; security; usage; data and privacy with the sign-out guard) at 7760x4680, so no section below moved. Mobile site & account rows on page 16 at y 8504, 9548 and 10592 were closed up so the deleted twins leave no gaps.",
+    "contracts": "docs/design/product/interaction-contract.md rows Main navigation / project switch, Resend, Profile name and UI-05 now cite only kept screens. Profile name and UI-05 drop the discard prompt for an unsaved name edit. design-evidence.json cited none of the deleted screens and was not changed.",
+    "verification": "No dangling prototype links on page 14 or page 16 after the deletions. With every page switched in, no URL action (1,994 checked), text hyperlink or prototype link anywhere points to a deleted node.",
+    "followUps": [
+      "interaction-contract.md rows Loading / unavailable control (K05, N101) and Sign-out (K19, K20, N41, N42, R06-R09) still cite screens deleted by earlier passes.",
+      "Page 00 · Start here has two link URLs to deleted nodes (1032-85170, 1009-98543), outside the Rail."
+    ],
+    "layoutAlignment": {
+      "date": "2026-10-16",
+      "request": "K22, K24, K25 and K27 were drawn in a simplified panel (bare email line and button) unlike their base screens. Redraw each on its base screen so the account pages show one design.",
+      "rule": "A kept state example is its base screen with only the state's control changed, using the shared components (Field error, Button Loading/Disabled, Auth notice tones). Frame ids stay the same.",
+      "screens": {
+        "K22": {
+          "frame": "990:95405",
+          "base": "K04",
+          "change": "Already K04's Profile summary in State=Invalid: the Display name Field is Invalid with Vidra Fresh / Field error (2172:93798) under it, \"Enter a name from 1 to 80 characters.\" Added K04's Sign out (2362:87576) and K04's links (addedLinks)."
+        },
+        "K24": {
+          "frame": "990:95589",
+          "base": "K08",
+          "change": "Layers replaced with K08's (How you sign in, Email, Sign-in method, Contact support, K08's Rail and links). Send password reset email is Vidra Fresh / Button State=Loading \"Sending…\" (2362:87107) at K08's 256px width, with no link."
+        },
+        "K25": {
+          "frame": "990:95674",
+          "base": "K08",
+          "change": "Layers replaced with K08's. Send password reset email stays Default and opens K24. Under it, where K10 places its Success notice, sits Vidra Fresh / Auth notice Tone=Error (2362:87391, 384px, status/danger tokens): \"The email could not be requested. Check your connection and try again.\""
+        },
+        "K27": {
+          "frame": "990:95844",
+          "base": "K02",
+          "change": "Layers replaced with K02's (Profile summary with Edit name, Sign out, K02's links). Verify email is Tone=Secondary State=Disabled \"Resend in 60s\" (2362:87537) with no link, followed by Auth notice Tone=Success \"A new verification link is on its way.\" (2362:87569), as on N127."
+        }
+      },
+      "replacedLayers": {
+        "K24": [
+          "990:95590",
+          "990:95651",
+          "990:95665"
+        ],
+        "K25": [
+          "990:95675",
+          "990:95736",
+          "990:95750"
+        ],
+        "K27": [
+          "990:95845",
+          "990:95906",
+          "990:95920"
+        ]
+      },
+      "addedLinks": [
+        {
+          "from": "K22",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I990:95467;2171:95029"
+        },
+        {
+          "from": "K22",
+          "control": "Security",
+          "now": "K08",
+          "hotspotId": "I990:95467;2171:95032"
+        },
+        {
+          "from": "K22",
+          "control": "Usage",
+          "now": "K11",
+          "hotspotId": "I990:95467;2171:95035"
+        },
+        {
+          "from": "K22",
+          "control": "Data and privacy",
+          "now": "K17",
+          "hotspotId": "I990:95467;2171:95038"
+        },
+        {
+          "from": "K22",
+          "control": "Cancel",
+          "now": "K01",
+          "hotspotId": "I2172:99133;2172:96056"
+        },
+        {
+          "from": "K22",
+          "control": "Sign out",
+          "now": "K18",
+          "hotspotId": "2362:87576"
+        }
+      ],
+      "mobile": "N122, N124, N125 and N127 on page 16 were not changed.",
+      "verification": "Each rebuilt frame's links match its base screen's, except the busy (K24) and disabled (K27) buttons, which have none. K02 Verify email opens K27 (NAVIGATE). Page 14 has 262 prototype links (128 NAVIGATE, 2 SWAP, 132 CHANGE_TO to component variants), none dangling. The section still holds 17 frames and K10 is unchanged."
+    },
+    "consistencyFixes": {
+      "date": "2026-10-16",
+      "request": "Fix the gaps left after the layout alignment: Rail state, Settings navigation links, N125's error and the verification button wording.",
+      "rail": "The Rail is Active=Account at the frame's full height (56x960) on all 17 Account & usage screens. K02, K04, K09, K10, K12, K13, K14, K16, K18, K22 and K27 were Active=Create at 56x900.",
+      "settingsNavigation": "Every Settings navigation now links each section other than the current one. Security screens (K08, K09, K10, K24, K25) gained Profile; Usage screens (K11, K12, K13, K14, K16) gained Profile and Security; K17 gained Profile, Security and Usage. K18 stays unlinked because its Sign out dialog covers the page.",
+      "verificationButton": "K02's button (964:91554) reads \"Resend verification\", Tone=Primary at 208px, like N98 and K08's Send password reset email, and still opens K27. K27's disabled \"Resend in 60s\" (2362:87537) is Primary at the same width.",
+      "mobile": "N125's plain red line \"The email could not be requested. Try again.\" (991:97237, deleted) became Vidra Fresh / Auth notice Tone=Error (2365:18019, full width) with K25's words. N125's and N105's Send password reset email now open N124, as N24's does and as K25's and K10's open K24.",
+      "railLinks": "The Rail component's Projects link pointed at a deleted frame; see componentChanges › Rail.",
+      "addedLinks": [
+        {
+          "from": "K08",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92117;2171:95048"
+        },
+        {
+          "from": "K09",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92212;2171:95048"
+        },
+        {
+          "from": "K10",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92307;2171:95048"
+        },
+        {
+          "from": "K24",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I2362:87071;2171:95048"
+        },
+        {
+          "from": "K25",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I2362:87238;2171:95048"
+        },
+        {
+          "from": "K11",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92407;2171:95067"
+        },
+        {
+          "from": "K11",
+          "control": "Security",
+          "now": "K08",
+          "hotspotId": "I964:92407;2171:95070"
+        },
+        {
+          "from": "K12",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92508;2171:95067"
+        },
+        {
+          "from": "K12",
+          "control": "Security",
+          "now": "K08",
+          "hotspotId": "I964:92508;2171:95070"
+        },
+        {
+          "from": "K13",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92611;2171:95067"
+        },
+        {
+          "from": "K13",
+          "control": "Security",
+          "now": "K08",
+          "hotspotId": "I964:92611;2171:95070"
+        },
+        {
+          "from": "K14",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92697;2171:95067"
+        },
+        {
+          "from": "K14",
+          "control": "Security",
+          "now": "K08",
+          "hotspotId": "I964:92697;2171:95070"
+        },
+        {
+          "from": "K16",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92891;2171:95067"
+        },
+        {
+          "from": "K16",
+          "control": "Security",
+          "now": "K08",
+          "hotspotId": "I964:92891;2171:95070"
+        },
+        {
+          "from": "K17",
+          "control": "Profile",
+          "now": "K01",
+          "hotspotId": "I964:92975;2171:95086"
+        },
+        {
+          "from": "K17",
+          "control": "Security",
+          "now": "K08",
+          "hotspotId": "I964:92975;2171:95089"
+        },
+        {
+          "from": "K17",
+          "control": "Usage",
+          "now": "K11",
+          "hotspotId": "I964:92975;2171:95092"
+        },
+        {
+          "from": "N125",
+          "control": "Send password reset email",
+          "now": "N124",
+          "hotspotId": "991:97235"
+        },
+        {
+          "from": "N105",
+          "control": "Send password reset email",
+          "now": "N124",
+          "hotspotId": "991:96793"
+        }
+      ],
+      "verification": "Page 14: 280 prototype links (146 NAVIGATE, 132 CHANGE_TO, 2 SWAP), none dangling, and all 127 link URLs resolve. Page 16: 402 links, none dangling. No Rail instance in the file has duplicated or dead item links."
+    }
+  },
+  "mobileProjectBrowserPruning": {
+    "request": "Judge N135 'Mobile projects empty' logically: rebuild it in the app shell if a person on a phone can reach an empty projects screen, otherwise delete it (Bryce, 2026-10-16).",
+    "rule": "A state of a page that the mobile app does not have cannot happen; delete it with its sibling states.",
+    "policy": "The mobile app has no projects list: the Mobile header's folder button opens the B22 sheet for the current project (Rename project, Conversations, Archived conversations, Move to Trash), no mobile app screen offers All projects or Switch project, and the Mobile site header's menu links nowhere. N135, N137 and N138 drew the empty, no-results and loading states of that missing page in the public-site shell, with no links in or out, so a person on a phone can never see them. Do not redraw them; the desktop project browser states X12, X14 and X15 stay.",
+    "deleted": {
+      "N135": "Projects page in the Mobile site header: 40px 'Projects', Search projects, 'No projects yet', 'Create a project to keep related work together.' and New project.",
+      "N137": "The same Projects page with a project search that found nothing.",
+      "N138": "The same Projects page while its project list loads."
+    },
+    "canvas": "The Mobile site & account row at y 10592 on page 16 was closed up again at the 470px pitch: N136 and N139-N152 moved left; no other row moved.",
+    "contracts": "interaction-contract.md 'Search and filters' evidence now cites N134/N136 instead of N134-N138; screen-catalog.json lists the three under screenRemoval20261016d. figma-catalog-additions.json is a dated inventory snapshot and was left unchanged, as in the account pass.",
+    "verification": "A file-wide scan before deleting found no link (NAVIGATE or proto URL) and no 00 · Start here text naming N135, N137 or N138. Page 16 sweep afterwards: 584 nodes, 657 actions, 0 unresolved."
+  },
+  "mobileSiteShellStates": {
+    "request": "Judge N136 and N139, the last app states drawn in the public-site shell (Bryce, 2026-10-16).",
+    "rule": "Keep a state only if a person on a phone reaches it, and draw a kept state in the shell of the page it belongs to.",
+    "policy": "The approved mobile library has no search: B04's Library controls are Filter, Sort and Show hidden, and the empty library N134 has none. N136 drew a typed media search with no results in the public-site shell, so a person on a phone can never see it. Do not redraw it; the desktop no-matches state X13 stays. N139, the empty first video edit, is a real step (the Video tab of a project with nothing in it) and was rebuilt in the mobile editor shell instead.",
+    "deleted": {
+      "N136": "Media page in the Mobile site header with 'morning reference' typed in Search, 'No results for “morning reference”', 'Try another search or clear the words.' and Clear search."
+    },
+    "rebuilt": {
+      "N139": "994:97256 keeps its frame and id. It now uses the mobile editor's Mobile header 2377:12744 and Mobile navigation 2377:12767 (Video active, copied from T13), and an Empty video preview 994:97265 in T13's preview slot (16,120, 358 x 202, X11's gap token) holding the video icon, 'Add images or clips to start your video.' and one Import media 2377:12763, the way X10 keeps its single action inside the empty stage. Removed: the 'Untitled video' title (workspace chrome omits video-edit titles), Choose saved media (a project with no media has nothing saved), the full-width Import media and the disabled Export (nothing to export yet)."
+    },
+    "links": "N139 Import media -> B14, the only designed way to bring media in on a phone (no mobile screen uses the media picker). The two empty-project screens point at each other: N139's Media tab -> N134 and N134's Video tab -> N139, instead of the populated B04 and T13. N139's active Video tab has no link; Create (S35) and Sketch (B08) keep T13's targets.",
+    "canvas": "The Mobile site & account row at y 10592 was closed up at the 470px pitch: N139-N152 moved left; no other row moved.",
+    "contracts": "interaction-contract.md 'Search and filters' evidence now cites N134 only (cell padded to keep the table width); screen-catalog.json lists N136 under screenRemoval20261016e. figma-catalog-additions.json (dated inventory snapshot) unchanged.",
+    "verification": "A file-wide scan before deleting found no link and no 00 · Start here text naming N136. Page 16 sweep after the N139 rebuild: 588 nodes, 661 actions, 0 unresolved."
+  },
+  "queueStatePruning": {
+    "request": "Bryce asked what \"In the queue\" meant on C49's conversation panel (930:106669).",
+    "rule": "A state earns UI only when a person can see it and act on it. Queued means the request was accepted and has not started on the model. Nothing on screen shows a queue, and the person can neither act on it nor tell it apart from the running state that follows.",
+    "deleted": {
+      "frames": {
+        "930:105527": "C40 · Image queued with its own follow-up draft (same as C41 except \"In the queue\")",
+        "930:106607": "C49 · Video queued keeps a new empty draft (same as C50 except \"In the queue\")",
+        "1071:91594": "W06 · Accepted request queued; captured words are read-only (W07 shows the running request with read-only words)",
+        "1076:97937": "W54 · Several accepted requests retain separate status (its only contrast was \"Lower camera · queued\")",
+        "932:110772": "E34 · Export accepted and waiting to render (same as E35 except \"Waiting to render\")"
+      },
+      "variants": {
+        "885:85023": "Output / State=Waiting (\"In the queue\")",
+        "885:85026": "Output / State=Received (no instances)",
+        "885:85027": "Output / State=Saving (no instances)",
+        "885:85029": "Output / State=Stored (no instances; the result shows as Ready)",
+        "885:85031": "Output / State=Lost (\"The output could not be saved\"; no instances)",
+        "892:85329": "Export panel / State=Queued (\"Waiting to render\")"
+      }
+    },
+    "rewiredLinks": [
+      "E32 Export (I2103:17685;2101:10010;2103:17745;2090:87881): E34 → E35"
+    ],
+    "canvas": "Output set compacted to Running, Ready, Failed (1024x308); Export panel set to Rendering, Ready, Ready · newer edit, Failed (792x344), 40px padding and gaps.",
+    "contracts": "ui-state-evidence.json (screens, components, stateCoverage, caseCoverage, prototypeLinks, reviewJourneys, queueStateRemoval20261016), workflow design-handoff.md, prompt-editing state-catalog.json and interaction-contract.md, product interaction-contract.md. request.queued, output_slot.waiting, received, saving and output_lost are contract-only; output_slot.stored maps to Output / State=Ready. The product W06 (959:88576, Video editing product page) is a different screen and was not touched.",
+    "verification": "Before deleting, no prototype link or 00 · Start here hyperlink pointed at C40, C49, W06 or W54, and E34's only inbound link was E32 Export. Afterwards pages 04 (314 links) and 10 (425 links) had 0 dangling destinations, and no text on page 01 named a removed state.",
+    "followUps": [
+      "Output / State=Running is filled with surface/panel, the Conversation panel's own fill, so the in-progress card is invisible and its spinner floats. Done later on 2026-10-16; see ui-state-evidence.json › inProgressSlot20261016.",
+      "One state has three wordings: \"Making your image\" (slot default), \"Making video…\" (C50 override) and \"Generating video…\" (W07 status line). Done later on 2026-10-16; see ui-state-evidence.json › inProgressSlot20261016.",
+      "Page 04's creation journeys (C38 Submit → C41 → C57, C47 Submit → C50 → C58) have no prototype links in Figma; ui-state-evidence prototypeLinks still lists their October 15 hotspots. Wired later on 2026-10-16; see ui-state-evidence.json › creationJourneyLinks20261016."
+    ]
+  },
+  "mobilePricingQuestions": {
+    "request": "Judge N152, N154 and N155, three mobile screens titled 'Mobile pricing question expanded' (Bryce, 2026-10-16).",
+    "rule": "Screens that differ only in which item is open, or in wording, keep one example; desktop W09 already shows every pricing question open on one screen.",
+    "policy": "N152, N154 and N155 were the same mobile pricing page with a different question open, so they differed only in wording. Like desktop W09, mobile keeps one 'questions expanded' screen: N152 now shows all three answers, and each of N07's questions opens it. Tapping an open question closes back to N07. N152 also gained N07's Create an account and footer links, which it had lacked. Do not redraw one screen per open question.",
+    "merged": "N154's open block 1019:98572 and N155's open block 1019:98617 moved into N152's Page content in place of its closed rows, so N152 (1019:98516) shows all three answers. The footer moved down to keep N07's 128px gap, and the frame grew from 1261 to 1376.",
+    "deleted": {
+      "N154": "N07 with only 'What happens when I reach the limit?' open: 'New generation waits until allowance is available. Your saved media, editing and downloads remain available.' The answer now lives on N152.",
+      "N155": "N07 with only 'Where can I check my usage?' open: 'Open Account, then Usage to see your available allowance and recent requests.' The answer now lives on N152."
+    },
+    "links": "N07's three questions (966:93911, 966:93917, 966:93923) now all open N152 instead of one copy each. N152's three open-question headers close to N07. N152's Create an account and its Documentation, Contact support, Privacy policy and Terms of service lines got N07's links; they had none.",
+    "canvas": "N154 and N155 were the 2nd and 3rd frames of the Mobile site & account row at y 12053; N153 now stands alone at 120, so no frame moved. N152 (row y 10592) now ends at y 11968, clear of that row.",
+    "verification": "A file-wide scan before deleting found no link outside N07/N152/N154/N155 and no 00 · Start here text naming N154 or N155. Page 16 sweep afterwards: 593 nodes, 666 actions, 0 unresolved."
+  },
+  "mediaImportPruning": {
+    "date": "2026-10-16",
+    "page": "08 · Media & import (1899:118749); mobile twins on 16 · Mobile",
+    "rule": "Choosing a file in the system chooser is the deliberate action, so the upload starts there. In-flight work has one visible state until its result arrives. The person's own Cancel needs no outcome state. Success closes the panel because the new item appears where it was imported.",
+    "deletedScreens": {
+      "999:97087 X16 · Choose the first file": "Ready to import / Import file confirm after the system file chooser.",
+      "999:97393 X18 · First file being checked": "Second in-flight state with the same Cancel upload action; checking now shows as Uploading.",
+      "999:98154 X24 · First upload cancelled": "Outcome of the person's own Cancel upload; the panel closes and the editor returns to X10.",
+      "936:111512 B14 · Mobile choose files to import": "Sheet in front of the system file chooser (Add a file from your device / Choose files / Cancel); Import media now opens B15."
+    },
+    "removedSurfaces": {
+      "M03 Ready to import sheet": "M03 now shows the library upload in progress.",
+      "X19 'Your file is saved' popover (Add to video / Keep in media)": "The file is in the editor's Project media panel; choosing its tile adds it (X20), doing nothing keeps it in media.",
+      "Upload status variants staged 889:85210, verifying 889:85212, ready 889:85213, cancelled 889:85217": "Deleted with the screens above; the set was rebuilt in place as Vidra Fresh / Import panel."
+    },
+    "surfaces": {
+      "staged": "Ready to import / product.png · Image reference / Import",
+      "verifying": "Checking product.png / Checking the actual file before use.",
+      "ready": "product.png is ready / Added to this project. / Use as input",
+      "cancelled": "Upload cancelled / Removed references will not come back. / Choose file",
+      "B14": "Add a file from your device. / Images, video and audio / Choose files / Cancel",
+      "X19": "Your file is saved / stadium.mp4 is ready / Add to video / Keep in media",
+      "hiddenMeta": "42% · You can keep writing. / Resume the same upload. / We will check that it is the same file.",
+      "rejectedDetail": "Choose a PNG, JPEG or supported media file."
+    },
+    "rewiredLinks": {
+      "X10 Upload": "X16 -> X17",
+      "X11 Import media": "X16 -> M03",
+      "X17 Cancel upload": "X24 -> X10",
+      "B04 906:100526, B31 2359:12708, N134 2365:18052, N139 2377:12763 Import media": "B14 -> B15"
+    }
+  }
+}

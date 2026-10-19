@@ -1,0 +1,179 @@
+{
+  "date": "2026-10-16",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "status": "approved 2026-10-16; applied in Figma; client not changed",
+  "request": "Redesign Vidra Fresh / Media card (893:85525) with Mobbin references, via /design:design-critique.",
+  "critique": [
+    "Selected used focus/ring (#ffdc4f), the keyboard-focus token, as a 2px outline around the whole card. Every other media selection in the file (Media tile, Media option) uses a quiet 2px text/primary ring on the picture.",
+    "Selected also shifted content: the picture shrank from 272 to 268 and the title and detail moved 2px down inside the outline.",
+    "Every card repeated a meta line ('Image · 3 versions', 'Video · 5 seconds', 'Export · 12 seconds', 'Imported image'), which is the repeated info row the Vidra rules cut. Only the clip length is something a person uses, and it belongs on the picture.",
+    "The card had no control. Edit (HISTORY-10), Copy to project (HISTORY-11, M08) and Hide/Restore (L02) had no entry point, so M08's Copy to project sheet was unreachable from M01.",
+    "Hidden dimmed the whole card to 50%, including the name and the 12px detail line (#b8b8b8 at 50% on #111 is about 3.2:1).",
+    "Unavailable used lock-keyhole, which reads as private or paid, and kept 'Image · 3 versions' under a missing picture.",
+    "The grid stopped 104px short of the Import media button (4 x 272 with 32px gaps ending at x 1296 of a 1400 content edge). Beside a side sheet the fourth column sat hidden under the sheet.",
+    "M05 and M08 drew the filter row as hand-built buttons ('All media', 'Recent first', 'Show hidden') instead of the Library controls used on M01 and M03.",
+    "Mobile B04 and B14 used captionless Media tiles with 68px gaps left over from removed captions, so the same library item looked different on phone and desktop."
+  ],
+  "references": [
+    {
+      "app": "Krea AI",
+      "screen": "Filtered Gallery",
+      "url": "https://mobbin.com/screens/f05e4715-1ad7-4f97-acd8-83adb2ab10af",
+      "pattern": "Gallery of picture-only tiles; clips carry a small badge in the picture; search and filters live outside the tiles."
+    },
+    {
+      "app": "Krea AI",
+      "screen": "Assets Selected",
+      "url": "https://mobbin.com/screens/99c32f41-2680-46b3-86fa-3b2392f1364b",
+      "pattern": "Selection marks the tile itself, and actions apply to the selected items."
+    },
+    {
+      "app": "Krea AI",
+      "screen": "Image Option Icons",
+      "url": "https://mobbin.com/screens/30ecb992-0e59-4075-a0d3-cc9ae1b5c564",
+      "pattern": "Item actions sit on the item, not in a separate panel."
+    },
+    {
+      "app": "Krea AI",
+      "screen": "Filter Menu Open",
+      "url": "https://mobbin.com/screens/23d8f1f5-629b-43a0-887e-4e0e4d1203bc",
+      "pattern": "Type and favourite filters are a menu from the library header, not tile copy."
+    },
+    {
+      "app": "Sora",
+      "screen": "Discover Remix",
+      "url": "https://mobbin.com/screens/ebb5189b-dea9-42ac-b288-85593ec9775d",
+      "pattern": "Dense creative-library grid where the picture carries the item and metadata stays out of the way."
+    },
+    {
+      "app": "OpenSea",
+      "screen": "Multiple NFT Selection",
+      "url": "https://mobbin.com/screens/8be756ef-5542-4c84-bb73-dbd7253ae5bb",
+      "pattern": "Selected cards get a ring on the card; facts such as edition count are small badges in the picture corner."
+    },
+    {
+      "app": "FLORA",
+      "screen": "Saved Blocks Tab",
+      "url": "https://mobbin.com/screens/2f1fea13-32c1-4bca-aa40-1c97beece103",
+      "pattern": "Asset tiles mark the media type with a corner chip (MP4/PNG) instead of a caption line."
+    },
+    {
+      "app": "FLORA",
+      "screen": "Video Filtered Blocks",
+      "url": "https://mobbin.com/screens/c5e0adfd-8233-4cc5-87e5-d9a1fa059dbe",
+      "pattern": "Filtering to video changes the grid, not the tile anatomy."
+    },
+    {
+      "app": "FLORA",
+      "screen": "Workspace Home",
+      "url": "https://mobbin.com/screens/8aec8d15-a604-4080-b8a1-d598da1e9a8e",
+      "pattern": "Dark workspace grid: thumbnail, then a single name line."
+    },
+    {
+      "app": "YouTube",
+      "screen": "Youtube Library",
+      "url": "https://mobbin.com/screens/52e2c671-3ade-419c-a793-17f313aba2f2",
+      "pattern": "Duration lives in the thumbnail's bottom-right corner on a dark chip."
+    },
+    {
+      "app": "VEED",
+      "screen": "Video Projects",
+      "url": "https://mobbin.com/screens/45a6d69c-d964-4945-b991-1b27d2af12b2",
+      "pattern": "Video project cards: duration chip on the thumbnail, name under it."
+    },
+    {
+      "app": "Descript",
+      "screen": "Project Grid View",
+      "url": "https://mobbin.com/screens/f68de6fa-6c3a-4f87-bc58-180227695d5c",
+      "pattern": "Project grid: thumbnail plus name; duration is a small badge."
+    },
+    {
+      "app": "Canva",
+      "screen": "Template Options Menu",
+      "url": "https://mobbin.com/screens/4ab1444b-2a8e-479e-854e-3ee1cac39180",
+      "pattern": "The item's own menu holds Hide alongside duplicate and delete."
+    },
+    {
+      "app": "mymind",
+      "screen": "Card Context Menu",
+      "url": "https://mobbin.com/screens/9c85620f-1636-4033-96ed-c9819e97eb99",
+      "pattern": "Card context menu with item actions (add tags, add to space, delete)."
+    }
+  ],
+  "direction": [
+    "Picture first: a 16:9 Picture frame (radius/media, aspect ratio locked) fills the card width; the meta line is deleted.",
+    "One caption row under the picture: the name (Vidra Fresh / Label, text/secondary, one line, truncates) and a More Icon button (more-horizontal). The row keeps 32px in every state so all states share one size.",
+    "Facts move onto the picture: clips show a Duration chip bottom-right on surface/overlay (same chip as Media option); hidden items show a Hidden chip top-left and a 40% picture; unavailable items show an 'Unavailable' slate on surface/raised and drop More.",
+    "Selected is the 2px text/primary ring inside the picture, the treatment shared with Media tile and Media option. It marks the item an open side sheet acts on (M08).",
+    "More opens the Menu surface (Interface=Raised) 6px below the button with right edges aligned: Edit, Copy to project, Hide; a hidden item offers Restore instead of Hide. Rows are text-only, like the other Vidra menus.",
+    "Cards follow the grid column: 4 x 304 on desktop (the grid now spans the 1288px content box to the Import media edge), 3 x 272 beside a side sheet so nothing hides under it, 2 x 160 on mobile; 24px gaps (space/24) both ways. Grids are wrap auto layout with first-on-top stacking so an open menu overlaps the next row.",
+    "Mobile cards hide More: a 280px dropdown does not fit a 390px screen and Vidra uses sheets there. Desktop More needs a 44px hit area if it ever ships on touch."
+  ],
+  "components": {
+    "changed": {
+      "893:85525 Vidra Fresh / Media card": "Rebuilt in place; State=Ready 893:85521, Selected 893:85522, Hidden 893:85523 and Unavailable 893:85524 keep their ids. 304 x 207 (Picture 304 x 171 + 4 + 32 caption). Properties: Title#893:0, Duration#2248:0 (TEXT), Show duration#2248:5 (BOOLEAN), State. Detail#893:5 deleted. Description rewritten. Set laid out as one row of six at 120,7872 inside 02 · Shared components.",
+      "2250:9653, 2250:9735 Media card State=Menu and State=Hidden menu": "Both had lost their property bindings when they were cloned, so an open menu showed 'Stadium' and hid or reset a clip's duration chip. Title, Length (Duration) and the Duration chip (Show duration) are bound again; an 'Evening cut' 0:12 card swapped through Menu and Hidden menu keeps its name and chip."
+    },
+    "added": {
+      "2250:9653": "Media card / State=Menu (More in Icon button State=Selected; Menu 2038:9718 instance with Edit, Copy to project, Hide)",
+      "2250:9735": "Media card / State=Hidden menu (Edit, Copy to project, Restore)",
+      "2346:88030": "Media card / State=Uploading (added for the mobile library rollout): the Unavailable slate on surface/raised with a centred 20px loader-circle, the icon Media option Uploading uses; no More and no Duration chip. It draws upload.uploading in the library (B15, B33) and turns Ready when the upload lands."
+    },
+    "reused": [
+      "Vidra Fresh / Icon button 1959:117637 (Icon swap more-horizontal 884:84374)",
+      "Vidra Fresh / Menu 2038:9718",
+      "Vidra Fresh / Library controls 1514:90079",
+      "Vidra Fresh / Label and Caption text styles",
+      "surface/overlay, surface/panel, surface/raised, text/primary, text/secondary, text/muted, radius/media, radius/pill, space/2, space/4, space/6, space/24"
+    ],
+    "deleted": {
+      "lock-keyhole use in Media card / Unavailable": "replaced by the Unavailable slate label"
+    }
+  },
+  "screens": {
+    "updated": {
+      "897:91827 M01": "Media grid 2251:4328, 4 x 304, x112 y216, width 1288; clips 'Evening run' 0:05 and 'Evening cut' 0:12 show Duration; pictures use crops of the two file images (runner, light beam, window, stands) so the six items read as different media.",
+      "897:92094 M03": "Media grid 2251:4331, 3 x 272 beside the Import media sheet.",
+      "897:92383 M05": "Media grid 2251:4334, 3 x 272; hand-built filter buttons 897:92449/92451/92453 replaced by Library controls 2251:4337.",
+      "897:92723 M08": "Media grid 2251:4355, 3 x 272; Desk stays Selected under Copy to project; filter buttons 897:92789/92791/92793 replaced by Library controls 2251:4358.",
+      "906:100486 B04": "Six Media tiles replaced by Media card instances in Media grid 2252:14837 (2 x 160 at 24,248); More hidden; the Stadium card keeps the tile's link to B10.",
+      "936:111512 B14": "Four Media tiles replaced by Media card instances in Media grid 2252:14950; hidden stale 'All media' button 936:111550 deleted.",
+      "936:111589 B15": "Four captionless Media tiles (Stadium and Desk, each twice) replaced by Media grid 2346:88060 at 24,248: Desk reference (State=Uploading), then the first five of B04's cards, so it matches B33, the screen this sheet closes to. The hand-built All media/Import row became B04's header: Filters 2359:12688 (Library controls Size=Mobile) at 24,128 and Import media 2359:12690 at 236,68, with no link because the sheet backdrop covers it.",
+      "936:111661 B16": "Four Media tiles replaced by Media grid 2346:88140 at 24,248: Desk reference (Ready), then the first five of B04's cards, matching B31, which Done, Close sheet and Escape open. Header as on B04: Filters 2359:12694 and Import media 2359:12696 (no link; under the sheet backdrop).",
+      "936:112630 B22": "Four Media tiles replaced by Media grid 2346:88202 at 24,248 with B04's six cards, matching B04, which Close sheet and Escape open. Header as on B04: Filters 2359:12700 and Import media 2359:12702 (no link; under the sheet backdrop).",
+      "942:113105 B31": "Three Media tiles replaced by Media grid 2346:88247 at 24,248: Desk reference first (recent first), then the first five of B04's cards; Evening cut falls below the visible rows, which end at y 674 as on B04. Header as on B04: Filters 2359:12706 and Import media 2359:12708, which opens B14 (the recorded Import link; the old Import button had lost it).",
+      "945:113510 B33": "Three Media tiles, including a Media tile State=Generating standing in for the upload, replaced by Media grid 2346:88309 at 24,248: Desk reference (State=Uploading, opens B15), then the first five of B04's cards. Header as on B04: Filters 2359:12712 and Import media 2359:12714 (no link recorded for B33).",
+      "994:97180 N134": "Empty mobile library rebuilt in B04's app shell (it had the public Mobile site header, a 40px title and a Search field): copies of B04's Mobile header 2365:18032, 'Media' title 2365:18051, Import media 2365:18052 and Mobile navigation 2365:18062 (Media active), plus a centred Empty collection 2365:18056 at 24,128 (342 x 628, X11's gap token) holding X11's image icon, 'No media yet', one line and Create something. Removed: the site header, the 40px title, Search and the second Import media, because the header button already imports. Same frame and id, still in the Mobile site & account section."
+    },
+    "keptMediaTile": {
+      "936:112937 B26": "Not a library screen: the Media tile is the generated result in the conversation (Message, result, Composer; navigation on Create) and keeps its link to B29.",
+      "969:94083 N39": "Not a library screen: the Media tile is the conversation result shown when returning to a project (Message, result, Composer; navigation on Create)."
+    }
+  },
+  "linkChanges": [
+    "Media card (component level): More -> State=Menu (Ready, Selected) or State=Hidden menu (Hidden); More again or Escape closes; Hide -> State=Hidden; Restore -> State=Ready.",
+    "Menu rows Edit -> C06 and Copy to project -> M08, as proto URL actions because the component lives on 01 · Design system and Figma links cannot cross pages.",
+    "B04 Stadium card 2252:14838 -> B10 (moved from the replaced Media tile 906:100528).",
+    "docs/design/workflow/ui-state-evidence.json: Media card variants gain Menu and Hidden menu; the B04 -> B10 record now names 'Stadium' on 2252:14838; two M01 records added (Edit -> C06, Copy to project -> M08); mediaCardRedesign20261016 section added.",
+    "B33 Desk reference card 2346:88354 (State=Uploading) -> B15, restoring the recorded 'Uploading desk reference' link: its hotspot 945:113676 no longer existed and the tile it had moved to carried an empty reactions override. ui-state-evidence.json now names 'Desk reference' on 2346:88354.",
+    "B04's Stadium -> B10 link was not copied into the five new grids; their tiles had no links, and every other link on those screens (sheet buttons, Escape, timed responses) is unchanged.",
+    "B31 Import media 2359:12708 -> B14 restores the recorded Import link: the hand-built Import button 942:113145 had none. The other four new Import media buttons carry no link (B15, B16 and B22 sit under a sheet backdrop; B33 has none recorded). ui-state-evidence.json now names 'Import media' on 2359:12708; B04's Import media keeps its link to B14.",
+    "N134: Import media 2365:18052 -> B14 and Create something 994:97195 -> B01 (Mobile new request). The copied header's Project menu -> B22 link and the active Media tab's link to B04 were removed, because both would jump from an empty project into the populated one. The Create, Video and Sketch tabs keep B04's targets; the Create tab opens S35, as on 44 of the 45 mobile navigation bars."
+  ],
+  "contractChanges": [],
+  "clientDelta": [
+    "The client has no project media library page; this remains a Figma design contract (see figma-only-until-asked). ProjectWorkspace's Project media dialog is unchanged."
+  ],
+  "openQuestions": [
+    "Rename is listed in the interaction contract's media menu family but no rename UI exists anywhere in the file, so the menu leaves it out.",
+    "Mobile has no menu for library items; a Sheet Kind=Menu with the same three actions would be the mobile equivalent if needed."
+  ],
+  "verification": {
+    "instances": "34 Media card instances (24 on 08 · Media & import, 10 on 16 · Mobile), all in Media grid frames at 304x207, 272x189 or 160x126.",
+    "sweeps": "Pages 08 and 16: 0 old meta strings (versions / Imported image / Export · / Video · / Image ·), 0 hand-built filter buttons, 0 Media tiles left in library screens.",
+    "reactions": "Read back on every variant: More, Escape and the three menu rows as listed in linkChanges.",
+    "mobileRollout": "30 more Media card instances on 16 · Mobile (six each on B15, B16, B22, B31 and B33), all 160 x 126 in 344-wide wrap Media grid frames at 24,248 that end at y 674 as on B04, placed where the tiles were and below each sheet backdrop. Like B04/B14 the grid is 2 x 160 + 24 = 344, so the right margin is 22px; 24/24 margins would need 159px cards with 89.4px pictures. 18 tiles removed, none left directly on those frames. The five hand-built All media/Import rows were replaced by copies of B04's Filters (Library controls Size=Mobile) and Import media button, and the 'Media' titles now hug at 56 x 26. Media tile remains on page 16 only as conversation results: B26 and N39 directly, plus nested copies in B02, B42, S35, S36 and their Applied/Return frames. Page 16 reaction sweep with page 16 current: 572 nodes with reactions, 645 actions, 0 unresolved destinations. B31, B33 and B16 screenshots checked; Uploading cards read 'Desk reference'.",
+    "fileScan": "All 16 pages scanned after both passes: the five screens were changed in place (same frames and ids), so no copy of B04, B14, B15, B16, B22, B31 or B33 exists elsewhere. No hand-built 'All media' or filter-row 'Import' buttons remain in the file. Media tiles sit directly on a screen only on B26 and N39 (conversation results). Every link into these screens lands on the edited frames (B04 30, B14 2, B15 2, B22 1, B31 2, B33 1), and the 00 · Start here 'Review · Mobile library' link and the Mobile navigation 'Media' items still open B04. X11 and N134 are the empty-library state, not old copies; N134 was then rebuilt in B04's app shell (page 16 sweep afterwards: 583 nodes, 656 actions, 0 unresolved)."
+  },
+  "cleanupAfterApproval": "Bryce approved the redesign on its first showing ('Keep this media card direction'). The rebuild was in place, so no old variants remained; a text sweep of all 16 pages for the old meta copy (versions, Imported image, Export ·, Video · N seconds, Image ·) found no hand-built copies."
+}

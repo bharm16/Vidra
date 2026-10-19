@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-16",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "status": "approved by Bryce 2026-10-16 ('keep it'); applied in Figma; client not changed (Figma only until Bryce schedules the build)",
+  "request": "Redesign the Versions panel on C13 (891:86841) with Mobbin references, via /design:design-critique.",
+  "critique": [
+    "The drawer was the only flush, square-cornered edge sheet in the workspace (376 x 844 at x1064 y56). It covered the right 40% of the 992-wide media viewer, cutting off the picture and the seek bar.",
+    "Nothing marked the version on screen, yet the footer said 'Edit this version'. With four rows and no selection, 'this' had no referent. The preferred version was not marked either, although 'Make preferred' was offered.",
+    "Lineage was muted text ('Warmer light · from v1'). In the flat list v4 (from v1) sat under v3 (from v2), so the branch the screen is named after was invisible.",
+    "Actions lived in two places: a ⋯ overflow on every row and three stacked full-width buttons (Primary, Secondary, Quiet) under the list. The buttons moved with list length and broke the one-toolbar pattern.",
+    "Every row repeated 'Desk ·'. A hidden meta line ('Viewing a version keeps your draft as it is.') was left in the frame.",
+    "Mobile B12 showed state as captions ('Latest version', 'Currently viewing') and duplicated close as a Done button."
+  ],
+  "references": [
+    {
+      "app": "Canva",
+      "screen": "Selected Version History",
+      "url": "https://mobbin.com/screens/3a84847f-9d39-4164-ace3-bb430605f099",
+      "pattern": "The canvas shows the selected version; the history card has a timeline rail with a tinted selected row; Restore and Make a copy act on that selection."
+    },
+    {
+      "app": "Descript",
+      "screen": "Version History panel",
+      "url": "https://mobbin.com/screens/c47a89ba-4b62-45db-9768-8c0150d47af7",
+      "pattern": "Version history docked beside a media editor while the editor stays usable. This is the basis for a side panel instead of an overlay."
+    },
+    {
+      "app": "Claude",
+      "screen": "Version History Panel",
+      "url": "https://mobbin.com/screens/3af33fe8-915a-40d9-be6a-723cee7ae5c1",
+      "pattern": "Dark right panel titled Versions with a close button; the selected version is the only emphasised card."
+    },
+    {
+      "app": "Databricks",
+      "screen": "Version History Sidebar",
+      "url": "https://mobbin.com/screens/3fa8afdd-448b-4d7e-985e-8f3ee27bf8a0",
+      "pattern": "Restore sits with the selected version rather than in a detached stack."
+    },
+    {
+      "app": "Front",
+      "screen": "Version History Panel",
+      "url": "https://mobbin.com/screens/80fb2dcf-f7d3-4992-9e6a-804bdd6d6d9c",
+      "pattern": "One filled selected row plus a short state marker ('Current version')."
+    },
+    {
+      "app": "Pitch",
+      "screen": "Version History Modal",
+      "url": "https://mobbin.com/screens/ec673809-125c-4d56-abf2-0fe9a237295b",
+      "pattern": "Large visual previews make visual versions comparable. Rejected as a modal because it hides the conversation and draft."
+    },
+    {
+      "app": "Productboard",
+      "screen": "Restore Version Modal",
+      "url": "https://mobbin.com/screens/42d99f7c-66bb-4b3f-bb92-444182e88295",
+      "pattern": "Preview plus list plus one footer action named for what it does."
+    },
+    {
+      "app": "Jasper",
+      "screen": "Document history modal",
+      "url": "https://mobbin.com/screens/c883eeed-4ae8-4e07-abe8-6c89064a7be5",
+      "pattern": "Same preview/list/footer structure; confirms the footer-action convention."
+    },
+    {
+      "app": "Krea",
+      "screen": "Image Option Icons",
+      "url": "https://mobbin.com/screens/30ecb992-0e59-4075-a0d3-cc9ae1b5c564",
+      "pattern": "Vary and Upscale are bound to the image they affect; image tools treat variation as an action on a specific result."
+    }
+  ],
+  "direction": [
+    "Versions is a right-hand card that twins the Conversation card: x1064 y64, 368 x 828, surface/panel, 1px border/default inside, radius/panel, space/16 padding. The media viewer narrows to 616 (x440), as the Editor stage already does beside right panels.",
+    "Rows draw the real branch. Each edit indents 24px under its parent; rails drop from the parent's picture, ├ continues to a later sibling, └ ends the branch, and ancestor rails pass through deeper rows.",
+    "The version in the viewer is the Selected row (surface/selected pill, as in Menu item). Selecting a row changes only the viewer. The preferred version carries a 'Preferred' marker.",
+    "Rows show the picture, the version ('v2') and what changed ('Warmer light'). There is no repeated item name, no 'from v1' caption and no per-row overflow.",
+    "One docked footer acts on the selected version: Make preferred, New variation, then the primary Edit vN last. When the selected version is already preferred, the first button reads Preferred with a check and is inert (no screen draws this yet).",
+    "Mobile (B12) uses the same rows and actions in its bottom sheet, with a Versions title beside the close button. Done and the status captions are removed."
+  ],
+  "components": {
+    "changed": {
+      "886:84923 Vidra Fresh / Version row": "Rebuilt in place as set 2253:9794. 886:84923 is now State=Default, Depth=0. Variants: State=Default|Selected x Depth=0-3. Props: Label, Detail, Marker (TEXT), Show marker, Has children, Next sibling, Rail 1, Rail 2 (BOOLEAN). Picture 64 x 36 radius/small inside a Content pill (space/4 padding, radius/control). The ⋯ overflow was removed.",
+      "886:85008 Vidra Fresh / History menu": "Item 886:85030 renamed from 'Make another variation' to 'New variation', so the action has one label in the menu and the Versions footer (C35 inherits it)."
+    },
+    "added": {
+      "2254:9696": "Vidra Fresh / Side panel (Title TEXT, Show footer BOOLEAN, Content and Footer SLOTs). Strokes are excluded from layout, so the content width is 336."
+    }
+  },
+  "screens": {
+    "updated": {
+      "891:86691 C13": "Media viewer narrowed to 616 and set to v2 (warm filter, picture fit). The Side panel instance 2255:3604 holds the Desk tree: v1 Preferred > v2 (selected) > v3, and v1 > v4. The footer reads Make preferred · New variation · Edit v2.",
+      "936:111304 B12": "Sheet 936:111389 hugs its content at y584. It has the Versions title, a Stadium tree (v1 selected, v2 child) and the footer Make preferred · New variation · Edit v1."
+    },
+    "deletedNodes": {
+      "891:86841": "C13 Versions drawer, including its hidden meta line and the three stacked buttons",
+      "936:111400, 936:111411": "B12 old version rows",
+      "936:111422": "B12 hidden meta line 'Opening a version keeps your draft unchanged.'",
+      "936:111423": "B12 Done button (close remains)"
+    }
+  },
+  "linkChanges": [
+    "C13 Make another variation -> C26 moved to the New variation button 2255:3688.",
+    "B12 Stadium · v2 label -> B32 moved to the v2 row instance 2256:17903.",
+    "B12 Done -> B10 removed with the Done button. The close button I1308:132373;1308:91724 -> B10 and B12 Escape -> B10 were missing in Figma and were restored.",
+    "B10 Versions -> B12 had been lost: the hidden hotspot frame 944:113125 had no reaction and the button had none either. The link now sits on the Versions button 936:111157, and the dead hotspot frame was deleted.",
+    "Later on 2026-10-16, B10, B11, B12, B29 and B32 moved to the docked Kind=Image toolbar and their old Edit image / Animate and Versions / Download / Share rows were deleted, including the hidden B10 row that held 936:111157. B10 now reaches B12 through its ··· (Media actions → B11 sheet) and the sheet's new View versions item 2299:15017 → B12. B29 and B32 ··· → B11 were added, and B11 Close sheet and Escape → B10 match B12."
+  ],
+  "evidenceRepointed": "docs/design/workflow/ui-state-evidence.json: the Version row component now cites set 2253:9794 and its variants. Side panel was added. The C13 variation link cites 2255:3688. The B12 v2 link cites 2256:17903, Done -> B10 was dropped and Close sheet cites I1308:132373;1308:91724. B10 Versions -> B12 cites 936:111157.",
+  "contractChanges": "CONTEXT.md records the version-history panel contract. Workflow semantics are unchanged: viewing never changes the draft, Edit this version targets the selected version, Make another variation creates siblings, and Mark preferred moves the item pointer.",
+  "clientDelta": "The client has no version list, lineage or preferred marker today. MediaViewer offers Reuse setup, Use as input and Download only. Design only (Figma); nothing implemented.",
+  "done": [
+    {
+      "item": "Edit history (E15, E45, E46, B36, B37) converted to Side panel + Version row after Bryce approved the direction (2026-10-16).",
+      "desktop": "E15 895:315870, E45 993:114544 and E46 993:114774 each hold a Side panel instance titled Edit history at x1064 y64 (2272:92024, 2272:92070, 2272:92128). Its three Depth=0 rows are Edit 8 'Changed caption' with Marker 'Current', Edit 7 'Added music' and Edit 3 'Three clips'. The selected row is the edit in the Editor stage: Edit 8 on E15 (Show footer off), Edit 7 on E45 and Edit 3 on E46, each with one full-width primary footer button, Restore edit 7 or Restore edit 3. Row pictures use the edit's first frame (Stadium).",
+      "stage": "E45 and E46 use copies of E15's 616-wide Editor stage (2272:91559, 2272:91728). Preview is read-only, so Undo, Redo, Add media and Captions are Disabled there; History stays enabled and Export shows 'Exporting 42%' because the export of edit 7 keeps running (it was a Disabled Export before). E15 now shows edit 8's caption 'Stay out a little longer.' (as on E07) in the preview and the timeline cue. E45 keeps edit 7's 'Make room for evening.'. E46 has no caption and uses Timeline State=History without music.",
+      "mobile": "B36 1001:117540 and B37 1001:117612 use copies of B12's sheet titled Edit history (2272:93516, 2272:93438) with the same three rows. B36 selects Edit 8 and has no footer; B37 selects Edit 3 and has a 44px Restore edit 3. Both sheets are 312 tall at y532, so the sheet keeps one size when a row is selected.",
+      "deletedNodes": {
+        "895:316088": "E15 flush Edit history sheet: Preview edit 8/7/3 buttons, detached Restore edit 3 and hidden 'Restoring creates edit 9. The export keeps edit 7.'",
+        "993:114769": "E45 'Previewing edit 7' card with Back to current edit",
+        "993:115001": "E46 'Previewing edit 3' card with Restore this edit and Back to current edit",
+        "2103:18298, 2103:18420": "E45 and E46 992-wide Editor stages, replaced by the 616 copies",
+        "1001:117594": "B36 sheet: Current edit 8 / Preview edit 7 / Preview edit 3 buttons and its hidden meta line",
+        "1001:117767": "B37 'Previewing edit 3' sheet: description, Restore this edit and Back to current edit"
+      },
+      "links": [
+        "E15 Edit 7 row -> E45 and Edit 3 row -> E46 replace the Preview edit 7/3 buttons.",
+        "E45 Edit 8 row -> E15 and Edit 3 row -> E46. E46 Edit 8 row -> E15, Edit 7 row -> E45 and Restore edit 3 -> E48. E45 Restore edit 7 has no destination screen.",
+        "Close and Escape on E15, E45 and E46 -> E07, the same edit without the panel. The 12 History buttons on E01-E14 still open E15.",
+        "B36 Edit 3 row -> B37 (was Preview edit 3). B37 Edit 8 row -> B36 and Restore edit 3 -> B38 (was Restore this edit). Close sheet and Escape on B36 and B37 -> B09.",
+        "Added B41 Video editing > Edit history -> B36; B36 had no entry point."
+      ],
+      "evidence": "docs/design/workflow/ui-state-evidence.json prototypeLinks gained 21 rows for E15, E45, E46, B36, B37 and B41.",
+      "verification": "Final re-scan of all 16 pages by text and layer name: no 'Preview edit', 'Previewing edit', 'Back to current edit', 'Restore this edit' or hidden restore meta text remains. On pages 10 and 16 no Prototype hotspot frame points at Edit history. The only nodes named 'Edit history' are the three Side panel instances and B41's menu button; the mobile sheets are named 'Edit history sheet' (2272:93516, 2272:93438). B37's hidden stage caption 1001:117652 was deleted, so the five screens have no hidden text. Every new link resolves to its screen. Screenshots of all five screens were checked with node.screenshot. No before-copies were kept in Figma."
+    },
+    {
+      "item": "Restore results E48 and B38 folded into the Edit history panel (2026-10-16), with the E07/E08 caption cue fixed.",
+      "desktop": "E48 993:115240 keeps the Side panel open after Restore edit 3 (2287:21418, Show footer off). A new top row, Edit 9 'Restored edit 3', is Current and selected. Edit 8 'Changed caption' no longer carries Current, and Edit 7 and Edit 3 follow. The stage is a 616 copy of E46's (2287:21227): edit 3's contents (no caption, Timeline State=History without music), with Undo, Add media and Captions enabled again and the edit 7 export still at 'Exporting 42%'. The new Current row is the confirmation, so no success card is shown.",
+      "mobile": "B38 1001:117783 shows B37's backdrop and Edit history sheet (2287:35528, 2287:35529) with the same four rows and no footer. It is fixed at 312 tall at y532, like B36 and B37.",
+      "deletedNodes": {
+        "993:115457": "E48 floating card 'Edit 3 restored / Saved as edit 9. / View history' (View history had no link)",
+        "2103:18550": "E48 992-wide Editor stage, replaced by the 616 copy",
+        "1001:117936": "B38 'Restored feedback' line 'Restored as edit 9'",
+        "1001:117823": "B38 hidden stage caption (edit 9 has no caption)"
+      },
+      "captionCue": "The timeline caption cues on E07 895:314097 and E08 895:314315 now read 'Stay out a little longer.', matching their edit 8 preview, as E15 does.",
+      "links": "E46 Restore edit 3 -> E48 and B37 Restore edit 3 -> B38 are unchanged. E48 and B38 have no close, Escape or row links. No screen shows the editor after the restore without the panel, and E07 and B09 show edit 8's caption and music, so linking there would show the wrong edit. ui-state-evidence.json needed no change.",
+      "verification": "Pages 10 and 16 contain no 'Edit 3 restored', 'Saved as edit 9', 'View history' or 'Restored as edit 9' text or layer names, and E48 and B38 have no hidden text. Screenshots of E48, B38 and the E07 cue were checked with node.screenshot."
+    },
+    {
+      "item": "Picture Use menu rebuilt as the Kind=Image default (2026-10-16). Bryce chose to keep Media actions as a row under Use on desktop, hidden on mobile.",
+      "component": "Vidra Fresh / Use image menu 1368:89889, rebuilt in place from 'Vidra Fresh / Media menu /Edit image:...': Reuse setup (copy), Edit image (pencil), Animate (video), Media actions (more-horizontal). BOOLEAN Show media actions#2340:0 (default true) drives the last row. The surface matches Vidra Fresh / Menu (strokesIncludedInLayout off): 280x172.",
+      "toolbar": "Toolbar / Viewer Kind=Image Closed 2274:9701 and Open 2274:9717 now nest it as an exposed 'Menu' instead of Use media menu 1347:84394 plus hidden swap overrides. The Use menu frame is 280x172 at y=-178, 6px above the toolbar. New variant Kind=Image, Menu=Media actions 2340:10489 shows Vidra Fresh / Media actions in 'Media actions menu' (280x294, 6px above, right edge on Use). The Open variant's Media actions row changes to it; there, Use and the menu change back to Closed.",
+      "screens": "Media viewer Kind=Image's toolbar 1819:431709 lost its hidden swap overrides, so the 29 desktop picture viewers inherit the default. The B10, B11, B12, B29 and B32 toolbars lost theirs too, kept 358x32 and turn Show media actions off. C36 sets its viewer toolbar to Menu=Media actions with Favorite=Yes, and its hand-placed Media actions copy 916:104057 was deleted. C34's Image tools stays hand-placed on the same anchor. B11's sheet gained Share 2343:13988, because Use > Share had been mobile's only Share route.",
+      "removed": "Download (it repeats the toolbar button) and Share (it is in Media actions) left the Use menu, and every row's plus icon was replaced.",
+      "checks": "node.screenshot renders: C13 with Use open (four rows, 6px gap, right edge on Use), C36 in the Media actions state, B10 with Use open (three rows, 16px inset) and B11's sheet. An all-page sweep found no menu overrides on picture toolbars except the five mobile Show media actions toggles, and no loose Use menu or Media actions copies."
+    },
+    {
+      "item": "Clip Use menu cleaned up the same way (2026-10-16), at Bryce's request. Bryce's picture decision applies to clips too: Media actions is a row under Use.",
+      "component": "Vidra Fresh / Use video menu 1347:84394 (was 'Use media menu', rebuilt in place): Reuse setup (copy), Use a frame (image), Add to edit (film), Media actions (more-horizontal), with Show media actions#2360:9 (default true). Download original is gone because the toolbar has Download. Surface matches Vidra Fresh / Menu, 280x172. Vidra Fresh / Media actions gained Show image tools#2360:0 (default true); clips turn it off because Image tools is picture-only.",
+      "toolbar": "Kind=Video Closed 1818:6425 and Open 1841:6872: the nested Menu lost its leftover overrides, is exposed, and sits 6px above the toolbar (280x172 at y=-178). Open had lost 8 property links (Time, Seek, volume, fullscreen, divider, action group, Download), so opening Use on M01 brought back the seek bar and Download it hides; the links were copied back from Closed. New variant Kind=Video, Menu=Media actions 2360:10541 shows Media actions without Image tools (280x254, 6px above, right edge on Use). The video row now sits at y=292 and the picture row at y=688, so the taller menus don't overlap (set 3066x752).",
+      "screens": "Media viewer Kind=Video's toolbar 1819:431751 and W01's nested toolbar lost their hidden menu overrides; their properties, fills and size were kept. C51's dead link override on deleted layer 1818:6438 was removed with a guarded viewer reset (48 layers identical before and after). M01 now shows Download on its toolbar, matching B10. Its Media actions row stays on because M01 has no ··· above the clip. Two of the three identical 'Menu · Use video' specimens were deleted (1399:212387, 1399:161655); 1399:174131 remains.",
+      "checks": "node.screenshot renders: W01 and M01 with Use open (four rows, 6px gap, right edge on Use; M01 keeps its seek bar hidden), C51 unchanged, and the toolbar set. An all-page sweep found no menu overrides on any viewer toolbar except the five mobile picture toggles, no loose menus and no hand-placed Media actions copies."
+    }
+  ],
+  "notDone": [
+    "Pre-existing: Media viewer Kind=Image (887:85109) shows video transport (seek, 0:01 / 0:08, volume) for still pictures, e.g. C13, C36 and B10.",
+    "Done 2026-10-16: Toolbar / Viewer (1841:6871) now has Kind=Video|Image; Kind=Image (2274:9701 Closed, 2274:9717 Open) drops play, time, seek and volume and keeps Fullscreen | Media details, Download, Use. Media viewer Kind=Image and B10 use it, so all 29 picture viewers plus B10 show no transport (C13, C36, B10 screenshots checked); Kind=Video viewers are unchanged. Superseded leftovers deleted: B10's hidden Primary actions and Media tools rows, stale screen-level toolbar overrides on all 29 picture viewers, and 25 dead link overrides pointing at deleted layers."
+  ]
+}

@@ -1,0 +1,1900 @@
+{
+  "date": "2026-10-14",
+  "status": "complete",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "authorization": "Remove all 39 and clean up components or links that would bring them back.",
+  "scope": "Approved 39-screen REMOVE list and related reusable sources, instances, prototype/index links, navigation and help on Pages 24–29.",
+  "deletedScreens": [
+    {
+      "id": "906:100546",
+      "name": "B05 · Mobile comparison retains both drafts",
+      "page": 25,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "891:86329",
+      "name": "C11 · Compare conflicting draft copies",
+      "page": 25,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "891:87575",
+      "name": "C18 · Choose directions after replacing the input",
+      "page": 25,
+      "reason": "Propose removing the dedicated directions, summary or project-instructions approval screen. Preserve exact context internally and show only a relevant input/length issue inline. This changes an older proposed interaction and needs explicit acceptance before implementation.",
+      "status": "deleted"
+    },
+    {
+      "id": "891:87746",
+      "name": "C19 · Review a shorter context without losing history",
+      "page": 25,
+      "reason": "Propose removing the dedicated directions, summary or project-instructions approval screen. Preserve exact context internally and show only a relevant input/length issue inline. This changes an older proposed interaction and needs explicit acceptance before implementation.",
+      "status": "deleted"
+    },
+    {
+      "id": "891:88070",
+      "name": "C21 · Manage retained drafts",
+      "page": 25,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "904:98811",
+      "name": "C27 · Review changed project instructions",
+      "page": 25,
+      "reason": "Propose removing the dedicated directions, summary or project-instructions approval screen. Preserve exact context internally and show only a relevant input/length issue inline. This changes an older proposed interaction and needs explicit acceptance before implementation.",
+      "status": "deleted"
+    },
+    {
+      "id": "904:99142",
+      "name": "C29 · Resolve a conflict with both copies retained",
+      "page": 25,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "905:324220",
+      "name": "C33 · Discard an unfinished draft while keeping history",
+      "page": 25,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "1004:118559",
+      "name": "C60 · Confirm discarding only the selected draft",
+      "page": 25,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "1004:118681",
+      "name": "C61 · Discarded draft leaves other drafts and results intact",
+      "page": 25,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "903:97849",
+      "name": "D09 · Review future paid work before submission",
+      "page": 25,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "903:98009",
+      "name": "D10 · Deliverable usage receipt with failed slots kept",
+      "page": 25,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "903:98334",
+      "name": "D12 · Changed estimate requires review",
+      "page": 25,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "912:326757",
+      "name": "D13 · Verify payment before granting allowance",
+      "page": 25,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "912:326928",
+      "name": "D14 · Cancelled checkout preserves existing work",
+      "page": 25,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "895:316332",
+      "name": "E17 · Repair the saved export without rendering again",
+      "page": 25,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "912:326529",
+      "name": "E21 · Keep the captured renderer when recovering export",
+      "page": 25,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "901:319910",
+      "name": "R11 · Repair an attachment without generating again",
+      "page": 25,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "901:320244",
+      "name": "R13 · Owned recovery without a replacement project",
+      "page": 25,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "1011:118949",
+      "name": "R31 · Attachment repaired without regeneration",
+      "page": 25,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "964:92719",
+      "name": "K15 · Request receipt details",
+      "page": 26,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "964:93130",
+      "name": "K21 · Billing during free testing",
+      "page": 26,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "968:94104",
+      "name": "N26 · Mobile Billing",
+      "page": 26,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "991:96842",
+      "name": "N109 · Mobile Request receipt details",
+      "page": 26,
+      "reason": "No paid checkout, held/released credits or charge-estimate approval is in current scope. Remove these screens; free account status does not need billing/invoice/zero-credit receipt pages.",
+      "status": "deleted"
+    },
+    {
+      "id": "1034:88604",
+      "name": "E11 · Replacing a clip explicitly warns when sound will be lost",
+      "page": 27,
+      "reason": "This top-level screen survives after its modal, comparison or header was removed. Fold its remaining workspace into the canonical viewer/editor.",
+      "status": "deleted"
+    },
+    {
+      "id": "1030:84822",
+      "name": "G06 · Review a coupled setting change",
+      "page": 27,
+      "reason": "Propose removing the dedicated directions, summary or project-instructions approval screen. Preserve exact context internally and show only a relevant input/length issue inline. This changes an older proposed interaction and needs explicit acceptance before implementation.",
+      "status": "deleted"
+    },
+    {
+      "id": "1033:86636",
+      "name": "R06 · A model promised sound but the returned file has none",
+      "page": 27,
+      "reason": "This top-level screen survives after its modal, comparison or header was removed. Fold its remaining workspace into the canonical viewer/editor.",
+      "status": "deleted"
+    },
+    {
+      "id": "1033:86719",
+      "name": "R07 · Returned geometry is checked instead of silently corrected",
+      "page": 27,
+      "reason": "This top-level screen survives after its modal, comparison or header was removed. Fold its remaining workspace into the canonical viewer/editor.",
+      "status": "deleted"
+    },
+    {
+      "id": "1033:86905",
+      "name": "R09 · A background result does not replace the selected clip",
+      "page": 27,
+      "reason": "This top-level screen survives after its modal, comparison or header was removed. Fold its remaining workspace into the canonical viewer/editor.",
+      "status": "deleted"
+    },
+    {
+      "id": "1033:86988",
+      "name": "R10 · Historical settings stay separate from current capabilities",
+      "page": 27,
+      "reason": "This top-level screen survives after its modal, comparison or header was removed. Fold its remaining workspace into the canonical viewer/editor.",
+      "status": "deleted"
+    },
+    {
+      "id": "1072:93446",
+      "name": "W18 · Retry is reviewed as a new attempt",
+      "page": 28,
+      "reason": "Propose one explicit retry action on the failed request/output, retaining exact inputs and a new request identity. Remove the additional full-screen confirmation step; show a changed cost only if a future paid scope requires it.",
+      "status": "deleted"
+    },
+    {
+      "id": "1072:94095",
+      "name": "W20 · Video made; saving failed",
+      "page": 28,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "1073:92317",
+      "name": "W21 · Saved media needs attachment repair",
+      "page": 28,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "1073:92711",
+      "name": "W22 · Repairing the same stored output",
+      "page": 28,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "1073:93031",
+      "name": "W23 · Repaired result returns without taking over",
+      "page": 28,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "1073:94561",
+      "name": "W28 · Workspace — conflict dialog removed",
+      "page": 28,
+      "reason": "Draft access belongs in conversation history. Remove comparison/merge, standalone management, discard-success screens and empty shells. Retain revision/conflict storage protections.",
+      "status": "deleted"
+    },
+    {
+      "id": "1075:95370",
+      "name": "W43 · Retry a failed slot without renumbering the batch",
+      "page": 28,
+      "reason": "Propose one explicit retry action on the failed request/output, retaining exact inputs and a new request identity. Remove the additional full-screen confirmation step; show a changed cost only if a future paid scope requires it.",
+      "status": "deleted"
+    },
+    {
+      "id": "1075:96378",
+      "name": "W46 · Provider finished; durable saving is still in progress",
+      "page": 28,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    },
+    {
+      "id": "1075:96698",
+      "name": "W47 · An output is unrecoverable; a new attempt is explicit",
+      "page": 28,
+      "reason": "Remove attachment-repair/recovery-inbox/renderer-recovery screens. Keep durable storage and operation identity internally; expose an actionable failure in the originating request or export only when needed.",
+      "status": "deleted"
+    }
+  ],
+  "retiredComponentDefinitions": [
+    {
+      "id": "886:84904",
+      "name": "Vidra Fresh / Drafts menu",
+      "instances": []
+    },
+    {
+      "id": "886:84937",
+      "name": "Vidra Fresh / Draft comparison",
+      "instances": [
+        {
+          "id": "891:86472",
+          "name": "Draft comparison",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "885:85112",
+      "name": "State=Conflict",
+      "instances": [
+        {
+          "id": "914:86388",
+          "name": "Vidra Fresh / Save indicator",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "891:86434",
+          "name": "Save indicator",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "896:85606",
+      "name": "Kind=Dialog",
+      "instances": []
+    },
+    {
+      "id": "885:85028",
+      "name": "State=Save failed",
+      "instances": []
+    },
+    {
+      "id": "889:85137",
+      "name": "State=pending",
+      "instances": [
+        {
+          "id": "914:85988",
+          "name": "Vidra Fresh / Attachment status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "898:93789",
+          "name": "Attachment status",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85138",
+      "name": "State=attached",
+      "instances": [
+        {
+          "id": "914:85994",
+          "name": "Vidra Fresh / Attachment status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85139",
+      "name": "State=failed",
+      "instances": [
+        {
+          "id": "914:86000",
+          "name": "Vidra Fresh / Attachment status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "901:320070",
+          "name": "Attachment status",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85140",
+      "name": "State=destination_missing",
+      "instances": [
+        {
+          "id": "914:86006",
+          "name": "Vidra Fresh / Attachment status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85141",
+      "name": "State=recovery_attached",
+      "instances": [
+        {
+          "id": "914:86012",
+          "name": "Vidra Fresh / Attachment status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "901:320312",
+          "name": "Attachment status",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "892:85332",
+      "name": "State=Save failed",
+      "instances": [
+        {
+          "id": "914:86548",
+          "name": "Vidra Fresh / Export panel",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "895:316542",
+          "name": "Export panel",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "892:85340",
+      "name": "State=Needs attention",
+      "instances": [
+        {
+          "id": "914:86622",
+          "name": "Vidra Fresh / Export panel",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "912:326738",
+          "name": "Export panel",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "892:85341",
+      "name": "State=Recovery",
+      "instances": [
+        {
+          "id": "914:86631",
+          "name": "Vidra Fresh / Export panel",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "912:85885",
+      "name": "State=Checking",
+      "instances": [
+        {
+          "id": "914:86204",
+          "name": "Vidra Fresh / Payment status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "912:326921",
+          "name": "Payment status",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "912:85886",
+      "name": "State=Cancelled",
+      "instances": [
+        {
+          "id": "914:86210",
+          "name": "Vidra Fresh / Payment status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "912:327091",
+          "name": "Payment status",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "912:85887",
+      "name": "State=Failed",
+      "instances": [
+        {
+          "id": "914:86216",
+          "name": "Vidra Fresh / Payment status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "912:85888",
+      "name": "State=Expired",
+      "instances": [
+        {
+          "id": "914:86222",
+          "name": "Vidra Fresh / Payment status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85283",
+      "name": "State=quoted",
+      "instances": [
+        {
+          "id": "914:86156",
+          "name": "Vidra Fresh / Usage status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85284",
+      "name": "State=quote_invalid",
+      "instances": [
+        {
+          "id": "914:86162",
+          "name": "Vidra Fresh / Usage status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "903:98486",
+          "name": "Usage status",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85285",
+      "name": "State=reserving",
+      "instances": [
+        {
+          "id": "914:86168",
+          "name": "Vidra Fresh / Usage status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85286",
+      "name": "State=reserved",
+      "instances": [
+        {
+          "id": "914:86172",
+          "name": "Vidra Fresh / Usage status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85287",
+      "name": "State=reconciling",
+      "instances": [
+        {
+          "id": "914:86178",
+          "name": "Vidra Fresh / Usage status",
+          "page": "883:84247",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85288",
+      "name": "State=settled",
+      "instances": [
+        {
+          "id": "914:86184",
+          "name": "Vidra Fresh / Usage status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "903:98160",
+          "name": "Usage status",
+          "page": "887:85295",
+          "component": null
+        }
+      ]
+    },
+    {
+      "id": "889:85289",
+      "name": "State=released",
+      "instances": [
+        {
+          "id": "915:328067",
+          "name": "Usage status",
+          "page": "887:85295",
+          "component": null
+        },
+        {
+          "id": "914:86190",
+          "name": "Vidra Fresh / Usage status",
+          "page": "883:84247",
+          "component": null
+        },
+        {
+          "id": "1440:131555",
+          "name": "Usage status",
+          "page": "887:85295",
+          "component": "1440:131558"
+        }
+      ]
+    },
+    {
+      "id": "957:88346",
+      "name": "Active=Billing",
+      "instances": [
+        {
+          "id": "964:93192",
+          "name": "Settings navigation",
+          "page": "956:84247",
+          "component": null
+        }
+      ]
+    }
+  ],
+  "deletionBatches": [
+    {
+      "page": "883:84247",
+      "removed": [
+        {
+          "id": "914:86388",
+          "name": "Vidra Fresh / Save indicator",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:85988",
+          "name": "Vidra Fresh / Attachment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:85994",
+          "name": "Vidra Fresh / Attachment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86000",
+          "name": "Vidra Fresh / Attachment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86006",
+          "name": "Vidra Fresh / Attachment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86012",
+          "name": "Vidra Fresh / Attachment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86548",
+          "name": "Vidra Fresh / Export panel",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86622",
+          "name": "Vidra Fresh / Export panel",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86631",
+          "name": "Vidra Fresh / Export panel",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86204",
+          "name": "Vidra Fresh / Payment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86210",
+          "name": "Vidra Fresh / Payment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86216",
+          "name": "Vidra Fresh / Payment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86222",
+          "name": "Vidra Fresh / Payment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86156",
+          "name": "Vidra Fresh / Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86162",
+          "name": "Vidra Fresh / Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86168",
+          "name": "Vidra Fresh / Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86172",
+          "name": "Vidra Fresh / Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86178",
+          "name": "Vidra Fresh / Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86184",
+          "name": "Vidra Fresh / Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "914:86190",
+          "name": "Vidra Fresh / Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "886:84904",
+          "name": "Vidra Fresh / Drafts menu",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "886:84937",
+          "name": "Vidra Fresh / Draft comparison",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "885:85112",
+          "name": "State=Conflict",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "896:85606",
+          "name": "Kind=Dialog",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "885:85028",
+          "name": "State=Save failed",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85137",
+          "name": "State=pending",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85138",
+          "name": "State=attached",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85139",
+          "name": "State=failed",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85140",
+          "name": "State=destination_missing",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85141",
+          "name": "State=recovery_attached",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "892:85332",
+          "name": "State=Save failed",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "892:85340",
+          "name": "State=Needs attention",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "892:85341",
+          "name": "State=Recovery",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "912:85885",
+          "name": "State=Checking",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "912:85886",
+          "name": "State=Cancelled",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "912:85887",
+          "name": "State=Failed",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "912:85888",
+          "name": "State=Expired",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85283",
+          "name": "State=quoted",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85284",
+          "name": "State=quote_invalid",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85285",
+          "name": "State=reserving",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85286",
+          "name": "State=reserved",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85287",
+          "name": "State=reconciling",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85288",
+          "name": "State=settled",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "889:85289",
+          "name": "State=released",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "957:88346",
+          "name": "Active=Billing",
+          "type": "COMPONENT"
+        },
+        {
+          "id": "914:85985",
+          "name": "Review / Attachment status",
+          "type": "FRAME"
+        },
+        {
+          "id": "914:86201",
+          "name": "Review / Payment status",
+          "type": "FRAME"
+        },
+        {
+          "id": "916:86943",
+          "name": "View drafts",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "889:85257",
+          "name": "View drafts",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "886:85002",
+          "name": "Instructions update",
+          "type": "FRAME"
+        },
+        {
+          "id": "957:88356",
+          "name": "Billing",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "957:88369",
+          "name": "Billing",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "957:88382",
+          "name": "Billing",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "957:88408",
+          "name": "Billing",
+          "type": "INSTANCE"
+        }
+      ],
+      "mutatedNodeIds": [],
+      "rerouted": [],
+      "cleared": [],
+      "missingTargets": []
+    },
+    {
+      "page": "887:85295",
+      "removed": [
+        {
+          "id": "906:100546",
+          "name": "B05 · Mobile comparison retains both drafts",
+          "type": "FRAME"
+        },
+        {
+          "id": "891:86329",
+          "name": "C11 · Compare conflicting draft copies",
+          "type": "FRAME"
+        },
+        {
+          "id": "891:87575",
+          "name": "C18 · Choose directions after replacing the input",
+          "type": "FRAME"
+        },
+        {
+          "id": "891:87746",
+          "name": "C19 · Review a shorter context without losing history",
+          "type": "FRAME"
+        },
+        {
+          "id": "891:88070",
+          "name": "C21 · Manage retained drafts",
+          "type": "FRAME"
+        },
+        {
+          "id": "904:98811",
+          "name": "C27 · Review changed project instructions",
+          "type": "FRAME"
+        },
+        {
+          "id": "904:99142",
+          "name": "C29 · Resolve a conflict with both copies retained",
+          "type": "FRAME"
+        },
+        {
+          "id": "905:324220",
+          "name": "C33 · Discard an unfinished draft while keeping history",
+          "type": "FRAME"
+        },
+        {
+          "id": "1004:118559",
+          "name": "C60 · Confirm discarding only the selected draft",
+          "type": "FRAME"
+        },
+        {
+          "id": "1004:118681",
+          "name": "C61 · Discarded draft leaves other drafts and results intact",
+          "type": "FRAME"
+        },
+        {
+          "id": "903:97849",
+          "name": "D09 · Review future paid work before submission",
+          "type": "FRAME"
+        },
+        {
+          "id": "903:98009",
+          "name": "D10 · Deliverable usage receipt with failed slots kept",
+          "type": "FRAME"
+        },
+        {
+          "id": "903:98334",
+          "name": "D12 · Changed estimate requires review",
+          "type": "FRAME"
+        },
+        {
+          "id": "912:326757",
+          "name": "D13 · Verify payment before granting allowance",
+          "type": "FRAME"
+        },
+        {
+          "id": "912:326928",
+          "name": "D14 · Cancelled checkout preserves existing work",
+          "type": "FRAME"
+        },
+        {
+          "id": "895:316332",
+          "name": "E17 · Repair the saved export without rendering again",
+          "type": "FRAME"
+        },
+        {
+          "id": "912:326529",
+          "name": "E21 · Keep the captured renderer when recovering export",
+          "type": "FRAME"
+        },
+        {
+          "id": "901:319910",
+          "name": "R11 · Repair an attachment without generating again",
+          "type": "FRAME"
+        },
+        {
+          "id": "901:320244",
+          "name": "R13 · Owned recovery without a replacement project",
+          "type": "FRAME"
+        },
+        {
+          "id": "1011:118949",
+          "name": "R31 · Attachment repaired without regeneration",
+          "type": "FRAME"
+        },
+        {
+          "id": "898:93789",
+          "name": "Attachment status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "915:328067",
+          "name": "Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1440:131555",
+          "name": "Usage status",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "943:113256",
+          "name": "Prototype · Add an input → C18",
+          "type": "FRAME"
+        }
+      ],
+      "mutatedNodeIds": [
+        "I917:329651;916:86943",
+        "887:85295"
+      ],
+      "rerouted": [],
+      "cleared": [
+        "I917:329651;916:86943"
+      ],
+      "missingTargets": []
+    },
+    {
+      "page": "956:84247",
+      "removed": [
+        {
+          "id": "964:92719",
+          "name": "K15 · Request receipt details",
+          "type": "FRAME"
+        },
+        {
+          "id": "964:93130",
+          "name": "K21 · Billing during free testing",
+          "type": "FRAME"
+        },
+        {
+          "id": "968:94104",
+          "name": "N26 · Mobile Billing",
+          "type": "FRAME"
+        },
+        {
+          "id": "991:96842",
+          "name": "N109 · Mobile Request receipt details",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95343",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95425",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95459",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95563",
+          "name": "Prototype · View details → K15",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95531",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "981:95386",
+          "name": "Prototype · Billing → N26",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95355",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95367",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95379",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95391",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95403",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95415",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95437",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95449",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95471",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95483",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95495",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        },
+        {
+          "id": "980:95519",
+          "name": "Prototype · Billing → K21 / Settings navigation",
+          "type": "FRAME"
+        }
+      ],
+      "mutatedNodeIds": [],
+      "rerouted": [],
+      "cleared": [],
+      "missingTargets": []
+    },
+    {
+      "page": "1026:84247",
+      "removed": [
+        {
+          "id": "1034:88604",
+          "name": "E11 · Replacing a clip explicitly warns when sound will be lost",
+          "type": "FRAME"
+        },
+        {
+          "id": "1030:84822",
+          "name": "G06 · Review a coupled setting change",
+          "type": "FRAME"
+        },
+        {
+          "id": "1033:86636",
+          "name": "R06 · A model promised sound but the returned file has none",
+          "type": "FRAME"
+        },
+        {
+          "id": "1033:86719",
+          "name": "R07 · Returned geometry is checked instead of silently corrected",
+          "type": "FRAME"
+        },
+        {
+          "id": "1033:86905",
+          "name": "R09 · A background result does not replace the selected clip",
+          "type": "FRAME"
+        },
+        {
+          "id": "1033:86988",
+          "name": "R10 · Historical settings stay separate from current capabilities",
+          "type": "FRAME"
+        }
+      ],
+      "mutatedNodeIds": [],
+      "rerouted": [],
+      "cleared": [],
+      "missingTargets": []
+    },
+    {
+      "page": "1048:84247",
+      "removed": [
+        {
+          "id": "1072:93446",
+          "name": "W18 · Retry is reviewed as a new attempt",
+          "type": "FRAME"
+        },
+        {
+          "id": "1072:94095",
+          "name": "W20 · Video made; saving failed",
+          "type": "FRAME"
+        },
+        {
+          "id": "1073:92317",
+          "name": "W21 · Saved media needs attachment repair",
+          "type": "FRAME"
+        },
+        {
+          "id": "1073:92711",
+          "name": "W22 · Repairing the same stored output",
+          "type": "FRAME"
+        },
+        {
+          "id": "1073:93031",
+          "name": "W23 · Repaired result returns without taking over",
+          "type": "FRAME"
+        },
+        {
+          "id": "1073:94561",
+          "name": "W28 · Workspace — conflict dialog removed",
+          "type": "FRAME"
+        },
+        {
+          "id": "1075:95370",
+          "name": "W43 · Retry a failed slot without renumbering the batch",
+          "type": "FRAME"
+        },
+        {
+          "id": "1075:96378",
+          "name": "W46 · Provider finished; durable saving is still in progress",
+          "type": "FRAME"
+        },
+        {
+          "id": "1075:96698",
+          "name": "W47 · An output is unrecoverable; a new attempt is explicit",
+          "type": "FRAME"
+        },
+        {
+          "id": "1091:101302",
+          "name": "Failures, cancellation and repair",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101593",
+          "name": "W18 · Retry is reviewed as a new attempt",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101600",
+          "name": "W20 · Video made; saving failed",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101604",
+          "name": "W21 · Saved media needs attachment repair",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101607",
+          "name": "W22 · Repairing the same stored output",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101611",
+          "name": "W23 · Repaired result returns without taking over",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101681",
+          "name": "W43 · Retry a failed slot without renumbering the batch",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101691",
+          "name": "W46 · Provider finished; durable saving is still in progress",
+          "type": "INSTANCE"
+        },
+        {
+          "id": "1091:101695",
+          "name": "W47 · An output is unrecoverable; a new attempt is explicit",
+          "type": "INSTANCE"
+        }
+      ],
+      "mutatedNodeIds": [
+        "1440:180834",
+        "1072:93118",
+        "1048:84247"
+      ],
+      "rerouted": [
+        "1440:180834",
+        "1072:93118"
+      ],
+      "cleared": [],
+      "missingTargets": []
+    }
+  ],
+  "copyAndExampleCleanup": [
+    {
+      "removedNodeIds": [
+        "914:86155",
+        "914:86161",
+        "914:86167",
+        "914:86171",
+        "914:86177",
+        "914:86183",
+        "914:86189",
+        "914:86387",
+        "914:86547",
+        "914:86621",
+        "914:86630"
+      ],
+      "mutatedNodeIds": [
+        "889:85134"
+      ]
+    },
+    {
+      "mutatedNodeIds": [
+        "I900:94803;887:85283;884:84528",
+        "I900:94803;887:85283",
+        "1440:130269",
+        "901:320241"
+      ],
+      "historyDestination": "900:94034"
+    },
+    {
+      "mutatedNodeIds": [
+        "963:90586",
+        "963:90593",
+        "963:90594",
+        "963:90591",
+        "963:91018",
+        "963:91029",
+        "963:91030",
+        "963:91038",
+        "963:91027",
+        "963:91144",
+        "963:91145",
+        "963:91148",
+        "963:91149",
+        "963:91142",
+        "963:91146",
+        "1437:97912",
+        "1437:98975",
+        "1437:98980",
+        "1437:98981",
+        "1437:99075",
+        "1437:99082",
+        "1437:99083",
+        "1437:99089",
+        "1437:99112",
+        "1437:99113",
+        "1437:99115",
+        "1437:99116",
+        "968:93860",
+        "970:94490",
+        "970:94495",
+        "970:94496",
+        "970:94637",
+        "970:94645",
+        "970:94646",
+        "970:94652",
+        "970:94687",
+        "970:94688",
+        "970:94690",
+        "970:94691"
+      ],
+      "removed": [
+        {
+          "id": "976:95095",
+          "name": "Billing"
+        },
+        {
+          "id": "1437:98361",
+          "name": "Billing"
+        },
+        {
+          "id": "968:94370",
+          "name": "Billing"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "absent": {
+      "checked": 64,
+      "remaining": []
+    },
+    "pages": [
+      {
+        "page": "883:84247",
+        "total": 6,
+        "matches": [
+          {
+            "id": "893:85700",
+            "text": [
+              "This draft is not saved yet. Keep a copy or retry saving before leaving."
+            ],
+            "context": [
+              "Kind=Confirm",
+              "Vidra Fresh / Dialog",
+              "Page 24 - Vidra fresh design system"
+            ]
+          },
+          {
+            "id": "893:85702",
+            "text": [
+              "Retry saving"
+            ],
+            "context": [
+              "Kind=Confirm",
+              "Vidra Fresh / Dialog",
+              "Page 24 - Vidra fresh design system"
+            ]
+          },
+          {
+            "id": "893:85708",
+            "text": [
+              "This draft is not saved yet. Keep a copy or retry saving before leaving."
+            ],
+            "context": [
+              "Kind=Unsaved",
+              "Vidra Fresh / Dialog",
+              "Page 24 - Vidra fresh design system"
+            ]
+          },
+          {
+            "id": "893:85710",
+            "text": [
+              "Retry saving"
+            ],
+            "context": [
+              "Kind=Unsaved",
+              "Vidra Fresh / Dialog",
+              "Page 24 - Vidra fresh design system"
+            ]
+          },
+          {
+            "id": "893:85716",
+            "text": [
+              "This draft is not saved yet. Keep a copy or retry saving before leaving."
+            ],
+            "context": [
+              "Kind=Destructive",
+              "Vidra Fresh / Dialog",
+              "Page 24 - Vidra fresh design system"
+            ]
+          },
+          {
+            "id": "893:85718",
+            "text": [
+              "Retry saving"
+            ],
+            "context": [
+              "Kind=Destructive",
+              "Vidra Fresh / Dialog",
+              "Page 24 - Vidra fresh design system"
+            ]
+          }
+        ],
+        "links": [],
+        "flows": []
+      },
+      {
+        "page": "887:85295",
+        "total": 10,
+        "matches": [
+          {
+            "id": "900:95293",
+            "text": [
+              "Neither this device nor the server has saved your latest changes. Retry saving or export a copy before leaving."
+            ],
+            "context": [
+              "Keep this draft before leaving",
+              "R04 · Protect work that has no saved copy",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "900:95295",
+            "text": [
+              "Retry saving"
+            ],
+            "context": [
+              "Keep this draft before leaving",
+              "R04 · Protect work that has no saved copy",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "1437:141712",
+            "text": [
+              "Your latest changes are not saved on this device or the server. Retry saving or export a copy before leaving."
+            ],
+            "context": [
+              "Vidra consolidated / Creation and history / Keep this draft before leaving",
+              "Consolidated state sources · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "1437:141713",
+            "text": [
+              "Retry saving"
+            ],
+            "context": [
+              "Vidra consolidated / Creation and history / Keep this draft before leaving",
+              "Consolidated state sources · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "1437:141728",
+            "text": [
+              "Your latest changes are not saved on this device or the server. Retry saving or export a copy before leaving.",
+              "Retry saving"
+            ],
+            "context": [
+              "Creation and history / Keep this draft before leaving",
+              "Consolidated state examples · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "1001:118325",
+            "text": [
+              "Your latest changes are not saved on this device or the server. Retry saving or export a copy before leaving."
+            ],
+            "context": [
+              "B42 · Mobile unsaved work blocks leaving",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "1001:118326",
+            "text": [
+              "Retry saving"
+            ],
+            "context": [
+              "B42 · Mobile unsaved work blocks leaving",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "912:326281",
+            "text": [
+              "Repair preview"
+            ],
+            "context": [
+              "E19 · Recover a playback copy without failing the source",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "900:95127",
+            "text": [
+              "Sync failed. Retry saving this same revision.",
+              "Retry saving"
+            ],
+            "context": [
+              "R03 · Failed sync with a local copy kept",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          },
+          {
+            "id": "901:321272",
+            "text": [
+              "Retry saving"
+            ],
+            "context": [
+              "R19 · An older save acknowledgement does not mark new words saved",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 25 - Vidra complete redesign"
+            ]
+          }
+        ],
+        "links": [],
+        "flows": []
+      },
+      {
+        "page": "956:84247",
+        "total": 16,
+        "matches": [
+          {
+            "id": "959:89159",
+            "text": [
+              "Billing"
+            ],
+            "context": [
+              "Page content",
+              "W11 · Terms of service",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "959:89138",
+            "text": [
+              "Billing"
+            ],
+            "context": [
+              "On this page",
+              "W11 · Terms of service",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "963:90357",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "Page content",
+              "H05 · Assemble and export a video",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "963:91034",
+            "text": [
+              "You can keep drafting offline when a local copy is available. Reconnecting does not automatically submit it. Conflicts preserve both copies, and an older save response cannot mark newer words saved."
+            ],
+            "context": [
+              "Page content",
+              "H11 · Recover interrupted work",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "968:93891",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "Page content",
+              "N19 · Mobile Documentation article",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "994:96827",
+            "text": [
+              "Billing"
+            ],
+            "context": [
+              "On this page",
+              "O20 · On this page",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "1437:99086",
+            "text": [
+              "You can keep drafting offline when a local copy is available. Reconnecting does not automatically submit it. Conflicts preserve both copies, and an older save response cannot mark newer words saved."
+            ],
+            "context": [
+              "Vidra consolidated / Documentation / Page content",
+              "Consolidated state sources · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "1437:97932",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "Vidra consolidated / Documentation / Background viewport",
+              "Consolidated state sources · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "1437:98409",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "Vidra consolidated / Creation and history / Background viewport",
+              "Consolidated state sources · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "1437:98296",
+            "text": [
+              "Billing"
+            ],
+            "context": [
+              "Vidra consolidated / Creation and history / Page content / Legal",
+              "Consolidated state sources · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "1437:97958",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "Documentation / Background viewport",
+              "Consolidated state examples · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "1437:98435",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "Creation and history / Background viewport",
+              "Consolidated state examples · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "968:93930",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "N20 · Mobile Docs navigation",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "968:94279",
+            "text": [
+              "Billing"
+            ],
+            "context": [
+              "N31 · Mobile Terms of service",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "968:94398",
+            "text": [
+              "Trim and reorder the visual track. Captions and source audio stay attached to their clip. If a shorter clip leaves timing outside its bounds, repair it before exporting."
+            ],
+            "context": [
+              "N35 · Mobile Document table of contents",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          },
+          {
+            "id": "970:94649",
+            "text": [
+              "You can keep drafting offline when a local copy is available. Reconnecting does not automatically submit it. Conflicts preserve both copies, and an older save response cannot mark newer words saved."
+            ],
+            "context": [
+              "N62 · Mobile Recovery guide",
+              "Archive · consolidated prototype fixtures · 2026-10-13",
+              "Page 26 - Vidra public site and account"
+            ]
+          }
+        ],
+        "links": [],
+        "flows": []
+      },
+      {
+        "page": "1026:84247",
+        "total": 0,
+        "matches": [],
+        "links": [],
+        "flows": []
+      },
+      {
+        "page": "1048:84247",
+        "total": 0,
+        "matches": [],
+        "links": [],
+        "flows": []
+      },
+      {
+        "page": "1345:393334",
+        "total": 0,
+        "matches": [],
+        "links": [],
+        "flows": []
+      }
+    ],
+    "indexAndHyperlinkChecks": [
+      {
+        "page": "887:85295",
+        "indexEntries": [],
+        "hyperlinks": []
+      },
+      {
+        "page": "956:84247",
+        "indexEntries": [],
+        "hyperlinks": []
+      },
+      {
+        "page": "1026:84247",
+        "indexEntries": [],
+        "hyperlinks": []
+      },
+      {
+        "page": "1048:84247",
+        "indexEntries": [],
+        "hyperlinks": []
+      }
+    ],
+    "visualReview": [
+      "963:90512 history help: new history wording fits without overlap",
+      "976:95086 mobile account navigation: Billing gone, retained entries intact"
+    ],
+    "retainedScreenRoots": [
+      {
+        "page": "887:85295",
+        "expected": 228,
+        "missing": []
+      },
+      {
+        "page": "956:84247",
+        "expected": 312,
+        "missing": []
+      },
+      {
+        "page": "1026:84247",
+        "expected": 51,
+        "missing": []
+      },
+      {
+        "page": "1048:84247",
+        "expected": 114,
+        "missing": []
+      }
+    ],
+    "toolbar": {
+      "toolbar": "1379:84830",
+      "variants": [
+        {
+          "id": "1379:84650",
+          "name": "Size=Desktop",
+          "height": 40,
+          "instances": 344
+        },
+        {
+          "id": "1379:84760",
+          "name": "Size=Compact",
+          "height": 40,
+          "instances": 51
+        }
+      ],
+      "retiredFamilies": [
+        {
+          "id": "889:85142",
+          "absent": true
+        },
+        {
+          "id": "912:85889",
+          "absent": true
+        }
+      ]
+    },
+    "notes": "39 approved roots and 25 retired component definitions absent; two emptied families also absent. Six-page reaction/flow audit and four-page index/hyperlink audit passed. 705 retained screen roots remain. Existing screenshot and gallery files are historical pre-removal evidence."
+  },
+  "remainingPatternMatches": "Reviewed and retained: genuine unsaved-work safeguards, playback recovery, invalid edit-timing guidance, legal Billing section headings, and internal conflict-copy retention. None are draft-management, attachment repair, checkout, or the deleted screen paths.",
+  "documentation": "Current contracts supersede rejected presentation requirements. Active catalogs no longer contain deleted targets in active evidence; retiredReferences preserve provenance. Old audit/gallery/consolidation snapshots are historical and must not recreate deleted UI.",
+  "boundaries": {
+    "applicationCodeChanged": false,
+    "backendSafetyRemoved": false,
+    "ADRsChanged": false,
+    "deferred9AndRework6Applied": false
+  },
+  "summary": {
+    "deletedScreens": 39,
+    "retiredComponentDefinitions": 25,
+    "explicitDeletedNodes": 138,
+    "retryControlsRerouted": 2,
+    "retainedScreenRootsVerified": 705,
+    "retainedFullToolbarInstances": 395,
+    "activeCatalogReferencesRetired": 79
+  }
+}

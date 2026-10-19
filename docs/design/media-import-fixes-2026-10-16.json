@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-16",
+  "page": "08 · Media & import (1899:118749)",
+  "request": "Fix page 08 before implementation: one Media page layout, one import surface, picture/clip wording, no meta label lines, no hidden or oversized layers on X20, one grid size, and a real dropdown for the M08 project choice.",
+  "component": {
+    "Vidra Fresh / Import panel": {
+      "id": "889:85218",
+      "rebuiltFrom": "Vidra Fresh / Upload status, in place (set and kept variant ids unchanged, instances stay linked)",
+      "structure": "Same as Vidra Fresh / Export panel: 336x112, Header (Image 64x36 + Text: Title, optional Status), Actions; surface/raised, border/default, radius 16, space/16 padding, space/12 gap, Vidra Fresh / Floating, Interface=Raised. No heading or close button; it closes on outside click or Escape.",
+      "variants": {
+        "State=Uploading": "889:85211",
+        "State=Failed": "889:85214",
+        "State=Not supported": "889:85215",
+        "State=File needed": "889:85216"
+      },
+      "copy": {
+        "Uploading": "Uploading · 42% + progress bar / Cancel upload (Secondary)",
+        "Failed": "Upload interrupted (status/danger) / Retry upload (Primary)",
+        "Not supported": "This file isn't supported (status/danger) / Choose another file (Primary)",
+        "File needed": "Choose <file> again / Choose file (Primary)"
+      },
+      "placement": "6px from the control that started the import: under Import media with right edges aligned (library); where the media picker opens above the composer, left edges aligned (conversation); under the Project media Field bar (editor). Mobile: inside the Sheet without its shadow, as B19 holds Export panel.",
+      "reviewBoard": "914:86045 renamed Review / Import panel"
+    }
+  },
+  "screens": {
+    "M01": "Import media opens M03.",
+    "M03": "Renamed 'M03 · Upload media to the library'. 424x844 side sheet replaced by Import panel State=Uploading at 1064,134; Cancel upload -> M01.",
+    "M04": "Side sheet that covered 416px of the Media viewer replaced by Import panel State=Uploading at 80,486 (media picker position, 6px above the composer).",
+    "M05": "Side sheet replaced by Import panel State=Failed at 1064,134; Retry upload -> M03.",
+    "M08": "Side sheet replaced by a 336px Copy to project popover 6px under the Desk card's More (408,429): Title, Field bar Segments=1 / Segment Type=Select 'Evening campaign' (was a Secondary button), Copy picture (was Copy image) -> M01. The preview and 'Desk · v2' line went because the card it opens from shows both.",
+    "M03/M05/M08 grids": "4 x 304 like M01 (were 3 x 272 beside the sheet); a popover floats over the grid instead of narrowing it.",
+    "X10": "Upload -> X17.",
+    "X11": "Rebuilt on M01's layout: 1440x900 (was 960), Rail Active=Media (was Create), 20px Media title at 112,96, Import media 144x32 at 1256,96 -> M03, no search or filters, centred 'No media yet' / 'Import a file or create your first picture or clip.' / Create something (Secondary) -> New request. Matches mobile N134.",
+    "X13": "Rebuilt on M01's layout: Find media row with 'morning reference', centred 'No matching media' / 'Try another search or clear the current one.' / Clear search (Secondary) -> M01.",
+    "X17": "Import panel State=Uploading under the Project media Field bar (80,118); Cancel upload -> X10; after 2s -> X19.",
+    "X19": "Renamed 'X19 · First file ready in project media'; the question popover is gone and the panel's Stadium tile -> X20.",
+    "X20": "Video preview rebuilt in its slot: picture fitted to the 924x520 frame (was a 1105x620 layer clipped by it) and the hidden 'Make room for evening.' caption layer removed.",
+    "X21": "Import panel State=Failed (80,118); Retry upload -> X17.",
+    "X22": "Import panel State=File needed 'Choose stadium.mp4 again' (80,118); Choose file -> X17.",
+    "B15": "Sheet holds Import panel State=Uploading without shadow, 390x208 pinned to the bottom like B19; the 342x192 picture went; Cancel upload -> B04."
+  },
+  "deletedScreens": [
+    "999:97087 X16",
+    "999:97393 X18",
+    "999:98154 X24",
+    "936:111512 B14"
+  ],
+  "metaLinesRemoved": [
+    "Destination: Evening campaign (M03, M04, M05)",
+    "stadium.mp4 · New project (X16-X24)",
+    "Desk · v2 (M08)"
+  ],
+  "wording": {
+    "Copy image": "Copy picture (M08)",
+    "Add images or clips to start your video": "Add pictures or clips to start your video (X10, X17, X19, X21, X22, E02, E22; N139 keeps its full stop)",
+    "Import your own media or create an image or clip.": "Import a file or create your first picture or clip. (X11, N134)"
+  },
+  "layout": "First import section repacked (pad 120, gutter 80, row gap 200): X10, X11, X13, X17, X19, X20, X21 then X22; section 10800x2240. Mobile section repacked after B14.",
+  "verification": "Re-scan of all 16 pages: no links or index rows point at deleted screens, and none of the replaced strings remain."
+}

@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-15",
+  "status": "reverted",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "scope": "Mark archived Figma content so it is not mistaken for current design or implemented: the same-page prototype-fixture archives on Pages 25-28 and the standalone archive page. Marked in place; nothing moved or deleted.",
+  "whyInPlace": "Figma prototype links cannot cross pages, and live screens still link into the archived fixtures (Page 25: 63, Page 26: 111, Page 28: 293; Page 27: 0). Moving live screens or archives to separate pages would break those 467 links, which the 2026-10-13 consolidation kept on purpose.",
+  "sections": {
+    "rename": {
+      "prev": "Archive · consolidated prototype fixtures · 2026-10-13",
+      "next": "Archive — do not implement · consolidated prototype fixtures · 2026-10-13",
+      "note": "Names still start with 'Archive', so /^Archive/ filters in earlier audit scripts and records keep matching."
+    },
+    "fill": {
+      "prev": "#ffffff",
+      "next": "#fde2e1 (light red; editor canvas only, not part of any screen)"
+    },
+    "ids": {
+      "Page 25 (887:85295)": "1450:131594",
+      "Page 26 (956:84247)": "1449:99261",
+      "Page 27 (1026:84247)": "1450:157257",
+      "Page 28 (1048:84247)": "1450:196187"
+    }
+  },
+  "frames": {
+    "rule": "Every frame directly inside an archive section was renamed to 'Archived · ' + its previous name; the previous name is the current name without that prefix. Frame IDs, contents and prototype reactions are unchanged.",
+    "counts": {
+      "Page 25": 194,
+      "Page 26": 268,
+      "Page 27": 48,
+      "Page 28": 91,
+      "total": 601
+    }
+  },
+  "page": {
+    "id": "753:12432",
+    "prev": "Archive - Exhaustive state mapping",
+    "next": "Archive — do not implement · Exhaustive state mapping",
+    "note": "Its own frames and sections were not renamed or tinted; the page name covers them."
+  },
+  "verification": {
+    "prefixed": "601 of 601 archived frames; 0 live frames carry the prefix",
+    "linksIntoArchives": "unchanged: Page 25 63, Page 26 111, Page 27 0, Page 28 293",
+    "render": "Page 27 archive section rendered with the red tint between frames"
+  },
+  "reverted": {
+    "date": "2026-10-15",
+    "reason": "The user disputed the archiving itself: many archived screens are among the best designs, and the 2026-10-13 consolidation mapped several of them loosely (for example B01 Mobile new request to Page 28 S35). A 'do not implement' label would have steered implementation away from them, so the marking was undone pending a restoration review.",
+    "restored": {
+      "sections": "original name 'Archive · consolidated prototype fixtures · 2026-10-13' and white fill (#ffffff) on 1450:131594, 1449:99261, 1450:157257, 1450:196187",
+      "frames": "'Archived · ' prefix removed from all 601 frames (194, 268, 48, 91); no prefixed names remain on Pages 25-28",
+      "page": "753:12432 back to 'Archive - Exhaustive state mapping'"
+    },
+    "unchanged": "Frame IDs, contents, positions and prototype reactions; nothing was moved while marked or reverted",
+    "followUp": "A separate session reviews archived screens against their mapped live screens and proposes which to restore"
+  }
+}

@@ -165,21 +165,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88814"
     },
     {
-      "key": "A02",
-      "title": "Sign in with filled fields",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "ready",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "",
-      "nodeId": "960:88852",
-      "name": "A02 · Sign in with filled fields",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88852"
-    },
-    {
       "key": "A03",
       "title": "Sign in validation",
       "kind": "auth",
@@ -225,126 +210,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88982"
     },
     {
-      "key": "A06",
-      "title": "Google sign-in in progress",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "google_busy",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "Complete sign-in in the Google window.",
-      "nodeId": "960:89023",
-      "name": "A06 · Google sign-in in progress",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89023"
-    },
-    {
-      "key": "A07",
-      "title": "Google sign-in cancelled",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "Sign-in was cancelled. Your draft is still here.",
-      "nodeId": "960:89071",
-      "name": "A07 · Google sign-in cancelled",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89071"
-    },
-    {
-      "key": "A08",
-      "title": "Google popup blocked",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "The Google window was blocked. Allow popups or use email.",
-      "nodeId": "960:89116",
-      "name": "A08 · Google popup blocked",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89116"
-    },
-    {
-      "key": "A09",
-      "title": "Embedded browser cannot use Google",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "Use email here, or open Vidra in your browser to continue with Google.",
-      "nodeId": "960:89162",
-      "name": "A09 · Embedded browser cannot use Google",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89162"
-    },
-    {
-      "key": "A10",
-      "title": "Sign-in provider unavailable",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "Google sign-in is unavailable right now. Use email or try again later.",
-      "nodeId": "960:89208",
-      "name": "A10 · Sign-in provider unavailable",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89208"
-    },
-    {
-      "key": "A11",
-      "title": "Sign-in rate limited",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "blocked",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "Too many attempts. Wait a moment before trying again.",
-      "nodeId": "960:89254",
-      "name": "A11 · Sign-in rate limited",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89254"
-    },
-    {
-      "key": "A12",
-      "title": "Sign-in offline",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "blocked",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "You are offline. Reconnect before signing in.",
-      "nodeId": "960:89300",
-      "name": "A12 · Sign-in offline",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89300"
-    },
-    {
-      "key": "A13",
-      "title": "Account disabled",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "blocked",
-      "status": "designed-awaiting-review",
-      "flow": "signin",
-      "message": "This account is disabled. Contact support for help.",
-      "nodeId": "960:89346",
-      "name": "A13 · Account disabled",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89346"
-    },
-    {
       "key": "A14",
       "title": "Create an account",
       "kind": "auth",
@@ -360,96 +225,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89392"
     },
     {
-      "key": "A15",
-      "title": "Account details ready",
-      "kind": "auth",
-      "route": "/signup",
-      "state": "ready",
-      "status": "designed-awaiting-review",
-      "flow": "signup",
-      "message": "",
-      "nodeId": "960:89435",
-      "name": "A15 · Account details ready",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89435"
-    },
-    {
-      "key": "A16",
-      "title": "Passwords do not match",
-      "kind": "auth",
-      "route": "/signup",
-      "state": "invalid",
-      "status": "designed-awaiting-review",
-      "flow": "signup",
-      "message": "The passwords do not match.",
-      "nodeId": "960:89478",
-      "name": "A16 · Passwords do not match",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89478"
-    },
-    {
-      "key": "A17",
-      "title": "Password is too short",
-      "kind": "auth",
-      "route": "/signup",
-      "state": "invalid",
-      "status": "designed-awaiting-review",
-      "flow": "signup",
-      "message": "Use at least 6 characters.",
-      "nodeId": "960:89531",
-      "name": "A17 · Password is too short",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89531"
-    },
-    {
-      "key": "A18",
-      "title": "Email already in use",
-      "kind": "auth",
-      "route": "/signup",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "signup",
-      "message": "This email already has an account. Sign in or reset your password.",
-      "nodeId": "960:89584",
-      "name": "A18 · Email already in use",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89584"
-    },
-    {
-      "key": "A19",
-      "title": "Creating an account",
-      "kind": "auth",
-      "route": "/signup",
-      "state": "busy",
-      "status": "designed-awaiting-review",
-      "flow": "signup",
-      "message": "",
-      "nodeId": "960:89634",
-      "name": "A19 · Creating an account",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89634"
-    },
-    {
-      "key": "A20",
-      "title": "Account creation failed",
-      "kind": "auth",
-      "route": "/signup",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "signup",
-      "message": "Your account could not be created. Check your connection and try again.",
-      "nodeId": "960:89680",
-      "name": "A20 · Account creation failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89680"
-    },
-    {
       "key": "A21",
       "title": "Check your email",
       "kind": "auth",
@@ -463,21 +238,6 @@
       "width": 1440,
       "height": 960,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89442"
-    },
-    {
-      "key": "A22",
-      "title": "Sending verification email",
-      "kind": "auth",
-      "route": "/email-verification",
-      "state": "sending",
-      "status": "designed-awaiting-review",
-      "flow": "verify",
-      "message": "",
-      "nodeId": "962:89466",
-      "name": "A22 · Sending verification email",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89466"
     },
     {
       "key": "A23",
@@ -540,66 +300,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89550"
     },
     {
-      "key": "A27",
-      "title": "Verification link invalid or missing",
-      "kind": "auth",
-      "route": "/email-verification",
-      "state": "invalid",
-      "status": "designed-awaiting-review",
-      "flow": "verify",
-      "message": "",
-      "nodeId": "962:89574",
-      "name": "A27 · Verification link invalid or missing",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89574"
-    },
-    {
-      "key": "A28",
-      "title": "Verification failed",
-      "kind": "auth",
-      "route": "/email-verification",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "verify",
-      "message": "",
-      "nodeId": "962:89598",
-      "name": "A28 · Verification failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89598"
-    },
-    {
-      "key": "A29",
-      "title": "Verification belongs to another account",
-      "kind": "auth",
-      "route": "/email-verification",
-      "state": "different_account",
-      "status": "designed-awaiting-review",
-      "flow": "verify",
-      "message": "",
-      "nodeId": "962:89622",
-      "name": "A29 · Verification belongs to another account",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89622"
-    },
-    {
-      "key": "A30",
-      "title": "Verified but signed out",
-      "kind": "auth",
-      "route": "/email-verification",
-      "state": "signed_out",
-      "status": "designed-awaiting-review",
-      "flow": "verify",
-      "message": "",
-      "nodeId": "962:89646",
-      "name": "A30 · Verified but signed out",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89646"
-    },
-    {
       "key": "A31",
       "title": "Forgot password",
       "kind": "auth",
@@ -613,36 +313,6 @@
       "width": 1440,
       "height": 960,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89666"
-    },
-    {
-      "key": "A32",
-      "title": "Reset email ready to send",
-      "kind": "auth",
-      "route": "/forgot-password",
-      "state": "ready",
-      "status": "designed-awaiting-review",
-      "flow": "forgot",
-      "message": "",
-      "nodeId": "962:89690",
-      "name": "A32 · Reset email ready to send",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89690"
-    },
-    {
-      "key": "A33",
-      "title": "Sending reset email",
-      "kind": "auth",
-      "route": "/forgot-password",
-      "state": "busy",
-      "status": "designed-awaiting-review",
-      "flow": "forgot",
-      "message": "",
-      "nodeId": "962:89714",
-      "name": "A33 · Sending reset email",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89714"
     },
     {
       "key": "A34",
@@ -660,36 +330,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89741"
     },
     {
-      "key": "A35",
-      "title": "Reset email could not be sent",
-      "kind": "auth",
-      "route": "/forgot-password",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "forgot",
-      "message": "We could not send the email. Check your connection and try again.",
-      "nodeId": "962:89763",
-      "name": "A35 · Reset email could not be sent",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89763"
-    },
-    {
-      "key": "A36",
-      "title": "Checking a password reset link",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "checking",
-      "status": "designed-awaiting-review",
-      "flow": "reset",
-      "message": "",
-      "nodeId": "962:89794",
-      "name": "A36 · Checking a password reset link",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89794"
-    },
-    {
       "key": "A37",
       "title": "Choose a new password",
       "kind": "auth",
@@ -703,51 +343,6 @@
       "width": 1440,
       "height": 960,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89812"
-    },
-    {
-      "key": "A38",
-      "title": "Reset passwords do not match",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "invalid",
-      "status": "designed-awaiting-review",
-      "flow": "reset",
-      "message": "The passwords do not match.",
-      "nodeId": "962:89844",
-      "name": "A38 · Reset passwords do not match",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89844"
-    },
-    {
-      "key": "A39",
-      "title": "Reset password is too short",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "invalid",
-      "status": "designed-awaiting-review",
-      "flow": "reset",
-      "message": "Use at least 6 characters.",
-      "nodeId": "962:89886",
-      "name": "A39 · Reset password is too short",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89886"
-    },
-    {
-      "key": "A40",
-      "title": "Saving the new password",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "busy",
-      "status": "designed-awaiting-review",
-      "flow": "reset",
-      "message": "",
-      "nodeId": "962:89928",
-      "name": "A40 · Saving the new password",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89928"
     },
     {
       "key": "A41",
@@ -780,126 +375,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89983"
     },
     {
-      "key": "A43",
-      "title": "Password reset link invalid or missing",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "invalid_link",
-      "status": "designed-awaiting-review",
-      "flow": "reset",
-      "message": "",
-      "nodeId": "962:90005",
-      "name": "A43 · Password reset link invalid or missing",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90005"
-    },
-    {
-      "key": "A44",
-      "title": "Password reset failed",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "flow": "reset",
-      "message": "We could not reset your password. Try again with this link.",
-      "nodeId": "962:90027",
-      "name": "A44 · Password reset failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90027"
-    },
-    {
-      "key": "A45",
-      "title": "Returning to a saved destination",
-      "kind": "auth",
-      "route": "/signin?redirect=<same-origin-path>",
-      "state": "checking",
-      "status": "designed-awaiting-review",
-      "flow": "return",
-      "message": "",
-      "nodeId": "962:90066",
-      "name": "A45 · Returning to a saved destination",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90066"
-    },
-    {
-      "key": "A46",
-      "title": "Keep a guest draft after sign-in",
-      "kind": "auth",
-      "route": "/signin?redirect=<same-origin-path>",
-      "state": "guest_draft",
-      "status": "designed-awaiting-review",
-      "flow": "return",
-      "message": "",
-      "nodeId": "962:90081",
-      "name": "A46 · Keep a guest draft after sign-in",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90081"
-    },
-    {
-      "key": "A47",
-      "title": "Different account cannot take over a draft",
-      "kind": "auth",
-      "route": "/signin?redirect=<same-origin-path>",
-      "state": "different_account",
-      "status": "designed-awaiting-review",
-      "flow": "return",
-      "message": "",
-      "nodeId": "962:90103",
-      "name": "A47 · Different account cannot take over a draft",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90103"
-    },
-    {
-      "key": "A48",
-      "title": "Saved destination unavailable",
-      "kind": "auth",
-      "route": "/signin?redirect=<same-origin-path>",
-      "state": "unavailable",
-      "status": "designed-awaiting-review",
-      "flow": "return",
-      "message": "",
-      "nodeId": "962:90122",
-      "name": "A48 · Saved destination unavailable",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90122"
-    },
-    {
-      "key": "A49",
-      "title": "Sign-out failed",
-      "kind": "auth",
-      "route": "/signin?redirect=<same-origin-path>",
-      "state": "signout_failed",
-      "status": "designed-awaiting-review",
-      "flow": "return",
-      "message": "",
-      "nodeId": "962:90139",
-      "name": "A49 · Sign-out failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90139"
-    },
-    {
-      "key": "A50",
-      "title": "Signed out",
-      "kind": "auth",
-      "route": "/signin?redirect=<same-origin-path>",
-      "state": "signed_out",
-      "status": "designed-awaiting-review",
-      "flow": "return",
-      "message": "",
-      "nodeId": "962:90156",
-      "name": "A50 · Signed out",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90156"
-    },
-    {
       "key": "H01",
       "title": "Documentation home",
       "kind": "docs",
@@ -909,7 +384,7 @@
       "nodeId": "963:91185",
       "name": "H01 · Documentation home",
       "width": 1440,
-      "height": 1562,
+      "height": 1480,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185"
     },
     {
@@ -922,7 +397,7 @@
       "nodeId": "963:89912",
       "name": "H02 · Get started",
       "width": 1440,
-      "height": 1604,
+      "height": 1522,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-89912"
     },
     {
@@ -935,7 +410,7 @@
       "nodeId": "963:90023",
       "name": "H03 · Create and edit images",
       "width": 1440,
-      "height": 1578,
+      "height": 1496,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90023"
     },
     {
@@ -948,7 +423,7 @@
       "nodeId": "963:90134",
       "name": "H04 · Generate a video clip",
       "width": 1440,
-      "height": 1656,
+      "height": 1574,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90134"
     },
     {
@@ -961,7 +436,7 @@
       "nodeId": "963:90245",
       "name": "H05 · Assemble and export a video",
       "width": 1440,
-      "height": 1630,
+      "height": 1548,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245"
     },
     {
@@ -974,7 +449,7 @@
       "nodeId": "963:90401",
       "name": "H06 · Import and organize media",
       "width": 1440,
-      "height": 1604,
+      "height": 1522,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90401"
     },
     {
@@ -987,7 +462,7 @@
       "nodeId": "963:90512",
       "name": "H07 · Conversations, drafts and versions",
       "width": 1440,
-      "height": 1630,
+      "height": 1548,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512"
     },
     {
@@ -1000,7 +475,7 @@
       "nodeId": "963:90630",
       "name": "H08 · Draw with Sketch",
       "width": 1440,
-      "height": 1604,
+      "height": 1522,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90630"
     },
     {
@@ -1013,7 +488,7 @@
       "nodeId": "963:90741",
       "name": "H09 · Choose models and settings",
       "width": 1440,
-      "height": 1630,
+      "height": 1548,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90741"
     },
     {
@@ -1026,7 +501,7 @@
       "nodeId": "963:90852",
       "name": "H10 · Share and download your work",
       "width": 1440,
-      "height": 1604,
+      "height": 1522,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90852"
     },
     {
@@ -1039,7 +514,7 @@
       "nodeId": "963:90963",
       "name": "H11 · Recover interrupted work",
       "width": 1440,
-      "height": 1656,
+      "height": 1574,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90963"
     },
     {
@@ -1052,7 +527,7 @@
       "nodeId": "963:91074",
       "name": "H12 · Understand your testing allowance",
       "width": 1440,
-      "height": 1578,
+      "height": 1496,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91074"
     },
     {
@@ -1065,7 +540,7 @@
       "nodeId": "963:91320",
       "name": "H13 · Search documentation",
       "width": 1440,
-      "height": 1562,
+      "height": 1480,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91320"
     },
     {
@@ -1078,7 +553,7 @@
       "nodeId": "963:91471",
       "name": "H14 · Documentation search results",
       "width": 1440,
-      "height": 1562,
+      "height": 1480,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91471"
     },
     {
@@ -1091,7 +566,7 @@
       "nodeId": "963:91630",
       "name": "H15 · Documentation search has no matches",
       "width": 1440,
-      "height": 1562,
+      "height": 1480,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91630"
     },
     {
@@ -1104,7 +579,7 @@
       "nodeId": "963:91783",
       "name": "H16 · Documentation search unavailable",
       "width": 1440,
-      "height": 1562,
+      "height": 1480,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91783"
     },
     {
@@ -1160,19 +635,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91459"
     },
     {
-      "key": "K03",
-      "title": "Account loading",
-      "kind": "account",
-      "route": "/account",
-      "state": "loading",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:91559",
-      "name": "K03 · Account loading",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91559"
-    },
-    {
       "key": "K04",
       "title": "Edit display name",
       "kind": "account",
@@ -1184,45 +646,6 @@
       "width": 1440,
       "height": 960,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91646"
-    },
-    {
-      "key": "K05",
-      "title": "Saving profile",
-      "kind": "account",
-      "route": "/account",
-      "state": "saving",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:91746",
-      "name": "K05 · Saving profile",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91746"
-    },
-    {
-      "key": "K06",
-      "title": "Profile saved",
-      "kind": "account",
-      "route": "/account",
-      "state": "saved",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:91849",
-      "name": "K06 · Profile saved",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91849"
-    },
-    {
-      "key": "K07",
-      "title": "Profile update failed",
-      "kind": "account",
-      "route": "/account",
-      "state": "error",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:91948",
-      "name": "K07 · Profile update failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91948"
     },
     {
       "key": "K08",
@@ -1316,19 +739,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92635"
     },
     {
-      "key": "K15",
-      "title": "Request receipt details",
-      "kind": "account",
-      "route": "/account",
-      "state": "receipt",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:92719",
-      "name": "K15 · Request receipt details",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92719"
-    },
-    {
       "key": "K16",
       "title": "No usage history yet",
       "kind": "account",
@@ -1366,45 +776,6 @@
       "width": 1440,
       "height": 960,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93011"
-    },
-    {
-      "key": "K19",
-      "title": "Signing out clears private content",
-      "kind": "account",
-      "route": "/account",
-      "state": "signout_busy",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:93118",
-      "name": "K19 · Signing out clears private content",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93118"
-    },
-    {
-      "key": "K20",
-      "title": "Sign-out could not finish",
-      "kind": "account",
-      "route": "/account",
-      "state": "signout_error",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:93123",
-      "name": "K20 · Sign-out could not finish",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93123"
-    },
-    {
-      "key": "K21",
-      "title": "Billing during free testing",
-      "kind": "account",
-      "route": "/account",
-      "state": "billing",
-      "status": "designed-awaiting-review",
-      "nodeId": "964:93130",
-      "name": "K21 · Billing during free testing",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93130"
     },
     {
       "key": "S01",
@@ -1781,20 +1152,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94001"
     },
     {
-      "key": "N11",
-      "title": "Mobile Sign up validation",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A16",
-      "status": "designed-awaiting-review",
-      "sourceScreen": "A16",
-      "nodeId": "966:94037",
-      "name": "N11 · Mobile Sign up validation",
-      "width": 390,
-      "height": 853,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94037"
-    },
-    {
       "key": "N12",
       "title": "Mobile Verify email",
       "kind": "mobile",
@@ -1991,20 +1348,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94079"
     },
     {
-      "key": "N26",
-      "title": "Mobile Billing",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "K21",
-      "status": "designed-awaiting-review",
-      "sourceScreen": "K21",
-      "nodeId": "968:94104",
-      "name": "N26 · Mobile Billing",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94104"
-    },
-    {
       "key": "N27",
       "title": "Mobile Data and privacy",
       "kind": "mobile",
@@ -2145,125 +1488,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94433"
     },
     {
-      "key": "A51",
-      "title": "Account created but verification email failed",
-      "kind": "auth",
-      "route": "/email-verification",
-      "state": "delivery_failed",
-      "flow": "verify",
-      "message": "Your account is ready, but the verification email could not be sent.",
-      "status": "designed-awaiting-review",
-      "nodeId": "962:90173",
-      "name": "A51 · Account created but verification email failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90173"
-    },
-    {
-      "key": "A52",
-      "title": "Unexpected sign-in failure",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "error",
-      "flow": "signin",
-      "message": "We could not sign you in. Try again, or contact support if this continues.",
-      "status": "designed-awaiting-review",
-      "nodeId": "962:90197",
-      "name": "A52 · Unexpected sign-in failure",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90197"
-    },
-    {
-      "key": "A53",
-      "title": "Email sign-in unavailable",
-      "kind": "auth",
-      "route": "/signin",
-      "state": "email_unavailable",
-      "flow": "signin",
-      "message": "Email sign-in is unavailable right now. Continue with Google or try again later.",
-      "status": "designed-awaiting-review",
-      "nodeId": "962:90242",
-      "name": "A53 · Email sign-in unavailable",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90242"
-    },
-    {
-      "key": "A54",
-      "title": "Reset email rate limited",
-      "kind": "auth",
-      "route": "/forgot-password",
-      "state": "blocked",
-      "flow": "forgot",
-      "message": "Too many requests. Wait before requesting another email.",
-      "status": "designed-awaiting-review",
-      "nodeId": "962:90288",
-      "name": "A54 · Reset email rate limited",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90288"
-    },
-    {
-      "key": "A55",
-      "title": "Verification resend rate limited",
-      "kind": "auth",
-      "route": "/email-verification",
-      "state": "rate_limited",
-      "flow": "verify",
-      "message": "",
-      "status": "designed-awaiting-review",
-      "nodeId": "962:90320",
-      "name": "A55 · Verification resend rate limited",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90320"
-    },
-    {
-      "key": "A56",
-      "title": "New password field required",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "empty_error",
-      "flow": "reset",
-      "message": "Enter a new password.",
-      "status": "designed-awaiting-review",
-      "nodeId": "962:90344",
-      "name": "A56 · New password field required",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90344"
-    },
-    {
-      "key": "A57",
-      "title": "New password ready to save",
-      "kind": "auth",
-      "route": "/reset-password",
-      "state": "filled",
-      "flow": "reset",
-      "message": "",
-      "status": "designed-awaiting-review",
-      "nodeId": "962:90386",
-      "name": "A57 · New password ready to save",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90386"
-    },
-    {
-      "key": "N37",
-      "title": "Mobile new password ready to save",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A57",
-      "sourceScreen": "A57",
-      "status": "designed-awaiting-review",
-      "nodeId": "968:94470",
-      "name": "N37 · Mobile new password ready to save",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94470"
-    },
-    {
       "key": "H19",
       "title": "Improve words without generating media",
       "kind": "article",
@@ -2273,7 +1497,7 @@
       "nodeId": "971:94418",
       "name": "H19 · Improve words without generating media",
       "width": 1440,
-      "height": 1626,
+      "height": 1544,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418"
     },
     {
@@ -2286,21 +1510,8 @@
       "nodeId": "971:94529",
       "name": "H20 · Select an area to edit",
       "width": 1440,
-      "height": 1578,
+      "height": 1496,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529"
-    },
-    {
-      "key": "X09",
-      "title": "An adopted guest draft stays unsubmitted",
-      "kind": "system",
-      "route": "/app",
-      "state": "guest_adopted",
-      "status": "designed-awaiting-review",
-      "nodeId": "971:94640",
-      "name": "X09 · An adopted guest draft stays unsubmitted",
-      "width": 1440,
-      "height": 900,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94640"
     },
     {
       "key": "T01",
@@ -2357,62 +1568,6 @@
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94083"
     },
     {
-      "key": "N40",
-      "title": "Mobile Signed out",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A50",
-      "sourceScreen": "A50",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94154",
-      "name": "N40 · Mobile Signed out",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94154"
-    },
-    {
-      "key": "N41",
-      "title": "Mobile Signing out",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "K19",
-      "sourceScreen": "K19",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94174",
-      "name": "N41 · Mobile Signing out",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94174"
-    },
-    {
-      "key": "N42",
-      "title": "Mobile Sign-out failed",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "K20",
-      "sourceScreen": "K20",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94186",
-      "name": "N42 · Mobile Sign-out failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94186"
-    },
-    {
-      "key": "N43",
-      "title": "Mobile Sign in ready",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A02",
-      "sourceScreen": "A02",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94200",
-      "name": "N43 · Mobile Sign in ready",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94200"
-    },
-    {
       "key": "N44",
       "title": "Mobile Signing in",
       "kind": "mobile",
@@ -2425,76 +1580,6 @@
       "width": 390,
       "height": 844,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94231"
-    },
-    {
-      "key": "N45",
-      "title": "Mobile Reset email ready",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A32",
-      "sourceScreen": "A32",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94265",
-      "name": "N45 · Mobile Reset email ready",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94265"
-    },
-    {
-      "key": "N46",
-      "title": "Mobile Reset email sending",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A33",
-      "sourceScreen": "A33",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94285",
-      "name": "N46 · Mobile Reset email sending",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94285"
-    },
-    {
-      "key": "N47",
-      "title": "Mobile Google sign-in waiting",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A06",
-      "sourceScreen": "A06",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94308",
-      "name": "N47 · Mobile Google sign-in waiting",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94308"
-    },
-    {
-      "key": "N48",
-      "title": "Mobile Sign up ready",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A15",
-      "sourceScreen": "A15",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94344",
-      "name": "N48 · Mobile Sign up ready",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94344"
-    },
-    {
-      "key": "N49",
-      "title": "Mobile Creating an account",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A19",
-      "sourceScreen": "A19",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94380",
-      "name": "N49 · Mobile Creating an account",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94380"
     },
     {
       "key": "N50",
@@ -2523,34 +1608,6 @@
       "width": 390,
       "height": 844,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94437"
-    },
-    {
-      "key": "N52",
-      "title": "Mobile Password saving",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A40",
-      "sourceScreen": "A40",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94457",
-      "name": "N52 · Mobile Password saving",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94457"
-    },
-    {
-      "key": "N53",
-      "title": "Mobile Google popup blocked",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "A08",
-      "sourceScreen": "A08",
-      "status": "designed-awaiting-review",
-      "nodeId": "969:94488",
-      "name": "N53 · Mobile Google popup blocked",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94488"
     },
     {
       "key": "N54",
@@ -2743,7 +1800,7 @@
       "nodeId": "971:94945",
       "name": "X11 · First project media library",
       "width": 1440,
-      "height": 960,
+      "height": 900,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94945"
     },
     {
@@ -2769,7 +1826,7 @@
       "nodeId": "971:95103",
       "name": "X13 · Media search has no matches",
       "width": 1440,
-      "height": 960,
+      "height": 900,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95103"
     },
     {
@@ -2892,9 +1949,9 @@
   "indexId": "976:95137",
   "indexUrl": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=976-95137",
   "summary": {
-    "screens": 207,
-    "desktop": 138,
-    "mobile": 69,
+    "screens": 200,
+    "desktop": 133,
+    "mobile": 67,
     "workspaceScreensElsewhere": 209,
     "sharedComponentFamilies": 96,
     "iconMasters": 55,
@@ -2940,56 +1997,6 @@
   ],
   "additionalScreens": [
     {
-      "key": "A58",
-      "title": "Email is still unverified",
-      "nodeId": "990:95299",
-      "name": "A58 · Email is still unverified",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95299",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "A59",
-      "title": "Refresh verification status",
-      "nodeId": "990:95323",
-      "name": "A59 · Refresh verification status",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95323",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "A60",
-      "title": "Verification refresh failed",
-      "nodeId": "990:95339",
-      "name": "A60 · Verification refresh failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95339",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "A61",
-      "title": "Reset link already used",
-      "nodeId": "990:95361",
-      "name": "A61 · Reset link already used",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95361",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "A62",
-      "title": "Wrong email action",
-      "nodeId": "990:95383",
-      "name": "A62 · Wrong email action",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95383",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "K22",
       "title": "Display name validation",
       "nodeId": "990:95405",
@@ -2997,16 +2004,6 @@
       "width": 1440,
       "height": 960,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95405",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "K23",
-      "title": "Leave an unfinished profile edit",
-      "nodeId": "990:95491",
-      "name": "K23 · Leave an unfinished profile edit",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95491",
       "status": "designed-awaiting-review"
     },
     {
@@ -3030,16 +2027,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "K26",
-      "title": "Request verification email",
-      "nodeId": "990:95757",
-      "name": "K26 · Request verification email",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95757",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "K27",
       "title": "Verification resend cooldown",
       "nodeId": "990:95844",
@@ -3047,26 +2034,6 @@
       "width": 1440,
       "height": 960,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95844",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "K28",
-      "title": "Verification resend failed",
-      "nodeId": "990:95929",
-      "name": "K28 · Verification resend failed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-95929",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "K29",
-      "title": "Account could not load",
-      "nodeId": "990:96014",
-      "name": "K29 · Account could not load",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=990-96014",
       "status": "designed-awaiting-review"
     },
     {
@@ -3080,106 +2047,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N71",
-      "title": "Mobile Google sign-in cancelled",
-      "nodeId": "991:95966",
-      "name": "N71 · Mobile Google sign-in cancelled",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-95966",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N72",
-      "title": "Mobile Embedded browser cannot use Google",
-      "nodeId": "991:95999",
-      "name": "N72 · Mobile Embedded browser cannot use Google",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-95999",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N73",
-      "title": "Mobile Sign-in provider unavailable",
-      "nodeId": "991:96032",
-      "name": "N73 · Mobile Sign-in provider unavailable",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96032",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N74",
-      "title": "Mobile Sign-in rate limited",
-      "nodeId": "991:96065",
-      "name": "N74 · Mobile Sign-in rate limited",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96065",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N75",
-      "title": "Mobile Sign-in offline",
-      "nodeId": "991:96098",
-      "name": "N75 · Mobile Sign-in offline",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96098",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N76",
-      "title": "Mobile Account disabled",
-      "nodeId": "991:96131",
-      "name": "N76 · Mobile Account disabled",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96131",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N77",
-      "title": "Mobile Password is too short",
-      "nodeId": "991:96164",
-      "name": "N77 · Mobile Password is too short",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96164",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N78",
-      "title": "Mobile Email already in use",
-      "nodeId": "991:96201",
-      "name": "N78 · Mobile Email already in use",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96201",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N79",
-      "title": "Mobile Account creation failed",
-      "nodeId": "991:96238",
-      "name": "N79 · Mobile Account creation failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96238",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N80",
-      "title": "Mobile Sending verification email",
-      "nodeId": "991:96275",
-      "name": "N80 · Mobile Sending verification email",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96275",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N81",
       "title": "Mobile Verification email resent",
       "nodeId": "991:96297",
@@ -3187,86 +2054,6 @@
       "width": 390,
       "height": 844,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96297",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N82",
-      "title": "Mobile Verification link invalid or missing",
-      "nodeId": "991:96317",
-      "name": "N82 · Mobile Verification link invalid or missing",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96317",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N83",
-      "title": "Mobile Verification failed",
-      "nodeId": "991:96339",
-      "name": "N83 · Mobile Verification failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96339",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N84",
-      "title": "Mobile Verification belongs to another account",
-      "nodeId": "991:96361",
-      "name": "N84 · Mobile Verification belongs to another account",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96361",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N85",
-      "title": "Mobile Verified but signed out",
-      "nodeId": "991:96383",
-      "name": "N85 · Mobile Verified but signed out",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96383",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N86",
-      "title": "Mobile Reset email could not be sent",
-      "nodeId": "991:96401",
-      "name": "N86 · Mobile Reset email could not be sent",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96401",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N87",
-      "title": "Mobile Checking a password reset link",
-      "nodeId": "991:96423",
-      "name": "N87 · Mobile Checking a password reset link",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96423",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N88",
-      "title": "Mobile Reset passwords do not match",
-      "nodeId": "991:96439",
-      "name": "N88 · Mobile Reset passwords do not match",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96439",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N89",
-      "title": "Mobile Reset password is too short",
-      "nodeId": "991:96469",
-      "name": "N89 · Mobile Reset password is too short",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96469",
       "status": "designed-awaiting-review"
     },
     {
@@ -3280,76 +2067,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N91",
-      "title": "Mobile Password reset link invalid or missing",
-      "nodeId": "991:96519",
-      "name": "N91 · Mobile Password reset link invalid or missing",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96519",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N92",
-      "title": "Mobile Password reset failed",
-      "nodeId": "991:96539",
-      "name": "N92 · Mobile Password reset failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96539",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N93",
-      "title": "Mobile Returning to a saved destination",
-      "nodeId": "991:96569",
-      "name": "N93 · Mobile Returning to a saved destination",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96569",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N94",
-      "title": "Mobile Keep a guest draft after sign-in",
-      "nodeId": "991:96582",
-      "name": "N94 · Mobile Keep a guest draft after sign-in",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96582",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N95",
-      "title": "Mobile Different account cannot take over a draft",
-      "nodeId": "991:96602",
-      "name": "N95 · Mobile Different account cannot take over a draft",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96602",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N96",
-      "title": "Mobile Saved destination unavailable",
-      "nodeId": "991:96619",
-      "name": "N96 · Mobile Saved destination unavailable",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96619",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N97",
-      "title": "Mobile Sign-out failed",
-      "nodeId": "991:96634",
-      "name": "N97 · Mobile Sign-out failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96634",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N98",
       "title": "Mobile Profile awaiting email verification",
       "nodeId": "991:96649",
@@ -3360,16 +2077,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N99",
-      "title": "Mobile Account loading",
-      "nodeId": "991:96669",
-      "name": "N99 · Mobile Account loading",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96669",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N100",
       "title": "Mobile Edit display name",
       "nodeId": "991:96684",
@@ -3377,36 +2084,6 @@
       "width": 390,
       "height": 844,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96684",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N101",
-      "title": "Mobile Saving profile",
-      "nodeId": "991:96703",
-      "name": "N101 · Mobile Saving profile",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96703",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N102",
-      "title": "Mobile Profile saved",
-      "nodeId": "991:96725",
-      "name": "N102 · Mobile Profile saved",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96725",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N103",
-      "title": "Mobile Profile update failed",
-      "nodeId": "991:96741",
-      "name": "N103 · Mobile Profile update failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96741",
       "status": "designed-awaiting-review"
     },
     {
@@ -3460,16 +2137,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N109",
-      "title": "Mobile Request receipt details",
-      "nodeId": "991:96842",
-      "name": "N109 · Mobile Request receipt details",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96842",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N110",
       "title": "Mobile No usage history yet",
       "nodeId": "991:96861",
@@ -3480,116 +2147,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N111",
-      "title": "Mobile Account created but verification email failed",
-      "nodeId": "991:96874",
-      "name": "N111 · Mobile Account created but verification email failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96874",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N112",
-      "title": "Mobile Unexpected sign-in failure",
-      "nodeId": "991:96898",
-      "name": "N112 · Mobile Unexpected sign-in failure",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96898",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N113",
-      "title": "Mobile Email sign-in unavailable",
-      "nodeId": "991:96931",
-      "name": "N113 · Mobile Email sign-in unavailable",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96931",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N114",
-      "title": "Mobile Reset email rate limited",
-      "nodeId": "991:96964",
-      "name": "N114 · Mobile Reset email rate limited",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96964",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N115",
-      "title": "Mobile Verification resend rate limited",
-      "nodeId": "991:96986",
-      "name": "N115 · Mobile Verification resend rate limited",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96986",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N116",
-      "title": "Mobile New password field required",
-      "nodeId": "991:97008",
-      "name": "N116 · Mobile New password field required",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97008",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N117",
-      "title": "Mobile Email is still unverified",
-      "nodeId": "991:97038",
-      "name": "N117 · Mobile Email is still unverified",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97038",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N118",
-      "title": "Mobile Refresh verification status",
-      "nodeId": "991:97062",
-      "name": "N118 · Mobile Refresh verification status",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97062",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N119",
-      "title": "Mobile Verification refresh failed",
-      "nodeId": "991:97078",
-      "name": "N119 · Mobile Verification refresh failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97078",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N120",
-      "title": "Mobile Reset link already used",
-      "nodeId": "991:97100",
-      "name": "N120 · Mobile Reset link already used",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97100",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N121",
-      "title": "Mobile Wrong email action",
-      "nodeId": "991:97122",
-      "name": "N121 · Mobile Wrong email action",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97122",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N122",
       "title": "Mobile Display name validation",
       "nodeId": "991:97144",
@@ -3597,16 +2154,6 @@
       "width": 390,
       "height": 844,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97144",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N123",
-      "title": "Mobile Leave an unfinished profile edit",
-      "nodeId": "991:97164",
-      "name": "N123 · Mobile Leave an unfinished profile edit",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97164",
       "status": "designed-awaiting-review"
     },
     {
@@ -3630,16 +2177,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N126",
-      "title": "Mobile Request verification email",
-      "nodeId": "991:97240",
-      "name": "N126 · Mobile Request verification email",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97240",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N127",
       "title": "Mobile Verification resend cooldown",
       "nodeId": "991:97263",
@@ -3647,26 +2184,6 @@
       "width": 390,
       "height": 844,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97263",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N128",
-      "title": "Mobile Verification resend failed",
-      "nodeId": "991:97284",
-      "name": "N128 · Mobile Verification resend failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97284",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N129",
-      "title": "Mobile Account could not load",
-      "nodeId": "991:97305",
-      "name": "N129 · Mobile Account could not load",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-97305",
       "status": "designed-awaiting-review"
     },
     {
@@ -3720,46 +2237,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N135",
-      "title": "Mobile projects empty",
-      "nodeId": "994:97197",
-      "name": "N135 · Mobile projects empty",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=994-97197",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N136",
-      "title": "Mobile media search has no results",
-      "nodeId": "994:97212",
-      "name": "N136 · Mobile media search has no results",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=994-97212",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N137",
-      "title": "Mobile project search has no results",
-      "nodeId": "994:97227",
-      "name": "N137 · Mobile project search has no results",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=994-97227",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N138",
-      "title": "Mobile project list loading",
-      "nodeId": "994:97242",
-      "name": "N138 · Mobile project list loading",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=994-97242",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N139",
       "title": "Mobile first video edit is empty",
       "nodeId": "994:97256",
@@ -3810,26 +2287,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N144",
-      "title": "Mobile guest draft kept without submission",
-      "nodeId": "994:97323",
-      "name": "N144 · Mobile guest draft kept without submission",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=994-97323",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "X16",
-      "title": "Choose the first file",
-      "nodeId": "999:97087",
-      "name": "X16 · Choose the first file",
-      "width": 1440,
-      "height": 900,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-97087",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "X17",
       "title": "First file uploading",
       "nodeId": "999:97241",
@@ -3840,20 +2297,10 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "X18",
-      "title": "First file being checked",
-      "nodeId": "999:97393",
-      "name": "X18 · First file being checked",
-      "width": 1440,
-      "height": 900,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-97393",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "X19",
-      "title": "First file saved without insertion",
+      "title": "First file ready in project media",
       "nodeId": "999:97545",
-      "name": "X19 · First file saved without insertion",
+      "name": "X19 · First file ready in project media",
       "width": 1440,
       "height": 900,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-97545",
@@ -3880,26 +2327,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "X23",
-      "title": "First file rejected",
-      "nodeId": "999:98002",
-      "name": "X23 · First file rejected",
-      "width": 1440,
-      "height": 900,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-98002",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "X24",
-      "title": "First upload cancelled",
-      "nodeId": "999:98154",
-      "name": "X24 · First upload cancelled",
-      "width": 1440,
-      "height": 900,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-98154",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "X20",
       "title": "First imported clip added explicitly",
       "nodeId": "999:98306",
@@ -3907,46 +2334,6 @@
       "width": 1440,
       "height": 900,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-98306",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "A63",
-      "title": "Password change was not confirmed",
-      "nodeId": "999:98605",
-      "name": "A63 · Password change was not confirmed",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-98605",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N145",
-      "title": "Mobile password change not confirmed",
-      "nodeId": "999:98622",
-      "name": "N145 · Mobile password change not confirmed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=999-98622",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "X25",
-      "title": "Upload continues with the panel closed",
-      "nodeId": "1000:98172",
-      "name": "X25 · Upload continues with the panel closed",
-      "width": 1440,
-      "height": 900,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1000-98172",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "X26",
-      "title": "First saved file remains in media",
-      "nodeId": "1000:98325",
-      "name": "X26 · First saved file remains in media",
-      "width": 1440,
-      "height": 900,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1000-98325",
       "status": "designed-awaiting-review"
     },
     {
@@ -4000,43 +2387,13 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N151",
-      "title": "Mobile shared file download failed",
-      "nodeId": "1003:98504",
-      "name": "N151 · Mobile shared file download failed",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1003-98504",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N152",
-      "title": "Mobile pricing question expanded",
+      "title": "Mobile pricing questions expanded",
       "nodeId": "1019:98516",
-      "name": "N152 · Mobile pricing question expanded",
+      "name": "N152 · Mobile pricing questions expanded",
       "width": 390,
-      "height": 1261,
+      "height": 1376,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1019-98516",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N154",
-      "title": "Mobile pricing question expanded",
-      "nodeId": "1019:98558",
-      "name": "N154 · Mobile pricing question expanded",
-      "width": 390,
-      "height": 1261,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1019-98558",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "N155",
-      "title": "Mobile pricing question expanded",
-      "nodeId": "1019:98600",
-      "name": "N155 · Mobile pricing question expanded",
-      "width": 390,
-      "height": 1240,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1019-98600",
       "status": "designed-awaiting-review"
     },
     {
@@ -4372,26 +2729,6 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "O33",
-      "title": "Download started",
-      "nodeId": "1009:98470",
-      "name": "O33 · Download started",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1009-98470",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "O34",
-      "title": "Could not start the download",
-      "nodeId": "1009:98487",
-      "name": "O34 · Could not start the download",
-      "width": 390,
-      "height": 844,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1009-98487",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "O35",
       "title": "Mobile navigation while signed in",
       "nodeId": "1019:98785",
@@ -4409,5 +2746,358 @@
     "overlays": 35,
     "totalScreens": 318,
     "liveReference": "../workflow/figma-catalog-additions.json"
+  },
+  "screenRemoval20261014": {
+    "status": "applied",
+    "record": "../screen-removal-execution-2026-10-14.json",
+    "policy": "The October 14 approved removal supersedes earlier presentation requirements for the 39 retired screens. Do not rebuild draft comparison/management/discard screens, context or coupled-setting approval gates, technical attachment/storage/renderer repair screens, billing/checkout/credit receipts, extra retry confirmation, or the retired result notices. Unfinished work is reached through conversation history. Retry is a direct deliberate action with a new execution identity; uncertain acceptance still reconciles the original identity. Data retention, conflict detection, media ownership, idempotency and internal recovery remain required. The retirement record, not older screenshots or state-model labels, determines active UI scope.",
+    "historicalValidation": "Earlier complete-coverage and prototype validation claims predate the approved removal; retired references are not active UI acceptance evidence.",
+    "retiredReferences": [
+      {
+        "path": "$.screens[93]",
+        "record": {
+          "key": "K15",
+          "title": "Request receipt details",
+          "kind": "account",
+          "route": "/account",
+          "state": "receipt",
+          "status": "designed-awaiting-review",
+          "nodeId": "964:92719",
+          "name": "K15 · Request receipt details",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92719"
+        }
+      },
+      {
+        "path": "$.screens[99]",
+        "record": {
+          "key": "K21",
+          "title": "Billing during free testing",
+          "kind": "account",
+          "route": "/account",
+          "state": "billing",
+          "status": "designed-awaiting-review",
+          "nodeId": "964:93130",
+          "name": "K21 · Billing during free testing",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93130"
+        }
+      },
+      {
+        "path": "$.screens[143]",
+        "record": {
+          "key": "N26",
+          "title": "Mobile Billing",
+          "kind": "mobile",
+          "route": "responsive",
+          "state": "K21",
+          "status": "designed-awaiting-review",
+          "sourceScreen": "K21",
+          "nodeId": "968:94104",
+          "name": "N26 · Mobile Billing",
+          "width": 390,
+          "height": 844,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94104"
+        }
+      },
+      {
+        "path": "$.additionalScreens[52]",
+        "record": {
+          "key": "N109",
+          "title": "Mobile Request receipt details",
+          "nodeId": "991:96842",
+          "name": "N109 · Mobile Request receipt details",
+          "width": 390,
+          "height": 844,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=991-96842",
+          "status": "designed-awaiting-review"
+        }
+      }
+    ]
+  },
+  "screenRemoval20261015": {
+    "status": "applied",
+    "record": "../figma-state-screen-removal-2026-10-15.json",
+    "policy": "The October 15 removal deleted screens and components that drew backend or contract states as UI: the auth state machine, cancellation races, request reconciliation, cross-tab submission and guest-draft ownership. Do not redraw them. Their behavior stays in backend contracts and tests; only the requirement for a dedicated UI surface is retired. The real client surfaces are AuthGateDialog \"Sign in to continue\", the RequireAuth redirect to /signin, the AccountPopover and toasts.",
+    "retiredScreens": [
+      "A46",
+      "A47",
+      "A50",
+      "K19",
+      "X09",
+      "N40",
+      "N41"
+    ],
+    "surfaces": {
+      "A46": "Guest drafts stay in the composer across sign-in; no adoption screen.",
+      "A47": "AuthGateDialog \"Sign in to continue\"; an account never receives another account's data.",
+      "A50": "RequireAuth redirects to /signin; sign-out from the AccountPopover.",
+      "K19": "AccountPopover sign-out; private content leaves the screen.",
+      "X09": "Composer keeps the words unsubmitted after sign-in; no dedicated screen.",
+      "N40": "RequireAuth redirects to /signin; sign-out from the AccountPopover.",
+      "N41": "AccountPopover sign-out; private content leaves the screen."
+    }
+  },
+  "screenRemoval20261015b": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-15.json",
+    "policy": "The second October 15 pass deleted screens, state variants and status components whose only purpose was to show a backend or contract state or to restate an invariant as a screen (cancellation races, reconciliation, provider status, storage and metadata internals, capability-rule demos, lane and ownership assertions, upload/download/profile outcome screens). Do not redraw them; their behavior stays in backend contracts and tests. Real surfaces: AuthGateDialog \"Sign in to continue\", RequireAuth redirect to /signin, the AccountPopover, inline messages and toasts.",
+    "retiredNodeCount": 25
+  },
+  "screenRemoval20261016": {
+    "status": "applied",
+    "record": "../auth-redesign-2026-10-16.json",
+    "policy": "The October 16 auth redesign rebuilt every sign-in, account-creation, recovery and verification screen on one Auth card (Conversation panel material) over the Ambient backdrop. Sign in and Create account switch in place and share one size; account creation has a single password field with Show, so the confirm-password mismatch screens are retired. Do not redraw them; a typo is caught by Show and by the reset flow.",
+    "retiredScreens": [
+      "A16",
+      "A38",
+      "N11",
+      "N88"
+    ],
+    "surfaces": {
+      "A16": "Create account keeps one password field with Show; no confirmation field.",
+      "A38": "Choose a new password keeps one field with Show.",
+      "N11": "Mobile twin of A16.",
+      "N88": "Mobile twin of A38."
+    },
+    "framesAlsoDeleted": {
+      "N40": "Retired 2026-10-15 but still on the canvas; deleted. N36 Sign out now opens N08.",
+      "N41": "Retired 2026-10-15 but still on the canvas; deleted."
+    }
+  },
+  "screenRemoval20261016b": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-16.json",
+    "policy": "The October 16 auth state pass kept one screen per step and one example of each card state: A01 sign in, A14 create account, A03 field error, A04 request-error notice, A05 busy, A21 check your email, A23 resend countdown, A24 checking a link, A25 email verified, A26 verification link expired, A31 forgot password, A34 check your inbox, A37 choose a new password, A41 password changed and A42 reset link expired, with their N twins (N08, N10, N70, N09, N44, N12, N81, N50, N51, N13, N14, N15, N16, N17, N90). The other 39 desktop screens and their 39 mobile twins repeated one of these with different words, showed a form with text typed in, or drew a state that cannot happen. Do not redraw them. A request error uses A04's notice with its own message; a field problem uses A03's Field error; a submit in progress uses A05's busy button. The Check verification action and its three result screens were removed everywhere (A21, A23, K26-K28 and their mobile twins): opening the emailed link verifies the address, and nothing waits on verification. Kept submit buttons now open the next step: A01 to A05, A14 to A21, A31 to A34, A37 to A41 (mobile N08 to N44, N10 to N12, N14 to N15, N16 to N17).",
+    "retiredScreens": [
+      "A02",
+      "A06",
+      "A07",
+      "A08",
+      "A09",
+      "A10",
+      "A11",
+      "A12",
+      "A13",
+      "A15",
+      "A17",
+      "A18",
+      "A19",
+      "A20",
+      "A22",
+      "A27",
+      "A28",
+      "A29",
+      "A30",
+      "A32",
+      "A33",
+      "A35",
+      "A36",
+      "A39",
+      "A40",
+      "A43",
+      "A44",
+      "A51",
+      "A52",
+      "A53",
+      "A54",
+      "A55",
+      "A56",
+      "A57",
+      "A58",
+      "A59",
+      "A60",
+      "A61",
+      "A62",
+      "N37",
+      "N43",
+      "N45",
+      "N46",
+      "N47",
+      "N48",
+      "N49",
+      "N52",
+      "N53",
+      "N71",
+      "N72",
+      "N73",
+      "N74",
+      "N75",
+      "N76",
+      "N77",
+      "N78",
+      "N79",
+      "N80",
+      "N82",
+      "N83",
+      "N84",
+      "N85",
+      "N86",
+      "N87",
+      "N89",
+      "N91",
+      "N92",
+      "N111",
+      "N112",
+      "N113",
+      "N114",
+      "N115",
+      "N116",
+      "N117",
+      "N118",
+      "N119",
+      "N120",
+      "N121"
+    ],
+    "surfaces": {
+      "A02": "A01 with text typed in. A01's Sign in now opens A05.",
+      "A06": "A05's busy button. Google's own window does the rest, so the card shows no notice for it.",
+      "A07": "A01. Closing Google's window is the person's choice, so the card returns to the form without a message.",
+      "A08": "A04's notice: \"The Google window was blocked. Allow popups or use email.\"",
+      "A09": "A04's notice: \"Use email here, or open Vidra in your browser to continue with Google.\"",
+      "A10": "A04's notice: \"Google sign-in is unavailable right now. Use email or try again later.\"",
+      "A11": "A04's notice: \"Too many attempts. Wait a moment before trying again.\"",
+      "A12": "A04's notice: \"You are offline. Reconnect before signing in.\"",
+      "A13": "A04's notice: \"This account is disabled. Contact support for help.\"",
+      "A15": "A14 with text typed in. A14's Create account now opens A21.",
+      "A17": "A03's Field error, under Password: \"Use at least 6 characters.\"",
+      "A18": "A04's notice on Create account: \"This email already has an account. Sign in or reset your password.\"",
+      "A19": "A05's busy button (\"Creating account…\").",
+      "A20": "A04's notice: \"Your account could not be created. Check your connection and try again.\"",
+      "A22": "A05's busy button on A21 (\"Sending…\"). A21's Resend verification now opens A23.",
+      "A27": "A26: the same outcome and the same Send a new link action.",
+      "A28": "A26, or opening the link again. A connection failure needs no screen of its own.",
+      "A29": "Cannot happen: opening a verification link verifies the address it was sent to, whoever is signed in.",
+      "A30": "A25. Continue to Vidra goes through sign in when the person is signed out.",
+      "A32": "A31 with text typed in. A31's Send reset link now opens A34.",
+      "A33": "A05's busy button (\"Sending…\").",
+      "A35": "A04's notice on A31: \"We could not send the email. Check your connection and try again.\"",
+      "A36": "A24, whose \"Checking your link…\" covers both link types. T02's Choose a new password now opens A37.",
+      "A39": "A03's Field error, under New password: \"Use at least 6 characters.\"",
+      "A40": "A05's busy button (\"Saving…\").",
+      "A43": "A42: the same outcome and the same Request a new link action.",
+      "A44": "A04's notice on A37: \"We could not reset your password. Try again with this link.\"",
+      "A51": "A21. If the first email fails, Resend verification sends it again.",
+      "A52": "A04's notice: \"We could not sign you in. Try again, or contact support if this continues.\"",
+      "A53": "A04's notice: \"Email sign-in is unavailable right now. Continue with Google or try again later.\"",
+      "A54": "A04's notice on A31: \"Too many requests. Wait before requesting another email.\"",
+      "A55": "A23's Resend countdown; otherwise A04's notice.",
+      "A56": "A03's Field error, under New password: \"Enter a new password.\"",
+      "A57": "A37 with text typed in. A37's Save password now opens A41.",
+      "A58": "Removed with Check verification. Opening the emailed link verifies the address (A24, then A25).",
+      "A59": "Removed with Check verification.",
+      "A60": "Removed with Check verification.",
+      "A61": "A42: the same outcome and the same Request a new link action.",
+      "A62": "Cannot happen from a real email, because each email links to its own page. A42 covers a hand-edited link.",
+      "N37": "Mobile twin of A57.",
+      "N43": "Mobile twin of A02.",
+      "N45": "Mobile twin of A32.",
+      "N46": "Mobile twin of A33.",
+      "N47": "Mobile twin of A06.",
+      "N48": "Mobile twin of A15.",
+      "N49": "Mobile twin of A19.",
+      "N52": "Mobile twin of A40.",
+      "N53": "Mobile twin of A08.",
+      "N71": "Mobile twin of A07.",
+      "N72": "Mobile twin of A09.",
+      "N73": "Mobile twin of A10.",
+      "N74": "Mobile twin of A11.",
+      "N75": "Mobile twin of A12.",
+      "N76": "Mobile twin of A13.",
+      "N77": "Mobile twin of A17.",
+      "N78": "Mobile twin of A18.",
+      "N79": "Mobile twin of A20.",
+      "N80": "Mobile twin of A22.",
+      "N82": "Mobile twin of A27.",
+      "N83": "Mobile twin of A28.",
+      "N84": "Mobile twin of A29.",
+      "N85": "Mobile twin of A30.",
+      "N86": "Mobile twin of A35.",
+      "N87": "Mobile twin of A36.",
+      "N89": "Mobile twin of A39.",
+      "N91": "Mobile twin of A43.",
+      "N92": "Mobile twin of A44.",
+      "N111": "Mobile twin of A51.",
+      "N112": "Mobile twin of A52.",
+      "N113": "Mobile twin of A53.",
+      "N114": "Mobile twin of A54.",
+      "N115": "Mobile twin of A55.",
+      "N116": "Mobile twin of A56.",
+      "N117": "Mobile twin of A58.",
+      "N118": "Mobile twin of A59.",
+      "N119": "Mobile twin of A60.",
+      "N120": "Mobile twin of A61.",
+      "N121": "Mobile twin of A62."
+    }
+  },
+  "screenRemoval20261016c": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-16.json",
+    "policy": "The October 16 account state pass kept one screen per step and one example of each card state in Account & usage: K01 profile, K02 profile awaiting verification, K27 verification resent with its countdown, K04 edit display name, K22 field error, K08 password and sign-in settings, K24 busy, K10 reset requested, K25 request-error notice, K09 Google sign-in settings, K11 usage, K12 allowance used, K16 no usage history, K13 usage loading, K14 usage could not load, K17 data and privacy and K18 the sign-out guard, with their mobile twins (N23, N98, N127, N100, N122, N24, N124, N105, N125, N104, N25, N106, N110, N107, N108, N27, N36). K03 and K29 drew the Profile panel loading and failing on its own, which cannot happen because the profile comes with the signed-in session (X02 and X03 cover a page that is loading or failed). K26 and K28 repeated K24's busy button and K25's notice. K23 asked the person to confirm their own Cancel of a one-field name edit. Do not redraw them. K04's Cancel and account links now open K01, K08, K11, K17 and K18 directly; N98's Resend verification opens N127 and N100's Cancel opens N23.",
+    "retiredScreens": [
+      "K03",
+      "K23",
+      "K26",
+      "K28",
+      "K29",
+      "N99",
+      "N123",
+      "N126",
+      "N128",
+      "N129"
+    ],
+    "surfaces": {
+      "K03": "K13's loading pattern. The profile comes with the signed-in session, so the Profile panel never loads on its own; a page that is still loading is X02.",
+      "K23": "\"Discard your name change?\" with Keep editing and Discard changes. Cancel on K04 is the person's own choice to drop a one-field name edit, so it needs no confirmation. K04's Cancel and account links now open their destinations directly.",
+      "K26": "K24's busy button (\"Sending…\").",
+      "K28": "K25's notice, word for word: \"The email could not be requested. Check your connection and try again.\"",
+      "K29": "K14's could-not-load pattern (\"Your account could not load.\" with Try again). The profile comes with the signed-in session, so it never fails on its own; a page that fails to load is X03.",
+      "N99": "Mobile twin of K03.",
+      "N123": "Mobile twin of K23.",
+      "N126": "Mobile twin of K26.",
+      "N128": "Mobile twin of K28.",
+      "N129": "Mobile twin of K29."
+    }
+  },
+  "screenRemoval20261016d": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-16.json",
+    "policy": "The mobile app has no projects list: the Mobile header's folder button opens the B22 sheet for the current project (Rename project, Conversations, Archived conversations, Move to Trash), no mobile app screen offers All projects or Switch project, and the Mobile site header's menu links nowhere. N135, N137 and N138 drew the empty, no-results and loading states of that missing page in the public-site shell, with no links in or out, so a person on a phone can never see them. Do not redraw them; the desktop project browser states X12, X14 and X15 stay.",
+    "retiredScreens": [
+      "N135",
+      "N137",
+      "N138"
+    ],
+    "surfaces": {
+      "N135": "Projects page in the Mobile site header: 40px 'Projects', Search projects, 'No projects yet', 'Create a project to keep related work together.' and New project.",
+      "N137": "The same Projects page with a project search that found nothing.",
+      "N138": "The same Projects page while its project list loads."
+    }
+  },
+  "screenRemoval20261016e": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-16.json",
+    "policy": "The approved mobile library has no search: B04's Library controls are Filter, Sort and Show hidden, and the empty library N134 has none. N136 drew a typed media search with no results in the public-site shell, so a person on a phone can never see it. Do not redraw it; the desktop no-matches state X13 stays. N139, the empty first video edit, is a real step (the Video tab of a project with nothing in it) and was rebuilt in the mobile editor shell instead.",
+    "retiredScreens": [
+      "N136"
+    ],
+    "surfaces": {
+      "N136": "Media page in the Mobile site header with 'morning reference' typed in Search, 'No results for “morning reference”', 'Try another search or clear the words.' and Clear search."
+    }
+  },
+  "screenRemoval20261016f": {
+    "status": "applied",
+    "record": "../figma-contract-state-pruning-2026-10-16.json",
+    "policy": "N152, N154 and N155 were the same mobile pricing page with a different question open, so they differed only in wording. Like desktop W09, mobile keeps one 'questions expanded' screen: N152 now shows all three answers, and each of N07's questions opens it. Tapping an open question closes back to N07. N152 also gained N07's Create an account and footer links, which it had lacked. Do not redraw one screen per open question.",
+    "retiredScreens": [
+      "N154",
+      "N155"
+    ],
+    "surfaces": {
+      "N154": "N07 with only 'What happens when I reach the limit?' open: 'New generation waits until allowance is available. Your saved media, editing and downloads remain available.' The answer now lives on N152.",
+      "N155": "N07 with only 'Where can I check my usage?' open: 'Open Account, then Usage to see your available allowance and recent requests.' The answer now lives on N152."
+    }
   }
 }

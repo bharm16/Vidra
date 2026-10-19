@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-13",
+  "scope": "Figma current redesign Pages 24–29; application code unchanged",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "changes": [
+    "Right-aligned text inside user message bubbles",
+    "Removed saved/add-to-conversation attachment-repair panel",
+    "Removed routine media name/version headers, including mobile viewer and sheet headers",
+    "Removed project controls from empty first-use/new-request states",
+    "Removed all What are you making headings"
+  ],
+  "visualChecks": [
+    "1065:85631",
+    "1056:84591",
+    "1073:92317"
+  ],
+  "statePreservation": "Existing-project access-loss state 1074:93482 retains its project context; empty follow-up drafts with history/media retain theirs.",
+  "audit": [
+    {
+      "page": "883:84247",
+      "userTexts": 1,
+      "wrongAlignment": [],
+      "forbidden": [],
+      "viewerTitles": [],
+      "emptyProjectFailures": []
+    },
+    {
+      "page": "887:85295",
+      "userTexts": 149,
+      "wrongAlignment": [],
+      "forbidden": [],
+      "viewerTitles": [],
+      "emptyProjectFailures": []
+    },
+    {
+      "page": "956:84247",
+      "userTexts": 3,
+      "wrongAlignment": [],
+      "forbidden": [],
+      "viewerTitles": [],
+      "emptyProjectFailures": []
+    },
+    {
+      "page": "1026:84247",
+      "userTexts": 0,
+      "wrongAlignment": [],
+      "forbidden": [],
+      "viewerTitles": [],
+      "emptyProjectFailures": []
+    },
+    {
+      "page": "1048:84247",
+      "userTexts": 292,
+      "wrongAlignment": [],
+      "forbidden": [],
+      "viewerTitles": [],
+      "emptyProjectFailures": []
+    },
+    {
+      "page": "1345:393334",
+      "userTexts": 0,
+      "wrongAlignment": [],
+      "forbidden": [],
+      "viewerTitles": [],
+      "emptyProjectFailures": []
+    }
+  ],
+  "changedEmptyStates": [
+    {
+      "id": "888:85153",
+      "name": "C01 · New request"
+    },
+    {
+      "id": "890:85349",
+      "name": "C02 · Choose what to make"
+    },
+    {
+      "id": "890:85488",
+      "name": "C03 · Review image settings"
+    },
+    {
+      "id": "890:85596",
+      "name": "C04 · Start with a video"
+    },
+    {
+      "id": "904:98166",
+      "name": "C23 · Generate video with explicit settings"
+    },
+    {
+      "id": "906:100187",
+      "name": "B01 · Mobile new request"
+    },
+    {
+      "id": "930:105076",
+      "name": "C37 · Image action chosen before writing"
+    },
+    {
+      "id": "930:105161",
+      "name": "C38 · Image request ready to generate"
+    },
+    {
+      "id": "930:105248",
+      "name": "C46 · Video action chosen before writing"
+    },
+    {
+      "id": "930:105333",
+      "name": "C47 · Video request ready to generate"
+    },
+    {
+      "id": "930:105420",
+      "name": "C39 · Choose an eligible image model"
+    },
+    {
+      "id": "930:106489",
+      "name": "C48 · Choose an eligible video model"
+    },
+    {
+      "id": "936:110561",
+      "name": "C55 · Image settings preserve the current words"
+    },
+    {
+      "id": "936:110669",
+      "name": "C56 · Video settings preserve the current words"
+    },
+    {
+      "id": "936:111425",
+      "name": "B13 · Mobile request settings"
+    },
+    {
+      "id": "936:112731",
+      "name": "B23 · Mobile image request ready"
+    },
+    {
+      "id": "936:113009",
+      "name": "B27 · Mobile action selection"
+    },
+    {
+      "id": "936:113122",
+      "name": "B28 · Mobile image action chosen before writing"
+    },
+    {
+      "id": "965:93574",
+      "name": "X07 · First signed-in workspace visit"
+    },
+    {
+      "id": "969:94033",
+      "name": "N38 · Mobile First workspace visit"
+    },
+    {
+      "id": "971:94640",
+      "name": "X09 · An adopted guest draft stays unsubmitted"
+    },
+    {
+      "id": "971:94758",
+      "name": "X10 · New video edit with no project media"
+    },
+    {
+      "id": "1065:85631",
+      "name": "S01 · Empty prompt"
+    },
+    {
+      "id": "1065:85871",
+      "name": "S02 · Highlighting a new draft"
+    }
+  ]
+}

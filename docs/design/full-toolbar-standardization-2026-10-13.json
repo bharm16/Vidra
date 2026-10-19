@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-13",
+  "scope": "Figma current redesign, Pages 24-28; application code unchanged",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "canonicalComponent": {
+    "id": "1379:84830",
+    "name": "Vidra Fresh / Full toolbar",
+    "variants": [
+      "Desktop",
+      "Compact"
+    ],
+    "height": 40,
+    "width": "Intrinsic horizontal auto-layout; no fixed instance width",
+    "properties": [
+      "Size",
+      "Editing"
+    ],
+    "nestedExposedInstances": [
+      "Editor transport",
+      "Editing actions"
+    ]
+  },
+  "previewBounds": {
+    "desktopMaximumWidth": 640,
+    "desktopMaximumHeight": 360,
+    "preserveAspectRatio": true,
+    "fullScreenException": true
+  },
+  "applied": {
+    "fullComponentInstances": 492,
+    "includesHiddenRetiredInstances": true,
+    "pages": [
+      {
+        "pageId": "887:85295",
+        "instances": 232
+      },
+      {
+        "pageId": "956:84247",
+        "instances": 27
+      },
+      {
+        "pageId": "1026:84247",
+        "instances": 34
+      },
+      {
+        "pageId": "1048:84247",
+        "instances": 195
+      },
+      {
+        "pageId": "883:84247",
+        "instances": 4
+      }
+    ],
+    "separateExportEditRemoved": "1081:97566",
+    "twoRowAssembliesReplaced": 17,
+    "sourceChanges": [
+      "Use and Download are in the shared full toolbar",
+      "Export and timeline actions share the same row when editing",
+      "Aspect ratio moved to output settings",
+      "Collapsed preview omits Add and Undo",
+      "Still-image transport is inactive in the full toolbar rather than using the two-control mini variant"
+    ]
+  },
+  "verification": {
+    "status": "incomplete",
+    "confirmed": "Figma mutation calls for full component replacements and instance reconciliation returned success",
+    "remaining": [
+      "Final visual and geometry check of the full control set",
+      "Check contextual control availability and compact overflow",
+      "Verify final alignment after auto-layout recomputation"
+    ],
+    "blockers": [
+      "Figma MCP use_figma, get_screenshot and whoami returned Transport closed",
+      "Computer Use reported the Mac is locked and automatic unlock failed"
+    ]
+  },
+  "supersededBy": "design-critique-remediation-2026-10-14.json",
+  "historicalRecordNote": "The dated mutation and interruption evidence is retained. Current image controls, touch sizing and verification are recorded in the October 14 remediation."
+}

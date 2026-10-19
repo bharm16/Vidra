@@ -1,0 +1,330 @@
+{
+  "date": "2026-10-15",
+  "status": "complete",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "scope": "Move the 14 pages no longer in use (09-11 and 14-23, including the old 'Archive - Exhaustive state mapping' page) onto one archive page with one section per former page, then delete the emptied pages, so the file shows only Pages 24-29 and the archive.",
+  "related": {
+    "critiqueFixesOriginals": "critique-fixes-originals-2026-10-14.json (not edited)",
+    "critiqueFixesRemaining": "critique-fixes-remaining-2026-10-15.json (not edited)",
+    "archiveMarking": "archive-marking-2026-10-15.json (not edited; the page it names, 753:12432, is now section 1719:84260)",
+    "archiveRestoration": "archive-restoration-2026-10-15.json (not edited; it changed only Pages 25-28, which this move did not touch)"
+  },
+  "pages": {
+    "before": 20,
+    "after": 7,
+    "live": [
+      { "id": "883:84247", "name": "Page 24 - Vidra fresh design system" },
+      { "id": "887:85295", "name": "Page 25 - Vidra complete redesign" },
+      { "id": "956:84247", "name": "Page 26 - Vidra public site and account" },
+      { "id": "1026:84247", "name": "Page 27 - Model-dependent creation" },
+      { "id": "1048:84247", "name": "Page 28 - Prompt editing and timeline" },
+      { "id": "1345:393334", "name": "Page 29 - Media controls review" }
+    ],
+    "archive": {
+      "id": "1719:84247",
+      "name": "Archive · retired pages",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1719-84247",
+      "readMe": "1719:84248",
+      "layout": "Read-me frame at the top; Pages 14-23 and the old archive page in one row; the three large workflow pages (09-11) in a second row."
+    }
+  },
+  "moved": [
+    {
+      "formerPageId": "379:11930",
+      "formerPage": "Page 14 - Prompt input explorations",
+      "section": "1719:84251",
+      "topLevelNodes": 12,
+      "ownLayers": 889,
+      "ownInstances": 223,
+      "flows": 0
+    },
+    {
+      "formerPageId": "409:50",
+      "formerPage": "Page 15 - Runway composer & sidebar",
+      "section": "1719:84252",
+      "topLevelNodes": 3,
+      "ownLayers": 225,
+      "ownInstances": 32,
+      "flows": 0,
+      "note": "Pilot move, counted with instance sublayers (340 before, 562 after); own layers counted after the move."
+    },
+    {
+      "formerPageId": "414:20104",
+      "formerPage": "Page 16 - Combining runway + krea (design consistency)",
+      "section": "1719:84253",
+      "topLevelNodes": 11,
+      "ownLayers": 1107,
+      "ownInstances": 346,
+      "flows": 0
+    },
+    {
+      "formerPageId": "442:4",
+      "formerPage": "Page 17 - Vidra design system",
+      "section": "1719:84254",
+      "topLevelNodes": 35,
+      "ownLayers": 1090,
+      "ownInstances": 316,
+      "flows": 0
+    },
+    {
+      "formerPageId": "442:5",
+      "formerPage": "Page 18 - UI redesign",
+      "section": "1719:84255",
+      "topLevelNodes": 26,
+      "ownLayers": 8394,
+      "ownInstances": 1432,
+      "flows": 2
+    },
+    {
+      "formerPageId": "521:25545",
+      "formerPage": "Page 19 - Component internals",
+      "section": "1719:84256",
+      "topLevelNodes": 7,
+      "ownLayers": 4277,
+      "ownInstances": 596,
+      "flows": 1
+    },
+    {
+      "formerPageId": "634:4",
+      "formerPage": "Page 20 - Krea reference and application",
+      "section": "1719:84257",
+      "topLevelNodes": 4,
+      "ownLayers": 3725,
+      "ownInstances": 908,
+      "flows": 1
+    },
+    {
+      "formerPageId": "699:23",
+      "formerPage": "Page 21 - Vidra design system",
+      "section": "1719:84258",
+      "topLevelNodes": 13,
+      "ownLayers": 7646,
+      "ownInstances": 1075,
+      "flows": 0
+    },
+    {
+      "formerPageId": "727:6410",
+      "formerPage": "Page 22 - Core views & journeys",
+      "section": "1719:84259",
+      "topLevelNodes": 7,
+      "ownLayers": 280,
+      "ownInstances": 92,
+      "flows": 2
+    },
+    {
+      "formerPageId": "753:12432",
+      "formerPage": "Archive - Exhaustive state mapping",
+      "section": "1719:84260",
+      "topLevelNodes": 35,
+      "ownLayers": 3287,
+      "ownInstances": 1038,
+      "flows": 8
+    },
+    {
+      "formerPageId": "843:84247",
+      "formerPage": "Page 23 - Creation workflows",
+      "section": "1719:84261",
+      "topLevelNodes": 44,
+      "ownLayers": 2386,
+      "ownInstances": 867,
+      "flows": 4
+    },
+    {
+      "formerPageId": "269:15854",
+      "formerPage": "09 — 01 · Compact dock workflows",
+      "section": "1719:84262",
+      "topLevelNodes": 972,
+      "ownLayers": 78654,
+      "ownInstances": 18367,
+      "flows": 282
+    },
+    {
+      "formerPageId": "269:41577",
+      "formerPage": "10 — 06 · Reference composer workflows",
+      "section": "1719:84263",
+      "topLevelNodes": 972,
+      "ownLayers": 78885,
+      "ownInstances": 18367,
+      "flows": 282
+    },
+    {
+      "formerPageId": "269:67300",
+      "formerPage": "11 — 08 · Prompt toolbar workflows",
+      "section": "1719:84264",
+      "topLevelNodes": 972,
+      "ownLayers": 78654,
+      "ownInstances": 18367,
+      "flows": 282
+    }
+  ],
+  "totals": {
+    "topLevelNodes": 3113,
+    "ownLayers": 269499,
+    "ownInstances": 62026,
+    "flows": 864,
+    "pagesDeleted": 14
+  },
+  "method": [
+    "Each former page's top-level nodes were appended to its own section on the archive page, offset so the content starts 400px inside the section. Moving keeps node IDs, relative layout and prototype reactions.",
+    "Layers were counted before and after each move, excluding instance sublayers (IDs starting with I), because how many of those the plugin API returns depends on which page is current. Every count after the move equals the count before it.",
+    "Figma moves a frame's flow starting point with the frame. Moved flows were renamed with the former page prefix, flows that did not move were added, and duplicates were skipped. One batch that set duplicate flows was rejected, and Figma rolled it back before anything changed.",
+    "A page was deleted only after it was loaded and confirmed to have no children."
+  ],
+  "flows": {
+    "total": 864,
+    "prefix": "Former page label plus the original flow name, for example '09 · Flow 10', 'P22 · Sketch' or 'Old archive · Creation and independent inspection'.",
+    "byPrefix": {
+      "09": 282,
+      "10": 282,
+      "11": 282,
+      "P18": 2,
+      "P19": 1,
+      "P20": 1,
+      "P22": 2,
+      "Old archive": 8,
+      "P23": 4
+    },
+    "check": "Every flow starts on a frame inside the section its prefix names."
+  },
+  "redirects": {
+    "note": "A link to a deleted page ID no longer opens that page. Node IDs inside the pages did not change, so links to frames still work. Use the section ID where a page ID was used.",
+    "pageToSection": {
+      "379:11930": "1719:84251",
+      "409:50": "1719:84252",
+      "414:20104": "1719:84253",
+      "442:4": "1719:84254",
+      "442:5": "1719:84255",
+      "521:25545": "1719:84256",
+      "634:4": "1719:84257",
+      "699:23": "1719:84258",
+      "727:6410": "1719:84259",
+      "753:12432": "1719:84260",
+      "843:84247": "1719:84261",
+      "269:15854": "1719:84262",
+      "269:41577": "1719:84263",
+      "269:67300": "1719:84264"
+    },
+    "repoReferences": [
+      "docs/adr/0014-the-design-handoff-is-the-authoritative-visual-spec.md links node-id=699-23 (ADR, preserved as written).",
+      "docs/design/page21-component-migration.md line 5 links node-id=699-23 as the source read on 2026-10-08 (not edited); Page 21 is now section 1719:84258.",
+      "packages/promptstudio-system/src/vidra.css line 1 names 699:23 in a comment (not edited).",
+      "docs/design/page21-verification.json and page21-component-migration.json record pageId 699:23 as read on 2026-10-08 (historical, not edited)."
+    ]
+  },
+  "dependencyFixesBeforeMove": {
+    "iconSwaps": {
+      "why": "Pages 24-28 used Page 14 and Page 16 icon components, which would otherwise have moved to the archive.",
+      "byFreshIcon": {
+        "image": 130,
+        "ratio": 79,
+        "clock": 58,
+        "pencil": 19,
+        "video": 6,
+        "model": 2,
+        "arrow": 1
+      },
+      "total": 295,
+      "remaining": 0
+    }
+  },
+  "keptInPlace": {
+    "sections": "'Archive · consolidated prototype fixtures · 2026-10-13' on Page 25 (1450:131594), Page 26 (1449:99261), Page 27 (1450:157257) and Page 28 (1450:196187).",
+    "why": "Live screens link into these sections (562 links) and 99 flows start in them; Figma prototype links cannot cross pages, so moving them would break those links."
+  },
+  "verification": {
+    "livePages": {
+      "Page 24": {
+        "links": 104,
+        "samePage": 98,
+        "crossPage": 6,
+        "intoArchive": 0,
+        "missingDestination": 0,
+        "instancesWithArchivedOrMissingMaster": 0,
+        "flows": 3
+      },
+      "Page 25": {
+        "links": 2714,
+        "samePage": 1445,
+        "crossPage": 1269,
+        "intoArchive": 0,
+        "missingDestination": 0,
+        "instancesWithArchivedOrMissingMaster": 0,
+        "flows": 31
+      },
+      "Page 26": {
+        "links": 2816,
+        "samePage": 2357,
+        "crossPage": 459,
+        "intoArchive": 0,
+        "missingDestination": 0,
+        "instancesWithArchivedOrMissingMaster": 0,
+        "flows": 12
+      },
+      "Page 27": {
+        "links": 411,
+        "samePage": 15,
+        "crossPage": 396,
+        "intoArchive": 0,
+        "missingDestination": 0,
+        "instancesWithArchivedOrMissingMaster": 0,
+        "flows": 3
+      },
+      "Page 28": {
+        "links": 1811,
+        "samePage": 742,
+        "crossPage": 1069,
+        "intoArchive": 0,
+        "missingDestination": 0,
+        "instancesWithArchivedOrMissingMaster": 0,
+        "flows": 144
+      },
+      "Page 29": {
+        "links": 20,
+        "samePage": 20,
+        "crossPage": 0,
+        "intoArchive": 0,
+        "missingDestination": 0,
+        "instancesWithArchivedOrMissingMaster": 0,
+        "flows": 2
+      }
+    },
+    "beforeAfter": "Same-page and cross-page link counts on every live page equal the counts taken before the move.",
+    "crossPageBreakdown": {
+      "variantChanges": {
+        "what": "CHANGE_TO interactions in instances whose destination is a variant in a Page 24 component set; variant interactions apply to every instance, so they work on any page.",
+        "Page 25": 1208,
+        "Page 26": 458,
+        "Page 27": 385,
+        "Page 28": 1036
+      },
+      "useMediaOverlays": {
+        "what": "OVERLAY from the 'Use media' button in Page 29 media bar instances to 'Vidra Fresh / Use media menu' (1347:84394) on Page 29.",
+        "Page 25": 61,
+        "Page 26": 1,
+        "Page 27": 11,
+        "Page 28": 33
+      },
+      "componentNavigation": {
+        "what": "NAVIGATE on the 'Phrase · stadium lights cool' component and its nested instances on Page 24 to Page 28 screens S06 and W52; it works in instances placed on Page 28.",
+        "Page 24": 6
+      }
+    },
+    "archivePage": {
+      "sections": 14,
+      "otherTopLevel": ["Read me · retired pages"],
+      "sectionOverlaps": 0,
+      "framesOutsideTheirSection": 0,
+      "instancesMissingMaster": 0,
+      "flows": 864,
+      "prototypeLinks": 4737,
+      "linksLeavingPage": 0
+    }
+  },
+  "preExistingNotChanged": [
+    "The 106 'Use media' overlays on Pages 25-28 point at a menu on Page 29, so they cannot open in prototypes started from those pages. Their counts are the same before and after the move."
+  ],
+  "notCheckable": [
+    "Comments: the plugin API cannot read comments, so a comment pinned to empty canvas on a deleted page (rather than to a moved frame) was not checked.",
+    "Version snapshot: the plugin cannot save a named version; File > Show version history can restore the pre-move state, but it restores the whole file."
+  ]
+}
