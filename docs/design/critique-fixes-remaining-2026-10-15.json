@@ -22,19 +22,13 @@
       "geometry": "Lucide circle-stop on the circle-alert grid: 16.67px ring at 1.67, 5px rounded square, 1.33 round strokes bound to color/white"
     },
     {
-      "ids": [
-        "1644:130617",
-        "1644:130680"
-      ],
+      "ids": ["1644:130617", "1644:130680"],
       "name": "Timeline viewport",
       "page": 25,
       "use": "clips the timeline 24px before a docked side panel (E15, E31)"
     },
     {
-      "ids": [
-        "1644:130618",
-        "1644:130681"
-      ],
+      "ids": ["1644:130618", "1644:130681"],
       "name": "Centered full toolbar",
       "page": 25,
       "use": "restored playback toolbar in E15 and E31 (clones of E01 1523:130236)"
@@ -240,11 +234,7 @@
         }
       ],
       "alignment": {
-        "rows": [
-          "1072:92130 W13",
-          "1075:96025 W44",
-          "1075:96359 W45"
-        ],
+        "rows": ["1072:92130 W13", "1075:96025 W44", "1075:96359 W45"],
         "counterAxisAlignItems": "MIN -> CENTER (16px icon was 4px above the 24px text line)"
       },
       "followUp": "About 25 other status rows on Page 28 still use refresh-cw as a progress or outcome icon (Generating video…, Queued, Cancelling…, Checking status…, Finding alternatives…, Uploading your image… -> spinner; Completed before cancellation, Warmer lights · ready -> no spinner; Status needs attention, Request not accepted -> circle-alert). Action buttons where refresh means retry keep it."
@@ -508,10 +498,7 @@
         },
         {
           "page": 25,
-          "ids": [
-            "1440:131411",
-            "1440:131483"
-          ],
+          "ids": ["1440:131411", "1440:131483"],
           "where": "conversation history, needs attention",
           "prev": "This request was accepted. Its provider outcome is still being checked.",
           "next": "This request started. We’re still checking its result."
@@ -546,11 +533,7 @@
         },
         {
           "page": 28,
-          "ids": [
-            "1440:185456",
-            "1440:186253",
-            "1440:186738"
-          ],
+          "ids": ["1440:185456", "1440:186253", "1440:186738"],
           "prev": "The accepted request keeps its captured setup.",
           "next": "This video keeps the setup it started with."
         },
@@ -562,10 +545,7 @@
         },
         {
           "page": 28,
-          "ids": [
-            "1440:181094",
-            "1440:185675"
-          ],
+          "ids": ["1440:181094", "1440:185675"],
           "prev": "We have not confirmed the provider outcome.",
           "next": "We haven’t confirmed whether this video finished."
         },
@@ -585,60 +565,42 @@
         },
         {
           "page": 26,
-          "ids": [
-            "1437:99080",
-            "963:91026"
-          ],
+          "ids": ["1437:99080", "963:91026"],
           "where": "H11 Recover interrupted work",
           "prev": "Use Check status. The accepted request keeps its original inputs and settings while the app reconciles the result. Do not create a second request just to find out whether the first was accepted.",
           "next": "Use Check status. Your request keeps its original inputs and settings while Vidra confirms the result. Don’t send a second request just to see whether the first one started."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:99107",
-            "963:91137"
-          ],
+          "ids": ["1437:99107", "963:91137"],
           "where": "H12 testing allowance",
           "prev": "Available models, supported settings and testing limits are checked before a request is accepted. Free intake does not reserve paid credits.",
           "next": "Vidra checks available models, supported settings and testing limits before a request starts. Free testing never uses paid credits."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:98924",
-            "963:90205"
-          ],
+          "ids": ["1437:98924", "963:90205"],
           "where": "H04 Generate a video clip",
           "prev": "The accepted request keeps its captured setup. A video submission opens a separate empty draft. Closing the viewer or starting other work does not turn a completed clip into that draft’s input.",
           "next": "Once a video starts, it keeps the setup you sent. Sending a video opens a new empty draft. Closing the viewer or starting other work doesn’t add the finished clip to that draft."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:98870",
-            "963:89983"
-          ],
+          "ids": ["1437:98870", "963:89983"],
           "where": "H02 Get started",
           "prev": "Once accepted, the request keeps its own setup. Start another draft or continue an eligible image follow-up while it runs. A completed result does not submit that draft for you.",
           "next": "Once a request starts, it keeps its own setup. Start another draft or continue an eligible image follow-up while it runs. A finished result never sends that draft for you."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:99032",
-            "963:90812"
-          ],
+          "ids": ["1437:99032", "963:90812"],
           "where": "H09 Choose models and settings",
           "prev": "Each accepted request keeps its model, settings, inputs and instruction context. An old request remains a record of what was used at that time.",
           "next": "Each request keeps the model, settings, inputs and instructions it started with, so an older request always shows what was used."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:97317",
-            "1437:99915"
-          ],
+          "ids": ["1437:97317", "1437:99915"],
           "where": "empty request list",
           "prev": "Your accepted requests will appear here.",
           "next": "Your requests will appear here."
@@ -671,40 +633,28 @@
         },
         {
           "page": 26,
-          "ids": [
-            "1437:99056",
-            "963:90919"
-          ],
+          "ids": ["1437:99056", "963:90919"],
           "where": "H10 Check an uncertain result",
           "prev": "If the response is lost while a link is being created or revoked, use Check status. The UI keeps the outcome unconfirmed until the server resolves it.",
           "next": "If your connection drops while you create or turn off a link, use Check status. The link shows as unconfirmed until Vidra finishes the change."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:99086",
-            "963:91034"
-          ],
+          "ids": ["1437:99086", "963:91034"],
           "where": "H11 Working offline or in several tabs",
           "prev": "You can keep drafting offline when a local copy is available. Reconnecting does not automatically submit it. Conflicts preserve both copies, and an older save response cannot mark newer words saved.",
           "next": "You can keep drafting offline when this device has a copy. Reconnecting doesn’t send it for you. If two copies conflict, both are kept, and an older save never replaces newer words."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:98954",
-            "963:90476"
-          ],
+          "ids": ["1437:98954", "963:90476"],
           "where": "H06 Organize without changing",
           "prev": "Favorite, preferred and hidden are independent choices. Renaming or hiding media does not change captured requests, exact edit sources, or previously shared versions.",
           "next": "Favorite, preferred and hidden are independent choices. Renaming or hiding media doesn’t change past requests, media used in edits, or versions you already shared."
         },
         {
           "page": 26,
-          "ids": [
-            "1437:99021",
-            "963:90796"
-          ],
+          "ids": ["1437:99021", "963:90796"],
           "where": "H09 introduction",
           "prev": "Choose a supported action and model, then review the settings that will be captured with the request.",
           "next": "Choose a supported action and model, then review the settings that will be sent with the request."

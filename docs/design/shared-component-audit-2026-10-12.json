@@ -2,13 +2,7 @@
   "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
   "completedDate": "2026-10-13",
   "scope": {
-    "pages": [
-      24,
-      25,
-      26,
-      27,
-      28
-    ],
+    "pages": [24, 25, 26, 27, 28],
     "pageIds": [
       "883:84247",
       "887:85295",
@@ -49,10 +43,7 @@
   "composerCoverage": {
     "total": 301,
     "compactCount": 249,
-    "compactSize": [
-      336,
-      316
-    ],
+    "compactSize": [336, 316],
     "byPage": {
       "25": 111,
       "26": 6,
@@ -678,9 +669,7 @@
       "967:87947",
       "1257:91578"
     ],
-    "additionalContextChecks": [
-      "999:97087"
-    ],
+    "additionalContextChecks": ["999:97087"],
     "reviewFrame": "1247:91434"
   },
   "structuralVerification": [
@@ -748,14 +737,8 @@
         "orphanCount": 0,
         "orphans": [],
         "intentionalMaskedBackground": [
-          [
-            "968:93937",
-            "974:95055"
-          ],
-          [
-            "968:94405",
-            "974:95056"
-          ]
+          ["968:93937", "974:95055"],
+          ["968:94405", "974:95056"]
         ],
         "staleCount": 0,
         "stale": [],
@@ -901,26 +884,13 @@
       "1234:120600"
     ],
     "retained": [
-      [
-        "1175:109861",
-        1
-      ],
-      [
-        "1177:141872",
-        1
-      ],
-      [
-        "1177:142825",
-        1
-      ]
+      ["1175:109861", 1],
+      ["1177:141872", 1],
+      ["1177:142825", 1]
     ]
   },
   "retiredControlRemnants": {
-    "removedNodeIds": [
-      "1175:109861",
-      "1177:141872",
-      "1177:142825"
-    ],
+    "removedNodeIds": ["1175:109861", "1177:141872", "1177:142825"],
     "kept": []
   },
   "repairs": [

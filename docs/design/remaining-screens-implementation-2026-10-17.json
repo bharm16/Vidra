@@ -14,14 +14,8 @@
     "catalogRows": 504,
     "retiredNullNodeRows": 17,
     "duplicateCatalogReferences": {
-      "960:88814": [
-        "product:A01",
-        "workflow:A01"
-      ],
-      "962:89666": [
-        "product:A31",
-        "workflow:A31"
-      ]
+      "960:88814": ["product:A01", "workflow:A01"],
+      "962:89666": ["product:A31", "workflow:A31"]
     }
   },
   "summary": {
@@ -367,13 +361,9 @@
       "behavior": "Exact-version publication/revoke, uncertain acceptance recovery, minimal public metadata and per-content-request ownership/project/epoch checks with HTTP Range."
     },
     "email-external": {
-      "frontend": [
-        "client/src/repositories/AuthRepository.ts"
-      ],
+      "frontend": ["client/src/repositories/AuthRepository.ts"],
       "backend": [],
-      "testSources": [
-        "client/src/pages/__tests__/AuthPages.behavior.test.tsx"
-      ],
+      "testSources": ["client/src/pages/__tests__/AuthPages.behavior.test.tsx"],
       "route": "Firebase outbound action email",
       "behavior": "Verification/reset mail is provider-owned outside the SPA; application states do not establish delivered email or console template parity."
     }
@@ -382,20 +372,13 @@
     {
       "id": "AUDIT-TIMELINE",
       "status": "resolved-source",
-      "nodes": [
-        "1081:97192"
-      ],
+      "nodes": ["1081:97192"],
       "detail": "Full and embedded editor views now coexist with composer/history. During alternate media inspection, actual EditorTimeline and Timeline control render through MediaViewer slots; playback pauses without unmounting edit state. Exact source insertion uses a retained operation receipt."
     },
     {
       "id": "AUDIT-SYSTEM",
       "status": "resolved-source",
-      "nodes": [
-        "965:93518",
-        "965:93546",
-        "994:97299",
-        "994:97311"
-      ],
+      "nodes": ["965:93518", "965:93546", "994:97299", "994:97311"],
       "detail": "App mounts loading/load-error/offline; initial project errors map401/403 to denied,503 to unavailable,and offline transport to offline. Partial resource errors remain inline."
     },
     {
@@ -14061,9 +14044,7 @@
       "implementation": {
         "disposition": "external-owned",
         "reason": "Verification/reset mail is provider-owned outside the SPA; application states do not establish delivered email or console template parity.",
-        "frontend": [
-          "client/src/repositories/AuthRepository.ts"
-        ],
+        "frontend": ["client/src/repositories/AuthRepository.ts"],
         "backend": []
       },
       "evidence": {
@@ -14101,9 +14082,7 @@
       "implementation": {
         "disposition": "external-owned",
         "reason": "Verification/reset mail is provider-owned outside the SPA; application states do not establish delivered email or console template parity.",
-        "frontend": [
-          "client/src/repositories/AuthRepository.ts"
-        ],
+        "frontend": ["client/src/repositories/AuthRepository.ts"],
         "backend": []
       },
       "evidence": {
@@ -25172,9 +25151,7 @@
           {
             "name": "projects-empty",
             "file": "projects-empty.png",
-            "sourceKeys": [
-              "X12"
-            ],
+            "sourceKeys": ["X12"],
             "url": "http://127.0.0.1:58341/app",
             "width": 1440,
             "height": 960,
@@ -25187,9 +25164,7 @@
           {
             "name": "projects-no-match",
             "file": "projects-no-match.png",
-            "sourceKeys": [
-              "X14"
-            ],
+            "sourceKeys": ["X14"],
             "url": "http://127.0.0.1:58341/app",
             "width": 1440,
             "height": 960,
@@ -25215,9 +25190,7 @@
           {
             "name": "media-empty-import-idle",
             "file": "media-empty-import-idle.png",
-            "sourceKeys": [
-              "X11"
-            ],
+            "sourceKeys": ["X11"],
             "url": "http://127.0.0.1:58341/app/project/project_978f6d2c-dfb6-4d43-a994-d440e607ae18?view=media",
             "width": 1440,
             "height": 960,
@@ -25243,9 +25216,7 @@
           {
             "name": "import-uploading",
             "file": "import-uploading.png",
-            "sourceKeys": [
-              "M03"
-            ],
+            "sourceKeys": ["M03"],
             "url": "http://127.0.0.1:58341/app/project/project_978f6d2c-dfb6-4d43-a994-d440e607ae18?view=media",
             "width": 1440,
             "height": 960,
@@ -25258,9 +25229,7 @@
           {
             "name": "import-uploading-mobile",
             "file": "import-uploading-mobile.png",
-            "sourceKeys": [
-              "B15"
-            ],
+            "sourceKeys": ["B15"],
             "url": "http://127.0.0.1:58341/app/project/project_978f6d2c-dfb6-4d43-a994-d440e607ae18?view=media",
             "width": 390,
             "height": 844,
@@ -25286,9 +25255,7 @@
           {
             "name": "import-interrupted",
             "file": "import-interrupted.png",
-            "sourceKeys": [
-              "M05"
-            ],
+            "sourceKeys": ["M05"],
             "url": "http://127.0.0.1:58341/app/project/project_978f6d2c-dfb6-4d43-a994-d440e607ae18?view=media",
             "width": 1440,
             "height": 960,
@@ -25470,9 +25437,7 @@
           {
             "name": "media-library",
             "file": "media-library.png",
-            "sourceKeys": [
-              "M01"
-            ],
+            "sourceKeys": ["M01"],
             "url": "http://127.0.0.1:58341/app/project/project_978f6d2c-dfb6-4d43-a994-d440e607ae18?view=media",
             "width": 1440,
             "height": 960,
@@ -25485,9 +25450,7 @@
           {
             "name": "media-no-match",
             "file": "media-no-match.png",
-            "sourceKeys": [
-              "X13"
-            ],
+            "sourceKeys": ["X13"],
             "url": "http://127.0.0.1:58341/app/project/project_978f6d2c-dfb6-4d43-a994-d440e607ae18?view=media",
             "width": 1440,
             "height": 960,
@@ -25513,9 +25476,7 @@
           {
             "name": "project-menu-mobile",
             "file": "project-menu-mobile.png",
-            "sourceKeys": [
-              "B22"
-            ],
+            "sourceKeys": ["B22"],
             "url": "http://127.0.0.1:58341/app/project/project_978f6d2c-dfb6-4d43-a994-d440e607ae18?view=media",
             "width": 390,
             "height": 844,
@@ -25632,9 +25593,7 @@
           {
             "name": "account-profile",
             "file": "account-profile.png",
-            "sourceKeys": [
-              "K01"
-            ],
+            "sourceKeys": ["K01"],
             "url": "http://127.0.0.1:58341/account",
             "width": 1440,
             "height": 960,
@@ -25647,9 +25606,7 @@
           {
             "name": "account-security",
             "file": "account-security.png",
-            "sourceKeys": [
-              "K08"
-            ],
+            "sourceKeys": ["K08"],
             "url": "http://127.0.0.1:58341/account?section=security",
             "width": 1440,
             "height": 960,
@@ -25662,9 +25619,7 @@
           {
             "name": "account-usage",
             "file": "account-usage.png",
-            "sourceKeys": [
-              "K11"
-            ],
+            "sourceKeys": ["K11"],
             "url": "http://127.0.0.1:58341/account?section=usage",
             "width": 1440,
             "height": 960,
@@ -25677,9 +25632,7 @@
           {
             "name": "account-data-and-privacy",
             "file": "account-data-and-privacy.png",
-            "sourceKeys": [
-              "K17"
-            ],
+            "sourceKeys": ["K17"],
             "url": "http://127.0.0.1:58341/account?section=privacy",
             "width": 1440,
             "height": 960,
@@ -25692,9 +25645,7 @@
           {
             "name": "account-profile-mobile",
             "file": "account-profile-mobile.png",
-            "sourceKeys": [
-              "N23"
-            ],
+            "sourceKeys": ["N23"],
             "url": "http://127.0.0.1:58341/account",
             "width": 390,
             "height": 844,

@@ -18,19 +18,19 @@ The [screen catalog](screen-catalog.json) is the finite inventory. The [route ma
 
 ## Review in this order
 
-| Area | Screens | What to verify |
-| --- | --- | --- |
-| Landing and products | [W01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947), [W04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411), [W05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495), [W06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576), [W07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732) | Every output has an independent starting point; no required image-to-video sequence. |
-| Pricing | [W08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88816), [W09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88920) | Bounded free testing, with no invented paid offer, credit grant or purchase button. |
-| Sign in and signup | [A01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88814), [A03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88890), [A04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88936), [A05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88982), [A14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89392) | Editable inputs, a field error, one request-error notice, the busy button and preserved return destination. |
-| Verification and reset | [A21](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89442), [A23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89490), [A24](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89512), [A25](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89530), [A26](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89550), [A31](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89666), [A34](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89741), [A37](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89812), [A41](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89963), [A42](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89983) | Checking a link, expired links, the resend countdown and safe return. |
-| Documentation | [H01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185), [H05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245), [H07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512), [H19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418), [H20](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529) | Thirteen complete guides plus search, no results, missing article and load failures. |
-| Account | [K01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91361), [K08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92055), [K09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92150), [K11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92345), [K17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92913), [K18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93011), K21 (retired October 14; not an implementation target) | Provider-aware password recovery, save feedback, allowance, billing and private-content clearing. |
-| Support | [S01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848), [S05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93074), [S06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93136), [S09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93305), [S11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95180), [S12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95234) | Prepare email, preserve topic/message, manual send, clipboard recovery and distinct deletion intent. |
-| First use and failures | [X01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93412), [X04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93490), [X06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93546), [X07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574), [X10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94758), [X11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94945), [X12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95026), [X13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95103), [X15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259) | No fake pre-existing media on a new account; loading/empty/no-match/access failures are distinct. |
-| Mobile | [N01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93576), [N10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94001), [N19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93867), [N23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94043), [N66](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=981-95300), [N68](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=982-95272) | Dedicated phone layouts, readable guides, full authentication journeys and context-preserving menus. |
-| Owned email content | [T01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94732), [T02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94745) | Verification/reset content and CTA handoff; no counterfeit Gmail/Google screen. |
-| Legal | [W10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89028), [W11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89112) | Readable source content and current source date; content approval remains separate. |
+| Area                   | Screens                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | What to verify                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Landing and products   | [W01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947), [W04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411), [W05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495), [W06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576), [W07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732)                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Every output has an independent starting point; no required image-to-video sequence.                        |
+| Pricing                | [W08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88816), [W09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88920)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Bounded free testing, with no invented paid offer, credit grant or purchase button.                         |
+| Sign in and signup     | [A01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88814), [A03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88890), [A04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88936), [A05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88982), [A14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89392)                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Editable inputs, a field error, one request-error notice, the busy button and preserved return destination. |
+| Verification and reset | [A21](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89442), [A23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89490), [A24](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89512), [A25](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89530), [A26](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89550), [A31](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89666), [A34](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89741), [A37](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89812), [A41](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89963), [A42](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89983) | Checking a link, expired links, the resend countdown and safe return.                                       |
+| Documentation          | [H01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185), [H05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245), [H07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512), [H19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418), [H20](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529)                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Thirteen complete guides plus search, no results, missing article and load failures.                        |
+| Account                | [K01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91361), [K08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92055), [K09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92150), [K11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92345), [K17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92913), [K18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93011), K21 (retired October 14; not an implementation target)                                                                                                                                                                                                                                                                                                     | Provider-aware password recovery, save feedback, allowance, billing and private-content clearing.           |
+| Support                | [S01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848), [S05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93074), [S06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93136), [S09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93305), [S11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95180), [S12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95234)                                                                                                                                                                                                                                                                                                                                                             | Prepare email, preserve topic/message, manual send, clipboard recovery and distinct deletion intent.        |
+| First use and failures | [X01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93412), [X04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93490), [X06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93546), [X07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574), [X10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94758), [X11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94945), [X12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95026), [X13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95103), [X15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259)                                                                                        | No fake pre-existing media on a new account; loading/empty/no-match/access failures are distinct.           |
+| Mobile                 | [N01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93576), [N10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94001), [N19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93867), [N23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94043), [N66](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=981-95300), [N68](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=982-95272)                                                                                                                                                                                                                                                                                                                                                             | Dedicated phone layouts, readable guides, full authentication journeys and context-preserving menus.        |
+| Owned email content    | [T01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94732), [T02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94745)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Verification/reset content and CTA handoff; no counterfeit Gmail/Google screen.                             |
+| Legal                  | [W10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89028), [W11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89112)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Readable source content and current source date; content approval remains separate.                         |
 
 ## Behavior and ownership
 
@@ -48,14 +48,14 @@ The [screen catalog](screen-catalog.json) is the finite inventory. The [route ma
 
 ## Implementation dependencies
 
-| Work | Keep | Replace or build | Depends on | Acceptance |
-| --- | --- | --- | --- | --- |
-| Public site and route split | Current authenticated ownership and compatibility resolvers | Landing/product pages, public shell, proposed `/app` split | Full design review, route contract | Deep links/aliases resolve without silently creating a new project; public navigation works on desktop/mobile. |
-| Authentication | Auth repository, Google/email methods, provider action-code validation | Forms, feedback, safe return coordination and normal error copy | Existing auth tests, current account model | Invalid/busy/disabled/offline states cannot issue duplicate auth actions; account-created/email-failed recovery does not duplicate accounts. |
-| Docs | Current product/workflow contracts | Article data, navigation, search, page errors and responsive reading layouts | Public shell | All thirteen guides reachable; empty/error search preserves query and closes to its caller. |
-| Account | Owned identity, verification and password-reset behavior | New profile-edit service/UI if approved, usage presentation, privacy-request handoff | Auth model and server-authoritative updates | Failed saves retain edits; unverified/Google states are correct; private data disappears before sign-out reconciliation. |
-| Support and legal | Configured support destination and existing policy source | Email preparation, topic preservation, copy fallback and reading layouts | Public shell; policy content review before publication | No “sent” claim from `mailto`; deletion intent is explicit and no automatic purge occurs. |
-| Mobile and first use | Same state/ownership contracts as desktop | Phone layouts, menus, search and genuinely empty collections | Corresponding desktop behavior | 44-pixel action targets, keyboard/focus handling, long-copy scroll, and no silent data changes when panels close. |
+| Work                        | Keep                                                                   | Replace or build                                                                     | Depends on                                             | Acceptance                                                                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public site and route split | Current authenticated ownership and compatibility resolvers            | Landing/product pages, public shell, proposed `/app` split                           | Full design review, route contract                     | Deep links/aliases resolve without silently creating a new project; public navigation works on desktop/mobile.                               |
+| Authentication              | Auth repository, Google/email methods, provider action-code validation | Forms, feedback, safe return coordination and normal error copy                      | Existing auth tests, current account model             | Invalid/busy/disabled/offline states cannot issue duplicate auth actions; account-created/email-failed recovery does not duplicate accounts. |
+| Docs                        | Current product/workflow contracts                                     | Article data, navigation, search, page errors and responsive reading layouts         | Public shell                                           | All thirteen guides reachable; empty/error search preserves query and closes to its caller.                                                  |
+| Account                     | Owned identity, verification and password-reset behavior               | New profile-edit service/UI if approved, usage presentation, privacy-request handoff | Auth model and server-authoritative updates            | Failed saves retain edits; unverified/Google states are correct; private data disappears before sign-out reconciliation.                     |
+| Support and legal           | Configured support destination and existing policy source              | Email preparation, topic preservation, copy fallback and reading layouts             | Public shell; policy content review before publication | No “sent” claim from `mailto`; deletion intent is explicit and no automatic purge occurs.                                                    |
+| Mobile and first use        | Same state/ownership contracts as desktop                              | Phone layouts, menus, search and genuinely empty collections                         | Corresponding desktop behavior                         | 44-pixel action targets, keyboard/focus handling, long-copy scroll, and no silent data changes when panels close.                            |
 
 Do not implement the replacement UI before the whole screen set is reviewed. Existing application tests and the workflow implementation plan remain authoritative; Figma coverage does not mark a work package implemented.
 
@@ -67,150 +67,150 @@ This is a design prototype, not a running application. Fields, account records, 
 
 ## Screen index
 
-| ID | Screen | Route / surface |
-| --- | --- | --- |
-| [A01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88814) | Sign in | `/signin` |
-| [A03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88890) | Sign in validation | `/signin` |
-| [A04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88936) | Incorrect credentials | `/signin` |
-| [A05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88982) | Signing in | `/signin` |
-| [A14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89392) | Create an account | `/signup` |
-| [A21](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89442) | Check your email | `/email-verification` |
-| [A23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89490) | Verification email resent | `/email-verification` |
-| [A24](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89512) | Checking verification link | `/email-verification` |
-| [A25](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89530) | Email verified | `/email-verification` |
-| [A26](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89550) | Verification link expired | `/email-verification` |
-| [A31](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89666) | Forgot password | `/forgot-password` |
-| [A34](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89741) | Check your inbox for reset instructions | `/forgot-password` |
-| [A37](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89812) | Choose a new password | `/reset-password` |
-| [A41](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89963) | Password changed | `/reset-password` |
-| [A42](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89983) | Password reset link expired | `/reset-password` |
-| [H01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185) | Documentation home | `/docs` |
-| [H02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-89912) | Get started | `/docs/start` |
-| [H03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90023) | Create and edit images | `/docs/images` |
-| [H04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90134) | Generate a video clip | `/docs/video` |
-| [H05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245) | Assemble and export a video | `/docs/editor` |
-| [H06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90401) | Import and organize media | `/docs/imports` |
-| [H07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512) | Conversations, drafts and versions | `/docs/history` |
-| [H08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90630) | Draw with Sketch | `/docs/sketch` |
-| [H09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90741) | Choose models and settings | `/docs/models` |
-| [H10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90852) | Share and download your work | `/docs/sharing` |
-| [H11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90963) | Recover interrupted work | `/docs/recovery` |
-| [H12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91074) | Understand your testing allowance | `/docs/allowance` |
-| [H13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91320) | Search documentation | `/docs` |
-| [H14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91471) | Documentation search results | `/docs` |
-| [H15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91630) | Documentation search has no matches | `/docs` |
-| [H16](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91783) | Documentation search unavailable | `/docs` |
-| [H17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91936) | Documentation article missing | `/docs` |
-| [H18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91997) | Documentation could not load | `/docs` |
-| [H19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418) | Improve words without generating media | `/docs/words` |
-| [H20](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529) | Select an area to edit | `/docs/regions` |
-| [K01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91361) | Profile | `/account` |
-| [K02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91459) | Profile awaiting email verification | `/account` |
-| [K04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91646) | Edit display name | `/account` |
-| [K08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92055) | Password and sign-in settings | `/account` |
-| [K09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92150) | Google sign-in settings | `/account` |
-| [K10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92245) | Password reset requested from account | `/account` |
-| [K11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92345) | Free testing allowance | `/account` |
-| [K12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92446) | Testing allowance exhausted | `/account` |
-| [K13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92549) | Usage loading | `/account` |
-| [K14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92635) | Usage unavailable | `/account` |
-| K15 (retired October 14; not an implementation target) | Request receipt details | `/account` |
-| [K16](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92829) | No usage history yet | `/account` |
-| [K17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92913) | Data and privacy requests | `/account` |
-| [K18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93011) | Sign out with unsaved work | `/account` |
-| K21 (retired October 14; not an implementation target) | Billing during free testing | `/account` |
-| [N01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93576) | Mobile Landing page | `responsive` |
-| [N02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93657) | Mobile Public navigation | `responsive` |
-| [N03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93768) | Mobile Image product page | `responsive` |
-| [N04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93799) | Mobile Video product page | `responsive` |
-| [N05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93830) | Mobile Editor product page | `responsive` |
-| [N06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93861) | Mobile Sketch product page | `responsive` |
-| [N07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93892) | Mobile Pricing | `responsive` |
-| [N08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93935) | Mobile Sign in | `responsive` |
-| [N09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93967) | Mobile Sign in error | `responsive` |
-| [N10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94001) | Mobile Sign up | `responsive` |
-| [N12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94075) | Mobile Verify email | `responsive` |
-| [N13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94099) | Mobile Verification error | `responsive` |
-| [N14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94123) | Mobile Forgot password | `responsive` |
-| [N15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94145) | Mobile Reset email sent | `responsive` |
-| [N16](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94169) | Mobile New password | `responsive` |
-| [N17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94197) | Mobile Password changed | `responsive` |
-| [N18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93826) | Mobile Docs home | `responsive` |
-| [N19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93867) | Mobile Documentation article | `responsive` |
-| [N20](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93906) | Mobile Docs navigation | `responsive` |
-| [N21](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93983) | Mobile Docs search | `responsive` |
-| [N22](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94016) | Mobile Docs no results | `responsive` |
-| [N23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94043) | Mobile Profile | `responsive` |
-| [N24](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94063) | Mobile Security | `responsive` |
-| [N25](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94079) | Mobile Allowance | `responsive` |
-| N26 (retired October 14; not an implementation target) | Mobile Billing | `responsive` |
-| [N27](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94120) | Mobile Data and privacy | `responsive` |
-| [N28](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94139) | Mobile Contact support | `responsive` |
-| [N29](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94164) | Mobile Email handoff | `responsive` |
-| [N30](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94206) | Mobile Privacy policy | `responsive` |
-| [N31](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94254) | Mobile Terms of service | `responsive` |
-| [N32](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94308) | Mobile Page not found | `responsive` |
-| [N33](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94320) | Mobile Offline | `responsive` |
-| [N34](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94332) | Mobile Account navigation | `responsive` |
-| [N35](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94374) | Mobile Document table of contents | `responsive` |
-| [N36](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94433) | Mobile Sign-out confirmation | `responsive` |
-| [N38](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94033) | Mobile First workspace visit | `responsive` |
-| [N39](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94083) | Mobile Return to a project | `responsive` |
-| [N44](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94231) | Mobile Signing in | `responsive` |
-| [N50](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94419) | Mobile Verification checking | `responsive` |
-| [N51](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94437) | Mobile Email verified | `responsive` |
-| [N54](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94310) | Mobile Get started guide | `responsive` |
-| [N55](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94349) | Mobile Image guide | `responsive` |
-| [N56](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94388) | Mobile Video guide | `responsive` |
-| [N57](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94427) | Mobile Import guide | `responsive` |
-| [N58](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94466) | Mobile History guide | `responsive` |
-| [N59](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94505) | Mobile Sketch guide | `responsive` |
-| [N60](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94544) | Mobile Model guide | `responsive` |
-| [N61](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94583) | Mobile Sharing guide | `responsive` |
-| [N62](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94622) | Mobile Recovery guide | `responsive` |
-| [N63](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94661) | Mobile Allowance guide | `responsive` |
-| [N64](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94700) | Mobile Wording guide | `responsive` |
-| [N65](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94739) | Mobile Region guide | `responsive` |
-| [N66](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=981-95300) | Mobile documentation search entry | `responsive` |
-| [N67](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=981-95320) | Mobile documentation search unavailable | `responsive` |
-| [N68](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=982-95272) | Mobile account data request | `responsive` |
-| [N69](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=982-95300) | Mobile account deletion request | `responsive` |
-| [S01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848) | Contact support | `/contact` |
-| [S02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92901) | Support details ready | `/contact` |
-| [S03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92954) | Support form validation | `/contact` |
-| [S04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93014) | Choose a support topic | `/contact` |
-| [S05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93074) | Continue in your email app | `/contact` |
-| [S06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93136) | No email app available | `/contact` |
-| [S07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93198) | Support address copied | `/contact` |
-| [S08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93251) | Clipboard permission failed | `/contact` |
-| [S09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93305) | Security report | `/contact` |
-| [S10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93359) | Request account data or deletion | `/contact` |
-| [S11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95180) | Product feedback | `/contact` |
-| [S12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95234) | Account deletion request | `/contact` |
-| [T01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94732) | Verification email | `email` |
-| [T02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94745) | Password reset email | `email` |
-| [W01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947) | Landing page | `/` |
-| [W02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88089) | Product navigation open | `/` |
-| [W03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88269) | Landing page for a returning creator | `/` |
-| [W04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411) | Image creation product page | `/product/images` |
-| [W05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495) | Video generation product page | `/product/video` |
-| [W06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576) | Video editing product page | `/product/editor` |
-| [W07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732) | Sketch product page | `/product/sketch` |
-| [W08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88816) | Pricing during free testing | `/pricing` |
-| [W09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88920) | Pricing questions expanded | `/pricing` |
-| [W10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89028) | Privacy policy | `/privacy-policy` |
-| [W11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89112) | Terms of service | `/terms-of-service` |
-| [X01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93412) | Page not found | `*` |
-| [X02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93440) | Page loading | `*` |
-| [X03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93462) | Page failed to load | `*` |
-| [X04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93490) | Offline page | `*` |
-| [X05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93518) | Service temporarily unavailable | `*` |
-| [X06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93546) | Access denied | `*` |
-| [X07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574) | First signed-in workspace visit | `/app` |
-| [X08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93659) | Return to an existing project | `/app` |
-| [X10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94758) | New video edit with no project media | `/app` |
-| [X11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94945) | First project media library | `/app` |
-| [X12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95026) | First project browser | `/app` |
-| [X13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95103) | Media search has no matches | `/app` |
-| [X14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95182) | Project search has no matches | `/app` |
-| [X15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259) | Project browser loading | `/app` |
+| ID                                                                                    | Screen                                  | Route / surface       |
+| ------------------------------------------------------------------------------------- | --------------------------------------- | --------------------- |
+| [A01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88814) | Sign in                                 | `/signin`             |
+| [A03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88890) | Sign in validation                      | `/signin`             |
+| [A04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88936) | Incorrect credentials                   | `/signin`             |
+| [A05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88982) | Signing in                              | `/signin`             |
+| [A14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89392) | Create an account                       | `/signup`             |
+| [A21](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89442) | Check your email                        | `/email-verification` |
+| [A23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89490) | Verification email resent               | `/email-verification` |
+| [A24](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89512) | Checking verification link              | `/email-verification` |
+| [A25](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89530) | Email verified                          | `/email-verification` |
+| [A26](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89550) | Verification link expired               | `/email-verification` |
+| [A31](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89666) | Forgot password                         | `/forgot-password`    |
+| [A34](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89741) | Check your inbox for reset instructions | `/forgot-password`    |
+| [A37](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89812) | Choose a new password                   | `/reset-password`     |
+| [A41](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89963) | Password changed                        | `/reset-password`     |
+| [A42](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89983) | Password reset link expired             | `/reset-password`     |
+| [H01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185) | Documentation home                      | `/docs`               |
+| [H02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-89912) | Get started                             | `/docs/start`         |
+| [H03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90023) | Create and edit images                  | `/docs/images`        |
+| [H04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90134) | Generate a video clip                   | `/docs/video`         |
+| [H05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245) | Assemble and export a video             | `/docs/editor`        |
+| [H06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90401) | Import and organize media               | `/docs/imports`       |
+| [H07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512) | Conversations, drafts and versions      | `/docs/history`       |
+| [H08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90630) | Draw with Sketch                        | `/docs/sketch`        |
+| [H09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90741) | Choose models and settings              | `/docs/models`        |
+| [H10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90852) | Share and download your work            | `/docs/sharing`       |
+| [H11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90963) | Recover interrupted work                | `/docs/recovery`      |
+| [H12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91074) | Understand your testing allowance       | `/docs/allowance`     |
+| [H13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91320) | Search documentation                    | `/docs`               |
+| [H14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91471) | Documentation search results            | `/docs`               |
+| [H15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91630) | Documentation search has no matches     | `/docs`               |
+| [H16](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91783) | Documentation search unavailable        | `/docs`               |
+| [H17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91936) | Documentation article missing           | `/docs`               |
+| [H18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91997) | Documentation could not load            | `/docs`               |
+| [H19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418) | Improve words without generating media  | `/docs/words`         |
+| [H20](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529) | Select an area to edit                  | `/docs/regions`       |
+| [K01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91361) | Profile                                 | `/account`            |
+| [K02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91459) | Profile awaiting email verification     | `/account`            |
+| [K04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91646) | Edit display name                       | `/account`            |
+| [K08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92055) | Password and sign-in settings           | `/account`            |
+| [K09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92150) | Google sign-in settings                 | `/account`            |
+| [K10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92245) | Password reset requested from account   | `/account`            |
+| [K11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92345) | Free testing allowance                  | `/account`            |
+| [K12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92446) | Testing allowance exhausted             | `/account`            |
+| [K13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92549) | Usage loading                           | `/account`            |
+| [K14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92635) | Usage unavailable                       | `/account`            |
+| K15 (retired October 14; not an implementation target)                                | Request receipt details                 | `/account`            |
+| [K16](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92829) | No usage history yet                    | `/account`            |
+| [K17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92913) | Data and privacy requests               | `/account`            |
+| [K18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93011) | Sign out with unsaved work              | `/account`            |
+| K21 (retired October 14; not an implementation target)                                | Billing during free testing             | `/account`            |
+| [N01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93576) | Mobile Landing page                     | `responsive`          |
+| [N02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93657) | Mobile Public navigation                | `responsive`          |
+| [N03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93768) | Mobile Image product page               | `responsive`          |
+| [N04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93799) | Mobile Video product page               | `responsive`          |
+| [N05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93830) | Mobile Editor product page              | `responsive`          |
+| [N06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93861) | Mobile Sketch product page              | `responsive`          |
+| [N07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93892) | Mobile Pricing                          | `responsive`          |
+| [N08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93935) | Mobile Sign in                          | `responsive`          |
+| [N09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93967) | Mobile Sign in error                    | `responsive`          |
+| [N10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94001) | Mobile Sign up                          | `responsive`          |
+| [N12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94075) | Mobile Verify email                     | `responsive`          |
+| [N13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94099) | Mobile Verification error               | `responsive`          |
+| [N14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94123) | Mobile Forgot password                  | `responsive`          |
+| [N15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94145) | Mobile Reset email sent                 | `responsive`          |
+| [N16](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94169) | Mobile New password                     | `responsive`          |
+| [N17](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-94197) | Mobile Password changed                 | `responsive`          |
+| [N18](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93826) | Mobile Docs home                        | `responsive`          |
+| [N19](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93867) | Mobile Documentation article            | `responsive`          |
+| [N20](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93906) | Mobile Docs navigation                  | `responsive`          |
+| [N21](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93983) | Mobile Docs search                      | `responsive`          |
+| [N22](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94016) | Mobile Docs no results                  | `responsive`          |
+| [N23](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94043) | Mobile Profile                          | `responsive`          |
+| [N24](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94063) | Mobile Security                         | `responsive`          |
+| [N25](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94079) | Mobile Allowance                        | `responsive`          |
+| N26 (retired October 14; not an implementation target)                                | Mobile Billing                          | `responsive`          |
+| [N27](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94120) | Mobile Data and privacy                 | `responsive`          |
+| [N28](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94139) | Mobile Contact support                  | `responsive`          |
+| [N29](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94164) | Mobile Email handoff                    | `responsive`          |
+| [N30](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94206) | Mobile Privacy policy                   | `responsive`          |
+| [N31](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94254) | Mobile Terms of service                 | `responsive`          |
+| [N32](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94308) | Mobile Page not found                   | `responsive`          |
+| [N33](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94320) | Mobile Offline                          | `responsive`          |
+| [N34](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94332) | Mobile Account navigation               | `responsive`          |
+| [N35](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94374) | Mobile Document table of contents       | `responsive`          |
+| [N36](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94433) | Mobile Sign-out confirmation            | `responsive`          |
+| [N38](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94033) | Mobile First workspace visit            | `responsive`          |
+| [N39](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94083) | Mobile Return to a project              | `responsive`          |
+| [N44](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94231) | Mobile Signing in                       | `responsive`          |
+| [N50](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94419) | Mobile Verification checking            | `responsive`          |
+| [N51](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94437) | Mobile Email verified                   | `responsive`          |
+| [N54](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94310) | Mobile Get started guide                | `responsive`          |
+| [N55](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94349) | Mobile Image guide                      | `responsive`          |
+| [N56](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94388) | Mobile Video guide                      | `responsive`          |
+| [N57](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94427) | Mobile Import guide                     | `responsive`          |
+| [N58](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94466) | Mobile History guide                    | `responsive`          |
+| [N59](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94505) | Mobile Sketch guide                     | `responsive`          |
+| [N60](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94544) | Mobile Model guide                      | `responsive`          |
+| [N61](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94583) | Mobile Sharing guide                    | `responsive`          |
+| [N62](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94622) | Mobile Recovery guide                   | `responsive`          |
+| [N63](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94661) | Mobile Allowance guide                  | `responsive`          |
+| [N64](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94700) | Mobile Wording guide                    | `responsive`          |
+| [N65](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94739) | Mobile Region guide                     | `responsive`          |
+| [N66](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=981-95300) | Mobile documentation search entry       | `responsive`          |
+| [N67](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=981-95320) | Mobile documentation search unavailable | `responsive`          |
+| [N68](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=982-95272) | Mobile account data request             | `responsive`          |
+| [N69](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=982-95300) | Mobile account deletion request         | `responsive`          |
+| [S01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848) | Contact support                         | `/contact`            |
+| [S02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92901) | Support details ready                   | `/contact`            |
+| [S03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92954) | Support form validation                 | `/contact`            |
+| [S04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93014) | Choose a support topic                  | `/contact`            |
+| [S05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93074) | Continue in your email app              | `/contact`            |
+| [S06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93136) | No email app available                  | `/contact`            |
+| [S07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93198) | Support address copied                  | `/contact`            |
+| [S08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93251) | Clipboard permission failed             | `/contact`            |
+| [S09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93305) | Security report                         | `/contact`            |
+| [S10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93359) | Request account data or deletion        | `/contact`            |
+| [S11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95180) | Product feedback                        | `/contact`            |
+| [S12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95234) | Account deletion request                | `/contact`            |
+| [T01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94732) | Verification email                      | `email`               |
+| [T02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94745) | Password reset email                    | `email`               |
+| [W01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947) | Landing page                            | `/`                   |
+| [W02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88089) | Product navigation open                 | `/`                   |
+| [W03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88269) | Landing page for a returning creator    | `/`                   |
+| [W04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411) | Image creation product page             | `/product/images`     |
+| [W05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495) | Video generation product page           | `/product/video`      |
+| [W06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576) | Video editing product page              | `/product/editor`     |
+| [W07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732) | Sketch product page                     | `/product/sketch`     |
+| [W08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88816) | Pricing during free testing             | `/pricing`            |
+| [W09](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88920) | Pricing questions expanded              | `/pricing`            |
+| [W10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89028) | Privacy policy                          | `/privacy-policy`     |
+| [W11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89112) | Terms of service                        | `/terms-of-service`   |
+| [X01](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93412) | Page not found                          | `*`                   |
+| [X02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93440) | Page loading                            | `*`                   |
+| [X03](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93462) | Page failed to load                     | `*`                   |
+| [X04](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93490) | Offline page                            | `*`                   |
+| [X05](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93518) | Service temporarily unavailable         | `*`                   |
+| [X06](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93546) | Access denied                           | `*`                   |
+| [X07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574) | First signed-in workspace visit         | `/app`                |
+| [X08](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93659) | Return to an existing project           | `/app`                |
+| [X10](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94758) | New video edit with no project media    | `/app`                |
+| [X11](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94945) | First project media library             | `/app`                |
+| [X12](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95026) | First project browser                   | `/app`                |
+| [X13](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95103) | Media search has no matches             | `/app`                |
+| [X14](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95182) | Project search has no matches           | `/app`                |
+| [X15](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259) | Project browser loading                 | `/app`                |

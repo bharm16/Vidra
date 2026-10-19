@@ -1036,14 +1036,9 @@
           "type": "FRAME"
         }
       ],
-      "mutatedNodeIds": [
-        "I917:329651;916:86943",
-        "887:85295"
-      ],
+      "mutatedNodeIds": ["I917:329651;916:86943", "887:85295"],
       "rerouted": [],
-      "cleared": [
-        "I917:329651;916:86943"
-      ],
+      "cleared": ["I917:329651;916:86943"],
       "missingTargets": []
     },
     {
@@ -1298,15 +1293,8 @@
           "type": "INSTANCE"
         }
       ],
-      "mutatedNodeIds": [
-        "1440:180834",
-        "1072:93118",
-        "1048:84247"
-      ],
-      "rerouted": [
-        "1440:180834",
-        "1072:93118"
-      ],
+      "mutatedNodeIds": ["1440:180834", "1072:93118", "1048:84247"],
+      "rerouted": ["1440:180834", "1072:93118"],
       "cleared": [],
       "missingTargets": []
     }
@@ -1326,9 +1314,7 @@
         "914:86621",
         "914:86630"
       ],
-      "mutatedNodeIds": [
-        "889:85134"
-      ]
+      "mutatedNodeIds": ["889:85134"]
     },
     {
       "mutatedNodeIds": [
@@ -1420,9 +1406,7 @@
           },
           {
             "id": "893:85702",
-            "text": [
-              "Retry saving"
-            ],
+            "text": ["Retry saving"],
             "context": [
               "Kind=Confirm",
               "Vidra Fresh / Dialog",
@@ -1442,9 +1426,7 @@
           },
           {
             "id": "893:85710",
-            "text": [
-              "Retry saving"
-            ],
+            "text": ["Retry saving"],
             "context": [
               "Kind=Unsaved",
               "Vidra Fresh / Dialog",
@@ -1464,9 +1446,7 @@
           },
           {
             "id": "893:85718",
-            "text": [
-              "Retry saving"
-            ],
+            "text": ["Retry saving"],
             "context": [
               "Kind=Destructive",
               "Vidra Fresh / Dialog",
@@ -1494,9 +1474,7 @@
           },
           {
             "id": "900:95295",
-            "text": [
-              "Retry saving"
-            ],
+            "text": ["Retry saving"],
             "context": [
               "Keep this draft before leaving",
               "R04 · Protect work that has no saved copy",
@@ -1516,9 +1494,7 @@
           },
           {
             "id": "1437:141713",
-            "text": [
-              "Retry saving"
-            ],
+            "text": ["Retry saving"],
             "context": [
               "Vidra consolidated / Creation and history / Keep this draft before leaving",
               "Consolidated state sources · 2026-10-13",
@@ -1550,9 +1526,7 @@
           },
           {
             "id": "1001:118326",
-            "text": [
-              "Retry saving"
-            ],
+            "text": ["Retry saving"],
             "context": [
               "B42 · Mobile unsaved work blocks leaving",
               "Archive · consolidated prototype fixtures · 2026-10-13",
@@ -1561,9 +1535,7 @@
           },
           {
             "id": "912:326281",
-            "text": [
-              "Repair preview"
-            ],
+            "text": ["Repair preview"],
             "context": [
               "E19 · Recover a playback copy without failing the source",
               "Archive · consolidated prototype fixtures · 2026-10-13",
@@ -1584,9 +1556,7 @@
           },
           {
             "id": "901:321272",
-            "text": [
-              "Retry saving"
-            ],
+            "text": ["Retry saving"],
             "context": [
               "R19 · An older save acknowledgement does not mark new words saved",
               "Archive · consolidated prototype fixtures · 2026-10-13",
@@ -1603,9 +1573,7 @@
         "matches": [
           {
             "id": "959:89159",
-            "text": [
-              "Billing"
-            ],
+            "text": ["Billing"],
             "context": [
               "Page content",
               "W11 · Terms of service",
@@ -1614,9 +1582,7 @@
           },
           {
             "id": "959:89138",
-            "text": [
-              "Billing"
-            ],
+            "text": ["Billing"],
             "context": [
               "On this page",
               "W11 · Terms of service",
@@ -1658,9 +1624,7 @@
           },
           {
             "id": "994:96827",
-            "text": [
-              "Billing"
-            ],
+            "text": ["Billing"],
             "context": [
               "On this page",
               "O20 · On this page",
@@ -1702,9 +1666,7 @@
           },
           {
             "id": "1437:98296",
-            "text": [
-              "Billing"
-            ],
+            "text": ["Billing"],
             "context": [
               "Vidra consolidated / Creation and history / Page content / Legal",
               "Consolidated state sources · 2026-10-13",
@@ -1746,9 +1708,7 @@
           },
           {
             "id": "968:94279",
-            "text": [
-              "Billing"
-            ],
+            "text": ["Billing"],
             "context": [
               "N31 · Mobile Terms of service",
               "Archive · consolidated prototype fixtures · 2026-10-13",

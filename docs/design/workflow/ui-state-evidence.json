@@ -6960,14 +6960,29 @@
     },
     "addedProperties": ["Media card/Duration", "Media card/Show duration"],
     "removedProperties": ["Media card/Detail"],
-    "screens": ["M01", "M03", "M05", "M08", "B04", "B15", "B16", "B22", "B31", "B33"]
+    "screens": [
+      "M01",
+      "M03",
+      "M05",
+      "M08",
+      "B04",
+      "B15",
+      "B16",
+      "B22",
+      "B31",
+      "B33"
+    ]
   },
   "editSourceTileRedesign20261016": {
     "status": "applied",
     "record": "../edit-source-tile-redesign-2026-10-16.json",
     "policy": "An image edit's composer shows only the picture being edited. Compact input fills its 72 x 48 tile with the picture, has no caption (the Edit image button names the action) and keeps the Remove badge inside its top-right corner. Reference and Sketch, the two ways to give a request its picture, are not shown beside it; they return when the picture is removed, and the media picker the tile opens has Upload. Not ready shows a loader and Unavailable an alert on an empty tile, because neither state has a picture. An area edit shows one tile: the picture with its area.",
     "retiredScreens": ["C24"],
-    "retiredComponents": ["Input", "Composer content / Media / e7cdda37882bb055", "Composer content / Prompt / cb1d3dcda404a9a"],
+    "retiredComponents": [
+      "Input",
+      "Composer content / Media / e7cdda37882bb055",
+      "Composer content / Prompt / cb1d3dcda404a9a"
+    ],
     "retiredLayers": ["C26 · Another variation sheet"],
     "retiredProperties": ["Compact input/Role"],
     "renamedVariants": {
@@ -6978,26 +6993,84 @@
       "Compact input/Kind=Image, State=Not ready": "2352:10371",
       "Compact input/Kind=Image, State=Unavailable": "2352:10381"
     },
-    "screens": ["C05", "C06", "C07", "C13", "C14", "C20", "C22", "C26", "C28", "C30", "C34", "C35", "C36", "C40", "C41", "C42", "C43", "C45", "C52", "C53", "C54", "C57", "C59", "D01", "M04", "M10", "M12", "R01", "R04", "R16", "X08", "B02", "B24", "B25", "B26", "B42", "N39"]
+    "screens": [
+      "C05",
+      "C06",
+      "C07",
+      "C13",
+      "C14",
+      "C20",
+      "C22",
+      "C26",
+      "C28",
+      "C30",
+      "C34",
+      "C35",
+      "C36",
+      "C40",
+      "C41",
+      "C42",
+      "C43",
+      "C45",
+      "C52",
+      "C53",
+      "C54",
+      "C57",
+      "C59",
+      "D01",
+      "M04",
+      "M10",
+      "M12",
+      "R01",
+      "R04",
+      "R16",
+      "X08",
+      "B02",
+      "B24",
+      "B25",
+      "B26",
+      "B42",
+      "N39"
+    ]
   },
   "queueStateRemoval20261016": {
     "status": "applied",
     "record": "../figma-contract-state-pruning-2026-10-16.json",
     "policy": "\"In the queue\", \"Queued\" and \"Waiting to render\" drew the server's not-started job status. A person cannot see the queue or act on it, and each queued screen matched its running twin except for that line (C40/C41, C49/C50, E34/E35; W06 and W54 beside W07). Accepted work shows its running state (Output / State=Running, the W07 status line, Export panel State=Rendering) until the result arrives. Do not redraw queued, waiting, received, saving or stored states.",
     "retiredScreens": ["C40", "C49", "E34", "W06", "W54"],
-    "retiredVariants": ["Output/State=Waiting", "Output/State=Received", "Output/State=Saving", "Output/State=Stored", "Output/State=Lost", "Export panel/State=Queued"],
+    "retiredVariants": [
+      "Output/State=Waiting",
+      "Output/State=Received",
+      "Output/State=Saving",
+      "Output/State=Stored",
+      "Output/State=Lost",
+      "Export panel/State=Queued"
+    ],
     "rewiredLinks": ["E32 Export → E35"]
   },
   "creationJourneyLinks20261016": {
     "status": "applied",
     "policy": "The October 15 page split dropped the creation-journey links that crossed pages. C38 Make image and C47 Make video (page 03) now open C41 and C50 (page 04) through prototype URLs. The model pickers C39 and C48 close with Escape, a second click on the model chip, or by choosing the model. C41 and C50 advance to C57 and C58 after 2000 ms (AFTER_TIMEOUT is stored in milliseconds), and the result tiles open C42 and C51. C-series hotspotIds now name the control instances that carry each link.",
-    "droppedLinks": ["C05 Drafts 2 → C21", "C05 Add an input → C18", "C06 Desk light → C05", "C11 Keep mine as a separate draft → C29"],
+    "droppedLinks": [
+      "C05 Drafts 2 → C21",
+      "C05 Add an input → C18",
+      "C06 Desk light → C05",
+      "C11 Keep mine as a separate draft → C29"
+    ],
     "reason": "Their controls or screens no longer exist: the Drafts pill was removed, C11, C18, C21 and C29 were deleted, and C06 has no Desk light control."
   },
   "inProgressSlot20261016": {
     "status": "applied",
     "policy": "Output's Running, Failed and Ready cards use surface/raised with the Interface Raised mode, so the in-progress card shows on the Conversation panel (surface/panel) and Try again keeps its control contrast. Work in progress has one wording: Making your image / Making your video, in the slot and in W status lines, always with the loader-circle icon. Submit buttons say Make image / Make video (the Composer controls default is Make video), the disabled-submit tooltip says Add a prompt first., and the video failure line says Could not make this video. Help and marketing prose on pages 15-16 still says generate.",
-    "changedComponents": ["Output/State=Running", "Output/State=Failed", "Output/State=Ready", "Composer controls/Layout=Stacked", "Composer controls/Layout=Inline", "Composer controls/Layout=Touch", "Request failure/Kind=Request"],
+    "changedComponents": [
+      "Output/State=Running",
+      "Output/State=Failed",
+      "Output/State=Ready",
+      "Composer controls/Layout=Stacked",
+      "Composer controls/Layout=Inline",
+      "Composer controls/Layout=Touch",
+      "Request failure/Kind=Request"
+    ],
     "screenOverrides": 26,
     "iconSwaps": ["W09", "W59", "W53"]
   }

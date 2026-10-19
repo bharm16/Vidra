@@ -9,11 +9,7 @@
     "Removed project controls from empty first-use/new-request states",
     "Removed all What are you making headings"
   ],
-  "visualChecks": [
-    "1065:85631",
-    "1056:84591",
-    "1073:92317"
-  ],
+  "visualChecks": ["1065:85631", "1056:84591", "1073:92317"],
   "statePreservation": "Existing-project access-loss state 1074:93482 retains its project context; empty follow-up drafts with history/media retain theirs.",
   "audit": [
     {

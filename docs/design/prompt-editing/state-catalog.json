@@ -746,12 +746,7 @@
   },
   "interactionsDocument": "interaction-contract.md",
   "implementationDocument": "implementation-notes.md",
-  "sourcePagesRetained": [
-    "883:84247",
-    "887:85295",
-    "956:84247",
-    "1026:84247"
-  ],
+  "sourcePagesRetained": ["883:84247", "887:85295", "956:84247", "1026:84247"],
   "followUpCorrection": {
     "status": "Figma design updated; application acceptance pending",
     "changes": [

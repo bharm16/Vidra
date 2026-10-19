@@ -4,21 +4,8 @@
   "status": "implemented-with-provider-free-runtime-evidence",
   "scope": {
     "figmaFile": "hVtzoSXhV2rQmxc6pOYC8c",
-    "desktop": [
-      "M10",
-      "M12",
-      "M13",
-      "M14",
-      "M15",
-      "M17",
-      "M18",
-      "M19",
-      "M20"
-    ],
-    "mobile": [
-      "B06",
-      "B08"
-    ],
+    "desktop": ["M10", "M12", "M13", "M14", "M15", "M17", "M18", "M19", "M20"],
+    "mobile": ["B06", "B08"],
     "mcpCalls": 7
   },
   "implementation": [

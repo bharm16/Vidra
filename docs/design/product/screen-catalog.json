@@ -2821,15 +2821,7 @@
     "status": "applied",
     "record": "../figma-state-screen-removal-2026-10-15.json",
     "policy": "The October 15 removal deleted screens and components that drew backend or contract states as UI: the auth state machine, cancellation races, request reconciliation, cross-tab submission and guest-draft ownership. Do not redraw them. Their behavior stays in backend contracts and tests; only the requirement for a dedicated UI surface is retired. The real client surfaces are AuthGateDialog \"Sign in to continue\", the RequireAuth redirect to /signin, the AccountPopover and toasts.",
-    "retiredScreens": [
-      "A46",
-      "A47",
-      "A50",
-      "K19",
-      "X09",
-      "N40",
-      "N41"
-    ],
+    "retiredScreens": ["A46", "A47", "A50", "K19", "X09", "N40", "N41"],
     "surfaces": {
       "A46": "Guest drafts stay in the composer across sign-in; no adoption screen.",
       "A47": "AuthGateDialog \"Sign in to continue\"; an account never receives another account's data.",
@@ -2850,12 +2842,7 @@
     "status": "applied",
     "record": "../auth-redesign-2026-10-16.json",
     "policy": "The October 16 auth redesign rebuilt every sign-in, account-creation, recovery and verification screen on one Auth card (Conversation panel material) over the Ambient backdrop. Sign in and Create account switch in place and share one size; account creation has a single password field with Show, so the confirm-password mismatch screens are retired. Do not redraw them; a typo is caught by Show and by the reset flow.",
-    "retiredScreens": [
-      "A16",
-      "A38",
-      "N11",
-      "N88"
-    ],
+    "retiredScreens": ["A16", "A38", "N11", "N88"],
     "surfaces": {
       "A16": "Create account keeps one password field with Show; no confirmation field.",
       "A38": "Choose a new password keeps one field with Show.",
@@ -3065,11 +3052,7 @@
     "status": "applied",
     "record": "../figma-contract-state-pruning-2026-10-16.json",
     "policy": "The mobile app has no projects list: the Mobile header's folder button opens the B22 sheet for the current project (Rename project, Conversations, Archived conversations, Move to Trash), no mobile app screen offers All projects or Switch project, and the Mobile site header's menu links nowhere. N135, N137 and N138 drew the empty, no-results and loading states of that missing page in the public-site shell, with no links in or out, so a person on a phone can never see them. Do not redraw them; the desktop project browser states X12, X14 and X15 stay.",
-    "retiredScreens": [
-      "N135",
-      "N137",
-      "N138"
-    ],
+    "retiredScreens": ["N135", "N137", "N138"],
     "surfaces": {
       "N135": "Projects page in the Mobile site header: 40px 'Projects', Search projects, 'No projects yet', 'Create a project to keep related work together.' and New project.",
       "N137": "The same Projects page with a project search that found nothing.",
@@ -3080,9 +3063,7 @@
     "status": "applied",
     "record": "../figma-contract-state-pruning-2026-10-16.json",
     "policy": "The approved mobile library has no search: B04's Library controls are Filter, Sort and Show hidden, and the empty library N134 has none. N136 drew a typed media search with no results in the public-site shell, so a person on a phone can never see it. Do not redraw it; the desktop no-matches state X13 stays. N139, the empty first video edit, is a real step (the Video tab of a project with nothing in it) and was rebuilt in the mobile editor shell instead.",
-    "retiredScreens": [
-      "N136"
-    ],
+    "retiredScreens": ["N136"],
     "surfaces": {
       "N136": "Media page in the Mobile site header with 'morning reference' typed in Search, 'No results for “morning reference”', 'Try another search or clear the words.' and Clear search."
     }
@@ -3091,10 +3072,7 @@
     "status": "applied",
     "record": "../figma-contract-state-pruning-2026-10-16.json",
     "policy": "N152, N154 and N155 were the same mobile pricing page with a different question open, so they differed only in wording. Like desktop W09, mobile keeps one 'questions expanded' screen: N152 now shows all three answers, and each of N07's questions opens it. Tapping an open question closes back to N07. N152 also gained N07's Create an account and footer links, which it had lacked. Do not redraw one screen per open question.",
-    "retiredScreens": [
-      "N154",
-      "N155"
-    ],
+    "retiredScreens": ["N154", "N155"],
     "surfaces": {
       "N154": "N07 with only 'What happens when I reach the limit?' open: 'New generation waits until allowance is available. Your saved media, editing and downloads remain available.' The answer now lives on N152.",
       "N155": "N07 with only 'Where can I check my usage?' open: 'Open Account, then Usage to see your available allowance and recent requests.' The answer now lives on N152."

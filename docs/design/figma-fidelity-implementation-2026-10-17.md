@@ -6,17 +6,17 @@ The retained **485 frames**, including **161 mobile frames**, have inspected sou
 
 All 99 originally representative-only examples have specific-state renders. Their reconciliation covers 102 states, including 41 actual workspace route/controller states. Historical images, earlier interpretations and insufficient captures remain retained separately.
 
-| Retained scope | Frames |
-| --- | ---: |
-| Workspace host and settings | 23 |
-| Prompt, history and recovery | 113 |
-| Model-dependent creation | 21 |
-| Media, imports, versions and sharing | 38 |
-| Sketch, area selection and projects | 20 |
-| Video editing and export | 76 |
-| Auth, account and support | 95 |
-| Public site, documentation and system states | 97 |
-| External email templates | 2 |
+| Retained scope                               | Frames |
+| -------------------------------------------- | -----: |
+| Workspace host and settings                  |     23 |
+| Prompt, history and recovery                 |    113 |
+| Model-dependent creation                     |     21 |
+| Media, imports, versions and sharing         |     38 |
+| Sketch, area selection and projects          |     20 |
+| Video editing and export                     |     76 |
+| Auth, account and support                    |     95 |
+| Public site, documentation and system states |     97 |
+| External email templates                     |      2 |
 
 ## Corrections grounded in actual Figma
 

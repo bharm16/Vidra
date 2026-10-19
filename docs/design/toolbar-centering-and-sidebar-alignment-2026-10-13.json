@@ -2,12 +2,7 @@
   "date": "2026-10-13",
   "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
   "scope": "Figma presentation only; application code unchanged",
-  "removed": [
-    "1033:86714",
-    "1033:86983",
-    "1034:88879",
-    "1034:88878"
-  ],
+  "removed": ["1033:86714", "1033:86983", "1034:88879", "1034:88878"],
   "alreadyRemovedHeader": "1040:92783",
   "toolbarFamily": "1379:84830",
   "centering": [
@@ -28,10 +23,7 @@
           "1342:89711",
           "1342:89737"
         ],
-        "created": [
-          "1425:143328",
-          "1425:143329"
-        ],
+        "created": ["1425:143328", "1425:143329"],
         "checked": 2,
         "failures": [],
         "skipped": []
@@ -737,11 +729,7 @@
     }
   ],
   "sidebar": {
-    "masters": [
-      "1029:84293",
-      "1029:84329",
-      "1029:84365"
-    ],
+    "masters": ["1029:84293", "1029:84329", "1029:84365"],
     "rowPaddingLeft": 0,
     "iconAndConversationInset": 20,
     "verifiedInstances": {

@@ -48,10 +48,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "906:100237",
-              "906:100239"
-            ]
+            "originalSources": ["906:100237", "906:100239"]
           }
         ],
         "originalUntouched": true
@@ -240,9 +237,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "940:112692"
-            ]
+            "originalSources": ["940:112692"]
           }
         ],
         "originalUntouched": true
@@ -375,9 +370,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "940:112737"
-            ]
+            "originalSources": ["940:112737"]
           }
         ],
         "originalUntouched": true
@@ -773,9 +766,7 @@
             "family": "1437:140004",
             "example": "1437:140006",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:111625"
-            ]
+            "originalSources": ["936:111625"]
           }
         ],
         "originalUntouched": true
@@ -923,9 +914,7 @@
             "family": "1437:140004",
             "example": "1437:140006",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:111697"
-            ]
+            "originalSources": ["936:111697"]
           }
         ],
         "originalUntouched": true
@@ -1001,9 +990,7 @@
             "family": "1437:140187",
             "example": "1437:140189",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "940:112827"
-            ]
+            "originalSources": ["940:112827"]
           }
         ],
         "originalUntouched": true
@@ -1079,9 +1066,7 @@
             "family": "1437:140187",
             "example": "1437:140189",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "940:112872"
-            ]
+            "originalSources": ["940:112872"]
           }
         ],
         "originalUntouched": true
@@ -1157,9 +1142,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "940:112917"
-            ]
+            "originalSources": ["940:112917"]
           }
         ],
         "originalUntouched": true
@@ -1235,9 +1218,7 @@
             "family": "1437:140556",
             "example": "1437:140558",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "940:112962"
-            ]
+            "originalSources": ["940:112962"]
           }
         ],
         "originalUntouched": true
@@ -1385,9 +1366,7 @@
             "family": "1437:140667",
             "example": "1437:140669",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:112666"
-            ]
+            "originalSources": ["936:112666"]
           }
         ],
         "originalUntouched": true
@@ -1469,10 +1448,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:112781",
-              "936:112783"
-            ]
+            "originalSources": ["936:112781", "936:112783"]
           }
         ],
         "originalUntouched": true
@@ -1554,9 +1530,7 @@
             "family": "1437:140004",
             "example": "1437:140006",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:112851"
-            ]
+            "originalSources": ["936:112851"]
           }
         ],
         "originalUntouched": true
@@ -1935,10 +1909,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:113173",
-              "936:113175"
-            ]
+            "originalSources": ["936:113173", "936:113175"]
           }
         ],
         "originalUntouched": true
@@ -2089,9 +2060,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "940:113068"
-            ]
+            "originalSources": ["940:113068"]
           }
         ],
         "originalUntouched": true
@@ -2212,9 +2181,7 @@
             "family": "1437:140004",
             "example": "1437:140006",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "942:113141"
-            ]
+            "originalSources": ["942:113141"]
           }
         ],
         "originalUntouched": true
@@ -2401,9 +2368,7 @@
             "family": "1437:140004",
             "example": "1437:140006",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "945:113546"
-            ]
+            "originalSources": ["945:113546"]
           }
         ],
         "originalUntouched": true
@@ -2479,10 +2444,7 @@
             "family": "1437:140187",
             "example": "1437:140189",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "945:113603",
-              "945:113606"
-            ]
+            "originalSources": ["945:113603", "945:113606"]
           }
         ],
         "originalUntouched": true
@@ -2558,10 +2520,7 @@
             "family": "1437:140187",
             "example": "1437:140189",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "945:113656",
-              "945:113659"
-            ]
+            "originalSources": ["945:113656", "945:113659"]
           }
         ],
         "originalUntouched": true
@@ -2646,9 +2605,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1001:117580"
-            ]
+            "originalSources": ["1001:117580"]
           }
         ],
         "originalUntouched": true
@@ -2883,9 +2840,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1001:117978"
-            ]
+            "originalSources": ["1001:117978"]
           }
         ],
         "originalUntouched": true
@@ -2961,9 +2916,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1001:118159"
-            ]
+            "originalSources": ["1001:118159"]
           }
         ],
         "originalUntouched": true
@@ -3048,9 +3001,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1001:118201"
-            ]
+            "originalSources": ["1001:118201"]
           }
         ],
         "originalUntouched": true
@@ -3486,9 +3437,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1001:118568"
-            ]
+            "originalSources": ["1001:118568"]
           }
         ],
         "originalUntouched": true
@@ -3573,9 +3522,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1001:118642"
-            ]
+            "originalSources": ["1001:118642"]
           }
         ],
         "originalUntouched": true
@@ -3651,10 +3598,7 @@
             "family": "1437:139576",
             "example": "1437:139578",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1010:118892",
-              "1010:118905"
-            ]
+            "originalSources": ["1010:118892", "1010:118905"]
           }
         ],
         "originalUntouched": true
@@ -3745,9 +3689,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "888:85239"
-            ]
+            "originalSources": ["888:85239"]
           }
         ],
         "originalUntouched": true
@@ -3846,9 +3788,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "890:85435"
-            ]
+            "originalSources": ["890:85435"]
           }
         ],
         "originalUntouched": true
@@ -3947,9 +3887,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "890:85574"
-            ]
+            "originalSources": ["890:85574"]
           }
         ],
         "originalUntouched": true
@@ -4040,10 +3978,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "890:85682",
-              "890:85684"
-            ]
+            "originalSources": ["890:85682", "890:85684"]
           }
         ],
         "originalUntouched": true
@@ -4496,11 +4431,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "890:86315",
-              "890:86321",
-              "890:86339"
-            ]
+            "originalSources": ["890:86315", "890:86321", "890:86339"]
           }
         ],
         "originalUntouched": true
@@ -4607,9 +4538,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "890:86507"
-            ]
+            "originalSources": ["890:86507"]
           }
         ],
         "originalUntouched": true
@@ -4702,9 +4631,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "891:86690"
-            ]
+            "originalSources": ["891:86690"]
           }
         ],
         "originalUntouched": true
@@ -4970,9 +4897,7 @@
             "family": "1437:143676",
             "example": "1437:143678",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1129:116365"
-            ]
+            "originalSources": ["1129:116365"]
           }
         ],
         "originalUntouched": true
@@ -5424,9 +5349,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "904:98252"
-            ]
+            "originalSources": ["904:98252"]
           }
         ],
         "originalUntouched": true
@@ -6176,9 +6099,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "930:105160"
-            ]
+            "originalSources": ["930:105160"]
           }
         ],
         "originalUntouched": true
@@ -6269,9 +6190,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "930:105247"
-            ]
+            "originalSources": ["930:105247"]
           }
         ],
         "originalUntouched": true
@@ -6381,9 +6300,7 @@
             "family": "1437:145357",
             "example": "1437:145359",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "930:105506"
-            ]
+            "originalSources": ["930:105506"]
           }
         ],
         "originalUntouched": true
@@ -6774,9 +6691,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "930:105332"
-            ]
+            "originalSources": ["930:105332"]
           }
         ],
         "originalUntouched": true
@@ -6867,9 +6782,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "930:105419"
-            ]
+            "originalSources": ["930:105419"]
           }
         ],
         "originalUntouched": true
@@ -6979,9 +6892,7 @@
             "family": "1437:145357",
             "example": "1437:145359",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "930:106575"
-            ]
+            "originalSources": ["930:106575"]
           }
         ],
         "originalUntouched": true
@@ -7568,9 +7479,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:110647"
-            ]
+            "originalSources": ["936:110647"]
           }
         ],
         "originalUntouched": true
@@ -7669,9 +7578,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "936:110755"
-            ]
+            "originalSources": ["936:110755"]
           }
         ],
         "originalUntouched": true
@@ -8601,9 +8508,7 @@
             "family": "1437:140556",
             "example": "1437:140558",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1004:118892"
-            ]
+            "originalSources": ["1004:118892"]
           }
         ],
         "originalUntouched": true
@@ -8670,9 +8575,7 @@
             "family": "1437:140556",
             "example": "1437:140558",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1004:118902"
-            ]
+            "originalSources": ["1004:118902"]
           }
         ],
         "originalUntouched": true
@@ -11297,9 +11200,7 @@
             "family": "1437:140187",
             "example": "1437:140189",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "945:113295"
-            ]
+            "originalSources": ["945:113295"]
           }
         ],
         "originalUntouched": true
@@ -11380,9 +11281,7 @@
             "family": "1437:140187",
             "example": "1437:140189",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "945:113508"
-            ]
+            "originalSources": ["945:113508"]
           }
         ],
         "originalUntouched": true
@@ -12748,10 +12647,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "897:92075",
-              "897:92093"
-            ]
+            "originalSources": ["897:92075", "897:92093"]
           }
         ],
         "originalUntouched": true
@@ -13043,10 +12939,7 @@
             "family": "1437:140004",
             "example": "1437:140006",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "897:92445",
-              "897:92479"
-            ]
+            "originalSources": ["897:92445", "897:92479"]
           }
         ],
         "originalUntouched": true
@@ -13254,10 +13147,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "897:92561",
-              "897:92595"
-            ]
+            "originalSources": ["897:92561", "897:92595"]
           }
         ],
         "originalUntouched": true
@@ -13465,10 +13355,7 @@
             "family": "1437:140004",
             "example": "1437:140006",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "897:92678",
-              "897:92712"
-            ]
+            "originalSources": ["897:92678", "897:92712"]
           }
         ],
         "originalUntouched": true
@@ -13676,10 +13563,7 @@
             "family": "1437:140667",
             "example": "1437:140669",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "897:92785",
-              "897:92819"
-            ]
+            "originalSources": ["897:92785", "897:92819"]
           }
         ],
         "originalUntouched": true
@@ -13887,10 +13771,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "897:92901",
-              "897:92935"
-            ]
+            "originalSources": ["897:92901", "897:92935"]
           }
         ],
         "originalUntouched": true
@@ -14672,10 +14553,7 @@
             "family": "1437:140667",
             "example": "1437:140669",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "900:94191",
-              "900:94199"
-            ]
+            "originalSources": ["900:94191", "900:94199"]
           }
         ],
         "originalUntouched": true
@@ -14751,9 +14629,7 @@
             "family": "1437:140667",
             "example": "1437:140669",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "900:94293"
-            ]
+            "originalSources": ["900:94293"]
           }
         ],
         "originalUntouched": true
@@ -14829,9 +14705,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "900:94366"
-            ]
+            "originalSources": ["900:94366"]
           }
         ],
         "originalUntouched": true
@@ -14961,10 +14835,7 @@
             "family": "1437:140667",
             "example": "1437:140669",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "900:94430",
-              "900:94438"
-            ]
+            "originalSources": ["900:94430", "900:94438"]
           }
         ],
         "originalUntouched": true
@@ -15049,11 +14920,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "900:94523",
-              "900:94543",
-              "900:94545"
-            ]
+            "originalSources": ["900:94523", "900:94543", "900:94545"]
           }
         ],
         "originalUntouched": true
@@ -15261,10 +15128,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "900:94608",
-              "900:94642"
-            ]
+            "originalSources": ["900:94608", "900:94642"]
           }
         ],
         "originalUntouched": true
@@ -16670,9 +16534,7 @@
             "family": "1437:139441",
             "example": "1437:139443",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "901:320962"
-            ]
+            "originalSources": ["901:320962"]
           }
         ],
         "originalUntouched": true
@@ -23492,10 +23354,7 @@
             "family": "1437:98110",
             "example": "1437:98112",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "981:95264",
-              "981:95265"
-            ]
+            "originalSources": ["981:95264", "981:95265"]
           }
         ],
         "originalUntouched": true
@@ -23562,10 +23421,7 @@
             "family": "1437:98110",
             "example": "1437:98112",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "981:95285",
-              "981:95286"
-            ]
+            "originalSources": ["981:95285", "981:95286"]
           }
         ],
         "originalUntouched": true
@@ -23869,9 +23725,7 @@
             "family": "1437:98274",
             "example": "1437:98276",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "981:95984"
-            ]
+            "originalSources": ["981:95984"]
           }
         ],
         "originalUntouched": true
@@ -23938,9 +23792,7 @@
             "family": "1437:98274",
             "example": "1437:98276",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "981:95988"
-            ]
+            "originalSources": ["981:95988"]
           }
         ],
         "originalUntouched": true
@@ -25981,10 +25833,7 @@
             "family": "1437:98110",
             "example": "1437:98112",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "981:95301",
-              "981:95302"
-            ]
+            "originalSources": ["981:95301", "981:95302"]
           }
         ],
         "originalUntouched": true
@@ -26051,10 +25900,7 @@
             "family": "1437:98110",
             "example": "1437:98112",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "981:95321",
-              "981:95322"
-            ]
+            "originalSources": ["981:95321", "981:95322"]
           }
         ],
         "originalUntouched": true
@@ -32031,9 +31877,7 @@
             "family": "1437:98274",
             "example": "1437:98276",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "965:93488"
-            ]
+            "originalSources": ["965:93488"]
           }
         ],
         "originalUntouched": true
@@ -32105,9 +31949,7 @@
             "family": "1437:98274",
             "example": "1437:98276",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "965:93516"
-            ]
+            "originalSources": ["965:93516"]
           }
         ],
         "originalUntouched": true
@@ -32179,9 +32021,7 @@
             "family": "1437:98274",
             "example": "1437:98276",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "965:93544"
-            ]
+            "originalSources": ["965:93544"]
           }
         ],
         "originalUntouched": true
@@ -32253,9 +32093,7 @@
             "family": "1437:98274",
             "example": "1437:98276",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "965:93572"
-            ]
+            "originalSources": ["965:93572"]
           }
         ],
         "originalUntouched": true
@@ -32346,9 +32184,7 @@
             "family": "1437:98274",
             "example": "1437:98276",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "965:93658"
-            ]
+            "originalSources": ["965:93658"]
           }
         ],
         "originalUntouched": true
@@ -32514,9 +32350,7 @@
             "family": "1437:101921",
             "example": "1437:101923",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "971:94726"
-            ]
+            "originalSources": ["971:94726"]
           }
         ],
         "originalUntouched": true
@@ -32597,9 +32431,7 @@
             "family": "1437:101949",
             "example": "1437:101951",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96632"
-            ]
+            "originalSources": ["1340:96632"]
           }
         ],
         "originalUntouched": true
@@ -32974,9 +32806,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96636"
-            ]
+            "originalSources": ["1340:96636"]
           }
         ],
         "originalUntouched": true
@@ -33066,9 +32896,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96640"
-            ]
+            "originalSources": ["1340:96640"]
           }
         ],
         "originalUntouched": true
@@ -33158,9 +32986,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96643"
-            ]
+            "originalSources": ["1340:96643"]
           }
         ],
         "originalUntouched": true
@@ -33250,9 +33076,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96646"
-            ]
+            "originalSources": ["1340:96646"]
           }
         ],
         "originalUntouched": true
@@ -33333,9 +33157,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96660"
-            ]
+            "originalSources": ["1340:96660"]
           }
         ],
         "originalUntouched": true
@@ -33425,9 +33247,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96651"
-            ]
+            "originalSources": ["1340:96651"]
           }
         ],
         "originalUntouched": true
@@ -33517,9 +33337,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96654"
-            ]
+            "originalSources": ["1340:96654"]
           }
         ],
         "originalUntouched": true
@@ -33609,9 +33427,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96656"
-            ]
+            "originalSources": ["1340:96656"]
           }
         ],
         "originalUntouched": true
@@ -33701,9 +33517,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96658"
-            ]
+            "originalSources": ["1340:96658"]
           }
         ],
         "originalUntouched": true
@@ -33784,9 +33598,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96662"
-            ]
+            "originalSources": ["1340:96662"]
           }
         ],
         "originalUntouched": true
@@ -33867,9 +33679,7 @@
             "family": "1437:102102",
             "example": "1437:102104",
             "textAndGeometryMatch": true,
-            "originalSources": [
-              "1340:96664"
-            ]
+            "originalSources": ["1340:96664"]
           }
         ],
         "originalUntouched": true
@@ -43098,9 +42908,7 @@
         "1436:398188",
         "1436:398189"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-15.json",
@@ -43159,9 +42967,7 @@
         "1436:398373",
         "1436:398374"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-20.json",
@@ -43218,9 +43024,7 @@
         "1436:398446",
         "1436:398447"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-25.json",
@@ -43277,9 +43081,7 @@
         "1436:398530",
         "1436:398531"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-30.json",
@@ -43336,9 +43138,7 @@
         "1436:398643",
         "1436:398644"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-35.json",
@@ -43392,9 +43192,7 @@
         "1436:398744",
         "1436:398745"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-40.json",
@@ -43449,9 +43247,7 @@
         "1436:398800",
         "1436:398801"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-45.json",
@@ -43512,9 +43308,7 @@
         "1436:398931",
         "1436:398932"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-5.json",
@@ -43564,9 +43358,7 @@
         "1436:397995",
         "1436:397996"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-50.json",
@@ -43624,9 +43416,7 @@
         "1436:399035",
         "1436:399036"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/auth-batch-55.json",
@@ -43665,9 +43455,7 @@
         "1436:399085",
         "1436:399086"
       ],
-      "mutated": [
-        "1435:95859"
-      ]
+      "mutated": ["1435:95859"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-0.json",
@@ -43750,10 +43538,7 @@
         "1437:147565",
         "1437:147566"
       ],
-      "mutated": [
-        "1437:147542",
-        "1437:147555"
-      ]
+      "mutated": ["1437:147542", "1437:147555"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-104.json",
@@ -43775,9 +43560,7 @@
         "1437:147582",
         "1437:147583"
       ],
-      "mutated": [
-        "1437:147572"
-      ]
+      "mutated": ["1437:147572"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-108.json",
@@ -43799,10 +43582,7 @@
         "1437:147598",
         "1437:147599"
       ],
-      "mutated": [
-        "1437:147555",
-        "1437:147572"
-      ]
+      "mutated": ["1437:147555", "1437:147572"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-112.json",
@@ -43828,10 +43608,7 @@
         "1437:147629",
         "1437:147630"
       ],
-      "mutated": [
-        "1437:147572",
-        "1437:147542"
-      ]
+      "mutated": ["1437:147572", "1437:147542"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-116.json",
@@ -43863,10 +43640,7 @@
         "1437:147704",
         "1437:147705"
       ],
-      "mutated": [
-        "1437:147542",
-        "1437:147572"
-      ]
+      "mutated": ["1437:147542", "1437:147572"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-12.json",
@@ -43928,9 +43702,7 @@
         "1437:140677",
         "1437:140678"
       ],
-      "mutated": [
-        "1437:139441"
-      ]
+      "mutated": ["1437:139441"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-120.json",
@@ -43955,10 +43727,7 @@
         "1437:147724",
         "1437:147725"
       ],
-      "mutated": [
-        "1437:147572",
-        "1437:147555"
-      ]
+      "mutated": ["1437:147572", "1437:147555"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-124.json",
@@ -43980,10 +43749,7 @@
         "1437:147741",
         "1437:147742"
       ],
-      "mutated": [
-        "1437:147723",
-        "1437:147542"
-      ]
+      "mutated": ["1437:147723", "1437:147542"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-128.json",
@@ -44021,12 +43787,7 @@
         "1437:147790",
         "1437:147791"
       ],
-      "mutated": [
-        "1437:147555",
-        "1437:140187",
-        "1437:147542",
-        "1437:141347"
-      ]
+      "mutated": ["1437:147555", "1437:140187", "1437:147542", "1437:141347"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-132.json",
@@ -44076,10 +43837,7 @@
         "1437:147857",
         "1437:147858"
       ],
-      "mutated": [
-        "1437:147572",
-        "1437:147542"
-      ]
+      "mutated": ["1437:147572", "1437:147542"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-136.json",
@@ -44135,10 +43893,7 @@
         "1437:147939",
         "1437:147940"
       ],
-      "mutated": [
-        "1437:147572",
-        "1437:147542"
-      ]
+      "mutated": ["1437:147572", "1437:147542"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-140.json",
@@ -44197,10 +43952,7 @@
         "1437:148044",
         "1437:148045"
       ],
-      "mutated": [
-        "1437:147572",
-        "1437:141930"
-      ]
+      "mutated": ["1437:147572", "1437:141930"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-144.json",
@@ -44455,12 +44207,7 @@
         "1437:148775",
         "1437:148776"
       ],
-      "mutated": [
-        "1437:139441",
-        "1437:148659",
-        "1437:148686",
-        "1437:148702"
-      ]
+      "mutated": ["1437:139441", "1437:148659", "1437:148686", "1437:148702"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-156.json",
@@ -44536,9 +44283,7 @@
         "1437:140749",
         "1437:140750"
       ],
-      "mutated": [
-        "1437:140004"
-      ]
+      "mutated": ["1437:140004"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-160.json",
@@ -44592,12 +44337,7 @@
         "1437:149017",
         "1437:149018"
       ],
-      "mutated": [
-        "1437:139441",
-        "1437:148873",
-        "1437:140667",
-        "1437:148450"
-      ]
+      "mutated": ["1437:139441", "1437:148873", "1437:140667", "1437:148450"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-164.json",
@@ -44655,10 +44395,7 @@
         "1437:149464",
         "1437:149465"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:149237"
-      ]
+      "mutated": ["1437:139455", "1437:149237"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-168.json",
@@ -44703,9 +44440,7 @@
         "1437:149803",
         "1437:149804"
       ],
-      "mutated": [
-        "1437:139455"
-      ]
+      "mutated": ["1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-172.json",
@@ -44740,9 +44475,7 @@
         "1437:149948",
         "1437:149949"
       ],
-      "mutated": [
-        "1437:139455"
-      ]
+      "mutated": ["1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-20.json",
@@ -45206,10 +44939,7 @@
         "1437:142212",
         "1437:142213"
       ],
-      "mutated": [
-        "1437:139441",
-        "1437:142160"
-      ]
+      "mutated": ["1437:139441", "1437:142160"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-44.json",
@@ -45263,9 +44993,7 @@
         "1437:142552",
         "1437:142553"
       ],
-      "mutated": [
-        "1437:139455"
-      ]
+      "mutated": ["1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-48.json",
@@ -45342,10 +45070,7 @@
         "1437:143175",
         "1437:143176"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:139441"
-      ]
+      "mutated": ["1437:139455", "1437:139441"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-52.json",
@@ -45424,9 +45149,7 @@
         "1437:143911",
         "1437:143912"
       ],
-      "mutated": [
-        "1437:139455"
-      ]
+      "mutated": ["1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-56.json",
@@ -45490,11 +45213,7 @@
         "1437:144424",
         "1437:144425"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:142160",
-        "1437:139441"
-      ]
+      "mutated": ["1437:139455", "1437:142160", "1437:139441"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-60.json",
@@ -45574,10 +45293,7 @@
         "1437:144874",
         "1437:144875"
       ],
-      "mutated": [
-        "1437:144279",
-        "1437:139455"
-      ]
+      "mutated": ["1437:144279", "1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-64.json",
@@ -45626,11 +45342,7 @@
         "1437:145321",
         "1437:145320"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:142160",
-        "1437:139441"
-      ]
+      "mutated": ["1437:139455", "1437:142160", "1437:139441"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-68.json",
@@ -45674,11 +45386,7 @@
         "1437:145468",
         "1437:145469"
       ],
-      "mutated": [
-        "1437:142160",
-        "1437:139441",
-        "1437:139455"
-      ]
+      "mutated": ["1437:142160", "1437:139441", "1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-72.json",
@@ -45719,11 +45427,7 @@
         "1437:145791",
         "1437:145790"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:142160",
-        "1437:139441"
-      ]
+      "mutated": ["1437:139455", "1437:142160", "1437:139441"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-76.json",
@@ -45763,11 +45467,7 @@
         "1437:145959",
         "1437:145960"
       ],
-      "mutated": [
-        "1437:145343",
-        "1437:145357",
-        "1437:139455"
-      ]
+      "mutated": ["1437:145343", "1437:145357", "1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-8.json",
@@ -45840,12 +45540,7 @@
         "1437:140281",
         "1437:140280"
       ],
-      "mutated": [
-        "1437:139961",
-        "1437:140004",
-        "1437:140099",
-        "1437:140187"
-      ]
+      "mutated": ["1437:139961", "1437:140004", "1437:140099", "1437:140187"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-80.json",
@@ -45894,11 +45589,7 @@
         "1437:146358",
         "1437:146357"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:142160",
-        "1437:139441"
-      ]
+      "mutated": ["1437:139455", "1437:142160", "1437:139441"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-84.json",
@@ -45944,11 +45635,7 @@
         "1437:146645",
         "1437:146646"
       ],
-      "mutated": [
-        "1437:142160",
-        "1437:139441",
-        "1437:139455"
-      ]
+      "mutated": ["1437:142160", "1437:139441", "1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-88.json",
@@ -46002,10 +45689,7 @@
         "1437:147086",
         "1437:147087"
       ],
-      "mutated": [
-        "1437:141752",
-        "1437:139455"
-      ]
+      "mutated": ["1437:141752", "1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-92.json",
@@ -46070,10 +45754,7 @@
         "1437:147475",
         "1437:147476"
       ],
-      "mutated": [
-        "1437:141752",
-        "1437:139455"
-      ]
+      "mutated": ["1437:141752", "1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-25-96.json",
@@ -46119,10 +45800,7 @@
         "1437:147543",
         "1437:147544"
       ],
-      "mutated": [
-        "1437:140556",
-        "1437:147487"
-      ]
+      "mutated": ["1437:140556", "1437:147487"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-0.json",
@@ -46302,10 +45980,7 @@
         "1437:96891",
         "1437:96892"
       ],
-      "mutated": [
-        "1437:96574",
-        "1437:96645"
-      ]
+      "mutated": ["1437:96574", "1437:96645"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-100.json",
@@ -46353,10 +46028,7 @@
         "1437:99618",
         "1437:99619"
       ],
-      "mutated": [
-        "1437:96958",
-        "1437:97210"
-      ]
+      "mutated": ["1437:96958", "1437:97210"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-104.json",
@@ -46411,10 +46083,7 @@
         "1437:99688",
         "1437:99689"
       ],
-      "mutated": [
-        "1437:97210",
-        "1437:97810"
-      ]
+      "mutated": ["1437:97210", "1437:97810"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-108.json",
@@ -46464,11 +46133,7 @@
         "1437:99750",
         "1437:99751"
       ],
-      "mutated": [
-        "1437:97210",
-        "1437:96996",
-        "1437:97164"
-      ]
+      "mutated": ["1437:97210", "1437:96996", "1437:97164"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-112.json",
@@ -46509,10 +46174,7 @@
         "1437:99791",
         "1437:99792"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:96958"
-      ]
+      "mutated": ["1437:96996", "1437:96958"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-116.json",
@@ -46552,10 +46214,7 @@
         "1437:99841",
         "1437:99842"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:97034"
-      ]
+      "mutated": ["1437:96996", "1437:97034"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-12.json",
@@ -46637,9 +46296,7 @@
         "1437:97298",
         "1437:97299"
       ],
-      "mutated": [
-        "1437:97264"
-      ]
+      "mutated": ["1437:97264"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-120.json",
@@ -46681,12 +46338,7 @@
         "1437:99889",
         "1437:99890"
       ],
-      "mutated": [
-        "1437:97034",
-        "1437:97164",
-        "1437:97210",
-        "1437:97264"
-      ]
+      "mutated": ["1437:97034", "1437:97164", "1437:97210", "1437:97264"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-124.json",
@@ -46723,10 +46375,7 @@
         "1437:99926",
         "1437:99927"
       ],
-      "mutated": [
-        "1437:97264",
-        "1437:97810"
-      ]
+      "mutated": ["1437:97264", "1437:97810"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-128.json",
@@ -46793,11 +46442,7 @@
         "1437:100013",
         "1437:100014"
       ],
-      "mutated": [
-        "1437:97164",
-        "1437:97210",
-        "1437:96958"
-      ]
+      "mutated": ["1437:97164", "1437:97210", "1437:96958"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-132.json",
@@ -46848,10 +46493,7 @@
         "1437:100081",
         "1437:100082"
       ],
-      "mutated": [
-        "1437:97210",
-        "1437:96958"
-      ]
+      "mutated": ["1437:97210", "1437:96958"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-136.json",
@@ -46906,11 +46548,7 @@
         "1437:100164",
         "1437:100165"
       ],
-      "mutated": [
-        "1437:97210",
-        "1437:97264",
-        "1437:97034"
-      ]
+      "mutated": ["1437:97210", "1437:97264", "1437:97034"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-140.json",
@@ -46956,10 +46594,7 @@
         "1437:100231",
         "1437:100232"
       ],
-      "mutated": [
-        "1437:97210",
-        "1437:96958"
-      ]
+      "mutated": ["1437:97210", "1437:96958"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-144.json",
@@ -47008,11 +46643,7 @@
         "1437:100301",
         "1437:100302"
       ],
-      "mutated": [
-        "1437:96958",
-        "1437:96996",
-        "1437:100276"
-      ]
+      "mutated": ["1437:96958", "1437:96996", "1437:100276"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-148.json",
@@ -47061,9 +46692,7 @@
         "1437:100371",
         "1437:100372"
       ],
-      "mutated": [
-        "1437:100276"
-      ]
+      "mutated": ["1437:100276"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-152.json",
@@ -47099,10 +46728,7 @@
         "1437:100412",
         "1437:100413"
       ],
-      "mutated": [
-        "1437:97264",
-        "1437:100370"
-      ]
+      "mutated": ["1437:97264", "1437:100370"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-156.json",
@@ -47127,9 +46753,7 @@
         "1437:100439",
         "1437:100440"
       ],
-      "mutated": [
-        "1437:97264"
-      ]
+      "mutated": ["1437:97264"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-16.json",
@@ -47174,10 +46798,7 @@
         "1437:97365",
         "1437:97366"
       ],
-      "mutated": [
-        "1437:97264",
-        "1437:96996"
-      ]
+      "mutated": ["1437:97264", "1437:96996"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-160.json",
@@ -47203,11 +46824,7 @@
         "1437:100525",
         "1437:100526"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:97210",
-        "1437:97264"
-      ]
+      "mutated": ["1437:96996", "1437:97210", "1437:97264"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-164.json",
@@ -47289,10 +46906,7 @@
         "1437:100688",
         "1437:100689"
       ],
-      "mutated": [
-        "1437:97264",
-        "1437:97653"
-      ]
+      "mutated": ["1437:97264", "1437:97653"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-168.json",
@@ -47382,11 +46996,7 @@
         "1437:100847",
         "1437:100848"
       ],
-      "mutated": [
-        "1437:97653",
-        "1437:100276",
-        "1437:100796"
-      ]
+      "mutated": ["1437:97653", "1437:100276", "1437:100796"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-172.json",
@@ -47490,11 +47100,7 @@
         "1437:101060",
         "1437:101061"
       ],
-      "mutated": [
-        "1437:100276",
-        "1437:100796",
-        "1437:100960"
-      ]
+      "mutated": ["1437:100276", "1437:100796", "1437:100960"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-176.json",
@@ -47583,12 +47189,7 @@
         "1437:101239",
         "1437:101240"
       ],
-      "mutated": [
-        "1437:97264",
-        "1437:100276",
-        "1437:100796",
-        "1437:96996"
-      ]
+      "mutated": ["1437:97264", "1437:100276", "1437:100796", "1437:96996"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-180.json",
@@ -47713,11 +47314,7 @@
         "1437:101521",
         "1437:101522"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:101195",
-        "1437:97653"
-      ]
+      "mutated": ["1437:96996", "1437:101195", "1437:97653"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-184.json",
@@ -47760,10 +47357,7 @@
         "1437:101644",
         "1437:101643"
       ],
-      "mutated": [
-        "1437:97653",
-        "1437:98274"
-      ]
+      "mutated": ["1437:97653", "1437:98274"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-188.json",
@@ -47800,9 +47394,7 @@
         "1437:101791",
         "1437:101792"
       ],
-      "mutated": [
-        "1437:98274"
-      ]
+      "mutated": ["1437:98274"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-192.json",
@@ -47857,10 +47449,7 @@
         "1437:101981",
         "1437:101982"
       ],
-      "mutated": [
-        "1437:100349",
-        "1437:100370"
-      ]
+      "mutated": ["1437:100349", "1437:100370"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-196.json",
@@ -47928,10 +47517,7 @@
         "1437:102103",
         "1437:102104"
       ],
-      "mutated": [
-        "1437:97264",
-        "1437:100370"
-      ]
+      "mutated": ["1437:97264", "1437:100370"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-20.json",
@@ -47979,11 +47565,7 @@
         "1437:97430",
         "1437:97431"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:97034",
-        "1437:97210"
-      ]
+      "mutated": ["1437:96996", "1437:97034", "1437:97210"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-200.json",
@@ -48041,11 +47623,7 @@
         "1437:102211",
         "1437:102210"
       ],
-      "mutated": [
-        "1437:102050",
-        "1437:102078",
-        "1437:102102"
-      ]
+      "mutated": ["1437:102050", "1437:102078", "1437:102102"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-204.json",
@@ -48108,11 +47686,7 @@
         "1437:102333",
         "1437:102332"
       ],
-      "mutated": [
-        "1437:102050",
-        "1437:102078",
-        "1437:102102"
-      ]
+      "mutated": ["1437:102050", "1437:102078", "1437:102102"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-208.json",
@@ -48134,10 +47708,7 @@
         "1437:102361",
         "1437:102360"
       ],
-      "mutated": [
-        "1437:102050",
-        "1437:102102"
-      ]
+      "mutated": ["1437:102050", "1437:102102"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-24.json",
@@ -48173,10 +47744,7 @@
         "1437:97472",
         "1437:97473"
       ],
-      "mutated": [
-        "1437:97210",
-        "1437:96958"
-      ]
+      "mutated": ["1437:97210", "1437:96958"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-28.json",
@@ -48284,10 +47852,7 @@
         "1437:97684",
         "1437:97685"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:97653"
-      ]
+      "mutated": ["1437:96996", "1437:97653"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-32.json",
@@ -48363,10 +47928,7 @@
         "1437:97767",
         "1437:97768"
       ],
-      "mutated": [
-        "1437:97653",
-        "1437:97164"
-      ]
+      "mutated": ["1437:97653", "1437:97164"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-36.json",
@@ -48426,10 +47988,7 @@
         "1437:97881",
         "1437:97882"
       ],
-      "mutated": [
-        "1437:96958",
-        "1437:97210"
-      ]
+      "mutated": ["1437:96958", "1437:97210"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-4.json",
@@ -48474,9 +48033,7 @@
         "1437:96997",
         "1437:96998"
       ],
-      "mutated": [
-        "1437:96574"
-      ]
+      "mutated": ["1437:96574"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-40.json",
@@ -48592,11 +48149,7 @@
         "1437:98134",
         "1437:98135"
       ],
-      "mutated": [
-        "1437:96645",
-        "1437:98081",
-        "1437:98110"
-      ]
+      "mutated": ["1437:96645", "1437:98081", "1437:98110"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-44.json",
@@ -48662,9 +48215,7 @@
         "1437:98217",
         "1437:98218"
       ],
-      "mutated": [
-        "1437:97264"
-      ]
+      "mutated": ["1437:97264"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-48.json",
@@ -48763,10 +48314,7 @@
         "1437:98336",
         "1437:98337"
       ],
-      "mutated": [
-        "1437:97264",
-        "1437:98274"
-      ]
+      "mutated": ["1437:97264", "1437:98274"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-52.json",
@@ -48875,10 +48423,7 @@
         "1437:98563",
         "1437:98564"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:97210"
-      ]
+      "mutated": ["1437:96996", "1437:97210"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-56.json",
@@ -48899,10 +48444,7 @@
         "1437:98589",
         "1437:98590"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:97264"
-      ]
+      "mutated": ["1437:96996", "1437:97264"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-60.json",
@@ -48958,12 +48500,7 @@
         "1437:98659",
         "1437:98660"
       ],
-      "mutated": [
-        "1437:96996",
-        "1437:97164",
-        "1437:97264",
-        "1437:97210"
-      ]
+      "mutated": ["1437:96996", "1437:97164", "1437:97264", "1437:97210"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-64.json",
@@ -49039,11 +48576,7 @@
         "1437:98759",
         "1437:98760"
       ],
-      "mutated": [
-        "1437:97210",
-        "1437:97164",
-        "1437:97810"
-      ]
+      "mutated": ["1437:97210", "1437:97164", "1437:97810"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-68.json",
@@ -49099,11 +48632,7 @@
         "1437:98842",
         "1437:98843"
       ],
-      "mutated": [
-        "1437:96958",
-        "1437:97210",
-        "1437:97164"
-      ]
+      "mutated": ["1437:96958", "1437:97210", "1437:97164"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-72.json",
@@ -49201,9 +48730,7 @@
         "1437:98954",
         "1437:98955"
       ],
-      "mutated": [
-        "1437:96645"
-      ]
+      "mutated": ["1437:96645"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-76.json",
@@ -49301,9 +48828,7 @@
         "1437:99062",
         "1437:99063"
       ],
-      "mutated": [
-        "1437:96645"
-      ]
+      "mutated": ["1437:96645"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-8.json",
@@ -49374,9 +48899,7 @@
         "1437:97125",
         "1437:97126"
       ],
-      "mutated": [
-        "1437:97034"
-      ]
+      "mutated": ["1437:97034"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-80.json",
@@ -49461,11 +48984,7 @@
         "1437:99169",
         "1437:99170"
       ],
-      "mutated": [
-        "1437:96645",
-        "1437:98081",
-        "1437:98110"
-      ]
+      "mutated": ["1437:96645", "1437:98081", "1437:98110"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-84.json",
@@ -49528,12 +49047,7 @@
         "1437:99252",
         "1437:99253"
       ],
-      "mutated": [
-        "1437:98081",
-        "1437:98110",
-        "1437:96996",
-        "1437:97164"
-      ]
+      "mutated": ["1437:98081", "1437:98110", "1437:96996", "1437:97164"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-88.json",
@@ -49615,9 +49129,7 @@
         "1437:99360",
         "1437:99361"
       ],
-      "mutated": [
-        "1437:97164"
-      ]
+      "mutated": ["1437:97164"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-92.json",
@@ -49703,10 +49215,7 @@
         "1437:99474",
         "1437:99475"
       ],
-      "mutated": [
-        "1437:97164",
-        "1437:97810"
-      ]
+      "mutated": ["1437:97164", "1437:97810"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/regions-26-96.json",
@@ -49763,10 +49272,7 @@
         "1437:99555",
         "1437:99556"
       ],
-      "mutated": [
-        "1437:97810",
-        "1437:96958"
-      ]
+      "mutated": ["1437:97810", "1437:96958"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-25-176.json",
@@ -49817,9 +49323,7 @@
         "1440:130656",
         "1440:130657"
       ],
-      "mutated": [
-        "1437:139455"
-      ]
+      "mutated": ["1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-25-180.json",
@@ -49868,10 +49372,7 @@
         "1440:131072",
         "1440:131073"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:139441"
-      ]
+      "mutated": ["1437:139455", "1437:139441"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-25-184.json",
@@ -49925,9 +49426,7 @@
         "1440:131336",
         "1440:131337"
       ],
-      "mutated": [
-        "1437:139455"
-      ]
+      "mutated": ["1437:139455"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-25-188.json",
@@ -49969,10 +49468,7 @@
         "1440:131623",
         "1440:131624"
       ],
-      "mutated": [
-        "1437:139455",
-        "1437:141787"
-      ]
+      "mutated": ["1437:139455", "1437:141787"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-25-192.json",
@@ -50423,10 +49919,7 @@
         "1440:140438",
         "1440:140439"
       ],
-      "mutated": [
-        "1440:140229",
-        "1440:140257"
-      ]
+      "mutated": ["1440:140229", "1440:140257"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-12.json",
@@ -50497,9 +49990,7 @@
         "1440:142164",
         "1440:142165"
       ],
-      "mutated": [
-        "1440:141490"
-      ]
+      "mutated": ["1440:141490"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-16.json",
@@ -50529,11 +50020,7 @@
         "1440:142579",
         "1440:142580"
       ],
-      "mutated": [
-        "1440:141490",
-        "1440:141545",
-        "1440:141643"
-      ]
+      "mutated": ["1440:141490", "1440:141545", "1440:141643"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-20.json",
@@ -50561,10 +50048,7 @@
         "1440:142901",
         "1440:142902"
       ],
-      "mutated": [
-        "1440:141490",
-        "1440:141545"
-      ]
+      "mutated": ["1440:141490", "1440:141545"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-24.json",
@@ -50603,10 +50087,7 @@
         "1440:143205",
         "1440:143206"
       ],
-      "mutated": [
-        "1440:141490",
-        "1440:141545"
-      ]
+      "mutated": ["1440:141490", "1440:141545"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-28.json",
@@ -50657,10 +50138,7 @@
         "1440:143547",
         "1440:143546"
       ],
-      "mutated": [
-        "1440:141490",
-        "1440:141545"
-      ]
+      "mutated": ["1440:141490", "1440:141545"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-32.json",
@@ -50703,11 +50181,7 @@
         "1440:143971",
         "1440:143972"
       ],
-      "mutated": [
-        "1440:141820",
-        "1440:141490",
-        "1440:141545"
-      ]
+      "mutated": ["1440:141820", "1440:141490", "1440:141545"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-36.json",
@@ -51422,10 +50896,7 @@
         "1440:141324",
         "1440:141325"
       ],
-      "mutated": [
-        "1440:140229",
-        "1440:140257"
-      ]
+      "mutated": ["1440:140229", "1440:140257"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-40.json",
@@ -51465,12 +50936,7 @@
         "1440:144557",
         "1440:144558"
       ],
-      "mutated": [
-        "1440:141643",
-        "1440:142381",
-        "1440:141820",
-        "1440:143722"
-      ]
+      "mutated": ["1440:141643", "1440:142381", "1440:141820", "1440:143722"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-44.json",
@@ -51503,11 +50969,7 @@
         "1440:144604",
         "1440:144605"
       ],
-      "mutated": [
-        "1440:144546",
-        "1440:144534",
-        "1440:144577"
-      ]
+      "mutated": ["1440:144546", "1440:144534", "1440:144577"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-27-8.json",
@@ -51628,11 +51090,7 @@
         "1440:141546",
         "1440:141547"
       ],
-      "mutated": [
-        "1440:140229",
-        "1440:140257",
-        "1440:140904"
-      ]
+      "mutated": ["1440:140229", "1440:140257", "1440:140904"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-0.json",
@@ -51700,9 +51158,7 @@
         "1440:174951",
         "1440:174952"
       ],
-      "mutated": [
-        "1440:174699"
-      ]
+      "mutated": ["1440:174699"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-12.json",
@@ -51780,10 +51236,7 @@
         "1440:176473",
         "1440:176474"
       ],
-      "mutated": [
-        "1440:174699",
-        "1440:175287"
-      ]
+      "mutated": ["1440:174699", "1440:175287"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-16.json",
@@ -51864,10 +51317,7 @@
         "1440:176926",
         "1440:176927"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:174699"
-      ]
+      "mutated": ["1440:175287", "1440:174699"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-20.json",
@@ -51948,10 +51398,7 @@
         "1440:177389",
         "1440:177390"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:174699"
-      ]
+      "mutated": ["1440:175287", "1440:174699"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-24.json",
@@ -52029,10 +51476,7 @@
         "1440:177848",
         "1440:177849"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:174699"
-      ]
+      "mutated": ["1440:175287", "1440:174699"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-28.json",
@@ -52139,11 +51583,7 @@
         "1440:178468",
         "1440:178469"
       ],
-      "mutated": [
-        "1440:174699",
-        "1440:175287",
-        "1440:178313"
-      ]
+      "mutated": ["1440:174699", "1440:175287", "1440:178313"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-32.json",
@@ -52383,10 +51823,7 @@
         "1440:178912",
         "1440:178913"
       ],
-      "mutated": [
-        "1440:178492",
-        "1440:178688"
-      ]
+      "mutated": ["1440:178492", "1440:178688"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-36.json",
@@ -52709,10 +52146,7 @@
         "1440:179231",
         "1440:179232"
       ],
-      "mutated": [
-        "1440:178492",
-        "1440:178688"
-      ]
+      "mutated": ["1440:178492", "1440:178688"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-4.json",
@@ -52793,10 +52227,7 @@
         "1440:175537",
         "1440:175538"
       ],
-      "mutated": [
-        "1440:174699",
-        "1440:175287"
-      ]
+      "mutated": ["1440:174699", "1440:175287"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-40.json",
@@ -53143,10 +52574,7 @@
         "1440:179574",
         "1440:179575"
       ],
-      "mutated": [
-        "1440:178492",
-        "1440:178688"
-      ]
+      "mutated": ["1440:178492", "1440:178688"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-44.json",
@@ -53398,11 +52826,7 @@
         "1440:179925",
         "1440:179926"
       ],
-      "mutated": [
-        "1440:178492",
-        "1440:178688",
-        "1440:175287"
-      ]
+      "mutated": ["1440:178492", "1440:178688", "1440:175287"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-48.json",
@@ -53503,10 +52927,7 @@
         "1440:180438",
         "1440:180439"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:179898"
-      ]
+      "mutated": ["1440:175287", "1440:179898"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-52.json",
@@ -53615,10 +53036,7 @@
         "1440:181069",
         "1440:181070"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:179898"
-      ]
+      "mutated": ["1440:175287", "1440:179898"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-56.json",
@@ -53718,9 +53136,7 @@
         "1440:181700",
         "1440:181701"
       ],
-      "mutated": [
-        "1440:175287"
-      ]
+      "mutated": ["1440:175287"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-60.json",
@@ -53807,11 +53223,7 @@
         "1440:182297",
         "1440:182298"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:179898",
-        "1440:181448"
-      ]
+      "mutated": ["1440:175287", "1440:179898", "1440:181448"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-64.json",
@@ -53936,12 +53348,7 @@
         "1440:182834",
         "1440:182835"
       ],
-      "mutated": [
-        "1440:181949",
-        "1440:182072",
-        "1440:175287",
-        "1440:182683"
-      ]
+      "mutated": ["1440:181949", "1440:182072", "1440:175287", "1440:182683"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-68.json",
@@ -54217,12 +53624,7 @@
         "1440:183616",
         "1440:183617"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:181576",
-        "1440:183193",
-        "1440:178688"
-      ]
+      "mutated": ["1440:175287", "1440:181576", "1440:183193", "1440:178688"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-72.json",
@@ -54498,10 +53900,7 @@
         "1440:184373",
         "1440:184374"
       ],
-      "mutated": [
-        "1440:183193",
-        "1440:174699"
-      ]
+      "mutated": ["1440:183193", "1440:174699"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-76.json",
@@ -54617,11 +54016,7 @@
         "1440:185006",
         "1440:185007"
       ],
-      "mutated": [
-        "1440:174699",
-        "1440:175287",
-        "1440:179898"
-      ]
+      "mutated": ["1440:174699", "1440:175287", "1440:179898"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-8.json",
@@ -54699,10 +54094,7 @@
         "1440:176005",
         "1440:176006"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:174699"
-      ]
+      "mutated": ["1440:175287", "1440:174699"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-80.json",
@@ -54975,11 +54367,7 @@
         "1440:185552",
         "1440:185553"
       ],
-      "mutated": [
-        "1440:183193",
-        "1440:178688",
-        "1440:175287"
-      ]
+      "mutated": ["1440:183193", "1440:178688", "1440:175287"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-84.json",
@@ -55067,10 +54455,7 @@
         "1440:186019",
         "1440:186020"
       ],
-      "mutated": [
-        "1440:175287",
-        "1440:174699"
-      ]
+      "mutated": ["1440:175287", "1440:174699"]
     },
     {
       "file": ".scratch/figma-consolidation-2026-10-13/resume-regions-28-88.json",
@@ -55334,10 +54719,7 @@
         "1440:186739",
         "1440:186740"
       ],
-      "mutated": [
-        "1440:174699",
-        "1440:175287"
-      ]
+      "mutated": ["1440:174699", "1440:175287"]
     }
   ],
   "sources": {
@@ -55558,11 +54940,7 @@
           "name": "00 · Whole product index"
         }
       ],
-      "hidden": [
-        "976:95156",
-        "976:95236",
-        "976:95272"
-      ],
+      "hidden": ["976:95156", "976:95236", "976:95272"],
       "archive": "1449:99261",
       "archivedCount": 268,
       "consolidationTargetsStillTopLevel": []

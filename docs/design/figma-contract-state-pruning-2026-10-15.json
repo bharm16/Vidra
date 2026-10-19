@@ -845,9 +845,7 @@
           "variant": "State=online"
         }
       ],
-      "screens": [
-        "C05"
-      ],
+      "screens": ["C05"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "connection.offline": {
@@ -860,9 +858,7 @@
           "variant": "State=offline"
         }
       ],
-      "screens": [
-        "R01"
-      ],
+      "screens": ["R01"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "connection.reconnecting": {
@@ -875,9 +871,7 @@
           "variant": "State=reconnecting"
         }
       ],
-      "screens": [
-        "R02"
-      ],
+      "screens": ["R02"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "draft_save.failed": {
@@ -890,9 +884,7 @@
           "variant": "State=Failed"
         }
       ],
-      "screens": [
-        "R03"
-      ],
+      "screens": ["R03"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "draft_save.local_failed": {
@@ -910,10 +902,7 @@
           "variant": "State=At risk"
         }
       ],
-      "screens": [
-        "R05",
-        "R04"
-      ],
+      "screens": ["R05", "R04"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "input_target.pending": {
@@ -926,22 +915,14 @@
           "variant": "State=Waiting"
         }
       ],
-      "screens": [
-        "C07",
-        "C08",
-        "C40",
-        "C41",
-        "B25"
-      ],
+      "screens": ["C07", "C08", "C40", "C41", "B25"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "submission.sending": {
       "meaning": "Frozen envelope and submission identity are stored and being sent.",
       "status": "designed",
       "components": [],
-      "screens": [
-        "C10"
-      ],
+      "screens": ["C10"],
       "surface": "Request appears in conversation history while sending; no status component.",
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
@@ -949,9 +930,7 @@
       "meaning": "Acceptance is unknown; reconcile this exact identity.",
       "status": "designed",
       "components": [],
-      "screens": [
-        "C10"
-      ],
+      "screens": ["C10"],
       "surface": "Uncertain acceptance reconciles the original request identity internally; no status component.",
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
@@ -965,15 +944,7 @@
           "variant": "State=running"
         }
       ],
-      "screens": [
-        "C09",
-        "C41",
-        "C50",
-        "E35",
-        "E44",
-        "B18",
-        "B34"
-      ],
+      "screens": ["C09", "C41", "C50", "E35", "E44", "B18", "B34"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "request.succeeded": {
@@ -986,15 +957,7 @@
           "variant": "State=succeeded"
         }
       ],
-      "screens": [
-        "C08",
-        "C57",
-        "C58",
-        "E36",
-        "E43",
-        "B19",
-        "B35"
-      ],
+      "screens": ["C08", "C57", "C58", "E36", "E43", "B19", "B35"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "request.failed": {
@@ -1007,9 +970,7 @@
           "variant": "State=failed"
         }
       ],
-      "screens": [
-        "R12"
-      ],
+      "screens": ["R12"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "output_slot.output_lost": {
@@ -1022,9 +983,7 @@
           "variant": "State=Lost"
         }
       ],
-      "screens": [
-        "R12"
-      ],
+      "screens": ["R12"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "upload.ready": {
@@ -1037,11 +996,7 @@
           "variant": "State=ready"
         }
       ],
-      "screens": [
-        "M09",
-        "B16",
-        "B31"
-      ],
+      "screens": ["M09", "B16", "B31"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "upload.missing_bytes": {
@@ -1054,9 +1009,7 @@
           "variant": "State=missing_bytes"
         }
       ],
-      "screens": [
-        "M06"
-      ],
+      "screens": ["M06"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "upload.cancelled": {
@@ -1069,9 +1022,7 @@
           "variant": "State=cancelled"
         }
       ],
-      "screens": [
-        "M07"
-      ],
+      "screens": ["M07"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "playback.buffering": {
@@ -1084,9 +1035,7 @@
           "variant": "State=Buffering"
         }
       ],
-      "screens": [
-        "E19"
-      ],
+      "screens": ["E19"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "sketch.paused": {
@@ -1099,9 +1048,7 @@
           "variant": "State=paused"
         }
       ],
-      "screens": [
-        "M16"
-      ],
+      "screens": ["M16"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "video_edit.valid": {
@@ -1138,11 +1085,7 @@
           "variant": "State=Anyone with the link"
         }
       ],
-      "screens": [
-        "D02",
-        "E39",
-        "B21"
-      ],
+      "screens": ["D02", "E39", "B21"],
       "presentation": "Access control set to Anyone with the link; Copy link is enabled."
     },
     "sharing.revoking": {
@@ -1155,9 +1098,7 @@
           "variant": "State=Anyone with the link"
         }
       ],
-      "screens": [
-        "D02"
-      ],
+      "screens": ["D02"],
       "presentation": "No separate panel state: the access control keeps showing its confirmed value until the change is confirmed (L07)."
     },
     "sharing.revocation_unknown": {
@@ -1170,9 +1111,7 @@
           "variant": "State=Anyone with the link"
         }
       ],
-      "screens": [
-        "D02"
-      ],
+      "screens": ["D02"],
       "presentation": "No separate panel state: the access control keeps showing its confirmed value until the change is confirmed (L07). Reconciled by operation ID."
     },
     "usage.not_required": {
@@ -1185,9 +1124,7 @@
           "variant": "State=not_required"
         }
       ],
-      "screens": [
-        "C01"
-      ],
+      "screens": ["C01"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "usage.unavailable": {
@@ -1200,9 +1137,7 @@
           "variant": "State=unavailable"
         }
       ],
-      "screens": [
-        "D11"
-      ],
+      "screens": ["D11"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "clarification.stale_proposal": {
@@ -1215,9 +1150,7 @@
           "variant": "State=stale_proposal"
         }
       ],
-      "screens": [
-        "C15"
-      ],
+      "screens": ["C15"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "download.resolving": {
@@ -1230,9 +1163,7 @@
           "variant": "State=resolving"
         }
       ],
-      "screens": [
-        "D08"
-      ],
+      "screens": ["D08"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "download.started": {
@@ -1245,10 +1176,7 @@
           "variant": "State=started"
         }
       ],
-      "screens": [
-        "D08",
-        "E37"
-      ],
+      "screens": ["D08", "E37"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "download.failed": {
@@ -1261,9 +1189,7 @@
           "variant": "State=failed"
         }
       ],
-      "screens": [
-        "D08"
-      ],
+      "screens": ["D08"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "assistant_response.streaming": {
@@ -1276,9 +1202,7 @@
           "variant": "State=streaming"
         }
       ],
-      "screens": [
-        "C28"
-      ],
+      "screens": ["C28"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "assistant_response.interrupted": {
@@ -1291,9 +1215,7 @@
           "variant": "State=interrupted"
         }
       ],
-      "screens": [
-        "R18"
-      ],
+      "screens": ["R18"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "assistant_response.saved": {
@@ -1306,9 +1228,7 @@
           "variant": "State=saved"
         }
       ],
-      "screens": [
-        "C15"
-      ],
+      "screens": ["C15"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "assistant_response.failed": {
@@ -1321,22 +1241,14 @@
           "variant": "State=failed"
         }
       ],
-      "screens": [
-        "R18"
-      ],
+      "screens": ["R18"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     }
   },
   "priorCaseCoverage": {
     "HISTORY-07": {
-      "rules": [
-        "H08",
-        "I03"
-      ],
-      "screens": [
-        "C31",
-        "C32"
-      ],
+      "rules": ["H08", "I03"],
+      "screens": ["C31", "C32"],
       "given": "Q1 is accepted before Q2 but finishes afterward.",
       "when": "Observe both results and a duplicate Q1 completion event.",
       "then": "History stays Q1 then Q2; each output appears once under its originating request.",
@@ -1345,14 +1257,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "HISTORY-11": {
-      "rules": [
-        "H11",
-        "C11"
-      ],
-      "screens": [
-        "M08",
-        "M09"
-      ],
+      "rules": ["H11", "C11"],
+      "screens": ["M08", "M09"],
       "given": "Library image A belongs to project P while Q is active.",
       "when": "Choose Copy to Q.",
       "then": "Create an owned Q copy, preserve P's original, and do not copy private conversation instructions or alter Q's active draft.",
@@ -1361,13 +1267,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-10": {
-      "rules": [
-        "C08",
-        "D07"
-      ],
-      "screens": [
-        "C15"
-      ],
+      "rules": ["C08", "D07"],
+      "screens": ["C15"],
       "given": "Wording assistance was requested for draft revision 4; revision 5 now exists.",
       "when": "The suggestion arrives.",
       "then": "Show a diff tied to revision 4; do not overwrite revision 5; deliberate Apply creates one undoable revision.",
@@ -1376,14 +1277,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-11": {
-      "rules": [
-        "C09",
-        "I02"
-      ],
-      "screens": [
-        "C15",
-        "C16"
-      ],
+      "rules": ["C09", "I02"],
+      "screens": ["C15", "C16"],
       "given": "A clarification targets draft D revision 4.",
       "when": "Answer after D advanced to revision 5.",
       "then": "Save the answer as an immutable entry and stale proposal; only Apply as new draft or explicit resolution may use it.",
@@ -1392,13 +1287,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-14": {
-      "rules": [
-        "C11",
-        "H04"
-      ],
-      "screens": [
-        "C25"
-      ],
+      "rules": ["C11", "H04"],
+      "screens": ["C25"],
       "given": "An owned legacy image has no producing-request/settings snapshot.",
       "when": "Choose View, then attempt exact Reuse, then choose Edit.",
       "then": "View works; exact Reuse is unavailable; Edit opens with unknown/empty historical context and requires new instructions.",
@@ -1407,14 +1297,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-15": {
-      "rules": [
-        "C12",
-        "I11"
-      ],
-      "screens": [
-        "M10",
-        "M11"
-      ],
+      "rules": ["C12", "I11"],
+      "screens": ["M10", "M11"],
       "given": "A mask is bound to image A at dimensions and transform T.",
       "when": "Replace A with B or crop/rotate/resize A.",
       "then": "The mask is invalid until explicitly redrawn/remapped; it cannot silently apply to different pixels.",
@@ -1423,14 +1307,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "DRAFT-03": {
-      "rules": [
-        "D02",
-        "I05"
-      ],
-      "screens": [
-        "C07",
-        "C08"
-      ],
+      "rules": ["D02", "I05"],
+      "screens": ["C07", "C08"],
       "given": "Request Q runs from draft D revision 3.",
       "when": "Type a new follow-up and change settings.",
       "then": "Save a separate draft/revision while Q's accepted snapshot remains revision 3.",
@@ -1439,13 +1317,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "DRAFT-06": {
-      "rules": [
-        "D04",
-        "I06"
-      ],
-      "screens": [
-        "C08"
-      ],
+      "rules": ["D04", "I06"],
+      "screens": ["C08"],
       "given": "A follow-up draft waits on Q's slot and already contains text.",
       "when": "Q completes successfully and attaches to its original project.",
       "then": "Resolve only the declared input; preserve words/settings; do not auto-submit or move the viewer.",
@@ -1454,14 +1327,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "DRAFT-09": {
-      "rules": [
-        "D06",
-        "I06"
-      ],
-      "screens": [
-        "C31",
-        "C32"
-      ],
+      "rules": ["D06", "I06"],
+      "screens": ["C31", "C32"],
       "given": "Draft X waits on Q, then the creator starts independent draft Y.",
       "when": "Q completes.",
       "then": "Update parked X's declared dependency and Q's history only; active Y/viewer/navigation remain unchanged.",
@@ -1470,13 +1337,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "DRAFT-12": {
-      "rules": [
-        "D08",
-        "D10"
-      ],
-      "screens": [
-        "R05"
-      ],
+      "rules": ["D08", "D10"],
+      "screens": ["R05"],
       "given": "Local checkpointing fails but current revision 9 is acknowledged on the server.",
       "when": "Navigate or sign out.",
       "then": "Navigation is allowed with accurate storage status; no forced export/discard of remotely safe work.",
@@ -1485,15 +1347,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "DRAFT-15": {
-      "rules": [
-        "D11",
-        "I06"
-      ],
-      "screens": [
-        "C31",
-        "E07",
-        "D08"
-      ],
+      "rules": ["D11", "I06"],
+      "screens": ["C31", "E07", "D08"],
       "given": "A video request, export, download, or text-assistance request completes.",
       "when": "Continue working.",
       "then": "No implicit next image/video edit target is created; export keeps source editor; download keeps draft; text produces an explicit proposal.",
@@ -1502,14 +1357,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "ACTION-07": {
-      "rules": [
-        "A01",
-        "C08"
-      ],
-      "screens": [
-        "C28",
-        "C15"
-      ],
+      "rules": ["A01", "C08"],
+      "screens": ["C28", "C15"],
       "given": "The creator selects Ask or Improve wording.",
       "when": "Submit a description of desired media.",
       "then": "Return text/proposal only; no image/video generation occurs until the explicit media action is run.",
@@ -1518,13 +1367,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "JOB-01": {
-      "rules": [
-        "J01",
-        "I03"
-      ],
-      "screens": [
-        "C10"
-      ],
+      "rules": ["J01", "I03"],
+      "screens": ["C10"],
       "given": "A frozen request was accepted under submission S and hash H.",
       "when": "Replay S/H repeatedly and concurrently.",
       "then": "Return its same receipt; no second reservation, queue item or provider execution.",
@@ -1533,14 +1377,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "JOB-02": {
-      "rules": [
-        "J01",
-        "I02"
-      ],
-      "screens": [
-        "C11",
-        "C10"
-      ],
+      "rules": ["J01", "I02"],
+      "screens": ["C11", "C10"],
       "given": "Submission S is bound to hash H.",
       "when": "Send S with different instruction/input hash K.",
       "then": "Reject identity conflict; neither original snapshot nor job is overwritten.",
@@ -1549,13 +1387,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "JOB-03": {
-      "rules": [
-        "J02",
-        "I12"
-      ],
-      "screens": [
-        "C10"
-      ],
+      "rules": ["J02", "I12"],
+      "screens": ["C10"],
       "given": "Submit request timed out without a receipt.",
       "when": "Reload, reconnect and press Check status.",
       "then": "Restore envelope/S; query acceptance; recover existing receipt or resend identical S only after proven absence.",
@@ -1564,13 +1397,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "JOB-14": {
-      "rules": [
-        "J08",
-        "I07"
-      ],
-      "screens": [
-        "R12"
-      ],
+      "rules": ["J08", "I07"],
+      "screens": ["R12"],
       "given": "Saving failed and the provider output has now expired irrecoverably.",
       "when": "User requests recovery.",
       "then": "Record output_lost; disable impossible same-output repair; new generation is a new explicit request.",
@@ -1579,13 +1407,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "JOB-15": {
-      "rules": [
-        "J09",
-        "I04"
-      ],
-      "screens": [
-        "C08"
-      ],
+      "rules": ["J09", "I04"],
+      "screens": ["C08"],
       "given": "Slot is stored at server revision 12.",
       "when": "Receive revision 10 Running, then duplicate revision 12.",
       "then": "Do not revert or duplicate it; ignore/log stale observations.",
@@ -1594,13 +1417,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "JOB-23": {
-      "rules": [
-        "J14",
-        "C08"
-      ],
-      "screens": [
-        "R18"
-      ],
+      "rules": ["J14", "C08"],
+      "screens": ["R18"],
       "given": "Assistant response is streaming against draft revision 4.",
       "when": "Connection breaks midway.",
       "then": "Show incomplete text and reconcile the same text request; partial text cannot be Applied as a final proposal.",
@@ -1609,12 +1427,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "MEDIA-03": {
-      "rules": [
-        "M02"
-      ],
-      "screens": [
-        "M06"
-      ],
+      "rules": ["M02"],
+      "screens": ["M06"],
       "given": "A draft references staged bytes that were not recoverable after reload.",
       "when": "Reselect a file of the same name with different bytes.",
       "then": "Do not resume old identity as if identical; create a new input revision or require matching bytes.",
@@ -1623,12 +1437,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "MEDIA-05": {
-      "rules": [
-        "M03"
-      ],
-      "screens": [
-        "M07"
-      ],
+      "rules": ["M03"],
+      "screens": ["M07"],
       "given": "A shared upload is still running.",
       "when": "Explicitly cancel after reviewing affected drafts; output arrives late.",
       "then": "Affected references remain unavailable/removed; late file is a project item with no automatic draft reattachment.",
@@ -1637,13 +1447,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "MEDIA-06": {
-      "rules": [
-        "M04",
-        "I11"
-      ],
-      "screens": [
-        "D08"
-      ],
+      "rules": ["M04", "I11"],
+      "screens": ["D08"],
       "given": "A stored version's signed URL expires.",
       "when": "View or download it.",
       "then": "Resolve the same durable handle to a fresh authorized URL; do not regenerate or change version identity.",
@@ -1652,13 +1457,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "MEDIA-10": {
-      "rules": [
-        "M06"
-      ],
-      "screens": [
-        "M15",
-        "M16"
-      ],
+      "rules": ["M06"],
+      "screens": ["M15", "M16"],
       "given": "Sketch has a last successful preview and a newer pending drawing.",
       "when": "A new frame fails and then creator leaves Sketch.",
       "then": "Retain labeled last output; pause dispatch on leave; current project request is unchanged.",
@@ -1667,12 +1467,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "MEDIA-12": {
-      "rules": [
-        "M08"
-      ],
-      "screens": [
-        "M16"
-      ],
+      "rules": ["M08"],
+      "screens": ["M16"],
       "given": "Sketch has an unaccepted drawing and preview at close.",
       "when": "Reopen.",
       "then": "Offer locally saved drawing/settings; do not claim preview history saved or restart generation automatically; accepted outputs remain durable.",
@@ -1681,14 +1477,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "RESTORE-01": {
-      "rules": [
-        "R01",
-        "I05"
-      ],
-      "screens": [
-        "R02",
-        "C21"
-      ],
+      "rules": ["R01", "I05"],
+      "screens": ["R02", "C21"],
       "given": "A project has saved draft changes, running jobs and an unrelated viewed image.",
       "when": "Reload.",
       "then": "Restore each independently; reconstruct nonterminal jobs from server receipts rather than a local polling flag.",
@@ -1697,14 +1487,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "RESTORE-02": {
-      "rules": [
-        "R02",
-        "I07"
-      ],
-      "screens": [
-        "R01",
-        "R02"
-      ],
+      "rules": ["R02", "I07"],
+      "screens": ["R01", "R02"],
       "given": "The app is offline with an editable cached draft.",
       "when": "Press Generate, then reconnect.",
       "then": "No silent queued dispatch; replay safe saves/reconcile accepted work only; a never-accepted generation needs visible submit.",
@@ -1713,15 +1497,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "LIFECYCLE-01": {
-      "rules": [
-        "L01",
-        "I01"
-      ],
-      "screens": [
-        "M02",
-        "P09",
-        "C36"
-      ],
+      "rules": ["L01", "I01"],
+      "screens": ["M02", "P09", "C36"],
       "given": "An input is bound in the composer.",
       "when": "Filter, sort, rename or favorite items so it leaves the visible gallery.",
       "then": "Input remains explicitly bound and visible in composer; request order/history is unchanged.",
@@ -1730,14 +1507,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "LIFECYCLE-07": {
-      "rules": [
-        "L06",
-        "I11"
-      ],
-      "screens": [
-        "D02",
-        "E08"
-      ],
+      "rules": ["L06", "I11"],
+      "screens": ["D02", "E08"],
       "given": "A public link points at immutable export E7.",
       "when": "Export E8 and mark it preferred.",
       "then": "Old link still targets E7; publishing E8 requires another link.",
@@ -1746,12 +1517,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "LIFECYCLE-09": {
-      "rules": [
-        "L07"
-      ],
-      "screens": [
-        "D02"
-      ],
+      "rules": ["L07"],
+      "screens": ["D02"],
       "given": "Link revocation times out.",
       "when": "Display link management and retry.",
       "then": "Show Revocation pending/unknown; do not claim revoked until authoritative denial; retry same revocation.",
@@ -1760,13 +1527,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "LIFECYCLE-11": {
-      "rules": [
-        "L08",
-        "I14"
-      ],
-      "screens": [
-        "D08"
-      ],
+      "rules": ["L08", "I14"],
+      "screens": ["D08"],
       "given": "Stored output is ready.",
       "when": "Download fails or browser transfer starts.",
       "then": "Report transfer state only; no generation/export failure or additional charge; no claim of a completed disk write.",
@@ -1775,13 +1537,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "USAGE-03": {
-      "rules": [
-        "P02",
-        "I03"
-      ],
-      "screens": [
-        "D11"
-      ],
+      "rules": ["P02", "I03"],
+      "screens": ["D11"],
       "given": "Two different requests compete for the last allowance.",
       "when": "Accept concurrently.",
       "then": "Atomic reservation permits only the affordable work; duplicate settlements/reservations remain impossible.",
@@ -1790,14 +1547,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "USAGE-07": {
-      "rules": [
-        "P05",
-        "I07"
-      ],
-      "screens": [
-        "R11",
-        "D08"
-      ],
+      "rules": ["P05", "I07"],
+      "screens": ["R11", "D08"],
       "given": "A delivered result needs status, attachment or transfer recovery.",
       "when": "Perform recovery repeatedly.",
       "then": "No new generation reservation or customer charge is created.",
@@ -1806,13 +1557,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "USAGE-08": {
-      "rules": [
-        "P05",
-        "I10"
-      ],
-      "screens": [
-        "D11"
-      ],
+      "rules": ["P05", "I10"],
+      "screens": ["D11"],
       "given": "Allowance is exhausted while ready outputs and drafts exist.",
       "when": "Browse/download existing output and edit text.",
       "then": "Permit existing access/drafting; block only new billable work with the exact allowance reason.",
@@ -1821,15 +1567,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "RESTORE-11": {
-      "rules": [
-        "R09",
-        "I04"
-      ],
-      "screens": [
-        "R13",
-        "M08",
-        "M09"
-      ],
+      "rules": ["R09", "I04"],
+      "screens": ["R13", "M08", "M09"],
       "given": "An owned result is in recovery because original project attachment failed.",
       "when": "Copy it to project Q, then repair its original project P link.",
       "then": "Copy admission in Q and repaired original in P have distinct explicit associations; original request target stays P; neither recovery path creates another provider generation.",
@@ -1838,16 +1577,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-16": {
-      "rules": [
-        "C08",
-        "C09",
-        "H12",
-        "I02"
-      ],
-      "screens": [
-        "C20",
-        "C15"
-      ],
+      "rules": ["C08", "C09", "H12", "I02"],
+      "screens": ["C20", "C15"],
       "given": "An assistance question targets draft D revision 4, which is submitted unchanged before its answer arrives.",
       "when": "The answer arrives and the creator tries Apply.",
       "then": "Treat the proposal as non-applicable despite matching revision; never mutate accepted D. Offer a separate authorized writable draft or retain/discard the proposal.",
@@ -1865,16 +1596,9 @@
       "status": "planned",
       "fullClosureGate": "G-APP",
       "additionalSuites": [],
-      "requiredProductionPackages": [
-        "WP-01"
-      ],
-      "testReadyAfter": [
-        "WP-01"
-      ],
-      "designScreens": [
-        "C25",
-        "C07"
-      ],
+      "requiredProductionPackages": ["WP-01"],
+      "testReadyAfter": ["WP-01"],
+      "designScreens": ["C25", "C07"],
       "designStatus": "presentation mapped; runtime proof remains open"
     },
     "SUP-18": {
@@ -1887,16 +1611,9 @@
       "status": "planned",
       "fullClosureGate": "G-APP",
       "additionalSuites": [],
-      "requiredProductionPackages": [
-        "WP-23"
-      ],
-      "testReadyAfter": [
-        "WP-23"
-      ],
-      "designScreens": [
-        "D14",
-        "D11"
-      ],
+      "requiredProductionPackages": ["WP-23"],
+      "testReadyAfter": ["WP-23"],
+      "designScreens": ["D14", "D11"],
       "designStatus": "presentation mapped; runtime proof remains open"
     },
     "SUP-19": {
@@ -1909,16 +1626,9 @@
       "status": "planned",
       "fullClosureGate": "G-APP",
       "additionalSuites": [],
-      "requiredProductionPackages": [
-        "WP-25"
-      ],
-      "testReadyAfter": [
-        "WP-25"
-      ],
-      "designScreens": [
-        "C25",
-        "P01"
-      ],
+      "requiredProductionPackages": ["WP-25"],
+      "testReadyAfter": ["WP-25"],
+      "designScreens": ["C25", "P01"],
       "designStatus": "presentation mapped; runtime proof remains open"
     },
     "SUP-22": {
@@ -1931,17 +1641,9 @@
       "status": "planned",
       "fullClosureGate": "G-APP",
       "additionalSuites": [],
-      "requiredProductionPackages": [
-        "WP-24"
-      ],
-      "testReadyAfter": [
-        "WP-24"
-      ],
-      "designScreens": [
-        "C32",
-        "E08",
-        "M01"
-      ],
+      "requiredProductionPackages": ["WP-24"],
+      "testReadyAfter": ["WP-24"],
+      "designScreens": ["C32", "E08", "M01"],
       "designStatus": "presentation mapped; runtime proof remains open"
     },
     "SUP-23": {
@@ -1954,18 +1656,9 @@
       "status": "planned",
       "fullClosureGate": "G-COMMERCIAL",
       "additionalSuites": [],
-      "requiredProductionPackages": [
-        "WP-24",
-        "WP-26"
-      ],
-      "testReadyAfter": [
-        "WP-24",
-        "WP-26"
-      ],
-      "designScreens": [
-        "R16",
-        "D11"
-      ],
+      "requiredProductionPackages": ["WP-24", "WP-26"],
+      "testReadyAfter": ["WP-24", "WP-26"],
+      "designScreens": ["R16", "D11"],
       "designStatus": "presentation mapped; runtime proof remains open"
     },
     "SUP-30": {
@@ -1978,17 +1671,9 @@
       "status": "planned",
       "fullClosureGate": "G-APP",
       "additionalSuites": [],
-      "requiredProductionPackages": [
-        "WP-20",
-        "WP-21"
-      ],
-      "testReadyAfter": [
-        "WP-20",
-        "WP-21"
-      ],
-      "designScreens": [
-        "E19"
-      ],
+      "requiredProductionPackages": ["WP-20", "WP-21"],
+      "testReadyAfter": ["WP-20", "WP-21"],
+      "designScreens": ["E19"],
       "designStatus": "presentation mapped; runtime proof remains open"
     }
   },

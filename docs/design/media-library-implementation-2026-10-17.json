@@ -11,12 +11,7 @@
       "docs/design/media-import-fixes-2026-10-16.json",
       "docs/design/media-card-redesign-2026-10-16.json"
     ],
-    "components": [
-      "893:85525",
-      "1514:90079",
-      "889:85218",
-      "2038:9717"
-    ]
+    "components": ["893:85525", "1514:90079", "889:85218", "2038:9717"]
   },
   "entry": "/app/project/:projectId?view=media",
   "implemented": [

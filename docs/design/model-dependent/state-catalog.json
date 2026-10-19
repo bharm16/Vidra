@@ -9,11 +9,7 @@
     "vidraMediaActionTileNodeId": "1145:90969",
     "adaptation": "35 two-tier composers with qualified Vidra controls and media-action tiles; runtime acceptance not run"
   },
-  "sourcePagesRetained": [
-    "883:84247",
-    "887:85295",
-    "956:84247"
-  ],
+  "sourcePagesRetained": ["883:84247", "887:85295", "956:84247"],
   "generation": [
     {
       "key": "G01",

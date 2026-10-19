@@ -712,15 +712,8 @@
   },
   "priorCaseCoverage": {
     "HISTORY-06": {
-      "rules": [
-        "H07",
-        "C03",
-        "I02"
-      ],
-      "screens": [
-        "C35",
-        "C12"
-      ],
+      "rules": ["H07", "C03", "I02"],
+      "screens": ["C35", "C12"],
       "given": "Request Q1 produced A; later Q2 and Q3 produced other results.",
       "when": "Edit and run Q1 again with changed words.",
       "then": "New Q4 records revisesRequestId Q1 and Q1's original parent context; Q1-Q3 and their outputs remain.",
@@ -729,14 +722,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-01": {
-      "rules": [
-        "C01",
-        "I08"
-      ],
-      "screens": [
-        "C13",
-        "C12"
-      ],
+      "rules": ["C01", "I08"],
+      "screens": ["C13", "C12"],
       "given": "A-to-B-to-C edits exist; another branch from A requested blue lighting.",
       "when": "Edit B with warmer lighting.",
       "then": "Context contains B's ancestor path and new instruction; C's later edits and the blue sibling instruction are excluded.",
@@ -745,14 +732,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-03": {
-      "rules": [
-        "C03",
-        "C07"
-      ],
-      "screens": [
-        "C12",
-        "C27"
-      ],
+      "rules": ["C03", "C07"],
+      "screens": ["C12", "C27"],
       "given": "An old request used project instruction revision N; project is now N+1.",
       "when": "Reuse the old request.",
       "then": "Draft retains N and shows the available update; N+1 is applied only explicitly.",
@@ -761,13 +742,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-05": {
-      "rules": [
-        "C04",
-        "I10"
-      ],
-      "screens": [
-        "C16"
-      ],
+      "rules": ["C04", "I10"],
+      "screens": ["C16"],
       "given": "No unique media input is bound and several result batches exist.",
       "when": "Enter Use the second one.",
       "then": "A persisted clarification asks which request/slot; no media dispatch occurs.",
@@ -776,13 +752,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-11": {
-      "rules": [
-        "C09",
-        "I02"
-      ],
-      "screens": [
-        "C16"
-      ],
+      "rules": ["C09", "I02"],
+      "screens": ["C16"],
       "given": "A clarification targets draft D revision 4.",
       "when": "Answer after D advanced to revision 5.",
       "then": "Save the answer as an immutable entry and stale proposal; only Apply as new draft or explicit resolution may use it.",
@@ -791,13 +762,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-12": {
-      "rules": [
-        "C09",
-        "I10"
-      ],
-      "screens": [
-        "C16"
-      ],
+      "rules": ["C09", "I10"],
+      "screens": ["C16"],
       "given": "Two questions in the same conversation await answers.",
       "when": "Send an answer without a unique question reference.",
       "then": "Ask which question; neither target draft changes and neither request runs.",
@@ -806,14 +772,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "HISTORY-08": {
-      "rules": [
-        "H09",
-        "I04"
-      ],
-      "screens": [
-        "P02",
-        "C24"
-      ],
+      "rules": ["H09", "I04"],
+      "screens": ["P02", "C24"],
       "given": "Image A is owned in project P and referenced in conversations X and Y.",
       "when": "Submit one edit from each conversation.",
       "then": "Both requests reference exact A; histories remain distinct and no storage duplicate is required.",
@@ -822,13 +782,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "CONTEXT-02": {
-      "rules": [
-        "C02",
-        "H04"
-      ],
-      "screens": [
-        "C24"
-      ],
+      "rules": ["C02", "H04"],
+      "screens": ["C24"],
       "given": "A is primary base and B is a visual reference with unrelated history.",
       "when": "Submit an image edit.",
       "then": "Record both inputs and roles; B's conversation instructions are excluded unless explicitly selected as context.",
@@ -837,13 +792,8 @@
       "proofLimit": "Frames show the presentation and action contract. Identity, persistence, authorization, spending and asynchronous correctness require the assigned application tests."
     },
     "MEDIA-04": {
-      "rules": [
-        "M03"
-      ],
-      "screens": [
-        "M04",
-        "C24"
-      ],
+      "rules": ["M03"],
+      "screens": ["M04", "C24"],
       "given": "Two drafts reference one in-progress upload.",
       "when": "Remove it from only draft A.",
       "then": "Draft B and the upload continue; A's removed role does not return on completion.",
@@ -1191,9 +1141,7 @@
           "variant": "State=idle"
         }
       ],
-      "screens": [
-        "C05"
-      ],
+      "screens": ["C05"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "download.resolving": {
@@ -1219,9 +1167,7 @@
           "variant": "State=started"
         }
       ],
-      "screens": [
-        "E37"
-      ],
+      "screens": ["E37"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "download.failed": {
@@ -1247,9 +1193,7 @@
           "variant": "State=answering"
         }
       ],
-      "screens": [
-        "C16"
-      ],
+      "screens": ["C16"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "clarification.proposal_ready": {
@@ -1262,9 +1206,7 @@
           "variant": "State=proposal_ready"
         }
       ],
-      "screens": [
-        "C16"
-      ],
+      "screens": ["C16"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "clarification.stale_proposal": {
@@ -1290,9 +1232,7 @@
           "variant": "State=applied"
         }
       ],
-      "screens": [
-        "C24"
-      ],
+      "screens": ["C24"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "clarification.dismissed": {
@@ -1305,9 +1245,7 @@
           "variant": "State=dismissed"
         }
       ],
-      "screens": [
-        "C16"
-      ],
+      "screens": ["C16"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "request.queued": {
@@ -1320,12 +1258,7 @@
           "variant": "State=queued"
         }
       ],
-      "screens": [
-        "C07",
-        "C40",
-        "C49",
-        "E34"
-      ],
+      "screens": ["C07", "C40", "C49", "E34"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "request.running": {
@@ -1338,13 +1271,7 @@
           "variant": "State=running"
         }
       ],
-      "screens": [
-        "C09",
-        "C41",
-        "C50",
-        "E35",
-        "B18"
-      ],
+      "screens": ["C09", "C41", "C50", "E35", "B18"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "request.succeeded": {
@@ -1357,12 +1284,7 @@
           "variant": "State=succeeded"
         }
       ],
-      "screens": [
-        "C57",
-        "C58",
-        "E36",
-        "B19"
-      ],
+      "screens": ["C57", "C58", "E36", "B19"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "request.partial": {
@@ -1375,9 +1297,7 @@
           "variant": "State=partial"
         }
       ],
-      "screens": [
-        "D10"
-      ],
+      "screens": ["D10"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "request.failed": {
@@ -1403,9 +1323,7 @@
           "variant": "State=local"
         }
       ],
-      "screens": [
-        "C01"
-      ],
+      "screens": ["C01"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "project.creating": {
@@ -1418,9 +1336,7 @@
           "variant": "State=creating"
         }
       ],
-      "screens": [
-        "P03"
-      ],
+      "screens": ["P03"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "project.ready": {
@@ -1433,10 +1349,7 @@
           "variant": "State=ready"
         }
       ],
-      "screens": [
-        "P01",
-        "P02"
-      ],
+      "screens": ["P01", "P02"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "project.load_failed": {
@@ -1449,9 +1362,7 @@
           "variant": "State=load_failed"
         }
       ],
-      "screens": [
-        "P04"
-      ],
+      "screens": ["P04"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "project.inaccessible": {
@@ -1464,9 +1375,7 @@
           "variant": "State=inaccessible"
         }
       ],
-      "screens": [
-        "P05"
-      ],
+      "screens": ["P05"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "project.trashing": {
@@ -1479,9 +1388,7 @@
           "variant": "State=trashing"
         }
       ],
-      "screens": [
-        "P06"
-      ],
+      "screens": ["P06"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "project.trashed": {
@@ -1494,9 +1401,7 @@
           "variant": "State=trashed"
         }
       ],
-      "screens": [
-        "P07"
-      ],
+      "screens": ["P07"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "clarification.waiting": {
@@ -1509,9 +1414,7 @@
           "variant": "State=Default"
         }
       ],
-      "screens": [
-        "C16"
-      ],
+      "screens": ["C16"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "input_target.version": {
@@ -1524,15 +1427,7 @@
           "variant": "State=Ready"
         }
       ],
-      "screens": [
-        "C05",
-        "C24",
-        "M12",
-        "C45",
-        "C57",
-        "B24",
-        "B26"
-      ],
+      "screens": ["C05", "C24", "M12", "C45", "C57", "B24", "B26"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "input_target.pending": {
@@ -1545,12 +1440,7 @@
           "variant": "State=Waiting"
         }
       ],
-      "screens": [
-        "C07",
-        "C40",
-        "C41",
-        "B25"
-      ],
+      "screens": ["C07", "C40", "C41", "B25"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "input_target.choice_required": {
@@ -1563,10 +1453,7 @@
           "variant": "State=Choose"
         }
       ],
-      "screens": [
-        "C09",
-        "C30"
-      ],
+      "screens": ["C09", "C30"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     },
     "input_target.unavailable": {
@@ -1579,9 +1466,7 @@
           "variant": "State=Unavailable"
         }
       ],
-      "screens": [
-        "C22"
-      ],
+      "screens": ["C22"],
       "presentation": "Component variant with composition examples; not a claim that the example scene displays every independent state simultaneously."
     }
   },
@@ -2065,21 +1950,9 @@
         }
       },
       "replacedLayers": {
-        "K24": [
-          "990:95590",
-          "990:95651",
-          "990:95665"
-        ],
-        "K25": [
-          "990:95675",
-          "990:95736",
-          "990:95750"
-        ],
-        "K27": [
-          "990:95845",
-          "990:95906",
-          "990:95920"
-        ]
+        "K24": ["990:95590", "990:95651", "990:95665"],
+        "K25": ["990:95675", "990:95736", "990:95750"],
+        "K27": ["990:95845", "990:95906", "990:95920"]
       },
       "addedLinks": [
         {

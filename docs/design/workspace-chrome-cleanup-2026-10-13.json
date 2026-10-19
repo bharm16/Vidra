@@ -1031,9 +1031,5 @@
     ]
   },
   "toolbar": "Existing full-toolbar instances verified; no screen-level unmatched Use control. Page 29 Use menu preview is an action-menu demonstration.",
-  "visualChecks": [
-    "1033:86719",
-    "1055:84811",
-    "1371:119519"
-  ]
+  "visualChecks": ["1033:86719", "1055:84811", "1371:119519"]
 }

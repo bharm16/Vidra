@@ -5,20 +5,11 @@
   "canonicalComponent": {
     "id": "1379:84830",
     "name": "Vidra Fresh / Full toolbar",
-    "variants": [
-      "Desktop",
-      "Compact"
-    ],
+    "variants": ["Desktop", "Compact"],
     "height": 40,
     "width": "Intrinsic horizontal auto-layout; no fixed instance width",
-    "properties": [
-      "Size",
-      "Editing"
-    ],
-    "nestedExposedInstances": [
-      "Editor transport",
-      "Editing actions"
-    ]
+    "properties": ["Size", "Editing"],
+    "nestedExposedInstances": ["Editor transport", "Editing actions"]
   },
   "previewBounds": {
     "desktopMaximumWidth": 640,

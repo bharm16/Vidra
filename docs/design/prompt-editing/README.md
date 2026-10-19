@@ -8,16 +8,16 @@ After the October 14 consolidation and removals, Page 28 has **23 retained produ
 
 ## Review entry points
 
-| Journey | Entry |
-| --- | --- |
-| Sidebar, viewed clip and timeline together | [W32](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-93752) |
+| Journey                                                              | Entry                                                                                                                                                                                            |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sidebar, viewed clip and timeline together                           | [W32](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-93752)                                                                                                           |
 | Phrase replacement while viewing an asset and retaining the timeline | [W32 surface](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-93752) and [W48 state](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-183328) |
-| Phrase suggestions in the compact composer | [S07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-84868) |
-| Independent requests finishing out of order | [W07 surface](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-91916) and [W55 state](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-184764) |
-| Empty new draft with the prior asset and request retained | [W01 surface](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-89958) and [W59 state](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-185457) |
-| Timeline collapsed | [W33](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-94305) |
-| Narrow conversation, asset and replacements | [S35](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-89372) |
-| Image editor — explicitly deferred | [TODO](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1091-101743) |
+| Phrase suggestions in the compact composer                           | [S07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-84868)                                                                                                           |
+| Independent requests finishing out of order                          | [W07 surface](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-91916) and [W55 state](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-184764) |
+| Empty new draft with the prior asset and request retained            | [W01 surface](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-89958) and [W59 state](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1440-185457) |
+| Timeline collapsed                                                   | [W33](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-94305)                                                                                                           |
+| Narrow conversation, asset and replacements                          | [S35](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-89372)                                                                                                           |
+| Image editor — explicitly deferred                                   | [TODO](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1091-101743)                                                                                                         |
 
 ## Sources visually inspected before this work
 
@@ -41,6 +41,5 @@ The canonical composer remains `1175:109219`, with the touch controls variant `1
 ## Review evidence
 
 The October 14 [remediation record](../design-critique-remediation-2026-10-14.json) is the current geometry and visual-review record for Pages 24–29. It separates retained product surfaces, source reviews, intentional scrolling, archived fixtures and application acceptance.
-
 
 The original canvas check found no overlapping state/transition frames and no invalid prototype destinations across 610 checked node actions. Browser checks at that point exercised timeline hide/show and exact second-option replacement/undo while retaining the viewed clip. Those checks preceded the follow-up correction. The current Figma pass visually inspected the fixed dock, compact composer, and caption-free history, and audited the removed controls and labels; application and browser acceptance for the revised behavior remains open. [The earlier workspace render](workspace-review.png) predates these corrections.

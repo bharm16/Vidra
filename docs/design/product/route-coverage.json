@@ -3876,15 +3876,7 @@
     "status": "applied",
     "record": "../figma-state-screen-removal-2026-10-15.json",
     "policy": "The October 15 removal deleted screens and components that drew backend or contract states as UI: the auth state machine, cancellation races, request reconciliation, cross-tab submission and guest-draft ownership. Do not redraw them. Their behavior stays in backend contracts and tests; only the requirement for a dedicated UI surface is retired. The real client surfaces are AuthGateDialog \"Sign in to continue\", the RequireAuth redirect to /signin, the AccountPopover and toasts.",
-    "retiredScreens": [
-      "A46",
-      "A47",
-      "A50",
-      "K19",
-      "X09",
-      "N40",
-      "N41"
-    ]
+    "retiredScreens": ["A46", "A47", "A50", "K19", "X09", "N40", "N41"]
   },
   "screenRemoval20261015b": {
     "status": "applied",
@@ -3896,10 +3888,7 @@
     "status": "applied",
     "record": "../auth-redesign-2026-10-16.json",
     "policy": "The October 16 auth redesign rebuilt every sign-in, account-creation, recovery and verification screen on one Auth card (Conversation panel material) over the Ambient backdrop. Sign in and Create account switch in place and share one size; account creation has a single password field with Show, so the confirm-password mismatch screens are retired. Do not redraw them; a typo is caught by Show and by the reset flow.",
-    "retiredScreens": [
-      "A16",
-      "A38"
-    ]
+    "retiredScreens": ["A16", "A38"]
   },
   "screenRemoval20261016b": {
     "status": "applied",
@@ -3951,13 +3940,7 @@
     "status": "applied",
     "record": "../figma-contract-state-pruning-2026-10-16.json",
     "policy": "The October 16 account state pass kept one screen per step and one example of each card state in Account & usage: K01 profile, K02 profile awaiting verification, K27 verification resent with its countdown, K04 edit display name, K22 field error, K08 password and sign-in settings, K24 busy, K10 reset requested, K25 request-error notice, K09 Google sign-in settings, K11 usage, K12 allowance used, K16 no usage history, K13 usage loading, K14 usage could not load, K17 data and privacy and K18 the sign-out guard, with their mobile twins (N23, N98, N127, N100, N122, N24, N124, N105, N125, N104, N25, N106, N110, N107, N108, N27, N36). K03 and K29 drew the Profile panel loading and failing on its own, which cannot happen because the profile comes with the signed-in session (X02 and X03 cover a page that is loading or failed). K26 and K28 repeated K24's busy button and K25's notice. K23 asked the person to confirm their own Cancel of a one-field name edit. Do not redraw them. K04's Cancel and account links now open K01, K08, K11, K17 and K18 directly; N98's Resend verification opens N127 and N100's Cancel opens N23.",
-    "retiredScreens": [
-      "K03",
-      "K23",
-      "K26",
-      "K28",
-      "K29"
-    ]
+    "retiredScreens": ["K03", "K23", "K26", "K28", "K29"]
   },
   "historicalRouteSnapshot20261010": {
     "date": "2026-10-10",
@@ -4945,35 +4928,23 @@
     "resolution": [
       {
         "proposed": "/app",
-        "current": [
-          "/app",
-          "/app/project/:projectId"
-        ]
+        "current": ["/app", "/app/project/:projectId"]
       },
       {
         "proposed": "/product/:tool",
-        "current": [
-          "/product/:product",
-          "/products/:product"
-        ]
+        "current": ["/product/:product", "/products/:product"]
       },
       {
         "proposed": "/pricing",
-        "current": [
-          "/pricing"
-        ]
+        "current": ["/pricing"]
       },
       {
         "proposed": "/docs/:article",
-        "current": [
-          "/docs/*"
-        ]
+        "current": ["/docs/*"]
       },
       {
         "proposed": "/account/:section",
-        "current": [
-          "/account"
-        ],
+        "current": ["/account"],
         "sectionSelection": "?section=profile|security|usage|privacy"
       }
     ]

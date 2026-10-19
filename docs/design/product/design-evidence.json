@@ -57,9 +57,7 @@
     "outside": [],
     "overflow": [],
     "legacyMasterReferences": [],
-    "fontFamilies": [
-      "Inter"
-    ],
+    "fontFamilies": ["Inter"],
     "textStyles": [
       "S:2ac917175896a69b69a6f5bf1f2c91df4e7db1c2,",
       "S:b4eafcfb693d2ad6dfd1d987be5be94388edd189,",
@@ -110,97 +108,22 @@
     "missingJourneySteps": []
   },
   "reviewJourneys": {
-    "desktop_signin": [
-      "W01",
-      "A01",
-      "A05",
-      "X08"
-    ],
-    "desktop_signup": [
-      "W01",
-      "A14",
-      "A21",
-      "A23",
-      "A24",
-      "A25",
-      "X07"
-    ],
-    "reset_request": [
-      "A01",
-      "A31",
-      "A34"
-    ],
-    "reset_link": [
-      "T02",
-      "A37",
-      "A41",
-      "A01"
-    ],
-    "docs_search": [
-      "H01",
-      "O01",
-      "O02",
-      "H05"
-    ],
-    "profile_save": [
-      "K01",
-      "K04"
-    ],
-    "deletion_request": [
-      "K17",
-      "S12",
-      "O09"
-    ],
-    "support_email": [
-      "S01",
-      "S02",
-      "O09",
-      "O10",
-      "O11"
-    ],
-    "mobile_signup": [
-      "N01",
-      "N10",
-      "N12",
-      "N50",
-      "N51",
-      "N38"
-    ],
-    "mobile_signin": [
-      "N08",
-      "N44",
-      "N39"
-    ],
-    "mobile_reset_request": [
-      "N08",
-      "N14",
-      "N15"
-    ],
-    "mobile_reset_password": [
-      "N16",
-      "N17",
-      "N08"
-    ],
-    "mobile_docs_search": [
-      "N19",
-      "N66",
-      "N21",
-      "N19"
-    ],
-    "mobile_signout": [
-      "N23",
-      "N36"
-    ],
-    "mobile_data_request": [
-      "N27",
-      "N68",
-      "O12"
-    ],
-    "mobile_deletion_request": [
-      "N27",
-      "N69",
-      "O12"
-    ]
+    "desktop_signin": ["W01", "A01", "A05", "X08"],
+    "desktop_signup": ["W01", "A14", "A21", "A23", "A24", "A25", "X07"],
+    "reset_request": ["A01", "A31", "A34"],
+    "reset_link": ["T02", "A37", "A41", "A01"],
+    "docs_search": ["H01", "O01", "O02", "H05"],
+    "profile_save": ["K01", "K04"],
+    "deletion_request": ["K17", "S12", "O09"],
+    "support_email": ["S01", "S02", "O09", "O10", "O11"],
+    "mobile_signup": ["N01", "N10", "N12", "N50", "N51", "N38"],
+    "mobile_signin": ["N08", "N44", "N39"],
+    "mobile_reset_request": ["N08", "N14", "N15"],
+    "mobile_reset_password": ["N16", "N17", "N08"],
+    "mobile_docs_search": ["N19", "N66", "N21", "N19"],
+    "mobile_signout": ["N23", "N36"],
+    "mobile_data_request": ["N27", "N68", "O12"],
+    "mobile_deletion_request": ["N27", "N69", "O12"]
   },
   "sharedLibrary": {
     "families": 96,
@@ -211,692 +134,196 @@
         "957:87540",
         "Site header",
         [
-          [
-            "957:87538",
-            "Account=Guest",
-            1440,
-            80
-          ],
-          [
-            "957:87539",
-            "Account=Member",
-            1440,
-            80
-          ]
+          ["957:87538", "Account=Guest", 1440, 80],
+          ["957:87539", "Account=Member", 1440, 80]
         ]
       ],
       [
         "957:87571",
         "Mobile site header",
         [
-          [
-            "957:87569",
-            "State=Default",
-            390,
-            64
-          ],
-          [
-            "957:87570",
-            "State=Menu",
-            390,
-            64
-          ]
+          ["957:87569", "State=Default", 390, 64],
+          ["957:87570", "State=Menu", 390, 64]
         ]
       ],
-      [
-        "957:87591",
-        "Site footer",
-        []
-      ],
-      [
-        "957:87613",
-        "Site product menu",
-        []
-      ],
+      ["957:87591", "Site footer", []],
+      ["957:87613", "Site product menu", []],
       [
         "957:87663",
         "Auth form",
         [
-          [
-            "957:87651",
-            "Step=Sign in, State=Empty",
-            384,
-            388
-          ],
-          [
-            "957:87652",
-            "Step=Sign in, State=Ready",
-            384,
-            388
-          ],
-          [
-            "957:87653",
-            "Step=Sign in, State=Busy",
-            384,
-            388
-          ],
-          [
-            "957:87654",
-            "Step=Sign up, State=Empty",
-            384,
-            388
-          ],
-          [
-            "957:87655",
-            "Step=Sign up, State=Ready",
-            384,
-            388
-          ],
-          [
-            "957:87656",
-            "Step=Sign up, State=Busy",
-            384,
-            388
-          ],
-          [
-            "957:87657",
-            "Step=Forgot password, State=Empty",
-            384,
-            194
-          ],
-          [
-            "957:87658",
-            "Step=Forgot password, State=Ready",
-            384,
-            194
-          ],
-          [
-            "957:87659",
-            "Step=Forgot password, State=Busy",
-            384,
-            194
-          ],
-          [
-            "957:87660",
-            "Step=Reset password, State=Empty",
-            384,
-            194
-          ],
-          [
-            "957:87661",
-            "Step=Reset password, State=Ready",
-            384,
-            194
-          ],
-          [
-            "957:87662",
-            "Step=Reset password, State=Busy",
-            384,
-            194
-          ]
+          ["957:87651", "Step=Sign in, State=Empty", 384, 388],
+          ["957:87652", "Step=Sign in, State=Ready", 384, 388],
+          ["957:87653", "Step=Sign in, State=Busy", 384, 388],
+          ["957:87654", "Step=Sign up, State=Empty", 384, 388],
+          ["957:87655", "Step=Sign up, State=Ready", 384, 388],
+          ["957:87656", "Step=Sign up, State=Busy", 384, 388],
+          ["957:87657", "Step=Forgot password, State=Empty", 384, 194],
+          ["957:87658", "Step=Forgot password, State=Ready", 384, 194],
+          ["957:87659", "Step=Forgot password, State=Busy", 384, 194],
+          ["957:87660", "Step=Reset password, State=Empty", 384, 194],
+          ["957:87661", "Step=Reset password, State=Ready", 384, 194],
+          ["957:87662", "Step=Reset password, State=Busy", 384, 194]
         ]
       ],
       [
         "957:87874",
         "Auth notice",
         [
-          [
-            "957:87871",
-            "Tone=Error",
-            384,
-            84
-          ],
-          [
-            "957:87872",
-            "Tone=Info",
-            384,
-            84
-          ],
-          [
-            "957:87873",
-            "Tone=Success",
-            384,
-            84
-          ]
+          ["957:87871", "Tone=Error", 384, 84],
+          ["957:87872", "Tone=Info", 384, 84],
+          ["957:87873", "Tone=Success", 384, 84]
         ]
       ],
       [
         "2170:10402",
         "Auth switch",
         [
-          [
-            "2170:10392",
-            "Selected=Sign in",
-            384,
-            40
-          ],
-          [
-            "2170:10397",
-            "Selected=Create account",
-            384,
-            40
-          ]
+          ["2170:10392", "Selected=Sign in", 384, 40],
+          ["2170:10397", "Selected=Create account", 384, 40]
         ]
       ],
-      [
-        "2170:93186",
-        "Auth card",
-        []
-      ],
-      [
-        "2170:93149",
-        "Auth message",
-        []
-      ],
+      ["2170:93186", "Auth card", []],
+      ["2170:93149", "Auth message", []],
       [
         "2170:93202",
         "Auth backdrop",
         [
-          [
-            "2170:93190",
-            "Size=Desktop",
-            1440,
-            960
-          ],
-          [
-            "2170:93200",
-            "Size=Mobile",
-            390,
-            844
-          ]
+          ["2170:93190", "Size=Desktop", 1440, 960],
+          ["2170:93200", "Size=Mobile", 390, 844]
         ]
       ],
       [
         "957:87893",
         "FAQ row",
         [
-          [
-            "957:87891",
-            "State=Closed",
-            704,
-            62
-          ],
-          [
-            "957:87892",
-            "State=Open",
-            704,
-            148
-          ]
+          ["957:87891", "State=Closed", 704, 62],
+          ["957:87892", "State=Open", 704, 148]
         ]
       ],
       [
         "957:87921",
         "Docs navigation",
         [
-          [
-            "957:87909",
-            "Active=Overview",
-            280,
-            820
-          ],
-          [
-            "957:87910",
-            "Active=Get started",
-            280,
-            820
-          ],
-          [
-            "957:87911",
-            "Active=Images",
-            280,
-            820
-          ],
-          [
-            "2170:10403",
-            "Active=Edit an area",
-            280,
-            820
-          ],
-          [
-            "957:87916",
-            "Active=Sketch",
-            280,
-            820
-          ],
-          [
-            "957:87912",
-            "Active=Video clips",
-            280,
-            820
-          ],
-          [
-            "957:87913",
-            "Active=Video editor",
-            280,
-            820
-          ],
-          [
-            "2170:10421",
-            "Active=Improve words",
-            280,
-            820
-          ],
-          [
-            "957:87917",
-            "Active=Models and settings",
-            280,
-            820
-          ],
-          [
-            "957:87914",
-            "Active=Imports",
-            280,
-            820
-          ],
-          [
-            "957:87915",
-            "Active=History and drafts",
-            280,
-            820
-          ],
-          [
-            "957:87918",
-            "Active=Sharing",
-            280,
-            820
-          ],
-          [
-            "957:87919",
-            "Active=Recovery",
-            280,
-            820
-          ],
-          [
-            "957:87920",
-            "Active=Allowance",
-            280,
-            820
-          ]
+          ["957:87909", "Active=Overview", 280, 820],
+          ["957:87910", "Active=Get started", 280, 820],
+          ["957:87911", "Active=Images", 280, 820],
+          ["2170:10403", "Active=Edit an area", 280, 820],
+          ["957:87916", "Active=Sketch", 280, 820],
+          ["957:87912", "Active=Video clips", 280, 820],
+          ["957:87913", "Active=Video editor", 280, 820],
+          ["2170:10421", "Active=Improve words", 280, 820],
+          ["957:87917", "Active=Models and settings", 280, 820],
+          ["957:87914", "Active=Imports", 280, 820],
+          ["957:87915", "Active=History and drafts", 280, 820],
+          ["957:87918", "Active=Sharing", 280, 820],
+          ["957:87919", "Active=Recovery", 280, 820],
+          ["957:87920", "Active=Allowance", 280, 820]
         ]
       ],
       [
         "2169:92410",
         "Sidebar link",
         [
-          [
-            "2169:92386",
-            "Size=Default, State=Default",
-            256,
-            32
-          ],
-          [
-            "2169:92389",
-            "Size=Default, State=Hover",
-            256,
-            32
-          ],
-          [
-            "2169:92392",
-            "Size=Default, State=Current",
-            256,
-            32
-          ],
-          [
-            "2169:92395",
-            "Size=Default, State=Focus",
-            256,
-            32
-          ],
-          [
-            "2169:92398",
-            "Size=Touch, State=Default",
-            256,
-            44
-          ],
-          [
-            "2169:92401",
-            "Size=Touch, State=Hover",
-            256,
-            44
-          ],
-          [
-            "2169:92404",
-            "Size=Touch, State=Current",
-            256,
-            44
-          ],
-          [
-            "2169:92407",
-            "Size=Touch, State=Focus",
-            256,
-            44
-          ]
+          ["2169:92386", "Size=Default, State=Default", 256, 32],
+          ["2169:92389", "Size=Default, State=Hover", 256, 32],
+          ["2169:92392", "Size=Default, State=Current", 256, 32],
+          ["2169:92395", "Size=Default, State=Focus", 256, 32],
+          ["2169:92398", "Size=Touch, State=Default", 256, 44],
+          ["2169:92401", "Size=Touch, State=Hover", 256, 44],
+          ["2169:92404", "Size=Touch, State=Current", 256, 44],
+          ["2169:92407", "Size=Touch, State=Focus", 256, 44]
         ]
       ],
       [
         "2171:94024",
         "Mobile docs navigation",
         [
-          [
-            "2171:93100",
-            "Active=Overview",
-            390,
-            818
-          ],
-          [
-            "2171:93166",
-            "Active=Get started",
-            390,
-            818
-          ],
-          [
-            "2171:93232",
-            "Active=Images",
-            390,
-            818
-          ],
-          [
-            "2171:93298",
-            "Active=Edit an area",
-            390,
-            818
-          ],
-          [
-            "2171:93364",
-            "Active=Sketch",
-            390,
-            818
-          ],
-          [
-            "2171:93430",
-            "Active=Video clips",
-            390,
-            818
-          ],
-          [
-            "2171:93496",
-            "Active=Video editor",
-            390,
-            818
-          ],
-          [
-            "2171:93562",
-            "Active=Improve words",
-            390,
-            818
-          ],
-          [
-            "2171:93628",
-            "Active=Models and settings",
-            390,
-            818
-          ],
-          [
-            "2171:93694",
-            "Active=Imports",
-            390,
-            818
-          ],
-          [
-            "2171:93760",
-            "Active=History and drafts",
-            390,
-            818
-          ],
-          [
-            "2171:93826",
-            "Active=Sharing",
-            390,
-            818
-          ],
-          [
-            "2171:93892",
-            "Active=Recovery",
-            390,
-            818
-          ],
-          [
-            "2171:93958",
-            "Active=Allowance",
-            390,
-            818
-          ]
+          ["2171:93100", "Active=Overview", 390, 818],
+          ["2171:93166", "Active=Get started", 390, 818],
+          ["2171:93232", "Active=Images", 390, 818],
+          ["2171:93298", "Active=Edit an area", 390, 818],
+          ["2171:93364", "Active=Sketch", 390, 818],
+          ["2171:93430", "Active=Video clips", 390, 818],
+          ["2171:93496", "Active=Video editor", 390, 818],
+          ["2171:93562", "Active=Improve words", 390, 818],
+          ["2171:93628", "Active=Models and settings", 390, 818],
+          ["2171:93694", "Active=Imports", 390, 818],
+          ["2171:93760", "Active=History and drafts", 390, 818],
+          ["2171:93826", "Active=Sharing", 390, 818],
+          ["2171:93892", "Active=Recovery", 390, 818],
+          ["2171:93958", "Active=Allowance", 390, 818]
         ]
       ],
       [
         "957:88262",
         "Docs search",
         [
-          [
-            "957:88258",
-            "State=Empty, Size=Wide",
-            560,
-            168
-          ],
-          [
-            "957:88259",
-            "State=Results, Size=Wide",
-            560,
-            168
-          ],
-          [
-            "957:88260",
-            "State=No matches, Size=Wide",
-            560,
-            168
-          ],
-          [
-            "957:88261",
-            "State=Unavailable, Size=Wide",
-            560,
-            168
-          ],
-          [
-            "2199:9881",
-            "State=Empty, Size=Compact",
-            390,
-            818
-          ],
-          [
-            "2199:9930",
-            "State=Results, Size=Compact",
-            390,
-            818
-          ],
-          [
-            "2199:9979",
-            "State=No matches, Size=Compact",
-            390,
-            818
-          ],
-          [
-            "2199:10018",
-            "State=Unavailable, Size=Compact",
-            390,
-            818
-          ]
+          ["957:88258", "State=Empty, Size=Wide", 560, 168],
+          ["957:88259", "State=Results, Size=Wide", 560, 168],
+          ["957:88260", "State=No matches, Size=Wide", 560, 168],
+          ["957:88261", "State=Unavailable, Size=Wide", 560, 168],
+          ["2199:9881", "State=Empty, Size=Compact", 390, 818],
+          ["2199:9930", "State=Results, Size=Compact", 390, 818],
+          ["2199:9979", "State=No matches, Size=Compact", 390, 818],
+          ["2199:10018", "State=Unavailable, Size=Compact", 390, 818]
         ]
       ],
       [
         "957:88348",
         "Settings navigation",
         [
-          [
-            "957:88343",
-            "Active=Profile",
-            232,
-            242
-          ],
-          [
-            "957:88344",
-            "Active=Security",
-            232,
-            242
-          ],
-          [
-            "957:88345",
-            "Active=Usage",
-            232,
-            242
-          ],
-          [
-            "957:88347",
-            "Active=Data and privacy",
-            232,
-            242
-          ]
+          ["957:88343", "Active=Profile", 232, 242],
+          ["957:88344", "Active=Security", 232, 242],
+          ["957:88345", "Active=Usage", 232, 242],
+          ["957:88347", "Active=Data and privacy", 232, 242]
         ]
       ],
       [
         "957:88419",
         "Usage summary",
         [
-          [
-            "957:88414",
-            "State=Available",
-            680,
-            190
-          ],
-          [
-            "957:88415",
-            "State=Limit",
-            680,
-            190
-          ],
-          [
-            "957:88416",
-            "State=Loading",
-            680,
-            190
-          ],
-          [
-            "957:88417",
-            "State=Error",
-            680,
-            190
-          ],
-          [
-            "957:88418",
-            "State=Empty",
-            680,
-            190
-          ]
+          ["957:88414", "State=Available", 680, 190],
+          ["957:88415", "State=Limit", 680, 190],
+          ["957:88416", "State=Loading", 680, 190],
+          ["957:88417", "State=Error", 680, 190],
+          ["957:88418", "State=Empty", 680, 190]
         ]
       ],
       [
         "957:88442",
         "Support form",
         [
-          [
-            "957:88438",
-            "State=Empty",
-            560,
-            470
-          ],
-          [
-            "957:88439",
-            "State=Ready",
-            560,
-            470
-          ],
-          [
-            "957:88440",
-            "State=Invalid",
-            560,
-            470
-          ],
-          [
-            "957:88441",
-            "State=Opening",
-            560,
-            470
-          ]
+          ["957:88438", "State=Empty", 560, 470],
+          ["957:88439", "State=Ready", 560, 470],
+          ["957:88440", "State=Invalid", 560, 470],
+          ["957:88441", "State=Opening", 560, 470]
         ]
       ],
       [
         "957:88524",
         "System message",
         [
-          [
-            "957:88518",
-            "State=Loading",
-            520,
-            340
-          ],
-          [
-            "957:88519",
-            "State=Failed",
-            520,
-            340
-          ],
-          [
-            "957:88520",
-            "State=Offline",
-            520,
-            340
-          ],
-          [
-            "957:88521",
-            "State=Not found",
-            520,
-            340
-          ],
-          [
-            "957:88522",
-            "State=Unavailable",
-            520,
-            340
-          ],
-          [
-            "957:88523",
-            "State=Denied",
-            520,
-            340
-          ]
+          ["957:88518", "State=Loading", 520, 340],
+          ["957:88519", "State=Failed", 520, 340],
+          ["957:88520", "State=Offline", 520, 340],
+          ["957:88521", "State=Not found", 520, 340],
+          ["957:88522", "State=Unavailable", 520, 340],
+          ["957:88523", "State=Denied", 520, 340]
         ]
       ],
       [
         "957:88578",
         "Profile summary",
         [
-          [
-            "957:88575",
-            "State=Default, Size=Wide",
-            680,
-            120
-          ],
-          [
-            "957:88576",
-            "State=Editing, Size=Wide",
-            680,
-            120
-          ],
-          [
-            "957:88577",
-            "State=Loading, Size=Wide",
-            680,
-            120
-          ],
-          [
-            "2172:96034",
-            "State=Invalid, Size=Wide",
-            680,
-            120
-          ],
-          [
-            "2172:96070",
-            "State=Default, Size=Compact",
-            342,
-            156
-          ],
-          [
-            "2172:96089",
-            "State=Editing, Size=Compact",
-            342,
-            156
-          ],
-          [
-            "2172:96119",
-            "State=Invalid, Size=Compact",
-            342,
-            156
-          ],
-          [
-            "2172:96156",
-            "State=Loading, Size=Compact",
-            342,
-            156
-          ]
+          ["957:88575", "State=Default, Size=Wide", 680, 120],
+          ["957:88576", "State=Editing, Size=Wide", 680, 120],
+          ["957:88577", "State=Loading, Size=Wide", 680, 120],
+          ["2172:96034", "State=Invalid, Size=Wide", 680, 120],
+          ["2172:96070", "State=Default, Size=Compact", 342, 156],
+          ["2172:96089", "State=Editing, Size=Compact", 342, 156],
+          ["2172:96119", "State=Invalid, Size=Compact", 342, 156],
+          ["2172:96156", "State=Loading, Size=Compact", 342, 156]
         ]
       ]
     ]

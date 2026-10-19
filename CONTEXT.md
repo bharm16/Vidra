@@ -144,7 +144,6 @@ Video edits persist immutable revisions and CAS operation receipts. Native FFmpe
 
 New exact-version public links use `/share/media/:id`, with a revocation-checked same-origin stream supporting byte ranges. Existing `/share/:uuid` links retain their legacy reader. Public snapshots omit prompts, settings and conversation data. Native downloads use attachment grants; browser transfer status remains browser-owned. Support opens an email handoff or manual copy; it does not claim that a message was sent or data deleted. Firebase email delivery, provider quality, cloud deployment and the account-usage composite-index deployment remain external acceptance boundaries. No index or infrastructure deployment was performed.
 
-
 ## Source-based fidelity reconciliation (2026-10-17)
 
 The retained 485-frame census was rechecked against the actual Figma screenshots and live component properties, including all 161 mobile frames. Fresh v2 geometry, typography, assets, menus, sheets, model creation, compact previews, editor states, recovery and public/auth screens now use those sources. An implementation mapping, a controlled component screenshot, a native application journey and exact-content pixel acceptance are distinct evidence levels; the fidelity ledger keeps them separate. Source conflicts and unmatched dynamic media remain explicit. The earlier blanket implementation claim is not visual acceptance.
@@ -154,7 +153,6 @@ Model and focus-editor studies have explicit `?view=model` and `?view=video-focu
 Ready imported media can enable creation while the persisted input retains its exact import receipt; admission resolves that receipt transactionally. Replacing one reference keeps the other references. Batch inspection, including beside an embedded editor, keeps draft and selected edit identities separate. New variation clears an inherited seed; Reuse setup keeps it.
 
 The router now blocks unsafe workspace departures, including browser Back and conversation-query changes, and offers the source leave dialog. Creating another draft also refuses to deactivate work without a safe copy. Leave checks and retries cover all retained in-memory buffers. Custom verification/reset email HTML and text templates are prepared and locally rendered, while sender integration and actual delivery remain external.
-
 
 ## Specific retained-state reconciliation (2026-10-18)
 

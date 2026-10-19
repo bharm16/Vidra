@@ -3,14 +3,7 @@
   "status": "complete",
   "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
   "scope": {
-    "pages": [
-      24,
-      25,
-      26,
-      27,
-      28,
-      29
-    ],
+    "pages": [24, 25, 26, 27, 28, 29],
     "retainedProductSurfaces": 141,
     "sourceAndGuideRenders": 19,
     "applicationCodeChanged": false,
@@ -53,144 +46,91 @@
       "id": "history_visibility",
       "status": "fixed",
       "resolution": "Reserved history space and kept the newest status/actions visible in 96 active history regions and consolidated sources.",
-      "nodes": [
-        "1071:91916",
-        "1072:91816"
-      ]
+      "nodes": ["1071:91916", "1072:91816"]
     },
     {
       "id": "replacement_overlap",
       "status": "fixed",
       "resolution": "Replacement panels sit above the composer with clearance from explicit inputs; close, options and Suggest have adequate touch targets.",
-      "nodes": [
-        "1056:84868",
-        "1056:85089",
-        "1070:89372",
-        "1070:89804"
-      ]
+      "nodes": ["1056:84868", "1056:85089", "1070:89372", "1070:89804"]
     },
     {
       "id": "mobile_composer_navigation",
       "status": "fixed",
       "resolution": "Canonical 64px mobile navigation, 44px controls, responsive composer controls, and six unused desktop-only layers removed.",
-      "nodes": [
-        "1070:89372",
-        "1070:89804",
-        "1482:89559"
-      ]
+      "nodes": ["1070:89372", "1070:89804", "1482:89559"]
     },
     {
       "id": "model_dependent_shell",
       "status": "fixed",
       "resolution": "Three retained screens and 31 reusable composer states use the canonical rail and 336px composer; model/settings/input values are retained.",
-      "nodes": [
-        "1032:85170",
-        "1032:85269",
-        "1032:85369"
-      ]
+      "nodes": ["1032:85170", "1032:85269", "1032:85369"]
     },
     {
       "id": "navigation_active_state",
       "status": "fixed",
       "resolution": "Seven rail destination variants and shared hover/focus labels; layers and prototype hit areas follow the visible controls.",
-      "nodes": [
-        "1487:91133",
-        "1487:90868"
-      ]
+      "nodes": ["1487:91133", "1487:90868"]
     },
     {
       "id": "failure_recovery",
       "status": "fixed",
       "resolution": "Request and output-slot failures show a reason and direct Retry. The original request/slot remains; a separate retry has its own outcome fixture.",
-      "nodes": [
-        "1494:125628",
-        "1494:125695",
-        "1075:95711"
-      ]
+      "nodes": ["1494:125628", "1494:125695", "1075:95711"]
     },
     {
       "id": "image_controls",
       "status": "fixed",
       "resolution": "Owner image toolbars show Fullscreen, Use and Download without Play, Time, Seek or Volume. Contextual image actions remain under Use; public-viewer permissions remain separate.",
-      "nodes": [
-        "1347:84308",
-        "1347:84310",
-        "1071:90656",
-        "1540:130290"
-      ]
+      "nodes": ["1347:84308", "1347:84310", "1071:90656", "1540:130290"]
     },
     {
       "id": "playback_states",
       "status": "fixed",
       "resolution": "Stopped and ended timestamps differ, seek endpoints are correct, and ended playback uses Replay. State-specific time properties avoid a shared-default defect.",
-      "nodes": [
-        "1363:84548",
-        "1363:84659",
-        "1247:91434"
-      ]
+      "nodes": ["1363:84548", "1363:84659", "1247:91434"]
     },
     {
       "id": "testing_usage",
       "status": "fixed",
       "resolution": "Removed misleading credit quantities and vague allowance copy. Free testing has no customer-credit balance; existing action limits remain and no reset date is invented.",
-      "nodes": [
-        "964:92345",
-        "957:88419"
-      ]
+      "nodes": ["964:92345", "957:88419"]
     },
     {
       "id": "library_control_roles",
       "status": "fixed_with_existing_options",
       "resolution": "Filter and sort are distinct labelled menus; visibility is a real toggle. This retains the existing filter options instead of inventing a new segmented-filter taxonomy.",
-      "nodes": [
-        "1514:90079",
-        "897:91827",
-        "906:100486",
-        "936:111512"
-      ]
+      "nodes": ["1514:90079", "897:91827", "906:100486", "936:111512"]
     },
     {
       "id": "project_copy",
       "status": "fixed",
       "resolution": "Projects search uses the correct placeholder, and sample cards have distinct edit-date/item-count metadata.",
-      "nodes": [
-        "900:93950"
-      ]
+      "nodes": ["900:93950"]
     },
     {
       "id": "audio_copy",
       "status": "fixed",
       "resolution": "Audio-entry actions consistently say Add audio.",
-      "nodes": [
-        "894:88355",
-        "932:110551"
-      ]
+      "nodes": ["894:88355", "932:110551"]
     },
     {
       "id": "pricing_navigation",
       "status": "fixed",
       "resolution": "Removed obsolete Pricing navigation from shared headers, footers, mobile menus and prototype hit areas; archived pricing was not restored.",
-      "nodes": [
-        "957:87540",
-        "957:87591"
-      ]
+      "nodes": ["957:87540", "957:87591"]
     },
     {
       "id": "project_selector",
       "status": "fixed",
       "resolution": "Project-name width hugs its text so the dropdown is adjacent.",
-      "nodes": [
-        "886:84775"
-      ]
+      "nodes": ["886:84775"]
     },
     {
       "id": "floating_action_labels",
       "status": "fixed_with_retained_contract",
       "resolution": "Details is explicitly labelled Media details; navigation has tooltips. The conversation-header plus is retained under the approved chrome contract.",
-      "nodes": [
-        "1308:91706",
-        "1297:91713"
-      ]
+      "nodes": ["1308:91706", "1297:91713"]
     },
     {
       "id": "preview_size",
@@ -202,25 +142,19 @@
       "id": "color_authority",
       "status": "fixed",
       "resolution": "Fresh owns the current shared color roles. Fourteen overlapping Model colors and matching dimensions alias Fresh; phrase roles are in Fresh; compatibility/exploration collections are retained and hidden from publishing.",
-      "nodes": [
-        "VariableCollectionId:883:84249"
-      ]
+      "nodes": ["VariableCollectionId:883:84249"]
     },
     {
       "id": "typeface",
       "status": "fixed",
       "resolution": "Current product surfaces use Inter; settings chips use the Fresh label style.",
-      "nodes": [
-        "1161:90895"
-      ]
+      "nodes": ["1161:90895"]
     },
     {
       "id": "primary_color_contrast",
       "status": "fixed",
       "resolution": "Replaced the imported blue action treatment with the existing white primary and dark foreground.",
-      "nodes": [
-        "VariableID:1357:84447"
-      ]
+      "nodes": ["VariableID:1357:84447"]
     },
     {
       "id": "editor_consistency",
@@ -238,29 +172,19 @@
       "id": "status_roles",
       "status": "fixed",
       "resolution": "Error, warning and success roles are documented; failure labels/icons use danger. Failure words and category cues do not rely on color alone.",
-      "nodes": [
-        "884:84697",
-        "1494:125628"
-      ]
+      "nodes": ["884:84697", "1494:125628"]
     },
     {
       "id": "disabled_states",
       "status": "fixed",
       "resolution": "Disabled controls have a distinct treatment and empty auth forms provide readable inline reasons. Empty password placeholders are muted.",
-      "nodes": [
-        "884:84504",
-        "1502:89955"
-      ]
+      "nodes": ["884:84504", "1502:89955"]
     },
     {
       "id": "review_guides",
       "status": "fixed",
       "resolution": "Seven guides use shared headers, link cards and a compact grid. Stale counts, empty rows and a nonfunctional leftover row are removed; consolidated links resolve to retained surfaces.",
-      "nodes": [
-        "1521:90056",
-        "1524:90056",
-        "1091:101275"
-      ]
+      "nodes": ["1521:90056", "1524:90056", "1091:101275"]
     },
     {
       "id": "library_names",
@@ -272,59 +196,37 @@
       "id": "account_rail_height",
       "status": "fixed",
       "resolution": "The four retained account screens have a rail spanning the full viewport.",
-      "nodes": [
-        "964:91361",
-        "964:92055",
-        "964:92345",
-        "964:92913"
-      ]
+      "nodes": ["964:91361", "964:92055", "964:92345", "964:92913"]
     },
     {
       "id": "navigation_alignment",
       "status": "fixed",
       "resolution": "Desktop and mobile navigation, account lists, search results and section menus align left.",
-      "nodes": [
-        "957:87921",
-        "957:88348",
-        "976:95052",
-        "976:95067",
-        "976:95086"
-      ]
+      "nodes": ["957:87921", "957:88348", "976:95052", "976:95067", "976:95086"]
     },
     {
       "id": "docs_search_hint",
       "status": "fixed",
       "resolution": "The command-key hint is inside the shared search control.",
-      "nodes": [
-        "884:84583"
-      ]
+      "nodes": ["884:84583"]
     },
     {
       "id": "touch_targets",
       "status": "fixed",
       "resolution": "Source-level repairs cover composer actions, attachment removal, Sketch tools, sheet/header controls, public menu buttons, seek controls and their prototype hit areas.",
-      "nodes": [
-        "1539:90066",
-        "1308:91729",
-        "957:87571"
-      ]
+      "nodes": ["1539:90066", "1308:91729", "957:87571"]
     },
     {
       "id": "minimum_type_size",
       "status": "fixed",
       "resolution": "Retained interface text is at least 12px; clipped timeline label boxes adapt to available clip width with truncation.",
-      "nodes": [
-        "892:85148"
-      ]
+      "nodes": ["892:85148"]
     },
     {
       "id": "phrase_category_cues",
       "status": "fixed",
       "resolution": "Subject, motion, lighting and environment use distinct underline patterns alongside their colors and readable category labels; prompt text is unchanged.",
-      "nodes": [
-        "1054:84325",
-        "884:84697"
-      ]
+      "nodes": ["1054:84325", "884:84697"]
     },
     {
       "id": "canvas_organization",
@@ -343,11 +245,7 @@
       "id": "visual_followup_repairs",
       "status": "fixed",
       "resolution": "The rendered pass caught and corrected a copied search placeholder, import-sheet background, zero-width auth-helper lines and remaining mobile menu alignment overrides.",
-      "nodes": [
-        "900:93950",
-        "936:111512",
-        "957:87663"
-      ]
+      "nodes": ["900:93950", "936:111512", "957:87663"]
     }
   ],
   "verification": {
@@ -2143,18 +2041,9 @@
       ],
       "touch": "1482:89559",
       "geometry": {
-        "touch": [
-          312,
-          148
-        ],
-        "settings": [
-          312,
-          96
-        ],
-        "primary": [
-          312,
-          44
-        ]
+        "touch": [312, 148],
+        "settings": [312, 96],
+        "primary": [312, 44]
       },
       "font": {
         "family": "Inter",
@@ -4374,423 +4263,238 @@
           "id": "1440:141446",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "Checking settings…"
-          ],
+          "settings": ["Veo 3.1", "Checking settings…"],
           "disabled": true
         },
         {
           "id": "1440:141941",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:142058",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:142183",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "8s",
-            "1080p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "8s", "1080p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:142490",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "8s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "8s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:142587",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "From image",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "From image", "5s", "720p", "Sound"],
           "disabled": true
         },
         {
           "id": "1440:142681",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "16:9",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "16:9", "5s", "720p", "Sound"],
           "disabled": false
         },
         {
           "id": "1440:142769",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:142863",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Sora 2"
-          ],
+          "settings": ["Sora 2"],
           "disabled": true
         },
         {
           "id": "1440:142910",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1"
-          ],
+          "settings": ["Veo 3.1"],
           "disabled": true
         },
         {
           "id": "1440:143053",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "6s",
-            "1080p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "6s", "1080p", "Sound included"],
           "disabled": true
         },
         {
           "id": "1440:143149",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "8s",
-            "1080p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "8s", "1080p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:143214",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:143339",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "16:9",
-            "8s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "16:9", "8s", "720p", "Sound"],
           "disabled": true
         },
         {
           "id": "1440:143458",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "9:16",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "9:16", "5s", "720p", "Sound"],
           "disabled": false
         },
         {
           "id": "1440:143546",
           "w": 336,
           "h": 356,
-          "settings": [
-            "Wan 2.2",
-            "≈5.1s",
-            "Advanced",
-            "16:9",
-            "480p"
-          ],
+          "settings": ["Wan 2.2", "≈5.1s", "Advanced", "16:9", "480p"],
           "disabled": false
         },
         {
           "id": "1440:143732",
           "w": 336,
           "h": 356,
-          "settings": [
-            "Wan 2.2",
-            "≈5.1s",
-            "Advanced",
-            "16:9",
-            "480p"
-          ],
+          "settings": ["Wan 2.2", "≈5.1s", "Advanced", "16:9", "480p"],
           "disabled": false
         },
         {
           "id": "1440:143828",
           "w": 336,
           "h": 356,
-          "settings": [
-            "Wan 2.2",
-            "≈7.6s",
-            "Advanced",
-            "16:9",
-            "480p"
-          ],
+          "settings": ["Wan 2.2", "≈7.6s", "Advanced", "16:9", "480p"],
           "disabled": false
         },
         {
           "id": "1440:143903",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1",
-            "+7s",
-            "16:9",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "+7s", "16:9", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:143979",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1"
-          ],
+          "settings": ["Veo 3.1"],
           "disabled": true
         },
         {
           "id": "1440:144126",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:141556",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:142277",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": true
         },
         {
           "id": "1440:142391",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:144036",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:144326",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "Choose an image",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "Choose an image", "5s", "720p", "Sound"],
           "disabled": true
         },
         {
           "id": "1440:141733",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": false
         },
         {
           "id": "1440:143613",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Veo 3.1",
-            "16:9",
-            "4s",
-            "720p",
-            "Sound included"
-          ],
+          "settings": ["Veo 3.1", "16:9", "4s", "720p", "Sound included"],
           "disabled": true
         },
         {
           "id": "1440:144426",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "From image",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "From image", "5s", "720p", "Sound"],
           "disabled": true
         },
         {
           "id": "1440:142957",
           "w": 336,
           "h": 316,
-          "settings": [
-            "Wan 2.2"
-          ],
+          "settings": ["Wan 2.2"],
           "disabled": true
         },
         {
           "id": "1440:144224",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "Reading image…",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "Reading image…", "5s", "720p", "Sound"],
           "disabled": true
         },
         {
           "id": "1177:144082",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "16:9",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "16:9", "5s", "720p", "Sound"],
           "disabled": false
         },
         {
           "id": "1177:144344",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "16:9",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "16:9", "5s", "720p", "Sound"],
           "disabled": true
         },
         {
           "id": "1177:144541",
           "w": 336,
           "h": 372,
-          "settings": [
-            "Wan 2.5",
-            "16:9",
-            "5s",
-            "720p",
-            "Sound"
-          ],
+          "settings": ["Wan 2.5", "16:9", "5s", "720p", "Sound"],
           "disabled": false
         }
       ]
@@ -5660,9 +5364,7 @@
         "1521:90062",
         "1521:90069"
       ],
-      "changed": [
-        "884:84697"
-      ],
+      "changed": ["884:84697"],
       "header": "1521:90056",
       "headerProps": {
         "Title#1521:0": {
@@ -5704,11 +5406,7 @@
       }
     },
     "pricing-source-change": {
-      "changed": [
-        "957:87546",
-        "957:87560",
-        "957:87609"
-      ]
+      "changed": ["957:87546", "957:87560", "957:87609"]
     },
     "public-copy-change": {
       "changed": [
@@ -6531,74 +6229,26 @@
       "cases": [
         {
           "id": "1440:143546",
-          "before": [
-            "Wan 2.2",
-            "≈5.1s",
-            "Advanced",
-            "16:9",
-            "480p"
-          ],
-          "after": [
-            "Wan 2.2",
-            "16:9",
-            "≈5.1s",
-            "480p",
-            "Advanced"
-          ],
+          "before": ["Wan 2.2", "≈5.1s", "Advanced", "16:9", "480p"],
+          "after": ["Wan 2.2", "16:9", "≈5.1s", "480p", "Advanced"],
           "preserved": true
         },
         {
           "id": "1440:143732",
-          "before": [
-            "Wan 2.2",
-            "≈5.1s",
-            "Advanced",
-            "16:9",
-            "480p"
-          ],
-          "after": [
-            "Wan 2.2",
-            "16:9",
-            "≈5.1s",
-            "480p",
-            "Advanced"
-          ],
+          "before": ["Wan 2.2", "≈5.1s", "Advanced", "16:9", "480p"],
+          "after": ["Wan 2.2", "16:9", "≈5.1s", "480p", "Advanced"],
           "preserved": true
         },
         {
           "id": "1440:143828",
-          "before": [
-            "Wan 2.2",
-            "≈7.6s",
-            "Advanced",
-            "16:9",
-            "480p"
-          ],
-          "after": [
-            "Wan 2.2",
-            "16:9",
-            "≈7.6s",
-            "480p",
-            "Advanced"
-          ],
+          "before": ["Wan 2.2", "≈7.6s", "Advanced", "16:9", "480p"],
+          "after": ["Wan 2.2", "16:9", "≈7.6s", "480p", "Advanced"],
           "preserved": true
         },
         {
           "id": "1440:143903",
-          "before": [
-            "Veo 3.1",
-            "+7s",
-            "16:9",
-            "720p",
-            "Sound included"
-          ],
-          "after": [
-            "Veo 3.1",
-            "16:9",
-            "+7s",
-            "720p",
-            "Sound included"
-          ],
+          "before": ["Veo 3.1", "+7s", "16:9", "720p", "Sound included"],
+          "after": ["Veo 3.1", "16:9", "+7s", "720p", "Sound included"],
           "preserved": true
         }
       ]
@@ -6615,20 +6265,8 @@
       "cases": [
         {
           "id": "1175:109950",
-          "before": [
-            "Veo 3.1",
-            "8s",
-            "16:9",
-            "720p",
-            ""
-          ],
-          "after": [
-            "Veo 3.1",
-            "16:9",
-            "8s",
-            "720p",
-            ""
-          ],
+          "before": ["Veo 3.1", "8s", "16:9", "720p", ""],
+          "after": ["Veo 3.1", "16:9", "8s", "720p", ""],
           "preserved": true
         }
       ]
@@ -6777,14 +6415,8 @@
         "I1396:131216;1379:84794;1381:84778;1381:84748",
         "1540:130290"
       ],
-      "created": [
-        "1540:130290"
-      ],
-      "hidden": [
-        "936:111151",
-        "936:111156",
-        "944:113125"
-      ],
+      "created": ["1540:130290"],
+      "hidden": ["936:111151", "936:111156", "944:113125"],
       "bar": {
         "id": "1540:130290",
         "x": 121,
@@ -6911,72 +6543,43 @@
           "id": "1437:139958",
           "w": 344,
           "h": 96,
-          "controls": [
-            "1549:130314"
-          ],
-          "hidden": [
-            "1437:139956",
-            "1437:139957"
-          ]
+          "controls": ["1549:130314"],
+          "hidden": ["1437:139956", "1437:139957"]
         },
         {
           "id": "1437:140011",
           "w": 344,
           "h": 96,
-          "controls": [
-            "1549:130332"
-          ],
-          "hidden": [
-            "1437:140009",
-            "1437:140010"
-          ]
+          "controls": ["1549:130332"],
+          "hidden": ["1437:140009", "1437:140010"]
         },
         {
           "id": "1437:140954",
           "w": 344,
           "h": 96,
-          "controls": [
-            "1549:130350"
-          ],
-          "hidden": [
-            "1437:140952",
-            "1437:140953"
-          ]
+          "controls": ["1549:130350"],
+          "hidden": ["1437:140952", "1437:140953"]
         },
         {
           "id": "1437:140985",
           "w": 344,
           "h": 96,
-          "controls": [
-            "1549:130368"
-          ],
-          "hidden": [
-            "1437:140983",
-            "1437:140984"
-          ]
+          "controls": ["1549:130368"],
+          "hidden": ["1437:140983", "1437:140984"]
         },
         {
           "id": "1437:140563",
           "w": 344,
           "h": 96,
-          "controls": [
-            "1549:130386"
-          ],
-          "hidden": [
-            "1437:140561",
-            "1437:140562"
-          ]
+          "controls": ["1549:130386"],
+          "hidden": ["1437:140561", "1437:140562"]
         },
         {
           "id": "936:111549",
           "w": 344,
           "h": 96,
-          "controls": [
-            "1549:130405"
-          ],
-          "hidden": [
-            "936:111550"
-          ]
+          "controls": ["1549:130405"],
+          "hidden": ["936:111550"]
         }
       ],
       "project": [
@@ -7035,12 +6638,7 @@
       ]
     },
     "mobile-auth-guidance-repair": {
-      "created": [
-        "1557:415845",
-        "1557:415849",
-        "1557:415856",
-        "1557:415857"
-      ],
+      "created": ["1557:415845", "1557:415849", "1557:415856", "1557:415857"],
       "changed": [
         "972:345788",
         "I972:345788;1502:89956",
@@ -7058,22 +6656,10 @@
         "966:94169"
       ],
       "cases": [
-        [
-          "966:93935",
-          "Enter your email and password to sign in."
-        ],
-        [
-          "966:94001",
-          "Enter your email and matching passwords."
-        ],
-        [
-          "966:94123",
-          "Enter the email address for your account."
-        ],
-        [
-          "966:94169",
-          "Enter and confirm a new password."
-        ]
+        ["966:93935", "Enter your email and password to sign in."],
+        ["966:94001", "Enter your email and matching passwords."],
+        ["966:94123", "Enter the email address for your account."],
+        ["966:94169", "Enter and confirm a new password."]
       ]
     },
     "mobile-menu-alignment": {
@@ -7311,9 +6897,7 @@
       ]
     },
     "compact-toolbar-default-label": {
-      "changed": [
-        "I1379:84794;1381:84778;1381:84753"
-      ],
+      "changed": ["I1379:84794;1381:84778;1381:84753"],
       "label": [
         {
           "text": "Show",
@@ -7322,24 +6906,14 @@
       ]
     },
     "guide-dead-row-cleanup": {
-      "changed": [
-        "1091:101298",
-        "1091:101275"
-      ],
+      "changed": ["1091:101298", "1091:101275"],
       "height": 500
     },
     "token-syntax-correction": {
-      "changed": [
-        "VariableID:1478:192105"
-      ]
+      "changed": ["VariableID:1478:192105"]
     },
     "failure-sizing": {
-      "changed": [
-        "1494:125606",
-        "1494:125615",
-        "1494:125617",
-        "1494:125626"
-      ]
+      "changed": ["1494:125606", "1494:125615", "1494:125617", "1494:125626"]
     }
   },
   "recovery": {

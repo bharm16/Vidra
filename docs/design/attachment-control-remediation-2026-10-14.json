@@ -24,10 +24,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · v1",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:143354",
@@ -36,10 +33,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Desk · v2",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:143595",
@@ -48,10 +42,7 @@
         "main": "1028:84336",
         "state": "empty",
         "identity": "Start image",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:143834",
@@ -60,10 +51,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · v1",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:145658",
@@ -72,10 +60,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Desk · portrait",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:146474",
@@ -84,10 +69,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · 8s",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:146692",
@@ -96,10 +78,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · 8s",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:147025",
@@ -108,10 +87,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Last frame · v1",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:142777",
@@ -120,10 +96,7 @@
         "main": "1028:84336",
         "state": "empty",
         "identity": "Start image",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:142777",
@@ -132,10 +105,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "End · v1",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:143145",
@@ -144,10 +114,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Start · v1",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:143145",
@@ -156,10 +123,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "End · v1",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:146831",
@@ -168,10 +132,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · v1",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:147465",
@@ -180,10 +141,7 @@
         "main": "1028:84351",
         "state": "invalid",
         "identity": "Image unavailable",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:146039",
@@ -192,10 +150,7 @@
         "main": "1028:84351",
         "state": "invalid",
         "identity": "Beat.wav · 8s",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:147715",
@@ -204,10 +159,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · v1",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:147715",
@@ -216,10 +168,7 @@
         "main": "1028:84351",
         "state": "invalid",
         "identity": "Beat.wav · 8s",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:147219",
@@ -228,10 +177,7 @@
         "main": "1028:84345",
         "state": "checking",
         "identity": "Start image",
-        "size": [
-          312,
-          48
-        ]
+        "size": [312, 48]
       },
       {
         "source": "1177:144081",
@@ -240,10 +186,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · v1",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:144081",
@@ -252,10 +195,7 @@
         "main": "1568:95697",
         "state": "audio",
         "identity": "Beat.wav · 8s",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:144295",
@@ -264,10 +204,7 @@
         "main": "1028:84342",
         "state": "image",
         "identity": "Stadium · v1",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       },
       {
         "source": "1177:144295",
@@ -276,10 +213,7 @@
         "main": "1028:84351",
         "state": "invalid",
         "identity": "Beat.wav · 32MB",
-        "size": [
-          148,
-          48
-        ]
+        "size": [148, 48]
       }
     ],
     "createdNodeIds": [
@@ -633,10 +567,7 @@
       "failures": [
         {
           "preview": "1177:144291",
-          "overlap": [
-            "1177:144292",
-            "1177:144293"
-          ]
+          "overlap": ["1177:144292", "1177:144293"]
         }
       ]
     },

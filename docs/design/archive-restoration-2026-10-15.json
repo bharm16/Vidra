@@ -1,386 +1,326 @@
 {
- "date": "2026-10-15",
- "status": "complete",
- "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
- "scope": "Restore archived screens from the 2026-10-13 consolidation whose flow no live screen shows. Same-page moves only, so prototype links keep working. Removals in screen-removal-execution-2026-10-14.json stay removed; application code is unchanged.",
- "related": {
-  "consolidation": "screen-consolidation-2026-10-13.json (not edited)",
-  "removals": "screen-removal-execution-2026-10-14.json (not edited)",
-  "audit": "critique-fixes-remaining-2026-10-15.json (not edited; its audit and census were rerun)",
-  "archiveMarking": "archive-marking-2026-10-15.json (not edited). The marking was reverted at about 01:45 by another session: archive section names are plain again and no frame carries an 'Archived · ' prefix, so no names changed here.",
-  "review": "https://claude.ai/artifact/Lhbh79jFdBjVjeM7ABSfAT (private review page: all 601 archived screens beside the live surface they were mapped to)"
- },
- "decision": {
-  "rule": "Restore a screen only when no live screen shows its flow and the flow is in current scope. Keep archived when a live screen already shows it, when it is a state of a live screen (kept as an extracted state component), or when it shows something retired.",
-  "userInstructions": [
-   "2026-10-15 02:23: 'just determine if its needed or not, if it is restore it, if not, dont'",
-   "2026-10-15 02:29: 1065:85871 'shouldnt be archived, it should be the default empty state composer'"
+  "date": "2026-10-15",
+  "status": "complete",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "scope": "Restore archived screens from the 2026-10-13 consolidation whose flow no live screen shows. Same-page moves only, so prototype links keep working. Removals in screen-removal-execution-2026-10-14.json stay removed; application code is unchanged.",
+  "related": {
+    "consolidation": "screen-consolidation-2026-10-13.json (not edited)",
+    "removals": "screen-removal-execution-2026-10-14.json (not edited)",
+    "audit": "critique-fixes-remaining-2026-10-15.json (not edited; its audit and census were rerun)",
+    "archiveMarking": "archive-marking-2026-10-15.json (not edited). The marking was reverted at about 01:45 by another session: archive section names are plain again and no frame carries an 'Archived · ' prefix, so no names changed here.",
+    "review": "https://claude.ai/artifact/Lhbh79jFdBjVjeM7ABSfAT (private review page: all 601 archived screens beside the live surface they were mapped to)"
+  },
+  "decision": {
+    "rule": "Restore a screen only when no live screen shows its flow and the flow is in current scope. Keep archived when a live screen already shows it, when it is a state of a live screen (kept as an extracted state component), or when it shows something retired.",
+    "userInstructions": [
+      "2026-10-15 02:23: 'just determine if its needed or not, if it is restore it, if not, dont'",
+      "2026-10-15 02:29: 1065:85871 'shouldnt be archived, it should be the default empty state composer'"
+    ],
+    "reviewCounts": {
+      "flowMissing": 83,
+      "stateOnly": 460,
+      "shownLive": 48,
+      "retired": 10,
+      "note": "Verdicts from a visual review of every archived frame beside its mapped surface and the closest live screen. Most 'flow missing' frames are mobile copies of live desktop pages, menus or popovers that exist as components, or secondary error outcomes; they stay archived."
+    },
+    "notRestoredFromProposal": {
+      "T01 1055:84528, T02 1055:84811": "Desktop clip editor without the conversation sidebar. Live W32/W33 show timeline shown/hidden inside the workspace, and CONTEXT.md requires the sidebar to stay useful beside generated assets during ongoing work."
+    },
+    "retiredExamples": "Pricing (W08, W09, N07, N152, N154, N155): public Pricing is absent during free testing. Context approval panels (C12, C24), repair notice (E19), unrecoverable-output card (R12)."
+  },
+  "restored": [
+    {
+      "page": 25,
+      "key": "B01",
+      "id": "906:100187",
+      "name": "B01 · Mobile new request",
+      "why": "No live mobile empty composer (S35 is a phrase-highlight state)",
+      "to": "1463:127933 04 · Mobile workflows (2980, 64)",
+      "from": "archive 1450:131594 (64, 64)"
+    },
+    {
+      "page": 25,
+      "key": "B02",
+      "id": "906:100241",
+      "name": "B02 · Mobile conversation and draft",
+      "why": "No live mobile conversation with history and composer",
+      "to": "1463:127933 (3466, 64)",
+      "from": "archive (534, 64)"
+    },
+    {
+      "page": 25,
+      "key": "B25",
+      "id": "936:112857",
+      "name": "B25 · Mobile image running keeps the follow-up empty",
+      "why": "No live mobile generation-in-progress",
+      "to": "1463:127933 (3952, 64)",
+      "from": "archive (8054, 64)"
+    },
+    {
+      "page": 25,
+      "key": "B26",
+      "id": "936:112937",
+      "name": "B26 · Mobile image ready keeps the follow-up empty",
+      "why": "No live mobile generated result",
+      "to": "1463:127933 (4438, 64)",
+      "from": "archive (8524, 64)"
+    },
+    {
+      "page": 25,
+      "key": "B20",
+      "id": "936:112272",
+      "name": "B20 · Mobile sharing private",
+      "why": "Sharing was only live on desktop (D01)",
+      "to": "1463:127933 (4924, 64)",
+      "from": "archive (5704, 64)"
+    },
+    {
+      "page": 25,
+      "key": "B21",
+      "id": "936:112450",
+      "name": "B21 · Mobile sharing published",
+      "why": "Published-link state of mobile sharing",
+      "to": "1463:127933 (5410, 64)",
+      "from": "archive (6174, 64)"
+    },
+    {
+      "page": 25,
+      "key": "C41",
+      "id": "930:105665",
+      "name": "C41 · Image running with its own follow-up draft",
+      "why": "First image generation in a new project (empty viewer) was not live; W07 always has a prior asset",
+      "to": "1463:127932 02 · Desktop workflows (64, 7036)",
+      "from": "archive (3104, 6812)"
+    },
+    {
+      "page": 25,
+      "key": "C42",
+      "id": "930:105803",
+      "name": "C42 · Image ready with its own follow-up draft",
+      "why": "First image result in a new project",
+      "to": "1463:127932 (1600, 7036)",
+      "from": "archive (4624, 6812)"
+    },
+    {
+      "page": 25,
+      "key": "C50",
+      "id": "930:106732",
+      "name": "C50 · Video running keeps a new empty draft",
+      "why": "First video generation in a new project",
+      "to": "1463:127932 (3136, 7036)",
+      "from": "archive (4624, 7792)"
+    },
+    {
+      "page": 25,
+      "key": "C51",
+      "id": "930:106857",
+      "name": "C51 · Video ready keeps a new empty draft",
+      "why": "First video result in a new project",
+      "to": "1463:127932 (4672, 7036)",
+      "from": "archive (6144, 7792)"
+    },
+    {
+      "page": 26,
+      "key": "A25",
+      "id": "962:89530",
+      "name": "A25 · Email verified",
+      "why": "Where the verification link lands; only 'Check your email' was live",
+      "to": "1463:141999 03 · Account and support (64, 3312)",
+      "from": "archive 1449:99261 (4624, 3184)"
+    },
+    {
+      "page": 26,
+      "key": "A34",
+      "id": "962:89741",
+      "name": "A34 · Check your inbox for reset instructions",
+      "why": "Confirmation after requesting a reset; only the form was live",
+      "to": "1463:141999 (1600, 3312)",
+      "from": "archive (7664, 4224)"
+    },
+    {
+      "page": 26,
+      "key": "A41",
+      "id": "962:89963",
+      "name": "A41 · Password changed",
+      "why": "Outcome of the reset flow",
+      "to": "1463:141999 (3136, 3312)",
+      "from": "archive (7664, 5264)"
+    },
+    {
+      "page": 26,
+      "key": "A50",
+      "id": "962:90156",
+      "name": "A50 · Signed out",
+      "why": "Where sign-out lands",
+      "to": "1463:141999 (4672, 3312)",
+      "from": "archive (3104, 7344)"
+    },
+    {
+      "page": 26,
+      "key": "X11",
+      "id": "971:94945",
+      "name": "X11 · First project media library",
+      "why": "First-run empty media library",
+      "to": "1463:141999 (64, 4368)",
+      "from": "archive (3104, 28330)"
+    },
+    {
+      "page": 26,
+      "key": "X12",
+      "id": "971:95026",
+      "name": "X12 · First project browser",
+      "why": "First-run empty project list",
+      "to": "1463:141999 (1600, 4368)",
+      "from": "archive (64, 28386)"
+    },
+    {
+      "page": 28,
+      "key": "S02",
+      "id": "1065:85871",
+      "name": "S02 · Highlighting a new draft",
+      "why": "User: the default empty-state composer. Placed in S01's slot at the head of the composer row.",
+      "to": "1462:121865 02 · Desktop workflows (4672, 64)",
+      "from": "archive 1450:196187 (64, 64)"
+    },
+    {
+      "page": 28,
+      "key": "W37",
+      "id": "1074:95792",
+      "name": "W37 · Inspect the exact setup that produced a selected result",
+      "why": "Request details panel (words, input, model, settings, destination, Reuse setup) was not on any live screen; listed in prompt-editing/state-catalog.json",
+      "to": "1462:121865 (3136, 4048)",
+      "from": "archive (1584, 10964)"
+    }
   ],
-  "reviewCounts": {
-   "flowMissing": 83,
-   "stateOnly": 460,
-   "shownLive": 48,
-   "retired": 10,
-   "note": "Verdicts from a visual review of every archived frame beside its mapped surface and the closest live screen. Most 'flow missing' frames are mobile copies of live desktop pages, menus or popovers that exist as components, or secondary error outcomes; they stay archived."
+  "liveFrameMoved": {
+    "id": "1065:85631",
+    "name": "S01 · Empty prompt",
+    "prev": "1462:121865 (4672, 64)",
+    "next": "1462:121865 (4672, 4048)",
+    "why": "Gives S02 the default empty-state slot; S01 stays live"
   },
-  "notRestoredFromProposal": {
-   "T01 1055:84528, T02 1055:84811": "Desktop clip editor without the conversation sidebar. Live W32/W33 show timeline shown/hidden inside the workspace, and CONTEXT.md requires the sidebar to stay useful beside generated assets during ongoing work."
+  "canvas": {
+    "page25": {
+      "1463:127932 02 · Desktop workflows": {
+        "prev": [120, 899, 6176, 7004],
+        "next": [120, 899, 6176, 8000],
+        "change": "one row added for C41, C42, C50, C51"
+      },
+      "1463:127933 04 · Mobile workflows": {
+        "prev": [120, 8063, 2948, 972],
+        "next": [120, 9059, 5864, 972],
+        "change": "moved down 996; widened for six mobile frames"
+      },
+      "1463:127934 07 · Menus and overlays": {
+        "prev": [120, 9195],
+        "next": [120, 10191]
+      },
+      "1437:139429 Consolidated state examples": {
+        "prev": [120, 9699],
+        "next": [120, 10695]
+      }
+    },
+    "page26": {
+      "1463:141999 03 · Account and support": {
+        "prev": [120, 13883, 6176, 3280],
+        "next": [120, 13883, 6176, 5392],
+        "change": "two rows added"
+      },
+      "shiftedDown2112": {
+        "1463:142000": [17323, 19435],
+        "1463:142001": [21957, 24069],
+        "1463:142002": [25317, 27429],
+        "1463:142003": [30209, 32321],
+        "1463:142004": [30970, 33082],
+        "1435:95820": [31474, 33586]
+      }
+    },
+    "page28": "No section changes; S02 and W37 took free slots in 02 · Desktop workflows."
   },
-  "retiredExamples": "Pricing (W08, W09, N07, N152, N154, N155): public Pricing is absent during free testing. Context approval panels (C12, C24), repair notice (E19), unrecoverable-output card (R12)."
- },
- "restored": [
-  {
-   "page": 25,
-   "key": "B01",
-   "id": "906:100187",
-   "name": "B01 · Mobile new request",
-   "why": "No live mobile empty composer (S35 is a phrase-highlight state)",
-   "to": "1463:127933 04 · Mobile workflows (2980, 64)",
-   "from": "archive 1450:131594 (64, 64)"
+  "migration": {
+    "method": "Own layers and instance overrides inside the restored frames: non-Fresh colour, number and effect bindings rebound through their alias chain to Vidra Fresh / Interface (else by name, else by resolved value); Vidra Model text styles mapped to the matching Vidra Fresh styles. All nodes were collected and checked to be on their page before any write; Figma applies each script atomically.",
+    "page25": {
+      "paint": {
+        "Current UI color/muted-foreground → color/muted (instance overrides in B02, B25, B26, C41, C42)": 15
+      }
+    },
+    "page26": "Already Fresh-only; nothing rebound.",
+    "page28": {
+      "paint": {
+        "Current UI color/muted-foreground → color/muted": 3,
+        "Model control → color/control": 2,
+        "Model white → color/white": 10,
+        "Model panel → color/panel": 1,
+        "Model border → color/border": 1,
+        "Model secondary → color/secondary": 6
+      },
+      "number": {
+        "Model space/0,4,8,12,20 → Fresh space/0,4,8,12,20": 22,
+        "Model radius/panel → radius/panel": 20,
+        "Model radius/control → radius/media": 8
+      },
+      "textStyles": {
+        "Vidra Model / Body → Vidra Fresh / Body": 8,
+        "Vidra Model / Title → Vidra Fresh / Title": 1,
+        "Vidra Model / Caption → Vidra Fresh / Caption": 6
+      }
+    },
+    "misses": 0
   },
-  {
-   "page": 25,
-   "key": "B02",
-   "id": "906:100241",
-   "name": "B02 · Mobile conversation and draft",
-   "why": "No live mobile conversation with history and composer",
-   "to": "1463:127933 (3466, 64)",
-   "from": "archive (534, 64)"
+  "currentDesignFixes": {
+    "disabledSubmit": {
+      "why": "Seven composer submit buttons (Vidra Fresh / Compact full-width submit) carried a local 0.42 opacity override, the old disabled style; contrast 1.97:1.",
+      "recipe": "Fresh Button State=Disabled (884:84504): color/panel fill, color/border 1px inside, color/muted label and icon, opacity 1",
+      "nodes": {
+        "B01": "I906:100224;1175:109170;1236:91110",
+        "B25": "I936:112911;1175:109170;1236:91110",
+        "B26": "I936:112985;1175:109170;1236:91110",
+        "C41": "I930:105760;1175:109170;1236:91110",
+        "C42": "I930:105892;1175:109170;1236:91110",
+        "C50": "I930:106827;1175:109170;1236:91110",
+        "C51": "I930:106946;1175:109170;1236:91110"
+      },
+      "prev": "opacity 0.42, fill color/white, no stroke, label and arrow color/black"
+    },
+    "x11ProjectName": {
+      "why": "CONTEXT.md (Oct 13): no project names or selectors in empty first-use states.",
+      "node": "I971:94989;886:84776 (Project in the Project bar)",
+      "prev": "visible, 'New project'",
+      "next": "hidden"
+    },
+    "copy": "No engineering or credit wording in the restored frames' visible text; no copy edits were needed."
   },
-  {
-   "page": 25,
-   "key": "B25",
-   "id": "936:112857",
-   "name": "B25 · Mobile image running keeps the follow-up empty",
-   "why": "No live mobile generation-in-progress",
-   "to": "1463:127933 (3952, 64)",
-   "from": "archive (8054, 64)"
+  "verification": {
+    "bindingCensus": {
+      "method": "Every node in every non-archive section, hidden layers included: paint, gradient-stop, text-range, effect and number bindings plus explicit variable modes",
+      "page25": "Vidra Fresh / Interface 28,803, nothing else",
+      "page26": "Vidra Fresh / Interface 24,493, nothing else",
+      "page28": "Vidra Fresh / Interface 44,652, nothing else",
+      "foreignVariableModes": 0
+    },
+    "audit": {
+      "method": "audit2 from critique-fixes-remaining-2026-10-15.json rerun on Pages 25, 26 and 28 (non-archive, non-outcome sections)",
+      "contrastFailures": {
+        "page25": "0 (7 before the disabled-submit fix)",
+        "page26": 0,
+        "page28": 0
+      },
+      "clippedText": "0 on each page",
+      "textSelfOverflow": "0 on each page",
+      "unboundPaints": "Page 25: 36 Sketch illustration colours (unchanged); 0 elsewhere",
+      "structuralOverflow": {
+        "page25": "34 (was 28): +6 from B20/B21 (Close sheet +6, editor dock transport and actions +6), the same 44px-target-in-shorter-row pattern already listed",
+        "page26": "33 (unchanged)",
+        "page28": "19 (unchanged)"
+      }
+    },
+    "prototypeLinks": "Every restored frame keeps its reactions; 0 missing destinations. Links into restored frames still resolve (for example B02 28, X11 5, X12 5, S02 1, W37 1).",
+    "screenshots": "Full-resolution (1x) renders of all 18 restored frames were inspected; files are in the side-session notes folder archive-review-2026-10-15/after."
   },
-  {
-   "page": 25,
-   "key": "B26",
-   "id": "936:112937",
-   "name": "B26 · Mobile image ready keeps the follow-up empty",
-   "why": "No live mobile generated result",
-   "to": "1463:127933 (4438, 64)",
-   "from": "archive (8524, 64)"
-  },
-  {
-   "page": 25,
-   "key": "B20",
-   "id": "936:112272",
-   "name": "B20 · Mobile sharing private",
-   "why": "Sharing was only live on desktop (D01)",
-   "to": "1463:127933 (4924, 64)",
-   "from": "archive (5704, 64)"
-  },
-  {
-   "page": 25,
-   "key": "B21",
-   "id": "936:112450",
-   "name": "B21 · Mobile sharing published",
-   "why": "Published-link state of mobile sharing",
-   "to": "1463:127933 (5410, 64)",
-   "from": "archive (6174, 64)"
-  },
-  {
-   "page": 25,
-   "key": "C41",
-   "id": "930:105665",
-   "name": "C41 · Image running with its own follow-up draft",
-   "why": "First image generation in a new project (empty viewer) was not live; W07 always has a prior asset",
-   "to": "1463:127932 02 · Desktop workflows (64, 7036)",
-   "from": "archive (3104, 6812)"
-  },
-  {
-   "page": 25,
-   "key": "C42",
-   "id": "930:105803",
-   "name": "C42 · Image ready with its own follow-up draft",
-   "why": "First image result in a new project",
-   "to": "1463:127932 (1600, 7036)",
-   "from": "archive (4624, 6812)"
-  },
-  {
-   "page": 25,
-   "key": "C50",
-   "id": "930:106732",
-   "name": "C50 · Video running keeps a new empty draft",
-   "why": "First video generation in a new project",
-   "to": "1463:127932 (3136, 7036)",
-   "from": "archive (4624, 7792)"
-  },
-  {
-   "page": 25,
-   "key": "C51",
-   "id": "930:106857",
-   "name": "C51 · Video ready keeps a new empty draft",
-   "why": "First video result in a new project",
-   "to": "1463:127932 (4672, 7036)",
-   "from": "archive (6144, 7792)"
-  },
-  {
-   "page": 26,
-   "key": "A25",
-   "id": "962:89530",
-   "name": "A25 · Email verified",
-   "why": "Where the verification link lands; only 'Check your email' was live",
-   "to": "1463:141999 03 · Account and support (64, 3312)",
-   "from": "archive 1449:99261 (4624, 3184)"
-  },
-  {
-   "page": 26,
-   "key": "A34",
-   "id": "962:89741",
-   "name": "A34 · Check your inbox for reset instructions",
-   "why": "Confirmation after requesting a reset; only the form was live",
-   "to": "1463:141999 (1600, 3312)",
-   "from": "archive (7664, 4224)"
-  },
-  {
-   "page": 26,
-   "key": "A41",
-   "id": "962:89963",
-   "name": "A41 · Password changed",
-   "why": "Outcome of the reset flow",
-   "to": "1463:141999 (3136, 3312)",
-   "from": "archive (7664, 5264)"
-  },
-  {
-   "page": 26,
-   "key": "A50",
-   "id": "962:90156",
-   "name": "A50 · Signed out",
-   "why": "Where sign-out lands",
-   "to": "1463:141999 (4672, 3312)",
-   "from": "archive (3104, 7344)"
-  },
-  {
-   "page": 26,
-   "key": "X11",
-   "id": "971:94945",
-   "name": "X11 · First project media library",
-   "why": "First-run empty media library",
-   "to": "1463:141999 (64, 4368)",
-   "from": "archive (3104, 28330)"
-  },
-  {
-   "page": 26,
-   "key": "X12",
-   "id": "971:95026",
-   "name": "X12 · First project browser",
-   "why": "First-run empty project list",
-   "to": "1463:141999 (1600, 4368)",
-   "from": "archive (64, 28386)"
-  },
-  {
-   "page": 28,
-   "key": "S02",
-   "id": "1065:85871",
-   "name": "S02 · Highlighting a new draft",
-   "why": "User: the default empty-state composer. Placed in S01's slot at the head of the composer row.",
-   "to": "1462:121865 02 · Desktop workflows (4672, 64)",
-   "from": "archive 1450:196187 (64, 64)"
-  },
-  {
-   "page": 28,
-   "key": "W37",
-   "id": "1074:95792",
-   "name": "W37 · Inspect the exact setup that produced a selected result",
-   "why": "Request details panel (words, input, model, settings, destination, Reuse setup) was not on any live screen; listed in prompt-editing/state-catalog.json",
-   "to": "1462:121865 (3136, 4048)",
-   "from": "archive (1584, 10964)"
+  "boundaries": {
+    "applicationCodeChanged": false,
+    "existingRecordsEdited": false,
+    "framesDeleted": 0,
+    "archivedFramesOtherwiseTouched": 0
   }
- ],
- "liveFrameMoved": {
-  "id": "1065:85631",
-  "name": "S01 · Empty prompt",
-  "prev": "1462:121865 (4672, 64)",
-  "next": "1462:121865 (4672, 4048)",
-  "why": "Gives S02 the default empty-state slot; S01 stays live"
- },
- "canvas": {
-  "page25": {
-   "1463:127932 02 · Desktop workflows": {
-    "prev": [
-     120,
-     899,
-     6176,
-     7004
-    ],
-    "next": [
-     120,
-     899,
-     6176,
-     8000
-    ],
-    "change": "one row added for C41, C42, C50, C51"
-   },
-   "1463:127933 04 · Mobile workflows": {
-    "prev": [
-     120,
-     8063,
-     2948,
-     972
-    ],
-    "next": [
-     120,
-     9059,
-     5864,
-     972
-    ],
-    "change": "moved down 996; widened for six mobile frames"
-   },
-   "1463:127934 07 · Menus and overlays": {
-    "prev": [
-     120,
-     9195
-    ],
-    "next": [
-     120,
-     10191
-    ]
-   },
-   "1437:139429 Consolidated state examples": {
-    "prev": [
-     120,
-     9699
-    ],
-    "next": [
-     120,
-     10695
-    ]
-   }
-  },
-  "page26": {
-   "1463:141999 03 · Account and support": {
-    "prev": [
-     120,
-     13883,
-     6176,
-     3280
-    ],
-    "next": [
-     120,
-     13883,
-     6176,
-     5392
-    ],
-    "change": "two rows added"
-   },
-   "shiftedDown2112": {
-    "1463:142000": [
-     17323,
-     19435
-    ],
-    "1463:142001": [
-     21957,
-     24069
-    ],
-    "1463:142002": [
-     25317,
-     27429
-    ],
-    "1463:142003": [
-     30209,
-     32321
-    ],
-    "1463:142004": [
-     30970,
-     33082
-    ],
-    "1435:95820": [
-     31474,
-     33586
-    ]
-   }
-  },
-  "page28": "No section changes; S02 and W37 took free slots in 02 · Desktop workflows."
- },
- "migration": {
-  "method": "Own layers and instance overrides inside the restored frames: non-Fresh colour, number and effect bindings rebound through their alias chain to Vidra Fresh / Interface (else by name, else by resolved value); Vidra Model text styles mapped to the matching Vidra Fresh styles. All nodes were collected and checked to be on their page before any write; Figma applies each script atomically.",
-  "page25": {
-   "paint": {
-    "Current UI color/muted-foreground → color/muted (instance overrides in B02, B25, B26, C41, C42)": 15
-   }
-  },
-  "page26": "Already Fresh-only; nothing rebound.",
-  "page28": {
-   "paint": {
-    "Current UI color/muted-foreground → color/muted": 3,
-    "Model control → color/control": 2,
-    "Model white → color/white": 10,
-    "Model panel → color/panel": 1,
-    "Model border → color/border": 1,
-    "Model secondary → color/secondary": 6
-   },
-   "number": {
-    "Model space/0,4,8,12,20 → Fresh space/0,4,8,12,20": 22,
-    "Model radius/panel → radius/panel": 20,
-    "Model radius/control → radius/media": 8
-   },
-   "textStyles": {
-    "Vidra Model / Body → Vidra Fresh / Body": 8,
-    "Vidra Model / Title → Vidra Fresh / Title": 1,
-    "Vidra Model / Caption → Vidra Fresh / Caption": 6
-   }
-  },
-  "misses": 0
- },
- "currentDesignFixes": {
-  "disabledSubmit": {
-   "why": "Seven composer submit buttons (Vidra Fresh / Compact full-width submit) carried a local 0.42 opacity override, the old disabled style; contrast 1.97:1.",
-   "recipe": "Fresh Button State=Disabled (884:84504): color/panel fill, color/border 1px inside, color/muted label and icon, opacity 1",
-   "nodes": {
-    "B01": "I906:100224;1175:109170;1236:91110",
-    "B25": "I936:112911;1175:109170;1236:91110",
-    "B26": "I936:112985;1175:109170;1236:91110",
-    "C41": "I930:105760;1175:109170;1236:91110",
-    "C42": "I930:105892;1175:109170;1236:91110",
-    "C50": "I930:106827;1175:109170;1236:91110",
-    "C51": "I930:106946;1175:109170;1236:91110"
-   },
-   "prev": "opacity 0.42, fill color/white, no stroke, label and arrow color/black"
-  },
-  "x11ProjectName": {
-   "why": "CONTEXT.md (Oct 13): no project names or selectors in empty first-use states.",
-   "node": "I971:94989;886:84776 (Project in the Project bar)",
-   "prev": "visible, 'New project'",
-   "next": "hidden"
-  },
-  "copy": "No engineering or credit wording in the restored frames' visible text; no copy edits were needed."
- },
- "verification": {
-  "bindingCensus": {
-   "method": "Every node in every non-archive section, hidden layers included: paint, gradient-stop, text-range, effect and number bindings plus explicit variable modes",
-   "page25": "Vidra Fresh / Interface 28,803, nothing else",
-   "page26": "Vidra Fresh / Interface 24,493, nothing else",
-   "page28": "Vidra Fresh / Interface 44,652, nothing else",
-   "foreignVariableModes": 0
-  },
-  "audit": {
-   "method": "audit2 from critique-fixes-remaining-2026-10-15.json rerun on Pages 25, 26 and 28 (non-archive, non-outcome sections)",
-   "contrastFailures": {
-    "page25": "0 (7 before the disabled-submit fix)",
-    "page26": 0,
-    "page28": 0
-   },
-   "clippedText": "0 on each page",
-   "textSelfOverflow": "0 on each page",
-   "unboundPaints": "Page 25: 36 Sketch illustration colours (unchanged); 0 elsewhere",
-   "structuralOverflow": {
-    "page25": "34 (was 28): +6 from B20/B21 (Close sheet +6, editor dock transport and actions +6), the same 44px-target-in-shorter-row pattern already listed",
-    "page26": "33 (unchanged)",
-    "page28": "19 (unchanged)"
-   }
-  },
-  "prototypeLinks": "Every restored frame keeps its reactions; 0 missing destinations. Links into restored frames still resolve (for example B02 28, X11 5, X12 5, S02 1, W37 1).",
-  "screenshots": "Full-resolution (1x) renders of all 18 restored frames were inspected; files are in the side-session notes folder archive-review-2026-10-15/after."
- },
- "boundaries": {
-  "applicationCodeChanged": false,
-  "existingRecordsEdited": false,
-  "framesDeleted": 0,
-  "archivedFramesOtherwiseTouched": 0
- }
 }
