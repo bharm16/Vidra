@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { Link, useNavigate, useParams, useSearchParams, useBlocker, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useBlocker, useLocation } from "react-router-dom";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { FreshRail, type FreshDestination } from "@/components/fresh/FreshRail";
@@ -9,6 +9,7 @@ import { WorkflowApi } from "./api/workflowApi";
 import { MediaActionsApi } from "./api/mediaActionsApi";
 import { useProjectWorkspace } from "./hooks/useProjectWorkspace";
 import { useLibraryEntry } from "./hooks/useLibraryEntry";
+import { GuestWorkspace } from "./GuestWorkspace";
 import { PromptComposer, type PromptComposerProps } from "./components/PromptComposer";
 import { ModelCreationArea, ModelInputActions, type CapabilityLookupStatus } from "./components/ModelCreationArea";
 import { observedDraftInputs } from "./state/inputBinding";
@@ -405,10 +406,25 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
 }
 
 function LibraryWorkspace({ ownerId }: { ownerId: string }): ReactElement {
-  const entry = useLibraryEntry(ownerId);
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  // Read once: dropping the claim from the URL must not restart the entry.
+  const [claim] = useState(() => search.get("claim") ?? undefined);
+  const entry = useLibraryEntry(ownerId, claim);
+  const library = entry.library;
+  useEffect(() => {
+    if (!library || !entry.claim) return;
+    const next = new URLSearchParams(search); next.delete("claim");
+    if (entry.claim.state === "claimed") {
+      next.set("conversation", entry.claim.conversationId);
+      navigate(`/app?${next}`, { replace: true, state: reopenWorkspaceState({ ownerId, projectId: library.id, conversationId: entry.claim.conversationId, draftId: entry.claim.draftId }) });
+    } else navigate(next.size ? `/app?${next}` : "/app", { replace: true });
+    // The claim settles once per entry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry.claim, library]);
   if (entry.error) return <SystemRoutePage state={entry.error.status === 401 || entry.error.status === 403 ? "denied" : entry.error.status === 503 ? "unavailable" : !navigator.onLine ? "offline" : "load-error"} onRetry={entry.retry} />;
-  if (!entry.library) return <SystemRoutePage state="loading" />;
-  return <OwnedWorkspace key={`${ownerId}:${entry.library.id}`} ownerId={ownerId} projectId={entry.library.id} library />;
+  if (!library || search.has("claim")) return <SystemRoutePage state="loading" />;
+  return <OwnedWorkspace key={`${ownerId}:${library.id}`} ownerId={ownerId} projectId={library.id} library />;
 }
 
 export default function ProjectWorkspace(): ReactElement {
@@ -421,7 +437,8 @@ export default function ProjectWorkspace(): ReactElement {
   const project = ProjectIdSchema.safeParse(params.projectId ?? search.get("project"));
   const openProject = (id: string, reopen: boolean): void => { if (!user) return; const next = new URLSearchParams(search); next.delete("project"); const target = { ownerId: user.uid, projectId: id }; navigate(`/app/project/${encodeURIComponent(id)}${next.size ? `?${next}` : ""}`, { state: reopen ? reopenWorkspaceState(target) : createdWorkspaceState(target) }); };
   if (!resolved) return <SystemRoutePage state="loading" />;
-  if (!user) return <main className="vf vf-project-index"><h1>Keep your work in a project.</h1><p>Sign in to save and reopen your requests.</p><Link to={`/signin?redirect=${encodeURIComponent(project.success ? `/app/project/${project.data}?${search}` : `/app?${search}`)}`}>Sign in</Link><Link to="/">Back to home</Link></main>;
+  // Saved projects need their owner; anyone can start writing a request.
+  if (!user) return project.success || browsing ? <SystemRoutePage state="denied" /> : <GuestWorkspace />;
   if (project.success) return <OwnedWorkspace key={`${user.uid}:${project.data}`} ownerId={user.uid} projectId={project.data} />;
   if (browsing) return <ProjectBrowser key={user.uid} ownerId={user.uid} onOpen={id => openProject(id, true)} onCreate={id => openProject(id, false)} />;
   return <LibraryWorkspace key={user.uid} ownerId={user.uid} />;

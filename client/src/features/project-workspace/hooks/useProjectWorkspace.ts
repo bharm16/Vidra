@@ -13,6 +13,7 @@ import { acknowledgeDraftBuffer, draftContent, draftHasSafeRetention, openDraftB
 import { EMPTY_WORKSPACE_VIEW, workspaceViewReducer, type WorkspaceViewEvent, type WorkspaceViewState } from "../state/workspaceState";
 import { initialDraftId } from "../state/initialDraft";
 import { bindDraftInput } from "../state/inputBinding";
+import { settingsForAction, settingsForProfile } from "../state/profileSettings";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
 function id(prefix: string): string { return `${prefix}_${crypto.randomUUID()}`; }
@@ -318,14 +319,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!buffer || profile.action !== buffer.content.action) return;
-    const parameters: DraftContent["settings"]["parameters"] = {};
-    for (const [name, policy] of Object.entries(profile.parameters)) {
-      if (buffer.content.settings.parameters[name] !== undefined) parameters[name] = buffer.content.settings.parameters[name];
-      else if (policy.policy === "fixed") parameters[name] = policy.value;
-      else if (policy.policy === "editable") parameters[name] = policy.defaultValue;
-    }
-    // Retained incompatible values remain visible; preparation never silently clamps them.
-    edit({ ...buffer.content, settings: { profileId: profile.id, profileRevision: profile.revision, parameters: { ...buffer.content.settings.parameters, ...parameters }, outputCount: buffer.content.settings.outputCount } });
+    edit({ ...buffer.content, settings: settingsForProfile(profile, buffer.content) });
   }, [edit]);
 
   const prepare = useCallback(async (): Promise<void> => {
@@ -472,7 +466,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!buffer || action === buffer.content.action) return;
-    edit({ ...buffer.content, action, settings: { ...buffer.content.settings, profileId: "unselected", profileRevision: "unresolved" } });
+    edit({ ...buffer.content, action, settings: settingsForAction(buffer.content) });
   }, [edit]);
 
   const openConversation = useCallback(async (value: string): Promise<void> => {
