@@ -14,11 +14,14 @@
  * rejected alongside absolute URLs.
  */
 export function safeRedirect(search: string): string | null {
-  const raw = new URLSearchParams(search).get("redirect");
+  const raw = new URLSearchParams(search).get("redirect") ?? new URLSearchParams(search).get("returnTo");
   if (!raw) return null;
   if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  return raw;
+  if (raw.startsWith("//") || raw.includes("\\") || [...raw].some(character => character.charCodeAt(0) <= 32)) return null;
+  const destination = new URL(raw, "https://vidra.invalid");
+  const path = `${destination.pathname}${destination.search}${destination.hash}`;
+  // Dot segments can normalize "/.//host" into a protocol-relative "//host".
+  return destination.origin === "https://vidra.invalid" && !path.startsWith("//") ? path : null;
 }
 
 /** The Firebase out-of-band code carried by an emailed action link. */

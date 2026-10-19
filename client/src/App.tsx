@@ -1,15 +1,13 @@
 import React, { lazy, Suspense, useEffect } from "react";
 import {
-  BrowserRouter as Router,
+  RouterProvider,
   Routes,
   Route,
   Navigate,
-  Outlet,
   useNavigate,
   useParams,
   useLocation,
 } from "react-router-dom";
-import { AppShell } from "@components/navigation/AppShell";
 import { RequireAuth } from "@components/navigation/RequireAuth";
 import { SessionPathRedirect } from "@components/navigation/SessionPathRedirect";
 import {
@@ -17,11 +15,16 @@ import {
   FeatureErrorBoundary,
 } from "./components/ErrorBoundary/";
 import { ToastProvider } from "./components/Toast";
-import { LoadingDots } from "./components/LoadingDots";
 import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import { AuthGateDialog } from "@features/auth-gate";
 import { apiClient } from "./services/ApiClient";
 import { trackPageView } from "./services/analytics";
+import { SystemRoutePage } from "./features/public-site/SystemPage";
+import { SiteShell } from "./features/public-site/SiteShell";
+
+const LandingPage = lazy(() => import("./features/public-site/PublicPages").then(module => ({ default: module.LandingPage })));
+const ProductPage = lazy(() => import("./features/public-site/PublicPages").then(module => ({ default: module.ProductPage })));
+const PricingPage = lazy(() => import("./features/public-site/PublicPages").then(module => ({ default: module.PricingPage })));
 
 const DocsPage = lazy(() =>
   import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })),
@@ -78,6 +81,7 @@ const HistoryPage = lazy(() =>
   })),
 );
 const SharedClip = lazy(() => import("./features/share/SharedClip"));
+const WorkflowSharePage = lazy(() => import("./features/workflow-sharing/WorkflowSharePage").then(module => ({ default: module.WorkflowSharePage })));
 const LiveEditor = lazy(() => import("./features/realtime-sketch/LiveEditor"));
 const StudioPage = lazy(() => import("./features/studio/StudioPage"));
 const StudioIndexPage = lazy(() => import("./features/studio/StudioIndexPage"));
@@ -86,47 +90,17 @@ const MainWorkspace = lazy(() =>
     default: module.MainWorkspace,
   })),
 );
+const ProjectWorkspace = lazy(() => import("./features/project-workspace/ProjectWorkspace"));
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((module) => ({
     default: module.NotFoundPage,
   })),
 );
 
-function RouteFallback(): React.ReactElement {
-  return (
-    <div className="flex min-h-[200px] items-center justify-center">
-      <LoadingDots />
-    </div>
-  );
-}
+function RouteFallback(): React.ReactElement { return <SystemRoutePage state="loading" />; }
 
-function MarketingFallback(): React.ReactElement {
-  return (
-    <div
-      className="flex min-h-[200px] items-center justify-center"
-      style={{ background: "#131416" }}
-    >
-      <LoadingDots />
-    </div>
-  );
-}
-
-function MarketingShell(): React.ReactElement {
-  const location = useLocation();
-
-  return (
-    <AppShell>
-      <div
-        key={location.pathname}
-        className="motion-presence-panel ps-animate-fade-in"
-        data-motion-state="entered"
-      >
-        <Suspense fallback={<MarketingFallback />}>
-          <Outlet />
-        </Suspense>
-      </div>
-    </AppShell>
-  );
+function RouteContent(): React.ReactElement {
+  return <ErrorBoundary fallback={({ resetError }) => <SystemRoutePage state={navigator.onLine ? "load-error" : "offline"} onRetry={resetError} />}><Suspense fallback={<RouteFallback />}><AppRoutes /></Suspense></ErrorBoundary>;
 }
 
 function WorkspaceRoute(): React.ReactElement {
@@ -186,13 +160,15 @@ function RouteTracker(): React.ReactElement | null {
 function AppRoutes(): React.ReactElement {
   return (
     <Routes>
-      <Route element={<MarketingShell />}>
-        {/* Marketing / company navigation. ADR-0010 site-scope (D9/D10): the
-            input at "/" is the only front door — /home and /products redirect
-            there. Frozen pricing/billing routes are unregistered. */}
+        <Route path="/app" element={<Suspense fallback={<RouteFallback />}><ProjectWorkspace /></Suspense>} />
+        <Route path="/app/project/:projectId" element={<Suspense fallback={<RouteFallback />}><ProjectWorkspace /></Suspense>} />
+
         <Route path="/home" element={<Navigate to="/" replace />} />
+        <Route path="/product/:product" element={<SiteShell><ProductPage /></SiteShell>} />
+        <Route path="/products/:product" element={<SiteShell><ProductPage /></SiteShell>} />
+        <Route path="/pricing" element={<SiteShell><PricingPage /></SiteShell>} />
         <Route path="/products" element={<Navigate to="/" replace />} />
-        <Route path="/docs" element={<DocsPage />} />
+        <Route path="/docs/*" element={<DocsPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -213,10 +189,11 @@ function AppRoutes(): React.ReactElement {
             </FeatureErrorBoundary>
           }
         />
-      </Route>
 
+      <Route path="/share/media/:id" element={<WorkflowSharePage />} />
+      <Route path="/legacy/share/:uuid" element={<SharedClip />} />
       {/* App routes */}
-      <Route path="/" element={<WorkspaceRoute />} />
+      <Route path="/" element={<SiteShell><LandingPage /></SiteShell>} />
       {/* The Live editor (ADR-0017) — the realtime sketch's own rail surface
           on its own infinite plane, outside the page's anatomy. */}
       <Route
@@ -282,7 +259,7 @@ function AppRoutes(): React.ReactElement {
           </RequireAuth>
         }
       />
-      <Route path="/create" element={<Navigate to="/" replace />} />
+      <Route path="/create" element={<Navigate to="/app?intent=make-image" replace />} />
       <Route path="/session/:sessionId" element={<WorkspaceRoute />} />
       <Route
         path="/session/:sessionId/studio"
@@ -294,31 +271,24 @@ function AppRoutes(): React.ReactElement {
       />
       <Route path="/prompt/:uuid" element={<PromptRedirect />} />
 
-      {/* Catch-all 404 — wrapped in MarketingShell for nav/footer */}
-      <Route element={<MarketingShell />}>
+
         <Route path="*" element={<NotFoundPage />} />
-      </Route>
     </Routes>
   );
 }
 
-function App(): React.ReactElement {
+export function AppNavigation(): React.ReactElement {
+  return <><RouteTracker /><RouteContent /><AuthGateDialog /></>;
+}
+
+function App({ router }: { router: React.ComponentProps<typeof RouterProvider>["router"] }): React.ReactElement {
   return (
     <ErrorBoundary
       title="Application Error"
       message="The application encountered an unexpected error. Please refresh the page to continue."
     >
       <ToastProvider>
-        <Router>
-          <RouteTracker />
-          <Suspense fallback={<RouteFallback />}>
-            <AppRoutes />
-          </Suspense>
-          {/* Global auth gate: the single sign-in dialog opened by the 401
-                handler and the pre-Go check. Overlays whatever page is
-                mounted so the user's draft stays visible behind it. */}
-          <AuthGateDialog />
-        </Router>
+        <RouterProvider router={router} />
       </ToastProvider>
     </ErrorBoundary>
   );

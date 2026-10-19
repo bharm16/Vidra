@@ -27,8 +27,10 @@ import {
 import type { User } from "../hooks/types";
 import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";
+import { z } from "zod";
 
 const log = logger.child("AuthRepository");
+const DisplayNameSchema = z.string().trim().min(1).max(80);
 
 /**
  * User-scoped local state must not survive sign-out: the next visitor on
@@ -208,10 +210,10 @@ export class AuthRepository {
   /**
    * Send an email verification link to the current user
    */
-  async sendVerificationEmail(redirectPath?: string): Promise<void> {
+  async sendVerificationEmail(redirectPath?: string, expectedOwnerId?: string): Promise<void> {
     try {
       const currentUser = this.auth.currentUser;
-      if (!currentUser) {
+      if (!currentUser || (expectedOwnerId !== undefined && currentUser.uid !== expectedOwnerId)) {
         throw new AuthRepositoryError("No authenticated user to verify", null);
       }
 
@@ -320,6 +322,9 @@ export class AuthRepository {
 
     try {
       await currentUser.reload();
+      if (this.auth.currentUser?.uid !== currentUser.uid) {
+        throw new AuthRepositoryError("The signed-in account changed.", null);
+      }
       const mapped = this._mapFirebaseUser(currentUser);
       if (this.sentry) {
         this.sentry.setUser(mapped);
@@ -337,12 +342,33 @@ export class AuthRepository {
     }
   }
 
+  /** Change only this authenticated owner's name; never accept an arbitrary uid. */
+  async updateDisplayName(ownerId: string, name: unknown): Promise<User> {
+    const displayName = DisplayNameSchema.parse(name);
+    const currentUser = this.auth.currentUser;
+    if (!currentUser || currentUser.uid !== ownerId) throw new AuthRepositoryError("Sign in to change your name.", null);
+    try {
+      await updateProfile(currentUser, { displayName });
+      if (this.auth.currentUser?.uid !== ownerId) throw new AuthRepositoryError("The signed-in account changed.", null);
+      return this._mapFirebaseUser(currentUser);
+    } catch (error) { throw new AuthRepositoryError("Your name could not be saved. Try again.", error); }
+  }
+
+  getSignInMethods(ownerId: string): string[] {
+    const user = this.auth.currentUser;
+    if (!user || user.uid !== ownerId) return [];
+    return [...new Set((user.providerData ?? []).map(provider => provider.providerId))];
+  }
+
   /**
    * Sign out the current user
    */
-  async signOut(): Promise<void> {
+  async signOut(expectedOwnerId?: string): Promise<void> {
     try {
+      if (expectedOwnerId !== undefined && this.auth.currentUser?.uid !== expectedOwnerId) throw new AuthRepositoryError("The signed-in account changed.", null);
       await signOut(this.auth);
+      // A later sign-in owns any new local state and Sentry identity.
+      if (this.auth.currentUser) return;
       await clearUserScopedLocalState();
 
       // Clear Sentry user context if integration is provided
@@ -459,10 +485,12 @@ export class AuthRepositoryError extends Error {
 export class MockAuthRepository {
   private currentUser: User | null = null;
   private authStateCallbacks: Array<(user: User | null) => void> = [];
+  private signInMethods: string[] = [];
 
   constructor(private readonly uid: string = "mock-user-id") {}
 
   async signInWithGoogle(): Promise<User> {
+    this.signInMethods = ["google.com"];
     this.currentUser = {
       uid: this.uid,
       email: "test@example.com",
@@ -477,6 +505,7 @@ export class MockAuthRepository {
   }
 
   async signInWithEmail(email: string, _password: string): Promise<User> {
+    this.signInMethods = ["password"];
     this.currentUser = {
       uid: this.uid,
       email,
@@ -494,6 +523,7 @@ export class MockAuthRepository {
     _password: string,
     displayName?: string,
   ): Promise<User> {
+    this.signInMethods = ["password"];
     this.currentUser = {
       uid: this.uid,
       email,
@@ -510,7 +540,8 @@ export class MockAuthRepository {
     return;
   }
 
-  async sendVerificationEmail(_redirectPath?: string): Promise<void> {
+  async sendVerificationEmail(_redirectPath?: string, expectedOwnerId?: string): Promise<void> {
+    if (expectedOwnerId !== undefined && this.currentUser?.uid !== expectedOwnerId) throw new AuthRepositoryError("The signed-in account changed.", null);
     return;
   }
 
@@ -539,7 +570,18 @@ export class MockAuthRepository {
     return this.currentUser;
   }
 
-  async signOut(): Promise<void> {
+  async updateDisplayName(ownerId: string, name: unknown): Promise<User> {
+    const displayName = DisplayNameSchema.parse(name);
+    if (!this.currentUser || this.currentUser.uid !== ownerId) throw new AuthRepositoryError("Sign in to change your name.", null);
+    this.currentUser = { ...this.currentUser, displayName };
+    this._notifyAuthStateChange();
+    return this.currentUser;
+  }
+
+  getSignInMethods(ownerId: string): string[] { return this.currentUser?.uid === ownerId ? [...this.signInMethods] : []; }
+
+  async signOut(expectedOwnerId?: string): Promise<void> {
+    if (expectedOwnerId !== undefined && this.currentUser?.uid !== expectedOwnerId) throw new AuthRepositoryError("The signed-in account changed.", null);
     this.currentUser = null;
     await clearUserScopedLocalState();
     this._notifyAuthStateChange();

@@ -1,0 +1,108 @@
+.vf-share-backdrop.vf-share-backdrop { position: fixed; z-index: 69; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 0; background: transparent !important; cursor: default; }
+.vf-share-panel { position: fixed; z-index: 70; top: 120px; right: 24px; display: flex; flex-direction: column; gap: var(--vf-space-12); width: 336px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 144px); padding: var(--vf-space-16); overflow-y: auto; border: 0; border-radius: var(--vf-radius-panel); background: var(--vf-raised, #242424); box-shadow: inset 0 0 0 1px var(--vf-border), 0 12px 18px rgb(0 0 0 / 38%); }
+.vf-share-panel header { display: flex; align-items: center; gap: var(--vf-space-12); }
+.vf-share-panel:focus { outline: none; }
+.vf-share-panel h2 { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 18px; font-weight: 500; letter-spacing: .13px; }
+.vf-share-thumbnail { flex: none; width: 64px; height: 36px; border-radius: var(--vf-space-6); object-fit: cover; }
+.vf-share-thumbnail-empty { background: var(--vf-control); }
+.vf-share-panel header .vf-icon-button { display: none; }
+.vf-share-panel > label { margin-bottom: -6px; font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .12px; color: var(--vf-secondary); }
+.vf-share-panel .vf-share-access { width: 100%; min-height: 32px; padding: 0 var(--vf-space-12); border: 1px solid var(--vf-border); background: var(--vf-panel) !important; }
+.vf-share-panel .vf-share-access.vf-button::before { background: transparent; }
+.vf-share-panel .vf-button[data-tone="primary"]:disabled::before { background: #2e2e2e; }
+.vf-share-access > span { display: flex; width: 100%; align-items: center; gap: var(--vf-space-8); }
+.vf-share-access > span > span { flex: 1; text-align: start; font-weight: 400; }
+.vf-share-access img { flex: none; width: 20px; height: 20px; }
+.vf.vf-share-access-menu { z-index: 75; min-width: 304px; padding: var(--vf-space-8); border: 1px solid var(--vf-border); border-radius: calc(var(--vf-space-2) * 7.0); background: var(--vf-raised, #242424); color: var(--vf-white); }
+.vf-share-actions { display: flex; }
+.vf-share-actions .vf-button { min-height: 32px; }
+.vf-share-panel > p, .vf-share-panel [role="alert"] p, .vf-share-copy-fallback p { color: var(--vf-secondary); font-size: 13px; line-height: 18px; }
+.vf-share-panel [role="alert"] { display: flex; flex-direction: column; gap: var(--vf-space-12); align-items: start; }
+.vf-share-copy-fallback { display: flex; flex-direction: column; gap: var(--vf-space-8); }
+.vf-share-copy-fallback input { width: 100%; min-width: 0; padding: var(--vf-space-8); border: none; border-radius: var(--vf-space-8); color: var(--vf-white); background: var(--vf-control); font-size: 12px; }
+.vf-workflow-share { min-height: 100dvh; }
+.vf-workflow-share > header { padding: calc(var(--vf-space-2) * 14.0) var(--vf-space-48); font-size: 20px; line-height: 26px; font-weight: 700; letter-spacing: -.2px; }
+.vf-workflow-share > main { display: flex; flex-direction: column; width: min(1120px, calc(100% - 80px)); margin: var(--vf-space-40) auto var(--vf-space-64); }
+.vf-public-share-media { display: flex; width: 100%; min-height: 160px; aspect-ratio: 16 / 9; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--vf-space-10); background: var(--vf-rail); }
+.vf-public-share-media > img, .vf-public-share-media > video { display: block; width: 100%; height: 100%; max-height: 75dvh; object-fit: contain; }
+.vf-workflow-share main > footer { display: flex; justify-content: space-between; align-items: center; gap: var(--vf-space-24); margin-top: var(--vf-space-24); }
+.vf-workflow-share main > footer p { color: var(--vf-secondary); font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .12px; }
+.vf-workflow-share main > footer .vf-button { min-width: 128px; min-height: 32px; }
+.vf-public-share-message { display: flex; align-items: start; flex-direction: column; gap: var(--vf-space-20); width: min(520px, 100%); margin: calc(var(--vf-space-2) * 80.0) auto 0; padding: var(--vf-space-24); }
+.vf-public-share-media .vf-public-share-message { margin-top: 0; }
+.vf-public-share-message > img { width: 20px; height: 20px; }
+.vf-public-share-message h1 { font-size: 20px; line-height: 26px; font-weight: 700; }
+.vf-public-share-message p { color: var(--vf-secondary); font-size: 15px; line-height: 22px; }
+.vf-public-share-error { margin-top: var(--vf-space-16); color: var(--vf-secondary); }
+@media (width < 768px) {
+  .vf-share-backdrop.vf-share-backdrop { background: rgb(11 11 11 / 55%) !important; }
+  .vf-share-panel { top: auto; right: 0; bottom: 4px; width: 100%; max-width: none; max-height: 85dvh; border-radius: var(--vf-space-16); padding: 88px 40px 40px; background: var(--vf-panel); box-shadow: none; }
+  .vf-share-panel > header, .vf-share-panel > label, .vf-share-panel > .vf-share-access, .vf-share-panel > .vf-share-actions { width: min(304px, 100%); }
+  .vf-share-panel .vf-share-access, .vf-share-actions .vf-button { min-height: 32px; height: 32px; }
+  .vf-workflow-share > header { padding: var(--vf-space-24); }
+  .vf-workflow-share > main { width: calc(100% - 32px); margin-top: var(--vf-space-32); }
+  .vf-public-share-message { margin-top: var(--vf-space-80); padding-inline: var(--vf-space-16); }
+}
+.vf-share-access-menu [role="menuitemradio"] { display: flex; align-items: center; gap: var(--vf-space-12); min-height: 36px; padding: var(--vf-space-8); }
+.vf-share-access-menu [role="menuitemradio"] > span:first-child { display: none; }
+.vf-share-selected-check { margin-left: auto; }
+.vf-public-share-title, .vf-public-share-create, .vf-public-mobile-copy { display: none; }
+.vf-workflow-share > header { position: relative; height: 82px; }
+.vf-workflow-share > header > a { position: absolute; top: 28px; left: 48px; }
+.vf-workflow-share[data-phase="loading"] > header > a, .vf-workflow-share[data-phase="error"] > header > a { top: 30px; left: 40px; }
+.vf-public-share-media > img { object-fit: cover; }
+.vf-workflow-share > main { margin-top: var(--vf-space-40); }
+.vf-workflow-share main > footer { align-items: flex-start; margin-top: calc(var(--vf-space-24) + var(--vf-space-2)); }
+.vf-workflow-share main > footer > .vf-button { margin-top: var(--vf-space-4); }
+.vf-workflow-share[data-phase="loading"] > main, .vf-workflow-share[data-phase="error"] > main { width: 520px; max-width: calc(100% - 80px); margin-top: calc(var(--vf-space-2) * 89); }
+.vf-workflow-share[data-phase="unavailable"] > main { width: 500px; max-width: calc(100% - 80px); margin-top: calc(var(--vf-space-2) * 109); }
+.vf-workflow-share .vf-public-share-message { width: 100%; margin: 0; padding: 0; gap: var(--vf-space-20); }
+.vf-public-share-message h1 { font-size: 32px; line-height: 38px; letter-spacing: -.64px; }
+.vf-public-share-message > .vf-button { height: 32px; min-height: 32px; min-width: 176px; }
+.vf-public-share-unavailable > img { width: 32px; height: 32px; }
+.vf-public-share-unavailable h1 { font-size: 20px; line-height: 26px; letter-spacing: -.2px; }
+.vf-public-share-message p { font-size: 15px; line-height: 22px; }
+.vf-public-share-controls { display: flex; align-items: center; gap: var(--vf-space-8); height: 32px; margin-top: var(--vf-space-32); color: var(--vf-secondary); font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .12px; }
+.vf-public-share-controls > .vf-icon-button { position: relative; flex: none; width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: var(--vf-space-6); }
+.vf-public-share-controls > .vf-icon-button::after { content: ""; position: absolute; inset: -6px; }
+.vf-workflow-share[data-media-kind="export"] .vf-public-share-controls { gap: var(--vf-space-6); }
+.vf-workflow-share[data-media-kind="export"] .vf-public-share-controls > .vf-icon-button { width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: calc(var(--vf-space-2) * 2.5); }
+.vf-workflow-share[data-media-kind="export"] .vf-public-share-controls > .vf-icon-button::after { inset: calc(var(--vf-space-8) * -1); }
+.vf-public-share-controls .vf-icon { width: 18px; height: 18px; }
+.vf-public-share-controls input { flex: 1; width: 0; min-width: 20px; height: 20px; accent-color: var(--vf-secondary); }
+.vf-public-share-controls input { appearance: none; background: transparent; cursor: pointer; }
+.vf-public-share-controls input::-webkit-slider-runnable-track { height: 2px; border: 0; border-radius: var(--vf-radius-pill); background: linear-gradient(to right, var(--vf-secondary) var(--vf-playback-progress, 0%), #444 var(--vf-playback-progress, 0%)); }
+.vf-public-share-controls input::-webkit-slider-thumb { appearance: none; width: 8px; height: 8px; margin-top: -3px; border: 0; border-radius: var(--vf-radius-pill); background: var(--vf-white); }
+.vf-public-share-controls input::-moz-range-track { height: 2px; border: 0; border-radius: var(--vf-radius-pill); background: #444; }
+.vf-public-share-controls input::-moz-range-progress { height: 2px; background: var(--vf-secondary); }
+.vf-public-share-controls input::-moz-range-thumb { width: 8px; height: 8px; border: 0; border-radius: var(--vf-radius-pill); background: var(--vf-white); }
+.vf-public-share-playable:fullscreen { display: flex; flex-direction: column; justify-content: center; padding: var(--vf-space-24); background: var(--vf-canvas); }
+.vf-public-share-playable:fullscreen > .vf-public-share-media { flex: 1; min-height: 0; aspect-ratio: auto; }
+@media (width < 768px) {
+  .vf-workflow-share > header { height: 74px; }
+  .vf-workflow-share > header > a, .vf-workflow-share[data-phase="loading"] > header > a, .vf-workflow-share[data-phase="error"] > header > a { top: 24px; left: 24px; }
+  .vf-workflow-share > main, .vf-workflow-share[data-phase="loading"] > main, .vf-workflow-share[data-phase="error"] > main, .vf-workflow-share[data-phase="unavailable"] > main { width: calc(100% - 48px); max-width: none; margin: calc(var(--vf-space-24) + var(--vf-space-6)) auto var(--vf-space-64); }
+  .vf-public-share-title { display: block; margin-bottom: var(--vf-space-32) !important; font-size: 32px; font-weight: 700; line-height: 38px; letter-spacing: -.64px; }
+  .vf-public-time-duration { display: none; }
+  .vf-public-share-media { min-height: 0; border-radius: var(--vf-space-6); }
+  .vf-workflow-share main > footer { display: flex; flex-direction: column; align-items: stretch; gap: var(--vf-space-32); margin-top: var(--vf-space-32); }
+  .vf-workflow-share main > footer > .vf-button { width: 100%; height: 44px; min-height: 44px; margin-top: 0; }
+  .vf-public-share-create { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; color: var(--vf-secondary) !important; font-size: 13px; line-height: 18px; }
+  .vf-public-share-message .vf-public-share-create { margin-top: 0; }
+  .vf-public-share-unavailable > img, .vf-public-desktop-copy { display: none; }
+  .vf-public-mobile-copy { display: block; }
+  .vf-workflow-share .vf-public-share-message { gap: var(--vf-space-32); }
+  .vf-public-share-message h1, .vf-public-share-unavailable h1 { font-size: 32px; line-height: 38px; letter-spacing: -.64px; }
+  .vf-public-share-message > .vf-button { width: 100%; height: 44px; min-height: 44px; }
+}
+@media (width < 768px) { .vf-share-panel header .vf-icon-button { display: flex; position: absolute; top: 18px; right: 24px; width: 44px; min-height: 44px; height: 44px; color: var(--vf-secondary); } }
+@media (width >= 768px) {
+  .vf-workflow-share[data-media-kind="image"] main > footer > .vf-button { margin-right: calc(var(--vf-space-8) * -1); }
+  .vf-share-panel[data-placement="editor"] { top: auto; right: 25px; bottom: 65px; }
+  .vf-workflow-share[data-media-kind="export"] > header > a { top: 30px; left: 40px; }
+  .vf-workflow-share[data-media-kind="export"] > main { width: min(960px, calc(100% - 80px)); margin-top: var(--vf-space-64); }
+  .vf-workflow-share[data-media-kind="export"] .vf-public-share-controls { margin-top: calc(var(--vf-space-24) - var(--vf-space-2)); }
+  .vf-workflow-share[data-media-kind="export"] main > footer { margin-top: var(--vf-space-24); }
+  .vf-workflow-share[data-media-kind="export"] main > footer > p { margin-top: calc(var(--vf-space-12) + var(--vf-space-2)); }
+  .vf-workflow-share[data-media-kind="export"] main > footer > .vf-button { width: 132px; min-width: 132px; margin-top: 0; }
+}

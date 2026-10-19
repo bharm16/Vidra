@@ -164,20 +164,14 @@ describe("regression: auth page hard-bug fixes", () => {
 
     renderSignUp("/signup?redirect=%2Fstudio");
 
-    fireEvent.change(screen.getByLabelText("Full name (optional)"), {
-      target: { value: "Ada" },
-    });
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "ada@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password", { exact: true }), {
       target: { value: "Passw0rd!" },
     });
-    fireEvent.change(screen.getByLabelText("Confirm password"), {
-      target: { value: "Passw0rd!" },
-    });
     fireEvent.click(
-      screen.getByRole("button", { name: "Create account & continue" }),
+      screen.getByRole("button", { name: "Create account" }),
     );
 
     await waitFor(() => {
@@ -207,20 +201,14 @@ describe("regression: auth page hard-bug fixes", () => {
 
     renderSignUp("/signup?redirect=%2Fstudio");
 
-    fireEvent.change(screen.getByLabelText("Full name (optional)"), {
-      target: { value: "Ada" },
-    });
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "ada@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password", { exact: true }), {
       target: { value: "Passw0rd!" },
     });
-    fireEvent.change(screen.getByLabelText("Confirm password"), {
-      target: { value: "Passw0rd!" },
-    });
     fireEvent.click(
-      screen.getByRole("button", { name: "Create account & continue" }),
+      screen.getByRole("button", { name: "Create account" }),
     );
 
     await waitFor(() => {
@@ -241,6 +229,25 @@ describe("regression: auth page hard-bug fixes", () => {
     expect(toastMock.error).not.toHaveBeenCalled();
   });
 
+  it("moves an expired link to the approved inbox step only after a successful resend", async () => {
+    mockUseAuthUser.mockReturnValue(authenticatedUser);
+    authRepositoryMock.verifyEmailWithCode.mockRejectedValue({ code: "auth/expired-action-code" });
+    renderEmailVerification({ pathname: "/email-verification", search: "?mode=verifyEmail&oobCode=expired" });
+    expect(await screen.findByRole("heading", { name: "This link has expired" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Send a new link" }));
+    expect(await screen.findByRole("heading", { name: "Check your email" })).toBeVisible();
+    expect(screen.getByText(/We sent a new link to ada@example.com/)).toBeVisible();
+    expect(authRepositoryMock.sendVerificationEmail).toHaveBeenCalledWith("/app", "user-1");
+  });
+  it("keeps a verified account's continuation available when an old link has expired", async () => {
+    mockUseAuthUser.mockReturnValue({ ...authenticatedUser, emailVerified: true });
+    authRepositoryMock.verifyEmailWithCode.mockRejectedValue({ code: "auth/expired-action-code" });
+    renderEmailVerification({ pathname: "/email-verification", search: "?mode=verifyEmail&oobCode=old-code" });
+    expect(await screen.findByRole("button", { name: "Continue to Vidra" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Email verified" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Send a new link" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
   it("switches from failed delivery to inbox state after a successful resend", async () => {
     mockUseAuthUser.mockReturnValue(authenticatedUser);
 
@@ -250,16 +257,16 @@ describe("regression: auth page hard-bug fixes", () => {
       state: { delivery: "failed" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Resend email" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resend verification" }));
 
     await waitFor(() => {
       expect(
-        screen.getByText(/We sent a verification link to/i),
+        screen.getByText(/We sent a new link to/i),
       ).toBeInTheDocument();
     });
 
     expect(
-      screen.getByText(/We sent a verification link to/i),
+      screen.getByText(/We sent a new link to/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(
@@ -267,7 +274,8 @@ describe("regression: auth page hard-bug fixes", () => {
       ),
     ).toBeNull();
     expect(authRepositoryMock.sendVerificationEmail).toHaveBeenCalledWith(
-      undefined,
+      "/app",
+      authenticatedUser.uid,
     );
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(toastMock.error).not.toHaveBeenCalled();
@@ -285,7 +293,7 @@ describe("regression: auth page hard-bug fixes", () => {
       state: { delivery: "failed" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Resend email" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resend verification" }));
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(

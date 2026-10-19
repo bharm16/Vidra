@@ -1,0 +1,26 @@
+{
+  "family": "Figtree",
+  "license": "SIL Open Font License 1.1",
+  "sources": [
+    {
+      "weight": 400,
+      "url": "https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_d_QF5e.ttf",
+      "sha256": "81f3fc9d8d4e307e5ae0dd43a03d22eb90d50b6cc72241552c460a59b6731b31"
+    },
+    {
+      "weight": 500,
+      "url": "https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_dNQF5e.ttf",
+      "sha256": "f8a90c01bc4c31aa84be5cbff3e80784bfc0da37e5aaa23eb9e05108b9ba0ece"
+    },
+    {
+      "weight": 600,
+      "url": "https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_ehR15e.ttf",
+      "sha256": "b5d3fe714f8283b072579c9318c6cbe9e028ca51d6ba33eed0412a828ec331da"
+    },
+    {
+      "weight": 700,
+      "url": "https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_eYR15e.ttf",
+      "sha256": "88aad0bfccf47bc631abd1351a0c815be98edf58c2c8706f72deb24a531639d6"
+    }
+  ]
+}

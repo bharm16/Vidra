@@ -2,24 +2,14 @@ import { expect, test, type Page } from "@playwright/test";
 import { injectAuthUser } from "./helpers/auth";
 
 /**
- * Golden path — the walkthrough that defines a working product (CONTEXT.md):
- * empty canvas → creator submits a one-liner → expansion → first frame
- * (explicit gate) → motion → render → a clip the creator can watch and keep.
+ * Retained legacy authoring compatibility at explicit /session/draft-* URLs.
+ * The public front door is now landing and the project workspace is /app;
+ * these paths do not prescribe a creation order for the new workspace.
  *
- * Unlike the other e2e specs, this one mocks NOTHING on the network. It runs
- * the real client against the real server and real LLM providers, because its
- * job is to catch exactly the class of failure unit tests cannot:
- * isolated-green, integrated-broken. The only seam is injectAuthUser, which
- * swaps the client-side auth repository — generation is sign-in-gated for
- * guests, and the wire still authenticates via the dev API key fallback.
- *
- * Tier 1 (always on) covers the guest gate plus the authed authoring loop
- * with zero generation spend: expansion → session URL → refresh-safe
- * persistence.
- *
- * Tier 2 (GOLDEN_PATH_FULL=1) adds the first-frame leg (real Replicate +
- * GCS storage). Off by default: it spends real money per run and requires
- * healthy storage credentials.
+ * PR UI runs only the guest gate, with all attempted mutating API calls
+ * intercepted before they can reach a provider. The remaining legacy tests
+ * intentionally exercise real services and are not part of the provider-free
+ * PR configuration. Their existing paid opt-in guards remain unchanged.
  */
 
 const ONE_LINER = "a lighthouse keeper reading by lamplight during a storm";
@@ -33,10 +23,18 @@ test.describe("golden path", () => {
   test("a guest submit is sign-in-gated and preserves the prompt", async ({
     page,
   }) => {
-    // Fresh anonymous load shows the empty canvas anchored on the shot input.
-    // (The "What are you making?" hero was removed in the ADR-0010 rebuild —
-    // the anchor input IS the empty state.)
-    await page.goto("/");
+    // The retained local draft route opens the legacy composer without
+    // exposing a remote session or moving the public front door.
+    const mutationAttempts: string[] = [];
+    await page.route("**/api/**", async route => {
+      const requestUrl = new URL(route.request().url());
+      const isApplicationApi = requestUrl.origin === new URL(page.url()).origin && requestUrl.pathname.startsWith("/api/");
+      if (isApplicationApi && ["POST", "PUT", "PATCH", "DELETE"].includes(route.request().method())) {
+        mutationAttempts.push(route.request().url());
+        await route.abort("blockedbyclient");
+      } else await route.continue();
+    });
+    await page.goto("/session/draft-e2e-guest");
     const editor = page.getByLabel("Shot description");
     await expect(editor).toBeVisible();
     await editor.fill(ONE_LINER);
@@ -50,6 +48,7 @@ test.describe("golden path", () => {
     await page.keyboard.press("Escape");
     await expect(gate).toHaveCount(0);
     await expect.poll(async () => await editorText(page)).toContain(ONE_LINER);
+    expect(mutationAttempts).toEqual([]);
   });
 
   test("a one-line idea expands into a session that survives refresh", async ({
@@ -58,7 +57,7 @@ test.describe("golden path", () => {
     test.setTimeout(120_000);
 
     await injectAuthUser(page);
-    await page.goto("/");
+    await page.goto("/session/draft-e2e-authoring");
     const editor = page.getByLabel("Shot description");
     await expect(editor).toBeVisible();
     await editor.fill(ONE_LINER);
@@ -115,7 +114,7 @@ test.describe("golden path", () => {
     // never mask the cold path.
     const ENHANCE_LINER = "a clockmaker winding a brass clock by candlelight";
     await injectAuthUser(page);
-    await page.goto("/");
+    await page.goto("/session/draft-e2e-enhancement");
     const editor = page.getByLabel("Shot description");
     await expect(editor).toBeVisible();
     await editor.fill(ENHANCE_LINER);
@@ -164,7 +163,7 @@ test.describe("golden path", () => {
     test.setTimeout(240_000);
 
     await injectAuthUser(page);
-    await page.goto("/");
+    await page.goto("/session/draft-e2e-frame");
     const editor = page.getByLabel("Shot description");
     await editor.fill(ONE_LINER);
 
@@ -198,7 +197,7 @@ test.describe("golden path", () => {
     test.setTimeout(720_000);
 
     await injectAuthUser(page);
-    await page.goto("/");
+    await page.goto("/session/draft-e2e-render");
     const editor = page.getByLabel("Shot description");
     await editor.fill(ONE_LINER);
     await page.getByTestId("canvas-generate-button").click();

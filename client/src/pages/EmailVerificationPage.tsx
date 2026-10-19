@@ -1,223 +1,69 @@
-import React from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { getAuthRepository } from "@repositories/index";
-import { useToast } from "@components/Toast";
-import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
+import { FreshButton } from "@/components/fresh/FreshButton";
 import { AuthModalCard } from "./auth/AuthModalCard";
-import authMail from "@/assets/design-system/auth-mail.svg";
-import { Spinner } from "./auth/Spinner";
+import { AuthNotice } from "./auth/AuthFormControls";
 import { readActionMode, readOobCode, safeRedirect } from "./auth/authParams";
 import { authErrorCopy } from "./auth/authErrorCopy";
 
-function getInitialEmail(search: string): string {
-  const params = new URLSearchParams(search);
-  const raw = params.get("email");
-  if (!raw) return "";
-  return raw.trim();
-}
-
 type VerifyState = "idle" | "verifying" | "verified" | "error";
-type DeliveryState = "sent" | "failed";
-type EmailVerificationNavState = {
-  delivery?: DeliveryState;
-};
-
-function getDeliveryState(state: unknown): DeliveryState | undefined {
-  if (!state || typeof state !== "object" || !("delivery" in state))
-    return undefined;
-  const delivery = state.delivery;
-  return delivery === "sent" || delivery === "failed" ? delivery : undefined;
-}
-
-export function EmailVerificationPage(): React.ReactElement {
-  const toast = useToast();
-  const navigate = useNavigate();
+export function EmailVerificationPage(): ReactElement {
   const location = useLocation();
-
-  const redirect = safeRedirect(location.search);
-  const oobCode = readOobCode(location.search);
-  const mode = readActionMode(location.search);
-
+  const navigate = useNavigate();
   const user = useAuthUser();
-  const [verifyState, setVerifyState] = React.useState<VerifyState>("idle");
-  const [error, setError] = React.useState<string | null>(null);
-  const [isResending, setIsResending] = React.useState(false);
-  const [resendCooldown, setResendCooldown] = React.useState(0);
-  const [emailHint, setEmailHint] = React.useState(() =>
-    getInitialEmail(location.search),
-  );
-  const [deliveryState, setDeliveryState] = React.useState<
-    DeliveryState | undefined
-  >(() =>
-    getDeliveryState(location.state as EmailVerificationNavState | undefined),
-  );
-
-  React.useEffect(() => {
-    const initial = getInitialEmail(location.search);
-    setEmailHint(initial);
-  }, [location.search]);
-
-  React.useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = window.setInterval(() => {
-      setResendCooldown((value) => Math.max(0, value - 1));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [resendCooldown]);
-
-  React.useEffect(() => {
-    if (!oobCode) return;
-    if (mode && mode !== "verifyEmail") {
-      setVerifyState("error");
-      setError("This link is not an email verification link.");
-      return;
-    }
-
-    let cancelled = false;
-    setVerifyState("verifying");
-    setError(null);
-
-    (async () => {
+  const currentOwner = useRef(user?.uid);
+  currentOwner.current = user?.uid;
+  const redirect = safeRedirect(location.search) ?? "/app";
+  const code = readOobCode(location.search);
+  const mode = readActionMode(location.search);
+  const [state, setState] = useState<VerifyState>("idle");
+  const [error, setError] = useState<string>();
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [resent, setResent] = useState(false);
+  const operation = useRef(0);
+  const resendOperation = useRef(0);
+  useEffect(() => () => { operation.current += 1; resendOperation.current += 1; }, []);
+  useEffect(() => { resendOperation.current += 1; setResending(false); setCooldown(0); setResent(false); }, [user?.uid]);
+  const failedDelivery = z.object({ delivery: z.enum(["sent", "failed"]) }).safeParse(location.state).data?.delivery === "failed";
+  const email = typeof user?.email === "string" ? user.email : new URLSearchParams(location.search).get("email")?.trim() ?? "";
+  useEffect(() => {
+    const token = ++operation.current;
+    setError(undefined);
+    if (!code) { setState("idle"); return; }
+    if (mode && mode !== "verifyEmail") { setState("error"); setError("This link is not an email verification link."); return; }
+    setState("verifying");
+    void (async (): Promise<void> => {
       try {
-        await getAuthRepository().verifyEmailWithCode(oobCode);
-        try {
-          await getAuthRepository().refreshCurrentUser();
-        } catch {
-          // ignore refresh failures; verification already succeeded
-        }
-        if (cancelled) return;
-        setVerifyState("verified");
-        toast.success("Email verified.");
-      } catch (err) {
-        if (cancelled) return;
-        setVerifyState("error");
-        setError(authErrorCopy(err, "verifyEmail"));
-        toast.error("Email verification failed.");
-      }
+        await getAuthRepository().verifyEmailWithCode(code);
+        try { await getAuthRepository().refreshCurrentUser(); } catch { /* Applying the code succeeded independently of the session refresh. */ }
+        if (token === operation.current) setState("verified");
+      } catch (err) { if (token === operation.current) { setState("error"); setError(authErrorCopy(err, "verifyEmail")); } }
     })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [mode, oobCode, toast]);
-
-  const continuePath = redirect ?? "/";
-  const continueLink = user
-    ? continuePath
-    : `/signin?redirect=${encodeURIComponent(continuePath)}`;
-
-  const userEmail = user && typeof user.email === "string" ? user.email : "";
-  const displayEmail = (userEmail || emailHint).trim();
-  const isEmailVerified =
-    user && typeof user.emailVerified === "boolean"
-      ? user.emailVerified
-      : false;
-
-  const handleResend = async (): Promise<void> => {
-    setError(null);
-    setIsResending(true);
-    try {
-      await getAuthRepository().sendVerificationEmail(redirect ?? undefined);
-      setDeliveryState("sent");
-      setResendCooldown(30);
-    } catch (err) {
-      setError(authErrorCopy(err, "resendVerification"));
-    } finally {
-      setIsResending(false);
-    }
+    return () => { operation.current += 1; };
+  }, [code, mode]);
+  useEffect(() => { if (cooldown <= 0) return; const id = window.setTimeout(() => setCooldown(value => Math.max(0, value - 1)), 1000); return () => window.clearTimeout(id); }, [cooldown]);
+  const resend = async (): Promise<void> => {
+    if (!user || resending || cooldown || state === "verifying") return;
+    const owner = user.uid;
+    const token = ++resendOperation.current;
+    setResending(true); setError(undefined);
+    try { await getAuthRepository().sendVerificationEmail(redirect, owner); if (token === resendOperation.current && owner === currentOwner.current) { setState("idle"); setResent(true); setCooldown(60); } }
+    catch (err) { if (token === resendOperation.current && owner === currentOwner.current) setError(authErrorCopy(err, "resendVerification")); }
+    finally { if (token === resendOperation.current && owner === currentOwner.current) setResending(false); }
   };
-
-  const handleContinue = (): void => {
-    if (user) {
-      navigate(continuePath, { replace: true });
-      return;
-    }
-    navigate(continueLink, { replace: true });
-  };
-
-  const showVerifiedPanel = verifyState === "verified" || isEmailVerified;
-  const showVerifyInProgress = verifyState === "verifying";
-  const showInlineError =
-    Boolean(error) && !showVerifiedPanel && !showVerifyInProgress;
-  const showDeliveryFailurePanel =
-    deliveryState === "failed" && !showVerifiedPanel;
-  const inlineErrorTitle =
-    verifyState === "error"
-      ? "Verification failed"
-      : "Could not send verification email";
-
-  const heading = showVerifiedPanel ? "Email verified" : "Verify your email";
-  const subhead = showVerifiedPanel
-    ? "You’re confirmed. Jump back into the app."
-    : showVerifyInProgress
-      ? "Applying your confirmation code. This should take a moment."
-      : showDeliveryFailurePanel
-        ? `Your account${displayEmail ? ` for ${displayEmail}` : ""} was created, but we couldn’t send the verification email yet. Try resending it from this page.`
-        : displayEmail
-          ? `We sent a verification link to ${displayEmail}. Click it to confirm.`
-          : "Open the verification email and click\nthe link to confirm.";
-
-  return (
-    <AuthModalCard
-      heading={heading}
-      headingIcon={<img src={authMail} alt="" />}
-      subhead={<span className="text-muted">{subhead}</span>}
-    >
-      <div className="flex flex-col gap-6">
-        {showInlineError ? (
-          <div
-            role="alert"
-            className="rounded-md border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui text-danger"
-          >
-            <p>{inlineErrorTitle}</p>
-            <p className="mt-1">{error}</p>
-          </div>
-        ) : null}
-        {showVerifyInProgress ? (
-          <div role="status" className="flex items-center gap-3 text-body">
-            <Spinner />
-            Verifying…
-          </div>
-        ) : null}
-        <Button
-          type="button"
-          onClick={handleContinue}
-          size="lg"
-          className="ps-auth-primary-action w-full font-normal"
-        >
-          {user ? "Continue" : "Sign in to continue"}
-        </Button>
-        {!showVerifiedPanel ? (
-          <div className="flex items-center gap-4">
-            <Button
-              type="button"
-              onClick={handleResend}
-              disabled={!user || isResending || resendCooldown > 0}
-              variant="secondary"
-              size="lg"
-              className="w-[176px] shrink-0 font-normal"
-            >
-              {isResending ? <Spinner /> : null}
-              {resendCooldown > 0
-                ? `Resend in ${resendCooldown}s`
-                : "Resend email"}
-            </Button>
-            {!user ? (
-              <p className="text-ui text-muted">
-                Sign in to resend
-                <br />a verification email.
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-        <Link
-          to={`/forgot-password${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
-          className="w-28 text-body hover:underline"
-        >
-          Password help
-        </Link>
-      </div>
-    </AuthModalCard>
-  );
+  const verified = state === "verified" || user?.emailVerified === true;
+  const continueTo = user ? redirect : `/signin?redirect=${encodeURIComponent(redirect)}`;
+  const expired = state === "error" && Boolean(error && /verification link (is invalid|has expired)/.test(error));
+  const heading = verified ? "Email verified" : state === "verifying" ? "Checking your link…" : expired ? "This link has expired" : state === "error" ? "This verification link is unavailable" : "Check your email";
+  const subhead = verified || state === "verifying" ? undefined : state === "error" ? "Request a new verification email for your account." : failedDelivery && !resent ? `Your account${email ? ` for ${email}` : ""} was created, but we couldn’t send the verification email yet. Try resending it from this page.` : resent ? `We sent a new link${email ? ` to ${email}` : ""}. Check your spam folder too.` : email ? `We sent a verification link to ${email}.` : "Open the verification email and follow the link to confirm.";
+  const icon = verified ? "check" : state === "verifying" ? "loader" : state === "error" ? "expired" : "mail";
+  return <AuthModalCard heading={heading} headingIcon={<img src={`/design-assets/fidelity-auth-${icon}.svg`} alt="" />} subhead={subhead} placement={!verified && state !== "error" && state !== "verifying" ? "verification" : "center"}>
+    {!verified && error && !(state === "error" && /verification link (is invalid|has expired)/.test(error)) ? <AuthNotice>{error}</AuthNotice> : null}
+    {state === "verifying" ? <span className="sr-only" role="status">Verifying…</span> : <div className="vf-auth-actions">{state === "error" && !verified ? <><FreshButton tone="primary" large disabled={!user || resending || cooldown > 0} onClick={() => { void resend(); }}>{resending ? "Sending…" : cooldown ? `Resend in ${cooldown}s` : "Send a new link"}</FreshButton><FreshButton asChild tone="quiet" large><Link to={`/signin?redirect=${encodeURIComponent(redirect)}`}>Back to sign in</Link></FreshButton></> : <><FreshButton tone="primary" large onClick={() => navigate(continueTo, { replace: true })}>{verified ? "Continue to Vidra" : user ? "Continue to workspace" : "Sign in to continue"}</FreshButton>
+    {!verified ? <><FreshButton tone="quiet" large disabled={!user || resending || cooldown > 0} onClick={() => { void resend(); }}>{resending ? "Sending…" : cooldown ? `Resend in ${cooldown}s` : "Resend verification"}</FreshButton>{!user ? <p className="vf-secondary">Sign in to resend a verification email.</p> : null}</> : null}</>}</div>}
+  </AuthModalCard>;
 }

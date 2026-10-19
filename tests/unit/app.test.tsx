@@ -3,6 +3,11 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 import App from "@/App";
+import { createAppRouter } from "@/router";
+import { transferableAbortController } from "node:util";
+
+const routers: ReturnType<typeof createAppRouter>[] = [];
+function renderApp(): void { const router = createAppRouter(); routers.push(router); render(<App router={router} />); }
 
 const { mockSetActiveTool } = vi.hoisted(() => ({
   mockSetActiveTool: vi.fn(),
@@ -44,7 +49,9 @@ vi.mock("@/components/layout/MainWorkspace", () => ({
   MainWorkspace: () => <div>MainWorkspace</div>,
 }));
 
-vi.mock("@/pages/HomePage", () => ({ HomePage: () => <div>HomePage</div> }));
+vi.mock("@/features/public-site/PublicPages", () => ({ LandingPage: () => <div>LandingPage</div>, ProductPage: () => <div>ProductPage</div>, PricingPage: () => <div>PricingPage</div> }));
+vi.mock("@/features/workflow-sharing/WorkflowSharePage", () => ({ WorkflowSharePage: () => <div>WorkflowSharePage</div> }));
+vi.mock("@/features/project-workspace/ProjectWorkspace", () => ({ default: () => <div>ProjectWorkspace</div> }));
 vi.mock("@/pages/ProductsPage", () => ({
   ProductsPage: () => <div>ProductsPage</div>,
 }));
@@ -86,9 +93,13 @@ vi.mock("@/pages/NotFoundPage", () => ({
 
 describe("App routes", () => {
   afterEach(() => {
+    routers.splice(0).forEach(router => router.dispose());
+    vi.unstubAllGlobals();
     vi.unstubAllEnvs();
   });
   beforeEach(() => {
+    // Node Request must receive a native signal rather than jsdom's AbortSignal.
+    vi.stubGlobal("AbortController", function NativeAbortController() { return transferableAbortController(); });
     mockSetActiveTool.mockClear();
     vi.stubEnv("VITE_FEATURE_BILLING_UI", "true");
     vi.stubEnv("VITE_FEATURE_CONTINUITY_UI", "true");
@@ -100,7 +111,7 @@ describe("App routes", () => {
   describe("error handling", () => {
     it("redirects /login to the sign-in page", async () => {
       window.history.pushState({}, "", "/login");
-      render(<App />);
+      renderApp();
 
       expect(await screen.findByText("SignInPage")).toBeInTheDocument();
     });
@@ -109,18 +120,21 @@ describe("App routes", () => {
   describe("edge cases", () => {
     it("renders the shared clip page for share routes", async () => {
       window.history.pushState({}, "", "/share/123");
-      render(<App />);
+      renderApp();
 
       expect(await screen.findByText("SharedClip")).toBeInTheDocument();
     });
   });
 
-  describe("core behavior", () => {
-    it("renders the main workspace on the root route", async () => {
-      window.history.pushState({}, "", "/");
-      render(<App />);
+  it("keeps new exact-version sharing separate from saved legacy links", async () => { window.history.pushState({}, "", "/share/media/123"); renderApp(); expect(await screen.findByText("WorkflowSharePage")).toBeInTheDocument(); });
+  it("opens project authoring at /app", async () => { window.history.pushState({}, "", "/app"); renderApp(); expect(await screen.findByText("ProjectWorkspace")).toBeInTheDocument(); });
 
-      expect(await screen.findByText("MainWorkspace")).toBeInTheDocument();
+  describe("core behavior", () => {
+    it("renders the retained public landing on the root route", async () => {
+      window.history.pushState({}, "", "/");
+      renderApp();
+
+      expect(await screen.findByText("LandingPage")).toBeInTheDocument();
     });
   });
 });

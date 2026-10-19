@@ -1,0 +1,10 @@
+.vf.vf-words-tools { position: fixed; z-index: 70; display: flex; width: 400px; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); flex-direction: column; align-items: stretch; gap: var(--vf-space-16); padding: var(--vf-space-16); overflow: auto; border: 0; border-radius: var(--vf-radius-panel); color: var(--vf-white); background: var(--vf-raised); box-shadow: inset 0 0 0 1px var(--vf-border); }
+.vf-words-tools .vf-words-tools-phrase { margin: 0; font-size: 17px; font-weight: 400; line-height: 26px; overflow-wrap: anywhere; }
+.vf-words-tools .vf-words-tools-label { margin: 0; color: var(--vf-secondary); font-size: 12px; font-weight: 500; line-height: 16px; letter-spacing: .01em; }
+.vf-words-tools-choices { display: flex; flex-wrap: wrap; gap: var(--vf-space-8); }
+.vf-words-tools .vf-words-tools-choice.vf-button { width: 168px; max-width: 100%; min-height: 32px; padding: var(--vf-space-6) var(--vf-space-12); }
+.vf-words-tools .vf-words-tools-choice:nth-child(2) { width: 152px; }
+.vf-words-tools .vf-words-tools-choice.vf-button::before { background: var(--vf-control); }
+.vf-words-tools-choice.vf-button > span { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vf-words-tools .vf-words-tools-alternatives.vf-button { width: 100%; min-height: 32px; color: var(--vf-secondary); }
+@media (width < 768px) { .vf-words-tools .vf-words-tools-choice.vf-button, .vf-words-tools .vf-words-tools-alternatives.vf-button { min-height: 44px; } }

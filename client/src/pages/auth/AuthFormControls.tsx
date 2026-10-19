@@ -1,11 +1,16 @@
-import React from "react";
+import type { ReactElement, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { Input } from "@promptstudio/system/components/ui/input";
-import authEye from "@/assets/design-system/auth-eye.svg";
 
-export const AUTH_INPUT_CLASS =
-  "h-12 rounded-md border-[0.5px] border-border-strong bg-input px-3 text-ui font-normal";
+export const AUTH_INPUT_CLASS = "vf-field";
+
+export function AuthFieldError({ id, children }: { id?: string; children: ReactNode }): ReactElement {
+  return <div id={id} className="vf-auth-error" role="alert"><img src="/design-assets/auth-field-alert.svg" alt="" />{children}</div>;
+}
+
+export function AuthNotice({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "success" }): ReactElement {
+  return <div className="vf-auth-notice" data-tone={tone} role={tone === "error" ? "alert" : "status"}><span className="vf-auth-notice-icon" aria-hidden="true"><img src={tone === "error" ? "/design-assets/fidelity-auth-alert.svg" : "/design-assets/fidelity-auth-success.svg"} alt="" /></span><span>{children}</span></div>;
+}
 
 interface AuthPasswordFieldProps {
   id: string;
@@ -17,77 +22,13 @@ interface AuthPasswordFieldProps {
   disabled?: boolean;
   autoComplete: "current-password" | "new-password";
   placeholder: string;
+  labelAside?: ReactNode;
+  error?: string | undefined;
 }
 
-export function AuthPasswordField({
-  id,
-  label,
-  value,
-  onChange,
-  visible,
-  onToggle,
-  disabled,
-  autoComplete,
-  placeholder,
-}: AuthPasswordFieldProps): React.ReactElement {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-2 block text-ui font-normal">
-        {label}
-      </label>
-      <div className="relative">
-        <Input
-          id={id}
-          className={`${AUTH_INPUT_CLASS} pr-12`}
-          type={visible ? "text" : "password"}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          autoComplete={autoComplete}
-          placeholder={placeholder}
-          disabled={disabled}
-        />
-        <Button
-          type="button"
-          onClick={onToggle}
-          variant="ghost"
-          size="icon-lg"
-          className="absolute right-0 top-0 rounded-md"
-          disabled={disabled}
-          aria-label={visible ? "Hide password" : "Show password"}
-          aria-pressed={visible}
-        >
-          <img src={authEye} alt="" />
-        </Button>
-      </div>
-    </div>
-  );
+export function AuthPasswordField({ id, label, value, onChange, visible, onToggle, disabled, autoComplete, placeholder, labelAside, error }: AuthPasswordFieldProps): ReactElement {
+  return <div className="vf-auth-field"><div className="vf-auth-label"><label htmlFor={id}>{label}</label>{labelAside}</div><div className="vf-auth-password"><input id={id} className={AUTH_INPUT_CLASS} type={visible ? "text" : "password"} value={value} onChange={event => onChange(event.target.value)} autoComplete={autoComplete} placeholder={placeholder} disabled={disabled} aria-invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined} /><Button variant="ghost" type="button" onClick={onToggle} disabled={disabled} aria-label={visible ? "Hide password" : "Show password"} aria-pressed={visible}>{visible ? "Hide" : "Show"}</Button></div>{error ? <AuthFieldError id={`${id}-error`}>{error}</AuthFieldError> : null}</div>;
 }
 
-// Native copy paints at 703:301951/301967/301970 are opaque white,
-// despite their secondary-text aliases resolving to 70 percent white.
-export function AuthEmailAlternative(): React.ReactElement {
-  return (
-    <div className="flex h-5 items-center gap-3 text-ui font-normal text-foreground">
-      <span className="h-px flex-1 bg-border" />
-      <span className="w-4 text-center">or</span>
-      <span className="h-px flex-1 bg-border" />
-    </div>
-  );
-}
-
-export function AuthLegalLinks(): React.ReactElement {
-  return (
-    <div className="flex flex-col gap-2 text-center text-ui font-normal">
-      <p className="text-foreground">By continuing, you agree to our</p>
-      <div className="flex items-center justify-center gap-4">
-        <Link to="/terms-of-service" className="hover:underline">
-          Terms
-        </Link>
-        <span className="text-foreground">and</span>
-        <Link to="/privacy-policy" className="hover:underline">
-          Privacy Policy
-        </Link>
-      </div>
-    </div>
-  );
-}
+export function AuthEmailAlternative(): ReactElement { return <div className="vf-auth-email-alternative"><span /><span>or</span><span /></div>; }
+export function AuthLegalLinks(): ReactElement { return <p className="vf-auth-consent">By continuing, you agree to the <Link to="/terms-of-service">Terms of service</Link> and <Link to="/privacy-policy">Privacy policy</Link>.</p>; }
