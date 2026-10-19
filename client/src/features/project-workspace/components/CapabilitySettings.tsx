@@ -4,7 +4,8 @@ import { FreshButton, FreshIcon } from "@/components/fresh/FreshButton";
 import type { CapabilityProfile, ParameterPolicy, ParameterValue } from "@shared/schemas/workflow/capability.schemas";
 import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { allowedParameterValues, capabilityProblems, derivedParameter, modelCapabilityDescription, modelCreationFeedback, parameterDescription, preModelParameterChoices, visibleParameters, visibleSavedParameters, parameterLabel, parameterName, type PreModelParameterChoices } from "../state/capabilitySettings";
+import { allowedParameterValues, capabilityProblems, derivedParameter, modelCapabilityDescription, modelCreationFeedback, parameterDescription, preModelParameterChoices, visibleSavedParameters, parameterLabel, parameterName, settingEntries, settingOptions, settingRole, type PreModelParameterChoices, type SettingOption } from "../state/capabilitySettings";
+import { withConstraints } from "../state/profileSettings";
 import { FrameSettings } from "./FrameSettings";
 import type { CapabilityLookupStatus } from "./ModelCreationArea";
 import "./model-creation-fidelity.css";
@@ -15,7 +16,7 @@ interface SettingProps {
   value: ParameterValue | undefined;
   policy: Extract<ParameterPolicy, { policy: "editable" }>;
   profile?: CapabilityProfile;
-  options?: ParameterValue[];
+  options?: SettingOption[];
   presentation: Presentation;
   disabled: boolean;
   onChange(value: ParameterValue): void;
@@ -28,13 +29,19 @@ function Setting({ name, value, policy, profile, options, presentation, disabled
   if (presentation === "model" && /audio|sound/i.test(name) && policy.domain.kind === "enum" && policy.domain.values.every(option => typeof option === "boolean") && typeof value === "boolean") {
     return <FreshButton className="vf-setting-chip" aria-label={`Sound: ${value ? "on" : "off"}`} aria-pressed={value} disabled={disabled} onClick={() => onChange(!value)}><SettingIcon name={name} />{value ? "Sound" : "Sound off"}</FreshButton>;
   }
-  const values = options ?? (policy.domain.kind === "enum" ? policy.domain.values : []);
+  const values = options ?? (policy.domain.kind === "enum" ? policy.domain.values.map(value => ({ value, enabled: true })) : []);
   return <SettingsMenu title={label} open={open} onOpenChange={setOpen} className={presentation === "model" ? "vf-model-setting-menu" : name === "outputCount" ? "vf-count-setting-menu" : ""} trigger={<FreshButton className={`vf-setting-chip${name === "outputCount" ? " vf-output-count" : ""}`} disabled={disabled} aria-label={`${label}: ${value === undefined ? "Choose" : displayValue(value)}`}><SettingIcon name={name} {...(profile ? { outputKind: profile.output.kind } : {})} />{value === undefined ? label : displayValue(value)}<FreshIcon name="down" /></FreshButton>}>
-    {policy.domain.kind === "enum" ? <div className="vf-setting-options" role="group" aria-label={label}>{values.map((option, index) => {
-      const description = presentation === "model" && profile ? parameterDescription(profile, name, option) : undefined;
-      return <FreshButton tone="quiet" className="vf-setting-option" key={`${index}:${String(option)}`} {...(description ? { "aria-label": `${displayValue(option)} ${description}` } : {})} aria-pressed={value === option} onClick={() => { onChange(option); setOpen(false); }}><span className="vf-model-setting-copy"><span>{displayValue(option)}</span>{description ? <small>{description}</small> : null}</span>{value === option ? <FreshIcon name="check" /> : null}</FreshButton>;
+    {policy.domain.kind === "enum" ? <div className="vf-setting-options" role="group" aria-label={label}>{values.map(({ value: option, enabled }, index) => {
+      const description = presentation === "model" && profile && (enabled || settingRole(name) === "shape") ? parameterDescription(profile, name, option) : undefined;
+      return <FreshButton tone="quiet" className="vf-setting-option" key={`${index}:${String(option)}`} {...(description ? { "aria-label": `${displayValue(option)} ${description}` } : {})} aria-pressed={value === option} disabled={!enabled} onClick={() => { if (!enabled) return; onChange(option); setOpen(false); }}><span className="vf-model-setting-copy"><span>{displayValue(option)}</span>{description ? <small>{description}</small> : null}</span>{value === option ? <FreshIcon name="check" /> : null}</FreshButton>;
     })}</div> : <label className="vf-range-setting"><span>{value === undefined ? "Choose a value" : displayValue(value)}</span><input aria-label={label} type="range" min={policy.domain.min} max={policy.domain.max} step={policy.domain.step} value={typeof value === "number" ? value : policy.domain.min} onChange={event => onChange(Number(event.target.value))} /><span>{policy.domain.min}–{policy.domain.max}</span></label>}
   </SettingsMenu>;
+}
+
+/** A creation choice this model cannot use keeps its place, greyed, and does not open. */
+function UnavailableSetting({ name }: { name: string }): ReactElement {
+  const label = parameterName(name);
+  return <FreshButton className="vf-setting-chip" disabled aria-label={label}><SettingIcon name={name} />{label}</FreshButton>;
 }
 
 function PreModelRange({ name, range, disabled, onChoose }: { name: string; range: PreModelParameterChoices["ranges"][number]; disabled: boolean; onChoose(value: number): void }): ReactElement {
@@ -94,12 +101,12 @@ export function CapabilitySettings({ profiles, content, media, disabled, onProfi
       {!candidates.some(candidate => candidate.label.toLocaleLowerCase().includes(query.toLocaleLowerCase())) ? <p className="vf-setting-warning">{query ? "No matching models" : "No model is available for this action."}</p> : null}
     </SettingsMenu>
     {!ready ? lookupStatus === "loading" ? <span className="vf-setting-chip vf-setting-readonly vf-model-loading" role="status"><img src="/design-assets/fidelity-model-loading.svg" alt="" />Checking settings…</span> : null : profile ? <>
-      {visibleParameters(profile).map(([name, policy]) => {
-        if (policy.policy === "unsupported" || policy.policy === "unknown" || (/audio|sound/i.test(name) && profile.generatedAudio === "unsupported")) return null;
+      {settingEntries(profile).map(([name, policy]) => {
+        if (!policy || policy.policy === "unsupported" || policy.policy === "unknown" || (settingRole(name) === "sound" && profile.generatedAudio === "unsupported")) return <UnavailableSetting key={name} name={name} />;
         const value = content.settings.parameters[name];
         const allowed = allowedParameterValues(profile, content, name);
         const constrained = presentation === "model" && policy.policy === "editable" && policy.domain.kind === "enum" && policy.domain.values.length > 1 && allowed?.length === 1 && value === allowed[0];
-        if (policy.policy === "editable" && !constrained) return <Setting key={name} name={name} value={value} policy={policy} profile={profile} {...(allowed ? { options: allowed } : {})} presentation={presentation} disabled={disabled} onChange={next => onChange({ ...content, settings: { ...content.settings, parameters: { ...content.settings.parameters, [name]: next } } })} />;
+        if (policy.policy === "editable" && !constrained) return <Setting key={name} name={name} value={value} policy={policy} profile={profile} {...(policy.policy === "editable" && policy.domain.kind === "enum" ? { options: settingOptions(profile, candidates, content, name) ?? [] } : {})} presentation={presentation} disabled={disabled} onChange={next => onChange({ ...content, settings: { ...content.settings, parameters: withConstraints(profile, { ...content.settings.parameters, [name]: next }) } })} />;
         const followsInput = policy.policy === "derived" || (policy.policy === "fixed" && policy.value === "match_input_image");
         let display = constrained && value !== undefined ? parameterValue(name, value) : policy.policy === "fixed" ? parameterValue(name, policy.value) : policy.policy === "derived" ? derivedParameter(policy, content, media) : "";
         if (policy.policy === "fixed" && policy.value === "match_input_image") display = derivedParameter({ policy: "derived", from: "input-aspect" }, content, media);

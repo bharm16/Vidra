@@ -246,15 +246,6 @@ export function registerCoreServices(container: DIContainer): void {
         geminiBaseUrl: process.env.GEMINI_BASE_URL,
       },
     },
-    capabilities: {
-      probeUrl: process.env.CAPABILITIES_PROBE_URL,
-      probePath: process.env.CAPABILITIES_PROBE_PATH,
-      probeRefreshMs: resolvePositiveNumber(
-        process.env.CAPABILITIES_PROBE_REFRESH_MS,
-        6 * 60 * 60 * 1000,
-        1,
-      ),
-    },
     promptOptimization: {
       shotPlanCacheTtlMs: resolvePositiveNumber(
         process.env.SHOT_PLAN_CACHE_TTL_MS,

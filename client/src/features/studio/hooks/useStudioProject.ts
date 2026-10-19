@@ -13,7 +13,6 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   createStudioProject,
-  fetchUnresolvedStudioReturns,
   getStudioModels,
   getStudioProject,
   getStudioTurn,
@@ -21,14 +20,7 @@ import {
   runStudioTurn,
   updateStudioProject,
   uploadStudioAttachment,
-  returnStudioImageToSession,
-  type UseInSessionOutcome,
 } from "../api/studioApi";
-import {
-  retryFirstFrameArming,
-  retryPictureAttachment,
-} from "@/features/generations/api/takeAttachment";
-import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type { StudioProject, StudioTurn } from "../api/schemas";
 import {
   initialStudioState,
@@ -68,41 +60,6 @@ export interface UseStudioProjectReturn {
   /** S-12: upload + stage a reference image on the composer. */
   attachFile: (file: File) => Promise<void>;
   removeAttachment: (attachmentId: string) => void;
-  /**
-   * "Use this in the session" (ADR-0022 decision 4): send the selected image
-   * back to the session as a picture take, armed as its first frame.
-   *
-   * The outcome is RETURNED rather than dispatched, because one of its three
-   * shapes is a question for the creator — a gone origin session offers them
-   * the choice of starting a new one — and a question does not belong in the
-   * error band. Only the flat failure is dispatched, where every other
-   * request failure already lands.
-   */
-  returnImageToSession: (options?: {
-    onMissingOriginSession?: "new-session";
-    confirmedWords?: string;
-  }) => Promise<UseInSessionOutcome>;
-  /**
-   * Retry one made-but-not-saved return (ADR-0022 decision 6, issue #135):
-   * re-send the take's own record under the same identity. No re-upload, no
-   * second admission, no generation — the de-duplicating session append makes
-   * it land on the one take. Resolves ok when the take is in its session; the
-   * unresolved list is then corrected for the project it was retried under.
-   */
-  retryReturnAttachment: (
-    imageId: string | null,
-    attachment: TakeAttachment,
-  ) => Promise<{ ok: boolean; message?: string }>;
-  /**
-   * Arm a returned take as its session's first frame through the arm door
-   * (issue #136): the take is named by the identity admission minted for it,
-   * and the server reads its record and durable handle from the session it is
-   * already in. No re-upload, no re-admission, no second take.
-   */
-  retryReturnArming: (
-    sessionId: string,
-    generationId: string,
-  ) => Promise<{ ok: boolean; message?: string }>;
 }
 
 function describeError(error: unknown): string {
@@ -153,8 +110,7 @@ export function useStudioProject(
   // refs for the same reason projectIdRef is: the press and the POST are
   // separated by a round trip (and possibly a sign-in), so what travels must be
   // what the creator saw when they pressed send — not whatever a re-render or
-  // another tab left on the record (#115). returnImageToSession reads the
-  // selection ref too.
+  // another tab left on the record (#115).
   const selectedImageIdRef = useRef<string | null>(null);
   selectedImageIdRef.current = state.selectedImageId;
   const pinnedModelRef = useRef<string | null>(null);
@@ -220,21 +176,6 @@ export function useStudioProject(
           return;
         }
         dispatch({ type: "requestFailed", error: describeError(error) });
-      }
-      // Recovery after refresh (ADR-0022 decision 6, issue #135): ask the
-      // server's receipts whether a return from THIS project is still owed
-      // its session row. Fired only once the open has settled — a snapshot
-      // that raced the open would be wiped by projectOpened's project-scope
-      // reset — and best-effort: a recovery read that fails must never cost
-      // the workspace its open; it only stays silent (the retry door also
-      // exists on every re-press, which replays to the same take).
-      try {
-        const returns = await fetchUnresolvedStudioReturns(routeProjectId);
-        if (cancelled) return;
-        dispatch({ type: "unresolvedReturnsLoaded", returns });
-      } catch {
-        // No recovery surface is not a workspace failure; nothing is invented
-        // in its place.
       }
     })();
     return () => {
@@ -402,102 +343,6 @@ export function useStudioProject(
     dispatch({ type: "attachmentUnstaged", attachmentId });
   }, []);
 
-  const returnImageToSession = useCallback(
-    async (options?: {
-      onMissingOriginSession?: "new-session";
-      confirmedWords?: string;
-    }): Promise<UseInSessionOutcome> => {
-      const projectId = projectIdRef.current;
-      const imageId = selectedImageIdRef.current;
-      if (!projectId || !imageId) {
-        return { state: "error", message: "Select an image first" };
-      }
-      // The attempt (issue #129): the pressed project and the pressed image,
-      // captured once, before the request. The server treats a re-press of the
-      // same pair as one take — so this object is the whole replay story: the
-      // retry a creator presses after a lost or dropped response carries the
-      // SAME identity, never a second selection.
-      try {
-        const outcome = await returnStudioImageToSession(
-          projectId,
-          imageId,
-          options,
-        );
-        // Late-response discipline: a settle after the creator opened another
-        // project belongs to the project it was pressed under. It is returned
-        // to the caller — who may still be waiting — but never dispatched into
-        // the newly-opened project's error band.
-        if (!isCurrentProject(projectId)) return outcome;
-        if (outcome.state === "error") {
-          dispatch({ type: "requestFailed", error: outcome.message });
-        }
-        return outcome;
-      } catch (error) {
-        const message = describeError(error);
-        if (!isCurrentProject(projectId)) {
-          return { state: "error", message };
-        }
-        dispatch({ type: "requestFailed", error: message });
-        return { state: "error", message };
-      }
-    },
-    [isCurrentProject],
-  );
-
-  /**
-   * The retry half of the attachment boundary (issue #135). The record rides
-   * the attachment — the server's own, never rebuilt client-side — so the
-   * retry cannot attach a take the server did not admit, and a retry of an
-   * attachment that actually landed is a no-op rather than a second copy.
-   * Late discipline (#129): the cleared flag is dispatched only to the
-   * project the retry was pressed under.
-   */
-  const retryReturnAttachment = useCallback(
-    async (
-      imageId: string | null,
-      attachment: TakeAttachment,
-    ): Promise<{ ok: boolean; message?: string }> => {
-      const projectId = projectIdRef.current;
-      try {
-        await retryPictureAttachment(attachment);
-        if (
-          imageId !== null &&
-          projectId &&
-          isCurrentProject(projectId)
-        ) {
-          dispatch({ type: "unresolvedReturnCleared", imageId });
-        }
-        return { ok: true };
-      } catch (error) {
-        return { ok: false, message: describeError(error) };
-      }
-    },
-    [isCurrentProject],
-  );
-
-  /**
-   * The arm half of the handoff (issue #136). The take rides by identity —
-   * the server's own record in the session it is already in — so this cannot
-   * re-admit, re-store media, or mint a second take. Late discipline (#129)
-   * is not needed here: the door addresses the session and take by identity,
-   * so a response landing after the creator opened another project still
-   * armed exactly the take it named.
-   */
-  const retryReturnArming = useCallback(
-    async (
-      sessionId: string,
-      generationId: string,
-    ): Promise<{ ok: boolean; message?: string }> => {
-      try {
-        await retryFirstFrameArming(sessionId, generationId);
-        return { ok: true };
-      } catch (error) {
-        return { ok: false, message: describeError(error) };
-      }
-    },
-    [],
-  );
-
   return {
     state,
     dispatch,
@@ -507,8 +352,5 @@ export function useStudioProject(
     selectImage,
     attachFile,
     removeAttachment,
-    returnImageToSession,
-    retryReturnAttachment,
-    retryReturnArming,
   };
 }

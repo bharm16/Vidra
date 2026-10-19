@@ -15,6 +15,46 @@ export function visibleParameters(profile: CapabilityProfile): [string, Paramete
   return orderedParameters(profile).filter(([name]) => ORDER.includes(name));
 }
 
+export type SettingRole = "shape" | "duration" | "resolution" | "sound";
+/** Models name the same creation choice differently; the role is what the composer shows. */
+export function settingRole(name: string): SettingRole | undefined {
+  if (/aspect|shape/i.test(name)) return "shape";
+  if (/duration/i.test(name)) return "duration";
+  if (/resolution/i.test(name)) return "resolution";
+  if (/audio|sound/i.test(name)) return "sound";
+  return undefined;
+}
+
+const CORE_SETTINGS: Record<CapabilityProfile["output"]["kind"], string[]> = { video: ["aspectRatio", "durationSeconds", "resolution", "sound"], image: ["aspectRatio"], text: [], file: [] };
+/** Core settings the model has no control for keep their place in the row, without a policy. */
+export function settingEntries(profile: CapabilityProfile): [string, ParameterPolicy | undefined][] {
+  const visible = visibleParameters(profile);
+  const missing = CORE_SETTINGS[profile.output.kind].filter(name => !visible.some(([key]) => settingRole(key) === settingRole(name)) && !(settingRole(name) === "sound" && profile.generatedAudio === "always"));
+  const rank = (name: string): number => ORDER.indexOf(name);
+  return [...visible, ...missing.map((name): [string, undefined] => [name, undefined])].sort(([a], [b]) => rank(a) - rank(b));
+}
+
+export interface SettingOption { value: ParameterValue; enabled: boolean; }
+/** Values other models of the action offer stay listed but unavailable, so a menu keeps its shape across models. */
+export function settingOptions(profile: CapabilityProfile, profiles: CapabilityProfile[], content: DraftContent, name: string): SettingOption[] | undefined {
+  const policy = profile.parameters[name];
+  if (policy?.policy !== "editable" || policy.domain.kind !== "enum") return undefined;
+  const allowed = allowedParameterValues(profile, content, name) ?? [];
+  const role = settingRole(name);
+  const values = [...policy.domain.values];
+  if (role && role !== "sound") {
+    for (const other of profiles) {
+      if (other.action !== profile.action) continue;
+      for (const [key, candidate] of Object.entries(other.parameters)) {
+        if (settingRole(key) !== role || candidate.policy !== "editable" || candidate.domain.kind !== "enum") continue;
+        for (const value of candidate.domain.values) if (!values.includes(value)) values.push(value);
+      }
+    }
+  }
+  if (values.every(value => typeof value === "number")) values.sort((a, b) => Number(a) - Number(b));
+  return values.map(value => ({ value, enabled: allowed.includes(value) }));
+}
+
 /** Saved choices remain readable while their model cannot be resolved. */
 export function visibleSavedParameters(parameters: DraftContent["settings"]["parameters"]): [string, ParameterValue][] {
   return Object.entries(parameters).filter(([name]) => ORDER.includes(name)).sort(([a], [b]) => ORDER.indexOf(a) - ORDER.indexOf(b));

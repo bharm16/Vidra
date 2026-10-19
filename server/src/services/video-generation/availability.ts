@@ -12,9 +12,6 @@ import {
   resolveProviderForModel,
 } from "./providers/ProviderRegistry";
 import { VIDEO_PROVIDER_CREDENTIALS } from "./providers/types";
-import { MANUAL_CAPABILITIES_REGISTRY } from "@services/capabilities/manualRegistry";
-import { getDynamicCapabilitiesRegistry } from "@services/capabilities/dynamicRegistry";
-import { resolveModelId as resolveCapabilityModelId } from "@services/capabilities/modelProviders";
 
 type LogSink = {
   warn: (message: string, meta?: Record<string, unknown>) => void;
@@ -27,11 +24,6 @@ const CANONICAL_VIDEO_MODEL_IDS = new Set<VideoModelId>(
 const isCanonicalVideoModelId = (modelId: string): modelId is VideoModelId =>
   CANONICAL_VIDEO_MODEL_IDS.has(modelId as VideoModelId);
 
-const withCapabilityModelId = (
-  capabilityModelId: string | null,
-): { capabilityModelId?: string } =>
-  capabilityModelId ? { capabilityModelId } : {};
-
 // Credential facts come from VIDEO_PROVIDER_CREDENTIALS. Two verbatim copies
 // of these strings used to live here and inside each provider closure, so the
 // error a caller saw could drift from the one the report explained.
@@ -40,58 +32,6 @@ const requiredKeyFor = (provider: keyof VideoProviderAvailability): string =>
 
 const missingMessageFor = (provider: keyof VideoProviderAvailability): string =>
   VIDEO_PROVIDER_CREDENTIALS[provider].missingMessage;
-
-export function getModelCapabilities(modelId: string): {
-  supportsImageInput: boolean;
-  supportsSeed: boolean;
-  supportsStyleReference: boolean;
-  supportsCharacterReference: boolean;
-  supportsExtendVideo: boolean;
-  capabilityModelId: string | null;
-} {
-  const resolvedCapabilityId = resolveCapabilityModelId(modelId);
-  const lookupId = resolvedCapabilityId ?? modelId;
-
-  const registries = [
-    getDynamicCapabilitiesRegistry(),
-    MANUAL_CAPABILITIES_REGISTRY,
-  ];
-  for (const registry of registries) {
-    for (const [, models] of Object.entries(registry)) {
-      for (const [id, schema] of Object.entries(models)) {
-        if (id === lookupId || schema.model === lookupId) {
-          return {
-            supportsImageInput: schema.fields?.image_input?.default === true,
-            supportsSeed: Boolean(schema.fields?.seed),
-            supportsStyleReference:
-              schema.fields?.style_reference?.default === true,
-            supportsCharacterReference:
-              schema.fields?.character_reference?.default === true,
-            supportsExtendVideo: schema.fields?.extend_video?.default === true,
-            capabilityModelId: id,
-          };
-        }
-      }
-    }
-  }
-
-  const i2vModels = [
-    "sora-2",
-    "sora-2-pro",
-    "luma-ray3",
-    "kling-26",
-    "wan-2.2",
-    "wan-2.5",
-  ];
-  return {
-    supportsImageInput: i2vModels.some((entry) => lookupId.includes(entry)),
-    supportsSeed: false,
-    supportsStyleReference: false,
-    supportsCharacterReference: false,
-    supportsExtendVideo: false,
-    capabilityModelId: resolvedCapabilityId ?? null,
-  };
-}
 
 export function getModelAvailability(
   model: string | null | undefined,
@@ -105,7 +45,6 @@ export function getModelAvailability(
       (model.trim().length === 0 || model.trim().toLowerCase() === "auto"));
   const autoModelId = isAuto ? resolveAutoModelId(providers) : null;
   const resolvedId = autoModelId || resolution.modelId;
-  const capabilityInfo = getModelCapabilities(resolvedId);
   const requestedId =
     typeof model === "string" && model.trim().length > 0
       ? model.trim()
@@ -119,7 +58,6 @@ export function getModelAvailability(
       reason: "missing_credentials",
       statusCode: 424,
       message: "No video generation providers are configured.",
-      supportsI2V: false,
       entitled: false,
       planTier: "unknown",
     };
@@ -140,7 +78,6 @@ export function getModelAvailability(
       reason: "unsupported_model",
       statusCode: 400,
       message: `Unknown video model: ${model}`,
-      supportsI2V: false,
       entitled: false,
       planTier: "unknown",
     };
@@ -153,9 +90,6 @@ export function getModelAvailability(
     id: model || resolvedId,
     requestedId,
     resolvedModelId: resolvedId,
-    ...withCapabilityModelId(capabilityInfo.capabilityModelId),
-    supportsImageInput: capabilityInfo.supportsImageInput,
-    supportsI2V: capabilityInfo.supportsImageInput,
   };
 
   if (!isReleaseGenerationModelSupported(resolvedId)) {
@@ -209,30 +143,22 @@ export function getAvailabilitySnapshot(
         id: modelId,
         available: false,
         reason: "unsupported_model" as const,
-        supportsI2V: false,
-        supportsImageInput: false,
         entitled: false,
         planTier: "unknown",
       };
     }
 
     const availability = getModelAvailability(canonicalModelId, providers, log);
-    const supportsI2V =
-      availability.supportsI2V ?? availability.supportsImageInput ?? false;
 
     return {
       id: canonicalModelId,
       available: availability.available,
-      supportsI2V,
       planTier: availability.planTier ?? "unknown",
       ...(availability.available
         ? {}
         : { reason: availability.reason ?? "unknown_availability" }),
       ...(availability.requiredKey
         ? { requiredKey: availability.requiredKey }
-        : {}),
-      ...(availability.supportsImageInput !== undefined
-        ? { supportsImageInput: availability.supportsImageInput }
         : {}),
       ...(availability.entitled !== undefined
         ? { entitled: availability.entitled }

@@ -1,5 +1,5 @@
 import type { PromptVersionEntry } from "@features/prompt-optimizer";
-import type { VideoTier } from "@features/generation-controls";
+import type { VideoTier } from "@features/generation-controls/types";
 import type { TimelineItem } from "@features/prompt-optimizer/types/domain/timeline";
 import type {
   Generation,

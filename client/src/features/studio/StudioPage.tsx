@@ -19,8 +19,7 @@ import {
   STUDIO_ORIGIN_GROUP_ID,
 } from "./components/StudioPlane";
 import { StudioThread } from "./components/StudioThread";
-import { UseInSessionAction } from "./components/UseInSessionAction";
-import { UnsavedReturnNotice } from "./components/UnsavedReturnNotice";
+import { UseInVideoAction } from "./components/UseInVideoAction";
 import { DownloadSelectedImage } from "./components/DownloadSelectedImage";
 import { useStudioProject } from "./hooks/useStudioProject";
 import { isTurnInFlight } from "./hooks/studioReducer";
@@ -99,7 +98,6 @@ export function StudioPage(): React.ReactElement {
         className="st-frame min-w-0 flex-1"
         data-has-images={Boolean(
           originImage ||
-            state.unresolvedReturns.length > 0 ||
             state.turns.some((turn) =>
               turn.calls.some(
                 (call) => call.status === "succeeded" && call.image,
@@ -111,32 +109,16 @@ export function StudioPage(): React.ReactElement {
           {/* Selection-scoped actions, right-anchored as a group. Both act on
               the project's selection, not on a cell — a control nested inside a
               plane cell would be a button inside a button. Download SVG appears
-              only when the selection is a vector (issue #118); the return door
-              is ADR-0022 decision 4. Unsaved returns are receipts the server
-              still owes (decision 6, issue #135), shown regardless of what is
-              selected so a reload cannot bury them. */}
+              only when the selection is a vector (issue #118); Use in a video
+              sends the selection to the /app library. */}
           <div className="st-selection-actions">
-            <UnsavedReturnNotice
-              returns={state.unresolvedReturns}
-              onRetry={studio.retryReturnAttachment}
-            />
             <DownloadSelectedImage
               turns={state.turns}
               selectedImageId={state.selectedImageId}
             />
-            <UseInSessionAction
-              // The return attempt belongs to the project it was pressed under
-              // (issue #129): a response landing after the creator opened
-              // another project must not light up the new project's action
-              // bar. Keying by the route's project remounts the action with
-              // the project, so a late outcome has nowhere to render — and
-              // returning to the project offers the press again, which the
-              // server replays to the same take.
-              key={routeProjectId ?? "new"}
+            <UseInVideoAction
+              turns={state.turns}
               selectedImageId={state.selectedImageId}
-              onUse={studio.returnImageToSession}
-              onRetryAttachment={studio.retryReturnAttachment}
-              onRetryArming={studio.retryReturnArming}
             />
           </div>
         </div>

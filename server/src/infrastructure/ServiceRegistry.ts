@@ -26,7 +26,6 @@ import type { VideoGenerationService } from "@services/video-generation/VideoGen
 import type { VideoJobWorker } from "@services/video-generation/runtime/VideoJobWorker";
 import type { ProviderCircuitManager } from "@services/video-generation/runtime/ProviderCircuitManager";
 import type { VideoWorkerHeartbeatStore } from "@services/video-generation/runtime/VideoWorkerHeartbeatStore";
-import type { CapabilitiesProbeService } from "@services/capabilities/CapabilitiesProbeService";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
 import type { ImageAssetStore } from "@services/image-generation/storage";
@@ -62,7 +61,6 @@ export interface ServiceRegistry {
   // Generation (nullable — resolves to null when provider creds are absent)
   imageGenerationService: ImageGenerationService | null;
   videoGenerationService: VideoGenerationService | null;
-  capabilitiesProbeService: CapabilitiesProbeService | null;
 
   // Credits / billing
   legacyCreditRefunder: LegacyCreditRefundService;

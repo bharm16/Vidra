@@ -21,7 +21,6 @@ import { toError } from "@shared/utils/error";
 import type { DIContainer } from "./infrastructure/DIContainer.ts";
 import type { IPostHogClient } from "./infrastructure/PostHogClient.ts";
 import type { SpanLabelingCacheService } from "./services/cache/SpanLabelingCacheService.ts";
-import type { CapabilitiesProbeService } from "./services/capabilities/CapabilitiesProbeService.ts";
 import type { CreditRefundSweeper } from "./services/video-generation/refunds/CreditRefundSweeper.ts";
 import type { VideoJobWorker } from "./services/video-generation/runtime/VideoJobWorker.ts";
 import type { VideoAssetRetentionService } from "./services/video-generation/storage/VideoAssetRetentionService.ts";
@@ -130,11 +129,6 @@ export function stopAllPeriodicWorkers(container: DIContainer): void {
       "videoAssetRetentionService",
     );
   videoAssetRetentionService?.stop();
-
-  const capabilitiesProbe = resolveOptional<CapabilitiesProbeService | null>(
-    "capabilitiesProbeService",
-  );
-  capabilitiesProbe?.stop();
 }
 
 /**

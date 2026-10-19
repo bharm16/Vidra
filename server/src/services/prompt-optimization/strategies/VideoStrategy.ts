@@ -11,8 +11,8 @@ import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
 import { hashString } from "@utils/hash";
 import { getVideoTemplateBuilder } from "./video-templates/index";
 import { getVideoOptimizationSchema } from "@utils/provider/SchemaFactory";
-import type { CapabilityValues } from "@shared/capabilities";
 import type {
+  GenerationParams,
   LockedSpan,
   OptimizationRequest,
   ShotPlan,
@@ -223,7 +223,7 @@ export class VideoStrategy implements OptimizationStrategy {
     shotPlan: ShotPlan | null,
     lockedSpans: LockedSpan[],
     config: { maxTokens: number; temperature: number; timeout: number },
-    generationParams?: CapabilityValues | null,
+    generationParams?: GenerationParams | null,
     sourcePrompt?: string | null,
     signal?: AbortSignal,
   ): Promise<StructuredOptimizationArtifact> {
@@ -312,7 +312,7 @@ export class VideoStrategy implements OptimizationStrategy {
 
   private applyGenerationParams(
     parsed: VideoPromptStructuredResponse,
-    generationParams?: CapabilityValues | null,
+    generationParams?: GenerationParams | null,
   ): VideoPromptStructuredResponse {
     if (!generationParams) {
       return parsed;
@@ -481,7 +481,7 @@ ${JSON.stringify(options.originalJson, null, 2)}
 
   private buildStructuredArtifact(
     parsed: VideoPromptStructuredResponse,
-    generationParams: CapabilityValues | null | undefined,
+    generationParams: GenerationParams | null | undefined,
     sourcePrompt: string,
     flags: { fallbackUsed?: boolean; lintPassed?: boolean } = {},
   ): StructuredOptimizationArtifact {

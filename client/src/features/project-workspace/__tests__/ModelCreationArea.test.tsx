@@ -42,19 +42,19 @@ it("retries failed settings lookup while preserving the actual selected model an
   expect(content.instructions).toContain("Follow the runner");
 });
 
-it("filters coupled choices without silently changing the retained duration", () => {
+it("moves a coupled duration with its resolution and greys what a retained setup cannot use", () => {
   const initial = modelContent(veo); const change = vi.fn();
   const props = { profiles: [veo], media: [], disabled: false, onProfile: vi.fn(), onChange: change, presentation: "model" as const };
   const view = render(<CapabilitySettings {...props} content={initial} />);
   fireEvent.click(screen.getByRole("button", { name: "Resolution: 720p" }));
   fireEvent.click(screen.getByRole("button", { name: /^1080p 8 seconds required$/ }));
-  expect(change).toHaveBeenLastCalledWith({ ...initial, settings: { ...initial.settings, parameters: { ...initial.settings.parameters, resolution: "1080p" } } });
+  expect(change).toHaveBeenLastCalledWith({ ...initial, settings: { ...initial.settings, parameters: { ...initial.settings.parameters, resolution: "1080p", duration: 8 } } });
   const incompatible: DraftContent = { ...initial, settings: { ...initial.settings, parameters: { ...initial.settings.parameters, resolution: "1080p" } } };
   expect(allowedParameterValues(veo, incompatible, "duration")).toEqual([8]);
   expect(incompatible.settings.parameters.duration).toBe(4);
   view.rerender(<CapabilitySettings {...props} content={incompatible} />);
   fireEvent.click(screen.getByRole("button", { name: "Duration: 4s" }));
-  expect(screen.queryByRole("button", { name: "6s" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "6s" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "8s" }));
   const corrected: DraftContent = { ...incompatible, settings: { ...incompatible.settings, parameters: { ...incompatible.settings.parameters, duration: 8 } } };
   view.rerender(<CapabilitySettings {...props} content={corrected} />);

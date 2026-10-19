@@ -16,7 +16,7 @@ import {
   DEFAULT_INK,
   SNAPSHOT_SIZE,
 } from "./config/constants";
-import { useAcceptLiveOutput } from "./hooks/useAcceptLiveOutput";
+import { useSendPictureToLibrary } from "@/features/project-imports/hooks/useSendPictureToLibrary";
 import { useRealtimeSketch } from "./hooks/useRealtimeSketch";
 import type { SendSketchFrame } from "./api/falI2i";
 import "./live-editor.css";
@@ -47,9 +47,9 @@ export function LiveEditor({
 }: LiveEditorProps): React.ReactElement {
   const sketch = useRealtimeSketch(sendFrameFn ? { sendFrameFn } : undefined);
   const compact = useCompactViewport();
-  // The one door out of this plane (ADR-0022 decision 5). It exports; it
-  // never makes this editor remember anything — ADR-0017 stands.
-  const acceptance = useAcceptLiveOutput();
+  // The one door out of this plane: the picture on screen goes to the /app
+  // library. It never makes this editor remember anything — ADR-0017 stands.
+  const library = useSendPictureToLibrary();
   const [tool, setTool] = useState<SketchTool>("select");
   const [ink, setInk] = useState<string>(DEFAULT_INK);
   const [brushSize, setBrushSize] = useState<number>(DEFAULT_BRUSH_SIZE);
@@ -170,10 +170,8 @@ export function LiveEditor({
             updateSettings={sketch.updateSettings}
             rerollSeed={sketch.rerollSeed}
             liveOutput={sketch.state.liveOutput}
-            onUseThis={acceptance.accept}
-            acceptance={acceptance.status}
-            onRetryAttachment={acceptance.retryAttachment}
-            onRetryArming={acceptance.retryArming}
+            onUseThis={(output) => void library.send(output.imageUrl, `live-${output.requestId}`)}
+            sending={library.status}
             strengthPopoverOpen={openPopover === "strength"}
             onToggleStrengthPopover={() =>
               setOpenPopover((open) =>

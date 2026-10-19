@@ -72,7 +72,7 @@ The October 14 critique remediation unifies the current interface color roles un
 
 The project/conversation/draft workspace now implements retained creation, phrase editing, history/versions, imports, Media, Sketch, video editing/export, sharing, management, auth/account and public/help families. Owner checks, revisioned draft writes, immutable accepted requests, resumable imports and native export have local integration/browser evidence. Exact visual reconciliation remains open; the dated source-state evidence below distinguishes direct component/route renders from unresolved source differences and external qualification.
 
-Legacy session and Studio/Sketch workflows remain available. Their historical picture-before-video path is not the new project workspace's creation contract. New project requests dispatch the selected qualified action directly, with explicit input roles and immutable settings/destination capture.
+The legacy `/session` workspace was retired on 2026-10-19. `/session/*`, `/prompt/:uuid` and the sessions Library at `/history` redirect to `/app`; stored sessions are neither migrated nor deleted. Studio and the Live editor remain available. Studio's **Use in a video** and the Live editor's **Use this** upload the selected picture into the owner's library and open it in `/app` as a saved import, where **Use as input** starts the next request. New project requests dispatch the selected qualified action directly, with explicit input roles and immutable settings/destination capture.
 
 Finished-video assembly, trimming, caption/audio editing and immutable FFmpeg export are implemented. Area drawing is implemented but generation remains disabled without qualified adapters. Native text requires a reviewed cost policy, and unsupported model modes fail closed. Live provider quality, sender delivery and production deployment remain external acceptance boundaries.
 
@@ -85,18 +85,38 @@ Testing remains free under [ADR-0023](docs/adr/0023-bounded-free-validation-prop
 | Span labeling           | Categorizes phrases for semantic highlights without rewriting.                                           |
 | Enhancement/suggestions | Alternatives for a selected phrase, applied through an explicit edit.                                    |
 | Optimization            | Structured rewriting and model-specific compilation, finished by intent validation and prompt lint.      |
-| Session                 | Persisted authoring work: words versions and takes with destination/ancestry.                            |
+| Session                 | Stored authoring work from the retired `/session` workspace; readable, but no screen opens it.           |
 | Working words           | Current editable direction/settings. Browsing preserves them.                                            |
 | Take                    | Durable artifact with a server-assigned id: an admission id for pictures, the accepted job id for clips. |
 | Associated words        | Words version named at admission. Explicit **Reuse setup** restores setup.                               |
 | Production provenance   | Known inputs/instructions that made the artifact. Unknown upload provenance stays unknown.               |
 | Origin                  | Closed admission set: generated, upload, sketchpad, studio.                                              |
-| Space                   | Session media in chronological dispatch rows, with ancestry persisted.                                   |
 | Draft/render tier       | Model cost/quality choice, not lifecycle. Generated takes are persisted.                                 |
-| Studio project          | Standalone persisted conversation/images with explicit one-image handoffs.                               |
-| Sketchpad/live output   | Drawing surface and ephemeral generated image; **Use this** admits the exact displayed output.           |
+| Studio project          | Standalone persisted conversation/images; **Use in a video** sends one picture to the `/app` library.    |
+| Sketchpad/live output   | Drawing surface and ephemeral generated image; **Use this** sends the displayed output to the library.   |
 
 `/api/preview` remains a compatibility URL prefix. Say picture, clip or take for artifacts.
+
+## Capability settings — 2026-10-19
+
+There is one capability system: the workflow capability profiles in `shared/schemas/workflow/capability.schemas.ts`, offered by `server/src/services/creation-requests/preparation/WorkflowCapabilityCatalog.ts`. Each profile states its parameters as editable, fixed, derived, unsupported or unknown, plus input roles, generated sound and cross-setting constraints. The composer reads only these, so a new model needs only a profile. The legacy capability registry, `/api/capabilities` (with `/models`, `/providers` and `/registry`), its probe service and `sync:capabilities` were deleted with the `/session` workspace.
+
+The composer keeps one chip row across models. A core video setting (shape, duration, resolution, sound) or picture shape that the selected model cannot use stays in place as a greyed chip with no chevron and does not open. A menu lists the values other models of the same action offer; the ones this model or its active constraints cannot use are greyed and cannot be chosen. No text explains why. Parameters are matched to these roles by name, because models name them differently. Choosing another model keeps the values it can use, moves the rest to its nearest offer (by number for seconds and resolutions, otherwise its default) and drops settings it does not have. Choosing a value that constrains another setting moves that setting too (1080p moves duration to 8s). A restored setup is not rewritten; an incompatibility there stays visible, and the red Invalid outline is kept only for a restored model that is no longer offered.
+
+## Dormant capabilities — 2026-10-19
+
+These were kept when `/session` was retired. Each works against a live server path, but no screen reaches it yet. `client/src/features/dormant/` holds the client pieces.
+
+| Capability | Server | Client |
+| ---------- | ------ | ------ |
+| Expand your idea | `POST /api/optimize`, `POST /api/optimize-compile` and `server/src/services/prompt-optimization/` | `dormant/expand-idea/PromptOptimizationApi.ts` |
+| End frame | `POST /api/preview/video/generate` (`endImage`) and the video provider adapters | — |
+| Extend a clip | `POST /api/preview/video/generate` (`extendVideo`) and the video provider adapters | — |
+| Camera motion | `camera_motion_id` and `subject_motion` on `POST /api/preview/video/generate` (`video-generate/motion.ts`, `shared/cameraMotion.ts`) | `dormant/camera-motion/cameraDirection.ts` |
+| Compare takes | — | `dormant/compare/generationComparison.ts` |
+| Rename or delete a session | `PATCH`/`DELETE /api/sessions/:id` | `repositories/PromptRepository.ts` |
+
+The server routes the `/session` workspace used for handoffs and its first-frame loop (`/api/sketch/accept`, Studio `use-in-session`, `from-session-picture` and `unresolved-returns`, `/api/preview/upload/admit-reference`, `/api/preview/generate`) still run, with no client caller. The replay gate's cross-mode golden path still exercises them.
 
 ## State and recovery
 

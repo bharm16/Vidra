@@ -18,13 +18,11 @@ interface ModelUnavailableInput {
     resolvedModelId?: string;
   };
   availableModelIds: string[];
-  availableCapabilityModels: string[];
 }
 
 export const createModelUnavailableError = ({
   availability,
   availableModelIds,
-  availableCapabilityModels,
 }: ModelUnavailableInput): VideoErrorResult => {
   const statusCode = availability.statusCode || 503;
   const availabilityDetails = [
@@ -38,9 +36,6 @@ export const createModelUnavailableError = ({
       : []),
     ...(availableModelIds.length > 0
       ? [`Available models: ${availableModelIds.join(", ")}`]
-      : []),
-    ...(availableCapabilityModels.length > 0
-      ? [`Available capability models: ${availableCapabilityModels.join(", ")}`]
       : []),
   ].join(" | ");
 

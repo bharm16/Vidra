@@ -1,27 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  getCapabilitiesMock,
-  resolveModelIdMock,
-  resolveProviderForModelMock,
-  validateCapabilityValuesMock,
-  loggerMock,
-} = vi.hoisted(() => ({
-  getCapabilitiesMock: vi.fn(),
-  resolveModelIdMock: vi.fn(),
-  resolveProviderForModelMock: vi.fn(),
-  validateCapabilityValuesMock: vi.fn(),
-  loggerMock: {
-    warn: vi.fn(),
-  },
-}));
-
-vi.mock("@services/capabilities", () => ({
-  getCapabilities: getCapabilitiesMock,
-  resolveModelId: resolveModelIdMock,
-  resolveProviderForModel: resolveProviderForModelMock,
-  validateCapabilityValues: validateCapabilityValuesMock,
-}));
+const { loggerMock } = vi.hoisted(() => ({ loggerMock: { warn: vi.fn() } }));
 
 vi.mock("@infrastructure/Logger", () => ({
   logger: loggerMock,
@@ -31,35 +10,34 @@ import { normalizeGenerationParams } from "@routes/optimize/normalizeGenerationP
 
 describe("normalizeGenerationParams", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    resolveModelIdMock.mockReturnValue("sora-2");
-    resolveProviderForModelMock.mockReturnValue("openai");
-    getCapabilitiesMock.mockReturnValue({ id: "schema" });
-    validateCapabilityValuesMock.mockReturnValue({
-      ok: true,
-      values: { fps: 24 },
-      errors: [],
-    });
+    loggerMock.warn.mockReset();
   });
 
-  it("returns a 400 error when no capability schema exists", () => {
-    getCapabilitiesMock.mockReturnValue(null);
+  it("returns null when no settings object is supplied", () => {
+    for (const generationParams of [undefined, null, "16:9", ["16:9"]]) {
+      expect(normalizeGenerationParams({ generationParams, operation: "optimize", requestId: "req-1" })).toEqual({ normalizedGenerationParams: null });
+    }
+  });
 
+  it("keeps plain settings values unchanged", () => {
     const result = normalizeGenerationParams({
-      generationParams: { fps: 24 },
-      targetModel: "missing-model",
+      generationParams: { aspect_ratio: "9:16", duration_s: 6, resolution: "4k", seed: 42, audio: true },
+      targetModel: "veo-3",
       operation: "optimize",
-      requestId: "req-4",
+      requestId: "req-2",
     });
+    expect(result).toEqual({ normalizedGenerationParams: { aspect_ratio: "9:16", duration_s: 6, resolution: "4k", seed: 42, audio: true } });
+    expect(loggerMock.warn).not.toHaveBeenCalled();
+  });
 
-    expect(result).toEqual({
-      normalizedGenerationParams: null,
-      error: {
-        status: 400,
-        error: "Capabilities not found",
-        details: "No registry entry for openai/auto",
-      },
+  it("drops nested or non-finite values and says which", () => {
+    const result = normalizeGenerationParams({
+      generationParams: { aspect_ratio: "16:9", keyframes: [{ url: "x" }], fps: Number.NaN },
+      operation: "generateVideo",
+      requestId: "req-3",
+      userId: "user-1",
     });
-    expect(validateCapabilityValuesMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ normalizedGenerationParams: { aspect_ratio: "16:9" } });
+    expect(loggerMock.warn).toHaveBeenCalledWith("Dropped non-scalar generation parameters", expect.objectContaining({ dropped: ["keyframes", "fps"], requestId: "req-3" }));
   });
 });

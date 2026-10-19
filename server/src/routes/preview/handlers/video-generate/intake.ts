@@ -1,7 +1,6 @@
 import { VIDEO_MODELS } from "@config/modelConfig";
 import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
-import { resolveModelId as resolveCapabilityModelId } from "@services/capabilities/modelProviders";
 import type { ILogger } from "@interfaces/ILogger";
 import type { VideoModelId } from "@shared/videoModels";
 import type { VideoRequestPayload } from "@routes/preview/videoRequest";
@@ -108,16 +107,6 @@ export async function runVideoGenerateIntake(
         availableModelIds: snapshot.availableModelIds.filter(
           isReleaseGenerationModelSupported,
         ),
-        availableCapabilityModels: [
-          ...new Set(
-            snapshot.availableModelIds
-              .filter(isReleaseGenerationModelSupported)
-              .map(resolveCapabilityModelId)
-              .filter(
-                (id): id is string => typeof id === "string" && id.length > 0,
-              ),
-          ),
-        ],
       }),
     };
   }

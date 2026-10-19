@@ -4,7 +4,6 @@ import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { getAuth, getFirestore } from "@infrastructure/firebaseAdmin";
 import type { LLMClient } from "@clients/LLMClient";
-import type { CapabilitiesProbeService } from "@services/capabilities/CapabilitiesProbeService";
 import { getRuntimeFlags, resolveAllFlags } from "./feature-flags.ts";
 
 // ────────────────────────────────────────────────────────────────
@@ -262,19 +261,6 @@ async function initializeCommon(container: DIContainer): Promise<void> {
         total: llmClientsToWarm.length,
       });
     });
-  }
-
-  const capabilitiesProbe = container.resolve<CapabilitiesProbeService | null>(
-    "capabilitiesProbeService",
-  );
-  if (capabilitiesProbe) {
-    try {
-      capabilitiesProbe.start();
-    } catch (error) {
-      logger.warn("Capabilities probe failed to start", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
   }
 
   logger.info("All services initialized and validated successfully");

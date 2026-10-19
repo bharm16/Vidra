@@ -6,7 +6,7 @@
 // maps using three provider vocabularies, and nothing checked they agreed. The
 // divergences that produced are the reason this file exists:
 //
-//   - `runway` was a "provider" in the capability registry, the client model
+//   - `runway` was a "provider" in the old capability registry, the client model
 //     list, the style adapter and a full prompt-optimizer strategy — but no
 //     adapter can call it. Vidra could describe, price and optimize for a
 //     provider it had no way to invoke. That is now `generation: []`, a fact
@@ -14,8 +14,8 @@
 //   - `wan` was listed as a "provider"; it is a model family whose adapter is
 //     Replicate. `google` and `gemini` were two names for one relationship.
 //
-// Hence the split below: VENDOR is who makes the model (what the capability
-// registry buckets by), ADAPTER is which client code can dispatch to it.
+// Hence the split below: VENDOR is who makes the model, ADAPTER is which
+// client code can dispatch to it.
 // Conflating them is what let the drift hide.
 //
 // PURE by contract: data and total functions only — no Node APIs, no I/O.
@@ -27,11 +27,7 @@ import {
   type CanonicalPromptModelId,
 } from "./videoModels";
 
-/**
- * Who makes the model. These are the capability-registry buckets
- * (`server/src/services/capabilities/registry.generated.json`), minus the
- * `generic` catch-all which is not a vendor.
- */
+/** Who makes the model. */
 export const MODEL_VENDORS = [
   "openai",
   "google",
@@ -76,17 +72,8 @@ export interface ModelIdentity {
   canonicalId: CanonicalPromptModelId;
   vendor: ModelVendor;
   /**
-   * Every spelling the capability registry uses for this model. A list, not a
-   * single id: `wan-2.2` legitimately owns both `wan-2.2` and `wan-2.5`, and
-   * `sora-2` owns `sora-2-pro`. Legacy spellings (`veo-4`, `kling-26`) are
-   * load-bearing — several tests and a regression suite assert they resolve —
-   * so they are recorded here rather than removed.
-   */
-  capabilityIds: readonly string[];
-  /**
    * Callable generation variants, most-preferred first. EMPTY means the model
-   * is describable (it has prompt constraints, a capability schema and a
-   * prompt strategy) but has no adapter — it cannot be generated with.
+   * is describable (it has prompt constraints and a prompt strategy) but has no adapter — it cannot be generated with.
    */
   generation: readonly GenerationVariant[];
 }
@@ -101,20 +88,17 @@ export const MODEL_IDENTITIES: Record<CanonicalPromptModelId, ModelIdentity> = {
   "runway-gen45": {
     canonicalId: "runway-gen45",
     vendor: "runway",
-    capabilityIds: ["runway-gen45"],
     // No adapter exists. Describable, not callable — see the header note.
     generation: [],
   },
   "luma-ray3": {
     canonicalId: "luma-ray3",
     vendor: "luma",
-    capabilityIds: ["luma-ray3"],
     generation: [{ id: "luma-ray3", adapter: "luma", pricingKey: "luma-ray3" }],
   },
   "kling-2.1": {
     canonicalId: "kling-2.1",
     vendor: "kling",
-    capabilityIds: ["kling-2.1", "kling-26"],
     generation: [
       {
         id: "kling-v2-1-master",
@@ -126,7 +110,6 @@ export const MODEL_IDENTITIES: Record<CanonicalPromptModelId, ModelIdentity> = {
   "sora-2": {
     canonicalId: "sora-2",
     vendor: "openai",
-    capabilityIds: ["sora-2", "sora-2-pro"],
     generation: [
       { id: "sora-2", adapter: "openai", pricingKey: "sora-2" },
       { id: "sora-2-pro", adapter: "openai", pricingKey: "sora-2-pro" },
@@ -135,7 +118,6 @@ export const MODEL_IDENTITIES: Record<CanonicalPromptModelId, ModelIdentity> = {
   "veo-3": {
     canonicalId: "veo-3",
     vendor: "google",
-    capabilityIds: ["veo-3", "veo-4"],
     generation: [
       { id: "google/veo-3", adapter: "gemini", pricingKey: "google/veo-3" },
     ],
@@ -143,7 +125,6 @@ export const MODEL_IDENTITIES: Record<CanonicalPromptModelId, ModelIdentity> = {
   "wan-2.2": {
     canonicalId: "wan-2.2",
     vendor: "wan",
-    capabilityIds: ["wan-2.2", "wan-2.5"],
     generation: [
       REPLICATE("wan-video/wan-2.2-t2v-fast", "wan-2.2"),
       REPLICATE("wan-video/wan-2.2-i2v-fast", "wan-video/wan-2.2-i2v-fast"),
@@ -156,8 +137,8 @@ export const MODEL_IDENTITIES: Record<CanonicalPromptModelId, ModelIdentity> = {
 /**
  * Callable generation models with no prompt-side canonical model.
  *
- * They are dispatchable and priced, but carry no word-budget constraints,
- * capability schema or prompt strategy — so they cannot appear in
+ * They are dispatchable and priced, but carry no word-budget constraints
+ * or prompt strategy — so they cannot appear in
  * `MODEL_IDENTITIES`, whose key domain is the prompt vocabulary. Recording
  * them here is what lets the drift gate tell "unclaimed" apart from "missing".
  */
@@ -183,29 +164,11 @@ export const GENERATION_ID_TO_ADAPTER: Record<string, GenerationAdapter> =
     ].map((variant) => [variant.id, variant.adapter]),
   );
 
-/** Every capability-registry spelling → the canonical prompt model id. */
-export const CAPABILITY_ID_TO_CANONICAL: Record<
-  string,
-  CanonicalPromptModelId
-> = Object.fromEntries(
-  IDENTITY_LIST.flatMap((identity) =>
-    identity.capabilityIds.map((id) => [id, identity.canonicalId] as const),
-  ),
-);
-
-/** Canonical prompt model id → the vendor bucket the capability registry uses. */
+/** Canonical prompt model id → the vendor that makes it. */
 export const CANONICAL_TO_VENDOR: Record<CanonicalPromptModelId, ModelVendor> =
   Object.fromEntries(
     IDENTITY_LIST.map((identity) => [identity.canonicalId, identity.vendor]),
   ) as Record<CanonicalPromptModelId, ModelVendor>;
-
-/** Capability-registry spelling → vendor bucket. */
-export const CAPABILITY_ID_TO_VENDOR: Record<string, ModelVendor> =
-  Object.fromEntries(
-    IDENTITY_LIST.flatMap((identity) =>
-      identity.capabilityIds.map((id) => [id, identity.vendor] as const),
-    ),
-  );
 
 /**
  * Whether a canonical model can actually be generated with.

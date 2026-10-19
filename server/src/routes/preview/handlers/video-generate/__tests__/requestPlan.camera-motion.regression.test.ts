@@ -48,15 +48,13 @@ describe("regression: a camera choice adds nothing the creator cannot see", () =
 
     // The queued prompt is the creator's text verbatim — no motion prose
     // spliced in (ADR-0010's truth contract).
-    // Every entry here traces to something the creator set or the model's
-    // own capability defaults — nothing to the camera choice.
+    // Every entry here traces to something the creator set — nothing to the
+    // camera choice. Unset settings are left to the provider's own defaults.
     expect(result.value.options).toEqual({
       aspectRatio: "16:9",
       model: "wan-2.5",
       startImage: "https://example.com/frame.png",
       seconds: "5",
-      seed: 0,
-      size: "720p",
     });
   });
 });

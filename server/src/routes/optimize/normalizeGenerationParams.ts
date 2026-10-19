@@ -1,11 +1,5 @@
 import { logger } from "@infrastructure/Logger";
-import {
-  getCapabilities,
-  resolveModelId,
-  resolveProviderForModel,
-  validateCapabilityValues,
-} from "@services/capabilities";
-import type { CapabilityValues } from "@shared/capabilities";
+import type { GenerationParams } from "@services/prompt-optimization/types";
 
 interface NormalizeGenerationParamsInput {
   generationParams: unknown;
@@ -16,7 +10,7 @@ interface NormalizeGenerationParamsInput {
 }
 
 interface NormalizeGenerationParamsResult {
-  normalizedGenerationParams: CapabilityValues | null;
+  normalizedGenerationParams: GenerationParams | null;
   error?: {
     status: number;
     error: string;
@@ -24,6 +18,11 @@ interface NormalizeGenerationParamsResult {
   };
 }
 
+/**
+ * Keeps the plain settings values a request carries and drops anything else.
+ * Which values a model accepts is the provider adapter's call; the composer's
+ * capability profiles decide what a person can choose.
+ */
 export const normalizeGenerationParams = ({
   generationParams,
   targetModel,
@@ -31,43 +30,19 @@ export const normalizeGenerationParams = ({
   requestId,
   userId,
 }: NormalizeGenerationParamsInput): NormalizeGenerationParamsResult => {
-  if (!generationParams || typeof generationParams !== "object") {
+  if (!generationParams || typeof generationParams !== "object" || Array.isArray(generationParams)) {
     return { normalizedGenerationParams: null };
   }
 
-  const resolvedModel = resolveModelId(targetModel);
-  const provider = resolveProviderForModel(resolvedModel) || "generic";
-  const model =
-    resolvedModel && getCapabilities(provider, resolvedModel)
-      ? resolvedModel
-      : "auto";
-  const schema = getCapabilities(provider, model);
-  if (!schema) {
-    return {
-      normalizedGenerationParams: null,
-      error: {
-        status: 400,
-        error: "Capabilities not found",
-        details: `No registry entry for ${provider}/${model}`,
-      },
-    };
+  const normalized: GenerationParams = {};
+  const dropped: string[] = [];
+  for (const [key, value] of Object.entries(generationParams)) {
+    if (typeof value === "string" || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value))) normalized[key] = value;
+    else dropped.push(key);
+  }
+  if (dropped.length > 0) {
+    logger.warn("Dropped non-scalar generation parameters", { operation, requestId, userId, targetModel, dropped });
   }
 
-  const validation = validateCapabilityValues(
-    schema,
-    generationParams as CapabilityValues,
-  );
-  if (!validation.ok) {
-    logger.warn(
-      "Invalid generation parameters; falling back to sanitized defaults",
-      {
-        operation,
-        requestId,
-        userId,
-        errors: validation.errors,
-      },
-    );
-  }
-
-  return { normalizedGenerationParams: validation.values };
+  return { normalizedGenerationParams: normalized };
 };

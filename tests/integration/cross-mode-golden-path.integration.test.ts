@@ -17,7 +17,7 @@ import {
   CROSS_MODE_CAMERA_DIRECTION,
   CROSS_MODE_CAMERA_DIRECTION_2,
 } from "@scripts/replay/goldenScenarios";
-import { writeCameraDirection } from "@/features/workspace-shell/utils/cameraDirection";
+import { writeCameraDirection } from "@/features/dormant/camera-motion/cameraDirection";
 import { processVideoJob } from "@services/video-generation/runtime/processVideoJob";
 import { resumePendingAttachments } from "@services/video-generation/runtime/resumePendingAttachments";
 import type { SessionService } from "@services/sessions/SessionService";

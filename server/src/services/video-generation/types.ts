@@ -65,12 +65,9 @@ export interface VideoModelAvailability {
   reason?: "unsupported_model" | "missing_credentials" | "unknown_availability";
   requiredKey?: string;
   resolvedModelId?: VideoModelId;
-  capabilityModelId?: string;
   requestedId?: string;
   statusCode?: number;
   message?: string;
-  supportsImageInput?: boolean;
-  supportsI2V?: boolean;
   planTier?: string;
   entitled?: boolean;
 }
@@ -79,7 +76,6 @@ export interface VideoAvailabilityReport {
   providers: VideoProviderAvailability;
   models: VideoModelAvailability[];
   availableModels: string[];
-  availableCapabilityModels?: string[];
 }
 
 export interface VideoAvailabilitySnapshotModel {
@@ -87,8 +83,6 @@ export interface VideoAvailabilitySnapshotModel {
   available: boolean;
   reason?: VideoModelAvailability["reason"];
   requiredKey?: string;
-  supportsI2V?: boolean;
-  supportsImageInput?: boolean;
   planTier?: string;
   entitled?: boolean;
 }

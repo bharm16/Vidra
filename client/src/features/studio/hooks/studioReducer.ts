@@ -10,7 +10,6 @@ import type {
   StudioModelSlug,
   StudioProject,
   StudioTurn,
-  StudioUnresolvedReturn,
 } from "../api/schemas";
 
 export interface StudioState {
@@ -32,12 +31,6 @@ export interface StudioState {
   selectedImageId: string | null;
   /** S-12: uploaded-but-unsent reference images, staged in the composer. */
   pendingAttachments: StudioAttachment[];
-  /**
-   * Pictures of this project whose return to a session was made but not
-   * saved (ADR-0022 decision 6, issue #135) — discovered from server
-   * receipts when the project opens, cleared per take when a retry attaches.
-   */
-  unresolvedReturns: StudioUnresolvedReturn[];
   error: string | null;
   loading: boolean;
 }
@@ -51,7 +44,6 @@ type ProjectScopedState = Pick<
   | "streamingThinking"
   | "selectedImageId"
   | "pendingAttachments"
-  | "unresolvedReturns"
 >;
 
 /**
@@ -69,7 +61,6 @@ function emptyProjectScope(): ProjectScopedState {
     streamingThinking: null,
     selectedImageId: null,
     pendingAttachments: [],
-    unresolvedReturns: [],
   };
 }
 
@@ -140,15 +131,7 @@ export type StudioAction =
   | { type: "requestFailed"; error: string }
   | { type: "errorDismissed" }
   | { type: "imageSelected"; imageId: string | null }
-  | { type: "projectPatched"; project: StudioProject }
-  /**
-   * Recovery after refresh (issue #135): the server's receipt read for the
-   * opening project. Replaces the whole list — it is a snapshot of what the
-   * server still owes, not a delta.
-   */
-  | { type: "unresolvedReturnsLoaded"; returns: StudioUnresolvedReturn[] }
-  /** A retry attached one of them; the session now holds the take. */
-  | { type: "unresolvedReturnCleared"; imageId: string };
+  | { type: "projectPatched"; project: StudioProject };
 
 /** A polled turn replaces its thread entry; unknown ids append (defensive). */
 function mergeTurn(turns: StudioTurn[], turn: StudioTurn): StudioTurn[] {
@@ -253,15 +236,6 @@ export function studioReducer(
       return { ...state, selectedImageId: action.imageId };
     case "projectPatched":
       return { ...state, project: action.project };
-    case "unresolvedReturnsLoaded":
-      return { ...state, unresolvedReturns: action.returns };
-    case "unresolvedReturnCleared":
-      return {
-        ...state,
-        unresolvedReturns: state.unresolvedReturns.filter(
-          (unresolved) => unresolved.imageId !== action.imageId,
-        ),
-      };
     default:
       return state;
   }

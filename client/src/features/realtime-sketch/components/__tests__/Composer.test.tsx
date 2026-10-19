@@ -21,9 +21,7 @@ function renderComposer(
     rerollSeed: vi.fn(),
     liveOutput: null,
     onUseThis: vi.fn(),
-    acceptance: { state: "idle" },
-    onRetryAttachment: vi.fn(),
-    onRetryArming: vi.fn(),
+    sending: { state: "idle" },
     strengthPopoverOpen: false,
     onToggleStrengthPopover: vi.fn(),
     ...overrides,
@@ -76,9 +74,9 @@ describe("Composer", () => {
     expect(props.onUseThis).toHaveBeenCalledWith(shown);
   });
 
-  it("names the refusal when an acceptance failed", () => {
+  it("names the refusal when sending failed", () => {
     renderComposer({
-      acceptance: { state: "failed", message: "Nothing was saved." },
+      sending: { state: "failed", message: "Nothing was saved." },
     });
 
     expect(screen.getByTestId("live-editor-accept-error")).toHaveTextContent(

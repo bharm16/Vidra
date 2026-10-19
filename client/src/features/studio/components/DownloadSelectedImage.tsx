@@ -5,7 +5,7 @@ import type { StudioTurn } from "../api/schemas";
  * "Download SVG" for the selected vector image (issue #118).
  *
  * Bound to the project's SELECTION, in the topbar's right zone, for the same
- * reason `UseInSessionAction` is: the selection is the project's "this one",
+ * reason `UseInVideoAction` is: the selection is the project's "this one",
  * and a per-cell control would be a button inside a button.
  *
  * Only vectors get the control. Their view URL is served as an attachment

@@ -26,7 +26,6 @@ import {
   getGenerationCreditsPerSecond,
 } from "../shared/generationPricing.ts";
 import {
-  CAPABILITY_ID_TO_VENDOR,
   GENERATION_ADAPTERS,
   GENERATION_ID_TO_ADAPTER,
   MODEL_IDENTITIES,
@@ -37,8 +36,6 @@ import {
   REGISTERED_LLM_CLIENTS,
   isRegisteredLlmClient,
 } from "../server/src/config/llmClients.ts";
-import { MANUAL_CAPABILITIES_REGISTRY } from "../server/src/services/capabilities/manualRegistry.ts";
-import generatedRegistry from "../server/src/services/capabilities/registry.generated.json" with { type: "json" };
 
 interface Finding {
   severity: "error" | "warn";
@@ -144,48 +141,6 @@ for (const priceKey of Object.keys(GENERATION_PRICING)) {
 // eight hand-maintained tables in three vocabularies with nothing checking
 // they agreed. shared/modelIdentity.ts is now the answer key; the checks
 // below hold every other table to it.
-
-const capabilityBuckets: Record<string, Record<string, unknown>> = {};
-for (const [bucket, models] of Object.entries(MANUAL_CAPABILITIES_REGISTRY)) {
-  capabilityBuckets[bucket] = { ...models };
-}
-for (const [bucket, models] of Object.entries(
-  generatedRegistry as Record<string, Record<string, unknown>>,
-)) {
-  capabilityBuckets[bucket] = { ...capabilityBuckets[bucket], ...models };
-}
-
-// ─── Check 7: every declared capability id exists in the registry ───
-for (const identity of Object.values(MODEL_IDENTITIES)) {
-  for (const capabilityId of identity.capabilityIds) {
-    const bucket = capabilityBuckets[identity.vendor];
-    if (!bucket || !(capabilityId in bucket)) {
-      err(
-        "identity",
-        `MODEL_IDENTITIES["${identity.canonicalId}"] claims capability id "${capabilityId}" under vendor "${identity.vendor}", but the capability registry has no such entry.`,
-      );
-    }
-  }
-}
-
-// ─── Check 8: every registry model is claimed by exactly one identity ─
-for (const [bucket, models] of Object.entries(capabilityBuckets)) {
-  if (bucket === "generic") continue;
-  for (const modelId of Object.keys(models)) {
-    const vendor = CAPABILITY_ID_TO_VENDOR[modelId];
-    if (!vendor) {
-      err(
-        "identity",
-        `Capability registry declares "${modelId}" under "${bucket}", but no entry in MODEL_IDENTITIES claims it. Add it to capabilityIds, or drop it from the registry.`,
-      );
-    } else if (vendor !== bucket) {
-      err(
-        "identity",
-        `Capability registry files "${modelId}" under vendor "${bucket}", but MODEL_IDENTITIES says its vendor is "${vendor}".`,
-      );
-    }
-  }
-}
 
 // ─── Check 9: adapters named by the identity table are real ─────────
 for (const [generationId, adapter] of Object.entries(

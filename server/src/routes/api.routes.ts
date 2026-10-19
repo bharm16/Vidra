@@ -12,7 +12,6 @@
 
 import express, { type Router } from "express";
 import { createOptimizeRoutes } from "./optimize.routes";
-import { createCapabilitiesRoutes } from "./capabilities.routes";
 import {
   createEnhancementRoutes,
   type EnhancementServices,
@@ -106,8 +105,6 @@ export function createAPIRoutes(services: ApiServices): Router {
     );
   }
 
-  // Capabilities registry routes (schema-driven UI)
-  router.use("/", createCapabilitiesRoutes());
 
   return router;
 }

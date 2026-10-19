@@ -104,11 +104,6 @@ export interface ServiceConfig {
       geminiBaseUrl: string | undefined;
     };
   };
-  capabilities: {
-    probeUrl: string | undefined;
-    probePath: string | undefined;
-    probeRefreshMs: number;
-  };
   promptOptimization: {
     shotPlanCacheTtlMs: number;
     shotPlanCacheMax: number;

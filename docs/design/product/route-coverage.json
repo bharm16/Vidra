@@ -1073,7 +1073,7 @@
         {
           "key": "G03",
           "nodeId": "1030:84502",
-          "name": "G03 \u00b7 Only supported durations are offered",
+          "name": "G03 \u00b7 Durations the model can't use are greyed out",
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Vidra?node-id=1030-84502",
           "width": 1440,
           "height": 960
@@ -1081,7 +1081,7 @@
         {
           "key": "G04",
           "nodeId": "1030:84608",
-          "name": "G04 \u00b7 Aspect ratios come from the selected model",
+          "name": "G04 \u00b7 Shapes the model can't use are greyed out",
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Vidra?node-id=1030-84608",
           "width": 1440,
           "height": 960
@@ -1161,7 +1161,7 @@
         {
           "key": "G25",
           "nodeId": "1032:86305",
-          "name": "G25 \u00b7 Frame-based generation has a derived length and no sound control",
+          "name": "G25 \u00b7 Frame-based generation has a derived length; Sound is greyed out",
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Vidra?node-id=1032-86305",
           "width": 1440,
           "height": 960

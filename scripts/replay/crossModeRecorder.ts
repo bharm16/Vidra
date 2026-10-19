@@ -25,7 +25,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { writeCameraDirection } from "@/features/workspace-shell/utils/cameraDirection";
+import { writeCameraDirection } from "@/features/dormant/camera-motion/cameraDirection";
 import {
   CROSS_MODE_ACCEPT_KEY,
   CROSS_MODE_CAMERA_DIRECTION,

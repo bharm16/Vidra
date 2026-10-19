@@ -25,8 +25,8 @@ describe("NavRail responsive navigation", () => {
     const { rerender } = render(rail());
     fireEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
     const destinations: ReadonlyArray<readonly [string, string]> = [
-      ["New session", "/"],
-      ["Library", "/history"],
+      ["New request", "/app"],
+      ["Library", "/app?view=media"],
       ["Live editor", "/live-editor"],
       ["Studio", "/studio"],
       ["Docs & help", "/docs"],

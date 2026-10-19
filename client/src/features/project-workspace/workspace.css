@@ -2501,3 +2501,10 @@ body:has(.vf-action-sheet) > [data-state="open"]:not([role="dialog"]) {
     height: 278px;
   }
 }
+.vf-setting-chip.vf-button:disabled .vf-setting-icon {
+  opacity: 0.45;
+}
+:root .vf-setting-option.vf-button:disabled,
+:root .vf-setting-option.vf-button:disabled small {
+  color: var(--vf-muted);
+}

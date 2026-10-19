@@ -4,20 +4,15 @@ import {
   Routes,
   Route,
   Navigate,
-  useNavigate,
-  useParams,
   useLocation,
 } from "react-router-dom";
 import { RequireAuth } from "@components/navigation/RequireAuth";
-import { SessionPathRedirect } from "@components/navigation/SessionPathRedirect";
 import {
   ErrorBoundary,
   FeatureErrorBoundary,
 } from "./components/ErrorBoundary/";
 import { ToastProvider } from "./components/Toast";
-import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import { AuthGateDialog } from "@features/auth-gate";
-import { apiClient } from "./services/ApiClient";
 import { trackPageView } from "./services/analytics";
 import { SystemRoutePage } from "./features/public-site/SystemPage";
 import { SiteShell } from "./features/public-site/SiteShell";
@@ -75,21 +70,11 @@ const ContactSupportPage = lazy(() =>
   })),
 );
 
-const HistoryPage = lazy(() =>
-  import("./pages/HistoryPage").then((module) => ({
-    default: module.HistoryPage,
-  })),
-);
 const SharedClip = lazy(() => import("./features/share/SharedClip"));
 const WorkflowSharePage = lazy(() => import("./features/workflow-sharing/WorkflowSharePage").then(module => ({ default: module.WorkflowSharePage })));
 const LiveEditor = lazy(() => import("./features/realtime-sketch/LiveEditor"));
 const StudioPage = lazy(() => import("./features/studio/StudioPage"));
 const StudioIndexPage = lazy(() => import("./features/studio/StudioIndexPage"));
-const MainWorkspace = lazy(() =>
-  import("./components/layout/MainWorkspace").then((module) => ({
-    default: module.MainWorkspace,
-  })),
-);
 const ProjectWorkspace = lazy(() => import("./features/project-workspace/ProjectWorkspace"));
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((module) => ({
@@ -101,52 +86,6 @@ function RouteFallback(): React.ReactElement { return <SystemRoutePage state="lo
 
 function RouteContent(): React.ReactElement {
   return <ErrorBoundary fallback={({ resetError }) => <SystemRoutePage state={navigator.onLine ? "load-error" : "offline"} onRetry={resetError} />}><Suspense fallback={<RouteFallback />}><AppRoutes /></Suspense></ErrorBoundary>;
-}
-
-function WorkspaceRoute(): React.ReactElement {
-  return (
-    <GenerationControlsStoreProvider>
-      <FeatureErrorBoundary featureName="Main Workspace">
-        <MainWorkspace />
-      </FeatureErrorBoundary>
-    </GenerationControlsStoreProvider>
-  );
-}
-
-function PromptRedirect(): React.ReactElement {
-  const { uuid } = useParams<{ uuid: string }>();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    let cancelled = false;
-    const resolve = async () => {
-      if (!uuid) {
-        navigate("/", { replace: true });
-        return;
-      }
-      try {
-        const response = await apiClient.get(
-          `/sessions/by-prompt/${encodeURIComponent(uuid)}`,
-        );
-        const data = (response as { data?: { id: string } }).data;
-        if (!cancelled && data?.id) {
-          navigate(`/session/${data.id}`, { replace: true });
-          return;
-        }
-      } catch {
-        // fall through
-      }
-      if (!cancelled) {
-        navigate("/", { replace: true });
-      }
-    };
-    void resolve();
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate, uuid]);
-
-  return <RouteFallback />;
 }
 
 function RouteTracker(): React.ReactElement | null {
@@ -244,14 +183,7 @@ function AppRoutes(): React.ReactElement {
       />
       {/* Rail surfaces — every app page carries the left rail itself, so
           these live outside MarketingShell's topnav chrome. */}
-      <Route
-        path="/history"
-        element={
-          <RequireAuth>
-            <HistoryPage />
-          </RequireAuth>
-        }
-      />
+      <Route path="/history" element={<Navigate to="/app" replace />} />
       <Route
         path="/account"
         element={
@@ -261,16 +193,9 @@ function AppRoutes(): React.ReactElement {
         }
       />
       <Route path="/create" element={<Navigate to="/app?intent=make-image" replace />} />
-      <Route path="/session/:sessionId" element={<WorkspaceRoute />} />
-      <Route
-        path="/session/:sessionId/studio"
-        element={<SessionPathRedirect />}
-      />
-      <Route
-        path="/session/:sessionId/create"
-        element={<SessionPathRedirect />}
-      />
-      <Route path="/prompt/:uuid" element={<PromptRedirect />} />
+      {/* The legacy session workspace is retired; its saved links open /app. */}
+      <Route path="/session/*" element={<Navigate to="/app" replace />} />
+      <Route path="/prompt/:uuid" element={<Navigate to="/app" replace />} />
 
 
         <Route path="*" element={<NotFoundPage />} />

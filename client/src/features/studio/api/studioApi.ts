@@ -6,24 +6,18 @@
 import { apiClient } from "@/services/ApiClient";
 import { storageApi } from "@/api/storageApi";
 import { z } from "zod";
-import {
-  StudioUseInSessionResultSchema,
-  type StudioTurnSubmission,
-  type StudioUseInSessionResult,
-} from "@shared/schemas/studio.schemas";
+import { type StudioTurnSubmission } from "@shared/schemas/studio.schemas";
 import {
   RunTurnResponseSchema,
   StudioAttachmentSchema,
   StudioModelInfoSchema,
   StudioProjectSchema,
   StudioTurnSchema,
-  StudioUnresolvedReturnSchema,
   type RunTurnResponse,
   type StudioAttachment,
   type StudioModelInfo,
   type StudioProject,
   type StudioTurn,
-  type StudioUnresolvedReturn,
 } from "./schemas";
 
 async function request<T extends z.ZodTypeAny>(
@@ -66,22 +60,6 @@ export async function createStudioProject(
   return request("/projects", StudioProjectSchema, {
     method: "POST",
     body: JSON.stringify(title ? { title } : {}),
-  });
-}
-
-/**
- * "Refine in the studio" (ADR-0022 decision 4): birth a project from a session
- * picture. The server reads the take out of the session — which is where the
- * words-version lives — so the creator names only the session and the take.
- * Invoking twice for the same take returns the same project.
- */
-export async function createStudioProjectFromSessionPicture(input: {
-  sessionId: string;
-  generationId: string;
-}): Promise<StudioProject> {
-  return request("/projects/from-session-picture", StudioProjectSchema, {
-    method: "POST",
-    body: JSON.stringify(input),
   });
 }
 
@@ -318,128 +296,6 @@ export async function listStudioTurns(
   return request(`/projects/${projectId}/turns`, z.array(StudioTurnSchema));
 }
 
-/**
- * The 409 that is not an error — ADR-0022 decision 4.
- *
- * `reason` is the discriminator, not the status code: the same status also
- * carries "already being added", and the two must never be confused. A gone
- * origin session is a question for the creator, so it is parsed into an
- * outcome rather than thrown as a failure.
- */
-const MissingOriginSessionSchema = z.object({
-  reason: z.literal("origin-session-missing"),
-  sessionId: z.string(),
-  error: z.string(),
-});
-
-/**
- * The other 409 that is a question, not an error (issue #131). A session this
- * return would mint needs its associated words confirmed by the creator —
- * never the edit instruction or transform label. `suggestion` prefills the
- * field when a from-scratch generate's prompt exists; it is absent for an edit
- * or transform, where the creator's own words are required.
- */
-const NeedsConfirmedWordsSchema = z.object({
-  reason: z.literal("needs-confirmed-words"),
-  suggestion: z.string().optional(),
-  error: z.string(),
-});
-
-export type UseInSessionOutcome =
-  | { state: "returned"; result: StudioUseInSessionResult }
-  | { state: "origin-session-missing"; sessionId: string; message: string }
-  | {
-      state: "needs-confirmed-words";
-      suggestion?: string;
-      message: string;
-    }
-  | { state: "error"; message: string };
-
-/**
- * "Use this in the session" (ADR-0022 decision 4): a studio image returns to a
- * session as a picture take, armed as its first frame.
- *
- * The destination is never sent — the project's own origin is what decides it.
- * Pressing twice for the same image yields one take, so a retry after a lost
- * response is safe without a client-held key.
- */
-export async function returnStudioImageToSession(
-  projectId: string,
-  imageId: string,
-  options?: { onMissingOriginSession?: "new-session"; confirmedWords?: string },
-): Promise<UseInSessionOutcome> {
-  const response = await apiClient.rawRequest(
-    `/studio/projects/${projectId}/images/${imageId}/use-in-session`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        ...(options?.onMissingOriginSession
-          ? { onMissingOriginSession: options.onMissingOriginSession }
-          : {}),
-        ...(options?.confirmedWords
-          ? { confirmedWords: options.confirmedWords }
-          : {}),
-      }),
-    },
-  );
-
-  const body: unknown = await response.json().catch(() => null);
-
-  if (response.ok) {
-    const parsed = z
-      .object({
-        success: z.literal(true),
-        data: StudioUseInSessionResultSchema,
-      })
-      .parse(body);
-    return { state: "returned", result: parsed.data };
-  }
-
-  const choice = MissingOriginSessionSchema.safeParse(body);
-  if (choice.success) {
-    return {
-      state: "origin-session-missing",
-      sessionId: choice.data.sessionId,
-      message: choice.data.error,
-    };
-  }
-
-  const needsWords = NeedsConfirmedWordsSchema.safeParse(body);
-  if (needsWords.success) {
-    return {
-      state: "needs-confirmed-words",
-      ...(needsWords.data.suggestion !== undefined
-        ? { suggestion: needsWords.data.suggestion }
-        : {}),
-      message: needsWords.data.error,
-    };
-  }
-
-  const detail =
-    body !== null &&
-    typeof body === "object" &&
-    typeof (body as Record<string, unknown>).error === "string"
-      ? ((body as Record<string, unknown>).error as string)
-      : `Studio request failed (${response.status})`;
-  return { state: "error", message: detail };
-}
-
 export async function getStudioModels(): Promise<StudioModelInfo[]> {
   return request("/models", z.array(StudioModelInfoSchema));
-}
-
-/**
- * Recovery after refresh (ADR-0022 decision 6, issue #135): the project's
- * pictures whose return was admitted but never attached, read from the
- * server's own receipts. Validated at the wire like every other studio
- * response — an unresolved return the client cannot parse must not be shown,
- * and must not be silently shown as saved either.
- */
-export async function fetchUnresolvedStudioReturns(
-  projectId: string,
-): Promise<StudioUnresolvedReturn[]> {
-  return request(
-    `/projects/${projectId}/unresolved-returns`,
-    z.object({ returns: z.array(StudioUnresolvedReturnSchema) }),
-  ).then((data) => data.returns);
 }

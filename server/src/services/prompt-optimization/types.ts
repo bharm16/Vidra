@@ -4,8 +4,10 @@
  */
 import type { VideoPromptStructuredResponse } from "@server/contracts/prompt-analysis/structuredPrompt";
 import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
-import type { CapabilityValues } from "@shared/capabilities";
 import type { LockedSpan } from "@shared/schemas/optimization.schemas";
+
+/** Generation settings a request carries alongside its words. */
+export type GenerationParams = Record<string, string | number | boolean>;
 
 /**
  * Optimization mode type
@@ -57,7 +59,7 @@ export interface OptimizationRequest {
   targetModel?: string; // e.g., 'runway', 'luma', 'veo'
   context?: InferredContext | null;
   brainstormContext?: Record<string, unknown> | null;
-  generationParams?: CapabilityValues | null;
+  generationParams?: GenerationParams | null;
   skipCache?: boolean;
   lockedSpans?: LockedSpan[];
   shotPlan?: ShotPlan | null;

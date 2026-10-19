@@ -33,7 +33,7 @@
     },
     {
       "key": "G03",
-      "title": "Only supported durations are offered",
+      "title": "Durations the model can't use are greyed out",
       "nodeId": "1030:84502",
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84502",
       "sourceAlignment": "updated",
@@ -43,7 +43,7 @@
     },
     {
       "key": "G04",
-      "title": "Aspect ratios come from the selected model",
+      "title": "Shapes the model can't use are greyed out",
       "nodeId": "1030:84608",
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84608",
       "sourceAlignment": "updated",
@@ -143,7 +143,7 @@
     },
     {
       "key": "G25",
-      "title": "Frame-based generation has a derived length and no sound control",
+      "title": "Frame-based generation has a derived length; Sound is greyed out",
       "nodeId": "1032:86305",
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86305",
       "sourceAlignment": "updated",

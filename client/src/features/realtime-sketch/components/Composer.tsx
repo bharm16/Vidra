@@ -12,7 +12,7 @@ import seedIcon from "../assets/seed.svg";
 
 import { effectiveSteps, snapStrength } from "../config/constants";
 import type { LiveOutput } from "../hooks/generationReducer";
-import type { AcceptanceStatus } from "../hooks/useAcceptLiveOutput";
+import type { SendPictureStatus } from "@/features/project-imports/hooks/useSendPictureToLibrary";
 import type { SketchSettings } from "../hooks/useRealtimeSketch";
 
 /**
@@ -34,12 +34,9 @@ interface ComposerProps {
   rerollSeed: () => void;
   /** The picture on screen — the mode chip's thumbnail and what Use this accepts. */
   liveOutput: LiveOutput | null;
+  /** Sends the picture on screen to the /app library. */
   onUseThis: (output: LiveOutput) => void;
-  acceptance: AcceptanceStatus;
-  /** Re-attach a made-but-not-saved acceptance (issue #134). */
-  onRetryAttachment: () => void;
-  /** Arm a saved-but-unarmed acceptance as the first frame (issue #136). */
-  onRetryArming: () => void;
+  sending: SendPictureStatus;
   strengthPopoverOpen: boolean;
   onToggleStrengthPopover: () => void;
 }
@@ -50,9 +47,7 @@ export function Composer({
   rerollSeed,
   liveOutput,
   onUseThis,
-  acceptance,
-  onRetryAttachment,
-  onRetryArming,
+  sending,
   strengthPopoverOpen,
   onToggleStrengthPopover,
 }: ComposerProps): React.ReactElement {
@@ -150,81 +145,17 @@ export function Composer({
           type="button"
           variant="ghost"
           className="le-chip le-chip-accept"
-          disabled={
-            liveOutput === null ||
-            acceptance.state === "accepting" ||
-            acceptance.state === "saving" ||
-            acceptance.state === "arming"
-          }
+          disabled={liveOutput === null || sending.state === "sending"}
           onClick={() => {
             if (liveOutput !== null) onUseThis(liveOutput);
           }}
         >
-          {acceptance.state === "accepting" ? "Accepting…" : "Use this"}
+          {sending.state === "sending" ? "Sending…" : "Use this"}
         </Button>
       </div>
-      {acceptance.state === "failed" ? (
+      {sending.state === "failed" ? (
         <div className="le-accept-error" data-testid="live-editor-accept-error">
-          {acceptance.message}
-        </div>
-      ) : null}
-      {acceptance.state === "unattached" || acceptance.state === "saving" ? (
-        // Issue #134: made-but-not-saved, stated plainly. The picture was
-        // made — it is still right here on the panel — and its session does
-        // not have it yet. This is never worded as an acceptance failure:
-        // nothing about the render went wrong, and the retry re-sends the
-        // take's own record rather than accepting anything again.
-        <div
-          className="le-accept-error"
-          data-testid="live-editor-accept-unattached"
-        >
-          <span>
-            {acceptance.state === "saving"
-              ? "Saving…"
-              : "Picture made, but not saved yet"}
-          </span>
-          {acceptance.state === "unattached" ? (
-            <Button
-              type="button"
-              variant="link"
-              className="text-foreground !h-auto p-0 underline underline-offset-2 hover:opacity-80"
-              onClick={onRetryAttachment}
-            >
-              Save it
-            </Button>
-          ) : null}
-          {acceptance.state === "unattached" && acceptance.message ? (
-            <span>{acceptance.message}</span>
-          ) : null}
-        </div>
-      ) : null}
-      {acceptance.state === "unarmed" || acceptance.state === "arming" ? (
-        // Issue #136: saved-but-not-armed, stated just as plainly. The take
-        // IS in its session — the retry arms that same take as the session's
-        // first frame through the arm door, never a re-accept and never a
-        // second take.
-        <div
-          className="le-accept-error"
-          data-testid="live-editor-accept-unarmed"
-        >
-          <span>
-            {acceptance.state === "arming"
-              ? "Setting the first frame…"
-              : "Picture saved, but not set as the first frame"}
-          </span>
-          {acceptance.state === "unarmed" ? (
-            <Button
-              type="button"
-              variant="link"
-              className="text-foreground !h-auto p-0 underline underline-offset-2 hover:opacity-80"
-              onClick={onRetryArming}
-            >
-              Set it
-            </Button>
-          ) : null}
-          {acceptance.state === "unarmed" && acceptance.message ? (
-            <span>{acceptance.message}</span>
-          ) : null}
+          {sending.message}
         </div>
       ) : null}
     </div>

@@ -1,6 +1,5 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
-import { CapabilitiesProbeService } from "@services/capabilities/CapabilitiesProbeService";
 import type { LegacyCreditRefundService } from "@services/video-generation/refunds/LegacyCreditRefundService";
 import { ReplicateVideoProvider } from "@services/video-generation/providers/ReplicateVideoProvider";
 import { VeoVideoProvider } from "@services/video-generation/providers/VeoVideoProvider";
@@ -102,13 +101,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       });
     },
     [...VIDEO_PROVIDER_TOKENS, "videoAssetStore", "config"],
-  );
-
-  container.register(
-    "capabilitiesProbeService",
-    (config: ServiceConfig) =>
-      new CapabilitiesProbeService(config.capabilities),
-    ["config"],
   );
 
   container.register(

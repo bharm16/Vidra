@@ -125,17 +125,17 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           )}
         >
           <Link
-            to="/"
-            aria-label={collapsed ? "New session" : undefined}
-            title={collapsed ? "New session" : undefined}
+            to="/app"
+            aria-label={collapsed ? "New request" : undefined}
+            title={collapsed ? "New request" : undefined}
           >
             <img src={plusIcon} alt="" draggable={false} className="shrink-0" />
-            {collapsed ? null : <span>New session</span>}
+            {collapsed ? null : <span>New request</span>}
           </Link>
         </Button>
         <div className="flex shrink-0 flex-col gap-1">
           <RailItem
-            to="/history"
+            to="/app?view=media"
             label="Library"
             collapsed={collapsed}
             active={active === "library"}
