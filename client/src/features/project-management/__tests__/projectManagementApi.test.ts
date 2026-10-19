@@ -44,3 +44,28 @@ describe("Project management owner boundary", () => {
     expect(() => api.changeConversation(project.id, conversation.id, { expectedRevision: 1 })).toThrow();
   });
 });
+describe("Project management reads", () => {
+  it("reads one owned project and rejects a different project identity", async () => {
+    const rawRequest = vi.fn().mockResolvedValue(response(project));
+    const api = new ProjectManagementApi("creator", { rawRequest });
+    expect((await api.getProject(project.id)).name).toBe("Evening campaign");
+    expect(rawRequest).toHaveBeenCalledWith(`/projects/${project.id}`, { method: "GET" });
+    rawRequest.mockResolvedValue(response({ ...project, id: "project_other" }));
+    await expect(api.getProject(project.id)).rejects.toThrow();
+  });
+  it("lists a project's conversations with media counts and rejects a conversation from another project", async () => {
+    const rawRequest = vi.fn().mockResolvedValue(response([{ ...conversation, media: { pictures: 2, clips: 1 } }]));
+    const api = new ProjectManagementApi("creator", { rawRequest });
+    expect((await api.listConversations(project.id))[0]?.media).toEqual({ pictures: 2, clips: 1 });
+    expect(rawRequest).toHaveBeenCalledWith(`/projects/${project.id}/conversations`, { method: "GET" });
+    rawRequest.mockResolvedValue(response([conversation, { ...conversation, id: "conversation_two", projectId: "project_other" }]));
+    await expect(api.listConversations(project.id)).rejects.toThrow("requested project and account");
+  });
+  it("maps an unreadable read failure to a retryable message and rejects a malformed project id before sending", async () => {
+    const rawRequest = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => { throw new SyntaxError("Unexpected token"); } });
+    const api = new ProjectManagementApi("creator", { rawRequest });
+    await expect(api.getProject(project.id)).rejects.toMatchObject({ name: "WorkflowApiError", status: 500, code: undefined, message: expect.stringContaining("not confirmed") });
+    expect(() => api.listConversations("not-a-project")).toThrow();
+    expect(rawRequest).toHaveBeenCalledTimes(1);
+  });
+});
