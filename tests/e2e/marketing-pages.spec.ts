@@ -9,14 +9,20 @@ test.describe("public pages and workspace entry", () => {
     await expect(page.getByLabel("Shot description")).toHaveCount(0);
   });
 
-  test("a public clip capability retains its intent through the sign-in gate", async ({ page }) => {
+  test("a public clip capability opens a signed-out composer that keeps its words through sign-up", async ({ page }) => {
     await page.goto("/product/video");
     await page.getByRole("main").getByRole("link", { name: "Start creating", exact: true }).click();
     await expect(page).toHaveURL(/\/app\?intent=make-video$/);
-    await expect(page.getByRole("heading", { name: "Keep your work in a project." })).toBeVisible();
-    await page.getByRole("link", { name: "Sign in", exact: true }).click();
-    await expect(page.getByRole("form", { name: "Sign in", exact: true })).toBeVisible();
-    expect(new URL(page.url()).searchParams.get("redirect")).toBe("/app?intent=make-video");
+    const words = page.getByLabel("Current request words", { exact: true });
+    await expect(words).toHaveAttribute("placeholder", "Describe your video…");
+    await words.fill("Waves breaking at night");
+    await page.getByRole("button", { name: "Reference", exact: true }).click();
+    await expect(page).toHaveURL(/\/signup\?redirect=/);
+    const redirect = new URL(page.url()).searchParams.get("redirect") ?? "";
+    expect(redirect).toMatch(/^\/app\?claim=guest_/);
+    const kept = await page.evaluate(() => JSON.parse(localStorage.getItem("vidra-guest-draft/v1") ?? "null") as { id: string; action: string; instructions: string } | null);
+    expect(kept).toMatchObject({ action: "make-video", instructions: "Waves breaking at night" });
+    expect(redirect).toBe(`/app?claim=${kept?.id}`);
   });
 
   test("docs search opens an exact guide and keeps its query", async ({ page }) => {

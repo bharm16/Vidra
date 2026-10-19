@@ -1,43 +1,24 @@
 import { test, expect } from "@playwright/test";
-import { authenticated, drafts, guard, keepWords, makePicture, project, projectId, versions } from "./helpers";
+import { authenticated, conversations, guard, keepWords, library, makePicture, project, versions } from "./helpers";
 
 test.beforeEach(async ({ page }) => { await authenticated(page); });
-test("explicit project creation owns the first-visit pose without replaying it onto another working copy", async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test("signed in, /app opens a composer without a project, and a new project is a place to file work", async ({ page }) => {
   await page.goto("/app");
-  const name = `First visit ${crypto.randomUUID()}`;
+  const words = page.getByLabel("Current request words", { exact: true });
+  await expect(words).toBeVisible();
+  await expect(page).toHaveURL(/\/app$/);
+  const home = await library(page);
+  await expect.poll(async () => (await conversations(page, home.id)).some(row => row.status === "active" && row.acceptanceSequence === 0)).toBe(true);
+  await page.goto("/app/projects");
+  const name = `Filed ${crypto.randomUUID()}`;
   await page.getByRole("button", { name: "New project", exact: true }).first().click();
   await page.getByLabel("Project name", { exact: true }).fill(name);
   await page.getByRole("button", { name: "Create project", exact: true }).click();
-  const workspace = page.locator(".vf-workspace"), composer = page.locator(".vf-composer");
-  await expect(workspace).toHaveAttribute("data-workspace-entry", "created");
-  await page.evaluate(() => document.fonts.ready);
-  await expect.poll(() => composer.boundingBox()).toEqual({ x: 27, y: 270, width: 336, height: 232 });
-  await expect(page.getByLabel("Current request words", { exact: true })).toHaveValue("");
-  const id = projectId(page), initial = (await drafts(page, id))[0]!;
-  expect(await drafts(page, id)).toHaveLength(1);
-  await page.screenshot({ path: testInfo.outputPath("N38-created-native-app.png") });
-  await keepWords(page, "Keep this new project draft");
-  await expect(workspace).toHaveAttribute("data-workspace-entry", "created");
-  expect((await drafts(page, id))[0]?.id).toBe(initial.id);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await expect.poll(async () => (await composer.boundingBox())?.width).toBe(720);
-  await page.getByRole("button", { name: "New request", exact: true }).click();
-  await expect(page.getByLabel("Current request words", { exact: true })).toHaveValue("");
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(workspace).not.toHaveAttribute("data-workspace-entry");
-  await expect.poll(() => composer.boundingBox()).toEqual({ x: 27, y: 282, width: 336, height: 232 });
-  await expect.poll(async () => (await drafts(page, id)).length).toBe(2);
-  expect((await drafts(page, id)).find(draft => draft.id === initial.id)).toMatchObject({ status: "parked", instructions: "Keep this new project draft" });
-  await page.reload();
-  await expect(page.getByLabel("Current request words", { exact: true })).toHaveValue("");
-  await expect(workspace).not.toHaveAttribute("data-workspace-entry");
-  await expect.poll(() => composer.boundingBox()).toEqual({ x: 27, y: 282, width: 336, height: 232 });
-  await page.goto("/app");
-  await page.getByRole("button", { name: `Open project ${name}`, exact: true }).click();
-  await expect(workspace).toHaveAttribute("data-workspace-entry", "reopen");
-  await expect.poll(() => composer.boundingBox()).toEqual({ x: 27, y: 282, width: 336, height: 232 });
-  expect(await drafts(page, id)).toHaveLength(2);
+  await page.waitForURL(/\/app\?folder=folder_/);
+  await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
+  await expect(words).toBeVisible();
+  const folderId = new URL(page.url()).searchParams.get("folder");
+  await expect.poll(async () => (await conversations(page, home.id)).some(row => row.folderId === folderId && row.acceptanceSequence === 0)).toBe(true);
   await guard(page);
 });
 

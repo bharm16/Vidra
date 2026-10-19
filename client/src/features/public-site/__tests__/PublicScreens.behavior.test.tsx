@@ -179,7 +179,8 @@ describe("public navigation and system recovery", () => {
     render(<MemoryRouter><SiteShell><p>Public content</p></SiteShell></MemoryRouter>);
     await screen.findByRole("link", { name: "Sign in" });
     expect(screen.queryByRole("link", { name: "Pricing" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Start creating" })).toHaveAttribute("href", "/signup?redirect=%2Fapp");
+    // Visitors start writing first; making something is what asks for an account.
+    expect(screen.getByRole("link", { name: "Start creating" })).toHaveAttribute("href", "/app");
   });
   it("retries the current failure without creating new work", () => {
     const retry = vi.fn();
