@@ -6,7 +6,7 @@
  *
  * Middleware Order:
  * 1. Request ID (for tracing)
- * 2. Security (Helmet, CORS, headers)
+ * 2. Security (Helmet, CORS)
  * 3. Compression
  * 4. Rate limiting (costly routes)
  * 5. Body parsing
@@ -68,56 +68,6 @@ const resolveAllowedOrigins = (): string[] => {
 };
 
 /**
- * Security headers configuration
- */
-const SECURITY_CONFIG = {
-  helmet: {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: [
-          "'self'",
-          "https://api.openai.com",
-          "https://*.firebaseapp.com",
-          "https://*.googleapis.com",
-          "https://*.google.com",
-        ],
-        frameSrc: ["'none'"],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-    hsts: {
-      maxAge: 31536000, // 1 year
-      includeSubDomains: true,
-      preload: true,
-    },
-    referrerPolicy: {
-      policy: "strict-origin-when-cross-origin",
-    },
-    permittedCrossDomainPolicies: {
-      permittedPolicies: "none",
-    },
-  },
-  additionalHeaders: {
-    "X-Permitted-Cross-Domain-Policies": "none",
-    "Cross-Origin-Resource-Policy": "cross-origin",
-  },
-  productionHeaders: {
-    // `credentialless` allows cross-origin resources (like signed GCS URLs for
-    // preview media) that don't carry credentials to load without requiring
-    // Cross-Origin-Resource-Policy headers. The stricter `require-corp` was
-    // blocking preview images because GCS doesn't set CORP headers on signed URLs.
-    "Cross-Origin-Embedder-Policy": "credentialless",
-    "Cross-Origin-Opener-Policy": "same-origin",
-  },
-} as const;
-
-/**
  * Compression configuration
  */
 const COMPRESSION_CONFIG: compression.CompressionOptions = {
@@ -145,38 +95,13 @@ export function applyRequestIdMiddleware(app: Application): void {
 }
 
 /**
- * Apply security middleware (Helmet + custom headers)
+ * Apply security middleware (Helmet defaults)
  */
 export function applySecurityMiddleware(app: Application): void {
-  // Helmet with CSP and other security headers
-  app.use(helmet(SECURITY_CONFIG.helmet));
-
-  // Additional security headers
-  app.use(
-    (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ): void => {
-      // Set additional headers
-      Object.entries(SECURITY_CONFIG.additionalHeaders).forEach(
-        ([key, value]) => {
-          res.setHeader(key, value);
-        },
-      );
-
-      // Production-only headers
-      if (process.env.NODE_ENV === "production") {
-        Object.entries(SECURITY_CONFIG.productionHeaders).forEach(
-          ([key, value]) => {
-            res.setHeader(key, value);
-          },
-        );
-      }
-
-      next();
-    },
-  );
+  // The client runs on another origin (Firebase Hosting) and embeds media this
+  // API serves — clip content, the storage proxy — in <img> and <video>, which
+  // helmet's default `same-origin` resource policy would block.
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 }
 
 /**
