@@ -34,7 +34,7 @@ export type { ServiceConfig } from "./services/service-config.types.ts";
 export async function configureServices(): Promise<DIContainer> {
   const container = createContainer();
 
-  // Foundation: logging, metrics, circuit breaker, config
+  // Foundation: logging, metrics, config
   registerCoreServices(container);
   registerObservabilityServices(container);
   registerCacheServices(container);

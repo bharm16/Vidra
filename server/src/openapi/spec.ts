@@ -374,7 +374,7 @@ export function buildOpenApiSpec(): OpenApiDocument {
     tags: [
       {
         name: "Health",
-        description: "Health checks, readiness/liveness probes, and metrics.",
+        description: "Health check.",
       },
       {
         name: "Prompt Optimization",

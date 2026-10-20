@@ -56,14 +56,10 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
     this.messageBuilder = new GeminiMessageBuilder();
     this.responseParser = new GeminiResponseParser();
     this.capabilities = { streaming: true };
-
-    // Circuit breaking is owned by LLMClient (the sole breaker seam). This
-    // adapter is a stateless HTTP transport — its 4xx-aware errorFilter is
-    // registered on the wrapping LLMClient in config/services/llm.services.ts.
   }
 
   /**
-   * Internal method to execute the request, wrapped by Circuit Breaker
+   * Internal method to execute the request
    */
   private async _executeRequest(
     systemPrompt: string,
@@ -103,15 +99,6 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
           response.status,
           isRetryable,
         );
-
-        // Don't trip breaker for 4xx errors (except 429)
-        if (
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 429
-        ) {
-          throw apiError; // Will be caught below but we might want to suppress breaker failure
-        }
 
         throw apiError;
       }

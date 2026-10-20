@@ -703,8 +703,7 @@ export class AIModelService {
   /**
    * Report a failed call to the provider circuit. Client aborts and 4xx
    * input errors (except 408/429) say nothing about provider health — they
-   * settle a half-open probe without counting as a failure. Mirrors the
-   * errorFilter convention on the gemini client's internal breaker.
+   * settle a half-open probe without counting as a failure.
    */
   private _settleCircuitOutcome(
     provider: string,

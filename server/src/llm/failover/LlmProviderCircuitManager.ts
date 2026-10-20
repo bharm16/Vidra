@@ -35,10 +35,9 @@ const DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD = 5;
 const DEFAULT_COOLDOWN_MS = 30_000;
 
 /**
- * Per-provider circuit breaker for the aiService routing layer, modeled on
- * the video ProviderCircuitManager (closed → open → half-open lifecycle).
+ * Per-provider circuit breaker for the aiService routing layer
+ * (closed → open → half-open lifecycle).
  *
- * Differences from the video manager, driven by workload shape:
  * - Consecutive-failure threshold instead of a failure-rate window — LLM
  *   calls sit on a synchronous user path, so reacting after N straight
  *   failures beats waiting for a minimum sample volume.
