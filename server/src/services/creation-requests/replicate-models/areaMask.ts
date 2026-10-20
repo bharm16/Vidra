@@ -28,6 +28,31 @@ export async function blackEditMaskFromAlpha(mask: Buffer): Promise<string> {
   return `data:image/png;base64,${png.toString("base64")}`;
 }
 
+/** Reads at most `maxBytes`, refusing a larger declared size up front and stopping a longer stream at the cap. */
+async function readCapped(response: Response, maxBytes: number): Promise<Buffer> {
+  const declared = Number(response.headers.get("content-length") ?? "0");
+  if (declared > maxBytes) throw new Error("The area mask is too large");
+  if (!response.body) {
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length > maxBytes) throw new Error("The area mask is too large");
+    return bytes;
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error("The area mask is too large");
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks, total);
+}
+
 export function createAreaMaskTools(
   fetchImpl: typeof fetch = fetch,
 ): ModelInputTools {
@@ -38,10 +63,7 @@ export function createAreaMaskTools(
       });
       if (!response.ok)
         throw new Error(`The area mask could not be read (${response.status})`);
-      const bytes = Buffer.from(await response.arrayBuffer());
-      if (bytes.length > MAX_MASK_BYTES)
-        throw new Error("The area mask is too large");
-      return blackEditMaskFromAlpha(bytes);
+      return blackEditMaskFromAlpha(await readCapped(response, MAX_MASK_BYTES));
     },
   };
 }

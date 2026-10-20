@@ -31,3 +31,26 @@ it("refuses an unreadable mask instead of editing the whole picture", async () =
     "could not be read",
   );
 });
+
+it("refuses a mask whose declared size is over 10 MB without reading it", async () => {
+  const body = new ReadableStream<Uint8Array>();
+  const tools = createAreaMaskTools(
+    vi.fn(async () => new Response(body, { headers: { "content-length": String(11 * 1024 * 1024) } })),
+  );
+  await expect(tools.blackEditMask("https://media.test/mask")).rejects.toThrow("too large");
+  expect(body.locked).toBe(false);
+});
+
+it("stops reading a mask stream as soon as it passes 10 MB", async () => {
+  const chunk = new Uint8Array(1024 * 1024);
+  let sent = 0;
+  const cancel = vi.fn();
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) { sent += 1; if (sent > 40) controller.close(); else controller.enqueue(chunk); },
+    cancel,
+  });
+  const tools = createAreaMaskTools(vi.fn(async () => new Response(body)));
+  await expect(tools.blackEditMask("https://media.test/mask")).rejects.toThrow("too large");
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(sent).toBeLessThanOrEqual(13);
+});
