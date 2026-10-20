@@ -16,12 +16,6 @@ interface LlmProviderCircuitManagerOptions {
   cooldownMs?: number;
   /** Clock override for tests. Defaults to Date.now. */
   now?: () => number;
-  metrics?: {
-    recordAlert?: (
-      alertName: string,
-      metadata?: Record<string, unknown>,
-    ) => void;
-  };
 }
 
 export interface LlmProviderCircuitSnapshot {
@@ -51,7 +45,6 @@ export class LlmProviderCircuitManager {
   private readonly consecutiveFailureThreshold: number;
   private readonly cooldownMs: number;
   private readonly now: () => number;
-  private readonly metrics: LlmProviderCircuitManagerOptions["metrics"];
 
   constructor(options: LlmProviderCircuitManagerOptions = {}) {
     this.consecutiveFailureThreshold =
@@ -65,7 +58,6 @@ export class LlmProviderCircuitManager {
         ? Math.max(1_000, Math.trunc(options.cooldownMs))
         : DEFAULT_COOLDOWN_MS;
     this.now = options.now ?? Date.now;
-    this.metrics = options.metrics;
   }
 
   canDispatch(provider: string): boolean {
@@ -102,7 +94,6 @@ export class LlmProviderCircuitManager {
         provider,
         previousState: record.state,
       });
-      this.metrics?.recordAlert?.("llm_provider_circuit_closed", { provider });
     }
 
     record.state = "closed";
@@ -175,11 +166,6 @@ export class LlmProviderCircuitManager {
       reason,
       cooldownMs: this.cooldownMs,
       consecutiveFailures: record.consecutiveFailures,
-    });
-    this.metrics?.recordAlert?.("llm_provider_circuit_opened", {
-      provider,
-      reason,
-      cooldownMs: this.cooldownMs,
     });
   }
 

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense } from "react";
 import {
   RouterProvider,
   Routes,
@@ -7,13 +7,9 @@ import {
   useLocation,
 } from "react-router-dom";
 import { RequireAuth } from "@components/navigation/RequireAuth";
-import {
-  ErrorBoundary,
-  FeatureErrorBoundary,
-} from "./components/ErrorBoundary/";
+import { ErrorBoundary } from "./components/ErrorBoundary/";
 import { ToastProvider } from "./components/Toast";
 import { AuthGateDialog } from "@features/auth-gate";
-import { trackPageView } from "./services/analytics";
 import { SystemRoutePage } from "./features/public-site/SystemPage";
 import { SiteShell } from "./features/public-site/SiteShell";
 
@@ -84,17 +80,6 @@ const NotFoundPage = lazy(() =>
 
 function RouteFallback(): React.ReactElement { return <SystemRoutePage state="loading" />; }
 
-function RouteContent(): React.ReactElement {
-  return <ErrorBoundary fallback={({ resetError }) => <SystemRoutePage state={navigator.onLine ? "load-error" : "offline"} onRetry={resetError} />}><Suspense fallback={<RouteFallback />}><AppRoutes /></Suspense></ErrorBoundary>;
-}
-
-function RouteTracker(): React.ReactElement | null {
-  const location = useLocation();
-  useEffect(() => {
-    void trackPageView(location.pathname);
-  }, [location.pathname]);
-  return null;
-}
 
 function AppRoutes(): React.ReactElement {
   return (
@@ -123,11 +108,7 @@ function AppRoutes(): React.ReactElement {
 
         <Route
           path="/share/:uuid"
-          element={
-            <FeatureErrorBoundary featureName="Shared Clip">
-              <SharedClip />
-            </FeatureErrorBoundary>
-          }
+          element={<SharedClip />}
         />
 
       <Route path="/share/media/:id" element={<WorkflowSharePage />} />
@@ -140,9 +121,7 @@ function AppRoutes(): React.ReactElement {
         path="/live-editor"
         element={
           <RequireAuth>
-            <FeatureErrorBoundary featureName="Live Editor">
-              <LiveEditor />
-            </FeatureErrorBoundary>
+            <LiveEditor />
           </RequireAuth>
         }
       />
@@ -155,9 +134,7 @@ function AppRoutes(): React.ReactElement {
         path="/studio"
         element={
           <RequireAuth>
-            <FeatureErrorBoundary featureName="Studio">
-              <StudioIndexPage />
-            </FeatureErrorBoundary>
+            <StudioIndexPage />
           </RequireAuth>
         }
       />
@@ -165,9 +142,7 @@ function AppRoutes(): React.ReactElement {
         path="/studio/new"
         element={
           <RequireAuth>
-            <FeatureErrorBoundary featureName="Studio">
-              <StudioPage />
-            </FeatureErrorBoundary>
+            <StudioPage />
           </RequireAuth>
         }
       />
@@ -175,9 +150,7 @@ function AppRoutes(): React.ReactElement {
         path="/studio/:projectId"
         element={
           <RequireAuth>
-            <FeatureErrorBoundary featureName="Studio">
-              <StudioPage />
-            </FeatureErrorBoundary>
+            <StudioPage />
           </RequireAuth>
         }
       />
@@ -203,20 +176,17 @@ function AppRoutes(): React.ReactElement {
   );
 }
 
+/** The one error boundary: leaving the page, or Try again, clears its recovery screen. */
 export function AppNavigation(): React.ReactElement {
-  return <><RouteTracker /><RouteContent /><AuthGateDialog /></>;
+  const { pathname } = useLocation();
+  return <ErrorBoundary resetKey={pathname} fallback={({ resetError }) => <SystemRoutePage state={navigator.onLine ? "load-error" : "offline"} onRetry={resetError} />}><Suspense fallback={<RouteFallback />}><AppRoutes /></Suspense><AuthGateDialog /></ErrorBoundary>;
 }
 
 function App({ router }: { router: React.ComponentProps<typeof RouterProvider>["router"] }): React.ReactElement {
   return (
-    <ErrorBoundary
-      title="Application Error"
-      message="The application encountered an unexpected error. Please refresh the page to continue."
-    >
-      <ToastProvider>
-        <RouterProvider router={router} />
-      </ToastProvider>
-    </ErrorBoundary>
+    <ToastProvider>
+      <RouterProvider router={router} />
+    </ToastProvider>
   );
 }
 

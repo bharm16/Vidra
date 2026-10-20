@@ -27,9 +27,6 @@ class TestWorker extends PollingWorkerBase {
     backoffFactor?: number;
     initialJitter?: boolean;
     runOnceImpl: () => Promise<boolean>;
-    metrics?: {
-      recordAlert: (name: string, meta?: Record<string, unknown>) => void;
-    };
   }) {
     super({
       workerId: opts.workerId,
@@ -43,7 +40,6 @@ class TestWorker extends PollingWorkerBase {
       ...(opts.initialJitter !== undefined
         ? { initialJitter: opts.initialJitter }
         : {}),
-      ...(opts.metrics ? { metrics: opts.metrics } : {}),
     });
     this.controller = { runOnce: vi.fn(opts.runOnceImpl), runs: 0 };
   }
@@ -95,7 +91,6 @@ describe("PollingWorkerBase", () => {
   });
 
   it("applies exponential backoff when runOnce throws", async () => {
-    const recordAlert = vi.fn();
     const worker = new TestWorker({
       workerId: "throws",
       basePollIntervalMs: 1_000,
@@ -104,7 +99,6 @@ describe("PollingWorkerBase", () => {
       runOnceImpl: async () => {
         throw new Error("boom");
       },
-      metrics: { recordAlert },
     });
 
     worker.start();
@@ -116,10 +110,6 @@ describe("PollingWorkerBase", () => {
 
     await vi.advanceTimersByTimeAsync(4_000);
     expect(worker.currentInterval()).toBe(8_000);
-
-    expect(recordAlert).toHaveBeenCalledWith("worker_loop_crash", {
-      worker: "throws",
-    });
 
     worker.stop();
   });

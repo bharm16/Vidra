@@ -4,10 +4,8 @@ import { logger } from "@infrastructure/Logger";
 import { extractUserId } from "@utils/requestHelpers";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
-import type { SpanLabelingTelemetryService } from "@services/observability/SpanLabelingTelemetryService";
 import type { ApiResponse } from "@shared/types/api";
 import { createLabelSpansCoordinator } from "./labelSpans/coordinator";
-import { createTracedLabelSpansCoordinator } from "./labelSpans/tracedCoordinator";
 import { parseLabelSpansRequest } from "./labelSpans/requestParser";
 import { handleLabelSpansStreamRequest } from "./labelSpans/streamingHandler";
 import { toPublicLabelSpansResult } from "./labelSpans/transform";
@@ -19,13 +17,9 @@ import type { PublicLabelSpansResult } from "./labelSpans/transform";
 export function createLabelSpansRoute(
   aiService: AIModelService,
   spanLabelingCache: SpanLabelingCacheService | null = null,
-  telemetryService: SpanLabelingTelemetryService | null = null,
 ): Router {
   const router = ExpressRouter();
-  const coordinator = createTracedLabelSpansCoordinator(
-    createLabelSpansCoordinator(aiService, spanLabelingCache),
-    telemetryService,
-  );
+  const coordinator = createLabelSpansCoordinator(aiService, spanLabelingCache);
 
   router.post("/stream", async (req: Request, res: Response) => {
     const parsed = parseLabelSpansRequest(req.body);

@@ -1,55 +1,52 @@
-/**
- * Unit tests for LoggingService
- *
- * Tests trace ID management, timer operations, log persistence,
- * and child logger behavior.
- */
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-
-// We need to test the class directly, not the singleton
-// Mock import.meta.env
-vi.stubGlobal("import", { meta: { env: { MODE: "development" } } });
-
-// Dynamically import to avoid singleton side effects
-let LoggingService: typeof import("../LoggingService");
-
-beforeEach(async () => {
-  localStorage.clear();
-  vi.restoreAllMocks();
-  // Re-import to get fresh module
-  LoggingService = await import("../LoggingService");
-});
+async function loadLogger(
+  env: Record<string, string>,
+): Promise<(typeof import("../LoggingService"))["logger"]> {
+  for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+  vi.resetModules();
+  return (await import("../LoggingService")).logger;
+}
 
 afterEach(() => {
-  localStorage.clear();
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
 });
 
-// ---------------------------------------------------------------------------
-// generateTraceId
-// ---------------------------------------------------------------------------
+describe("LoggingService", () => {
+  it("writes nothing outside development unless debug logging is on", async () => {
+    const logger = await loadLogger({ MODE: "production", VITE_DEBUG_LOGGING: "" });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
-// ---------------------------------------------------------------------------
-// startTimer / endTimer
-// ---------------------------------------------------------------------------
+    logger.error("hidden");
 
-// ---------------------------------------------------------------------------
-// getStoredLogs / clearStoredLogs
-// ---------------------------------------------------------------------------
-describe("LoggingService log persistence", () => {
-  it("clearStoredLogs removes stored logs", () => {
-    const { logger } = LoggingService;
-    localStorage.setItem(
-      "prompt_builder_logs",
-      JSON.stringify([{ level: "info", message: "test", timestamp: "now" }]),
-    );
-    logger.clearStoredLogs();
-    expect(logger.getStoredLogs()).toEqual([]);
+    expect(error).not.toHaveBeenCalled();
   });
 
-  it("getStoredLogs returns empty array on corrupted data", () => {
-    const { logger } = LoggingService;
-    localStorage.setItem("prompt_builder_logs", "not json");
-    expect(logger.getStoredLogs()).toEqual([]);
+  it("skips levels below VITE_LOG_LEVEL", async () => {
+    const logger = await loadLogger({ VITE_DEBUG_LOGGING: "true", VITE_LOG_LEVEL: "warn" });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    logger.debug("debug");
+    logger.info("info");
+    logger.warn("warn", { attempt: 2 });
+
+    expect(log).not.toHaveBeenCalled();
+    expect(info).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith("warn", { attempt: 2 });
+  });
+
+  it("prefixes a child's messages with its context and keeps error details", async () => {
+    const logger = await loadLogger({ VITE_DEBUG_LOGGING: "true", VITE_LOG_LEVEL: "debug" });
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    logger.child("Upload").error("Failed", new TypeError("bad file"), { size: 3 });
+
+    expect(error).toHaveBeenCalledWith(
+      "[Upload] Failed",
+      expect.objectContaining({ errorName: "TypeError", errorMessage: "bad file", size: 3 }),
+    );
   });
 });

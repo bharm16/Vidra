@@ -3,33 +3,20 @@ import { logger } from "@infrastructure/Logger";
 import type { ApiResponse } from "@shared/types/api";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { validateRequest } from "@middleware/validateRequest";
-import { PerformanceMonitor } from "@middleware/performanceMonitor";
 import { suggestionSchema } from "@config/schemas";
-import { extractUserId } from "@utils/requestHelpers";
 import { countSuggestions } from "./utils";
-import type { SuggestionsTelemetryService } from "@services/observability/SuggestionsTelemetryService";
 import type { EnhancementService } from "@services/enhancement/EnhancementService";
 
 interface EnhancementSuggestionsDeps {
   enhancementService: Pick<EnhancementService, "getEnhancementSuggestions">;
-  perfMonitor: PerformanceMonitor;
-  suggestionsTelemetryService: Pick<
-    SuggestionsTelemetryService,
-    "startSuggestionsTrace"
-  >;
 }
 
 export function registerEnhancementSuggestionsRoute(
   router: Router,
-  {
-    enhancementService,
-    perfMonitor,
-    suggestionsTelemetryService,
-  }: EnhancementSuggestionsDeps,
+  { enhancementService }: EnhancementSuggestionsDeps,
 ): void {
   router.post(
     "/enhancement/suggestions",
-    perfMonitor.trackRequest.bind(perfMonitor),
     validateRequest(suggestionSchema),
     asyncHandler(async (req, res) => {
       const startTime = Date.now();
@@ -67,17 +54,6 @@ export function registerEnhancementSuggestionsRoute(
         spanCount: allLabeledSpans?.length || 0,
       });
 
-      if (req.perfMonitor) {
-        req.perfMonitor.start("service_call");
-      }
-
-      const userIdRaw = extractUserId(req);
-      const userId = userIdRaw === "anonymous" ? null : userIdRaw;
-      const trace = suggestionsTelemetryService.startSuggestionsTrace(
-        requestId,
-        userId,
-      );
-
       try {
         const result = await enhancementService.getEnhancementSuggestions({
           highlightedText,
@@ -93,20 +69,9 @@ export function registerEnhancementSuggestionsRoute(
           nearbySpans,
           editHistory,
           debug,
-          trace,
         });
 
         const suggestionCount = countSuggestions(result);
-
-        if (req.perfMonitor) {
-          req.perfMonitor.end("service_call");
-          req.perfMonitor.addMetadata("cacheHit", result.fromCache ?? false);
-          req.perfMonitor.addMetadata("suggestionCount", suggestionCount);
-          req.perfMonitor.addMetadata(
-            "category",
-            highlightedCategory || "unknown",
-          );
-        }
 
         logger.info("Enhancement suggestions request completed", {
           operation,

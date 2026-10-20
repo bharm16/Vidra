@@ -36,7 +36,6 @@ import {
 import { useAsyncScheduler } from "./useAsyncScheduler.ts";
 import { useSpanLabelingCache } from "./useSpanLabelingCache.ts";
 import { useSpanLabelingCacheService } from "../context/SpanLabelingContext.tsx";
-import { predictiveCacheService } from "@/services/PredictiveCacheService";
 import type {
   LabeledSpan,
   SpanMeta,
@@ -371,14 +370,6 @@ export function useSpanLabeling({
 
       setCacheForPayload(payload, normalizedResult);
 
-      // Record pattern for predictive caching (network fetch = cache miss)
-      predictiveCacheService.recordRequest({
-        text: payload.text,
-        policy: payload.policy as unknown as Record<string, unknown> | null,
-        templateVersion: payload.templateVersion ?? null,
-        cacheHit: false,
-      });
-
       emitResult(
         {
           spans: normalizedResult.spans,
@@ -435,8 +426,6 @@ export function useSpanLabeling({
 
   const schedule = useCallback(
     (payload: SpanLabelingPayload, immediate = false): void => {
-      performance.mark("span-labeling-start");
-
       if (!enabled) {
         lastPayloadRef.current = null;
         setState(createDisabledState());
@@ -454,12 +443,6 @@ export function useSpanLabeling({
             cacheResult.cached.meta as SpanMeta | null,
             templateVersion,
           );
-          performance.mark("span-cache-hit");
-          performance.measure(
-            "span-labeling-cache-hit",
-            "span-labeling-start",
-            "span-cache-hit",
-          );
 
           setState({
             spans: Array.isArray(cacheResult.cached.spans)
@@ -469,13 +452,6 @@ export function useSpanLabeling({
             status: "success",
             error: null,
             signature: cacheResult.cached.signature,
-          });
-          // Record cache hit for predictive caching pattern tracking
-          predictiveCacheService.recordRequest({
-            text: payload.text,
-            policy: payload.policy as unknown as Record<string, unknown> | null,
-            templateVersion: payload.templateVersion ?? null,
-            cacheHit: true,
           });
 
           emitResult(
@@ -612,32 +588,6 @@ export function useSpanLabeling({
     if (!lastPayloadRef.current) return;
     schedule(lastPayloadRef.current, true);
   }, [schedule]);
-
-  // Trigger predictive cache pre-warming when status settles to 'success'
-  useEffect(() => {
-    if (state.status !== "success" || !enabled) return;
-    predictiveCacheService.preWarmCache(async (params) => {
-      const preWarmPayload: SpanLabelingPayload = {
-        text: params.text,
-        maxSpans,
-        minConfidence,
-        policy: (params.policy ?? mergedPolicy) as SpanLabelingPolicy,
-        templateVersion: params.templateVersion ?? templateVersion,
-        isI2VMode:
-          (params.templateVersion ?? templateVersion)
-            ?.toLowerCase()
-            .startsWith("i2v") ?? false,
-      };
-      return SpanLabelingApi.labelSpansStream(preWarmPayload, () => {}, null);
-    });
-  }, [
-    state.status,
-    enabled,
-    maxSpans,
-    minConfidence,
-    mergedPolicy,
-    templateVersion,
-  ]);
 
   useEffect(() => () => cancelPending(), [cancelPending]);
 

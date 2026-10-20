@@ -6,8 +6,8 @@ import { apiRequest } from "@/services/apiRequest";
  * `data` shapes are intentionally `unknown` and narrowed by callers. Routing
  * through {@link apiRequest} validates the envelope at the wire (a non-object body
  * throws here instead of surfacing as a silent `undefined`) and inherits the
- * shared apiClient plumbing every call gets — Firebase auth headers, the
- * telemetry-source header, and the 401 → open-sign-in-and-retry transport.
+ * shared apiClient plumbing every call gets — Firebase auth headers and the
+ * 401 → open-sign-in-and-retry transport.
  * (Validation boundary, not a transform — see CLAUDE.md "Anti-corruption layer".)
  */
 function storageRequest(

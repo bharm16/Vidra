@@ -26,7 +26,7 @@ async function request<T extends z.ZodTypeAny>(
   init?: RequestInit,
 ): Promise<z.infer<T>> {
   // Routes through the shared apiClient seam (Firebase auth headers, the
-  // telemetry-source header, the 401 → sign-in-and-retry transport, backoff).
+  // 401 → sign-in-and-retry transport, backoff).
   // The bespoke error handling below — statusCode enrichment, graceful non-JSON
   // body — is a caller contract (useStudioProject reads err.statusCode), so this
   // uses rawRequest rather than the generic apiRequest helper.
@@ -191,7 +191,7 @@ export async function runStudioTurn(
 ): Promise<RunTurnResponse> {
   // Streams NDJSON, so it opts out of the shared client's request timeout
   // (stream: true) — otherwise the timeout signal would abort the turn
-  // mid-stream. Auth + telemetry-source headers still come from the seam.
+  // mid-stream. Auth headers still come from the seam.
   //
   // The submission identity and captured selection/pin ride in this body (#115).
   // They are built once here, so the auth transport's single POST re-send after

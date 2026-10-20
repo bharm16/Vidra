@@ -10,12 +10,6 @@ import type { VideoJobRecord } from "./types";
 import { processVideoJob, type JobSessionAppendPort } from "./processVideoJob";
 
 interface VideoJobHandlerOptions {
-  metrics?: {
-    recordAlert: (
-      alertName: string,
-      metadata?: Record<string, unknown>,
-    ) => void;
-  };
   /**
    * ISSUE-12: when provided, processVideoJob calls
    * sessionService.appendGenerationToVersion after markCompleted succeeds,
@@ -47,7 +41,7 @@ export class VideoJobHandler implements JobHandler<VideoJobRecord> {
   }
 
   async process(job: VideoJobRecord, ctx: JobExecutionContext): Promise<void> {
-    const { metrics, sessionService } = this.options;
+    const { sessionService } = this.options;
     await processVideoJob(job, {
       jobStore: this.jobStore,
       videoGenerationService: this.videoGenerationService as never,
@@ -60,7 +54,6 @@ export class VideoJobHandler implements JobHandler<VideoJobRecord> {
       dlqSource: "worker-terminal",
       refundReason: "video job worker failed",
       logPrefix: "Video job",
-      ...(metrics ? { metrics } : {}),
       ...(sessionService ? { sessionService } : {}),
     });
   }

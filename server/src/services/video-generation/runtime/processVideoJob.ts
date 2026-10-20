@@ -122,15 +122,6 @@ export interface ProcessVideoJobDeps {
   heartbeatIntervalMs?: number | undefined;
   /** AbortSignal for cancellation (e.g., heartbeat abort in worker). */
   signal?: AbortSignal | undefined;
-  /** Metrics recorder for alerts. */
-  metrics?:
-    | {
-        recordAlert: (
-          alertName: string,
-          metadata?: Record<string, unknown>,
-        ) => void;
-      }
-    | undefined;
   /** DLQ source tag — differs between inline ("inline-terminal") and worker ("worker-terminal"). */
   dlqSource?: string | undefined;
   /** Reason string used when refunding credits on failure. */
@@ -173,7 +164,6 @@ export async function processVideoJob(
     workerId,
     leaseMs,
     signal,
-    metrics,
     dlqSource = "worker-terminal",
     refundReason = "video job failed",
     logPrefix = "Video job",
@@ -409,14 +399,6 @@ export async function processVideoJob(
       stage: classifiedError.stage,
     });
 
-    if (classifiedError.stage === "persistence") {
-      metrics?.recordAlert("video_job_persistence_failure", {
-        jobId: job.id,
-        attempt: job.attempts,
-        code: classifiedError.code,
-      });
-    }
-
     const hasAttemptsRemaining = job.attempts < job.maxAttempts;
     if (classifiedError.retryable && hasAttemptsRemaining) {
       const requeued = await jobStore.requeueForRetry(
@@ -431,13 +413,6 @@ export async function processVideoJob(
           userId: job.userId,
           attempt: job.attempts,
           maxAttempts: job.maxAttempts,
-        });
-        metrics?.recordAlert("video_job_requeued", {
-          jobId: job.id,
-          attempt: job.attempts,
-          maxAttempts: job.maxAttempts,
-          code: classifiedError.code,
-          category: classifiedError.category,
         });
       } else {
         log.warn(`${logPrefix} requeue skipped (status changed)`, {
@@ -476,14 +451,6 @@ export async function processVideoJob(
       }
       await jobStore.enqueueDeadLetter(job, terminalError, dlqSource, {
         creditsRefunded: refunded,
-      });
-      metrics?.recordAlert("video_job_terminal_failure", {
-        jobId: job.id,
-        attempt: job.attempts,
-        maxAttempts: job.maxAttempts,
-        code: terminalError.code,
-        category: terminalError.category,
-        stage: terminalError.stage,
       });
     } else {
       log.warn(`${logPrefix} failure skipped (status changed)`, {

@@ -25,17 +25,6 @@ describe("useAsyncScheduler", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
-    if (!performance.mark) {
-      (performance as unknown as { mark: (name: string) => void }).mark =
-        vi.fn();
-    }
-    if (!performance.measure) {
-      (
-        performance as unknown as {
-          measure: (name: string, start: string, end: string) => void;
-        }
-      ).measure = vi.fn();
-    }
   });
 
   afterEach(() => {

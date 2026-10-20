@@ -3,7 +3,6 @@
  */
 
 import { ApiClient } from "@/services/ApiClient";
-import { trackPromptOptimize } from "@/services/analytics";
 import { calculateQualityScore as scorePromptQuality } from "./qualityScore";
 import {
   buildOfflineResult,
@@ -38,7 +37,6 @@ export class PromptOptimizationApi {
   }: OptimizeOptions): Promise<OptimizeResult> {
     try {
       const requestOptions = signal ? { signal } : {};
-      trackPromptOptimize(mode);
       const raw = await this.client.post(
         "/optimize",
         {

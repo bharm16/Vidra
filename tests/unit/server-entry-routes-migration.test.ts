@@ -53,14 +53,6 @@ const createApiServices = (
       suggestedUpdates: {},
     })),
   },
-  suggestionsTelemetryService: {
-    startSuggestionsTrace: vi.fn(() => ({
-      recordStage: vi.fn(),
-      recordCacheHit: vi.fn(),
-      recordError: vi.fn(),
-      complete: vi.fn(),
-    })),
-  } as never,
 });
 
 describe("startServer", () => {

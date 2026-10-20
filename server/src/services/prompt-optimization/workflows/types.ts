@@ -1,5 +1,4 @@
 import type { ILogger } from "@interfaces/ILogger";
-import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
 import type { PromptLintResult } from "../services/PromptLintGateService";
 import type {
   CompilationState,
@@ -116,5 +115,4 @@ export interface OptimizeFlowArgs {
   ) => void;
   intentLock: IntentLockLike;
   promptLint: PromptLintLike;
-  telemetry: OptimizeTrace;
 }

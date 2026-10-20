@@ -39,12 +39,12 @@ describe("parseEnv", () => {
     const result = parseEnv(
       minimalEnv({
         CREDIT_REFUND_SWEEPER_ENABLED: "false",
-        SENTRY_DEBUG: "true",
+        ALLOW_DEV_CROSS_USER_SESSIONS: "true",
       }),
     );
 
     expect(result.CREDIT_REFUND_SWEEPER_ENABLED).toBe(false);
-    expect(result.SENTRY_DEBUG).toBe(true);
+    expect(result.ALLOW_DEV_CROSS_USER_SESSIONS).toBe(true);
   });
 
   it("collects ALL errors rather than stopping at the first", () => {

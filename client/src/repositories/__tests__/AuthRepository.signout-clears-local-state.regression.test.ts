@@ -4,9 +4,9 @@ import { AuthRepository } from "../AuthRepository";
 
 /**
  * Regression: sign-out only ended the Firebase session — the local history
- * mirror (localStorage "promptHistory") and persisted logs survived, so the
- * next visitor on the browser (a guest, or a different user) opened /history
- * and saw the previous user's session titles and prompts.
+ * mirror (localStorage "promptHistory") survived, so the next visitor on the
+ * browser (a guest, or a different user) opened /history and saw the previous
+ * user's session titles and prompts.
  */
 
 const firebaseSignOut = vi.hoisted(() => vi.fn());
@@ -26,7 +26,7 @@ vi.mock("firebase/auth", () => ({
   onAuthStateChanged: vi.fn(),
 }));
 
-const seedUserScopedState = (): void => {
+const seedHistoryMirror = (): void => {
   localStorage.setItem(
     "promptHistory",
     JSON.stringify([
@@ -38,10 +38,6 @@ const seedUserScopedState = (): void => {
       },
     ]),
   );
-  localStorage.setItem(
-    "prompt_builder_logs",
-    JSON.stringify([{ level: "info", message: "user content in logs" }]),
-  );
 };
 
 describe("regression: sign-out leaves no user-scoped local state behind", () => {
@@ -50,25 +46,23 @@ describe("regression: sign-out leaves no user-scoped local state behind", () => 
     firebaseSignOut.mockReset();
   });
 
-  it("a successful sign-out clears the history mirror and persisted logs", async () => {
-    seedUserScopedState();
+  it("a successful sign-out clears the history mirror", async () => {
+    seedHistoryMirror();
     firebaseSignOut.mockResolvedValueOnce(undefined);
 
     const repo = new AuthRepository({} as Auth);
     await repo.signOut();
 
     expect(localStorage.getItem("promptHistory")).toBeNull();
-    expect(localStorage.getItem("prompt_builder_logs")).toBeNull();
   });
 
   it("a failed sign-out clears nothing — the user is still signed in", async () => {
-    seedUserScopedState();
+    seedHistoryMirror();
     firebaseSignOut.mockRejectedValueOnce(new Error("network down"));
 
     const repo = new AuthRepository({} as Auth);
     await expect(repo.signOut()).rejects.toThrow();
 
     expect(localStorage.getItem("promptHistory")).not.toBeNull();
-    expect(localStorage.getItem("prompt_builder_logs")).not.toBeNull();
   });
 });

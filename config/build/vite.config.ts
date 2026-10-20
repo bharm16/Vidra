@@ -1,14 +1,10 @@
-import { defineConfig, type PluginOption } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const shouldGenerateSourcemaps =
-  Boolean(process.env.SENTRY_AUTH_TOKEN) ||
-  process.env.GENERATE_SOURCEMAP === "true";
 
 export default defineConfig(({ mode }) => ({
   root: path.resolve(__dirname, "../../client"),
@@ -18,7 +14,6 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: path.resolve(__dirname, "../../dist"),
-    sourcemap: shouldGenerateSourcemaps,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -35,7 +30,6 @@ export default defineConfig(({ mode }) => ({
             "firebase/app",
             "firebase/auth",
             "firebase/firestore",
-            "firebase/analytics",
           ],
           "vendor-icons": ["@phosphor-icons/react"],
           "vendor-three": ["three"],
@@ -67,30 +61,7 @@ export default defineConfig(({ mode }) => ({
       resolveExtensions: [".jsx", ".js", ".tsx", ".ts"],
     },
   },
-  plugins: [
-    react(),
-    mode === "production" && process.env.SENTRY_AUTH_TOKEN
-      ? sentryVitePlugin({
-          org: process.env.SENTRY_ORG,
-          project: process.env.SENTRY_PROJECT,
-          authToken: process.env.SENTRY_AUTH_TOKEN,
-          sourcemaps: {
-            assets: path.resolve(__dirname, "../../dist/**"),
-            ignore: ["node_modules"],
-            filesToDeleteAfterUpload: [
-              path.resolve(__dirname, "../../dist/**/*.map"),
-            ],
-          },
-          release: {
-            name: process.env.VITE_APP_VERSION || "unknown",
-            setCommits: {
-              auto: true,
-              ignoreMissing: true,
-            },
-          },
-        })
-      : undefined,
-  ].filter(Boolean) as PluginOption[],
+  plugins: [react()],
   server: {
     proxy: {
       "/api": {

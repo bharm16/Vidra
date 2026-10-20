@@ -25,11 +25,5 @@ export function createHealthRoutes(): Router {
     });
   });
 
-  if (process.env.NODE_ENV !== "production") {
-    router.get("/debug-sentry", (_req, _res) => {
-      throw new Error("My first Sentry error!");
-    });
-  }
-
   return router;
 }

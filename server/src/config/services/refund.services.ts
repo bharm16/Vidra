@@ -32,12 +32,7 @@ export function registerRefundServices(container: DIContainer): void {
       refunder: LegacyCreditRefundService,
       config: ServiceConfig,
     ) =>
-      createCreditRefundSweeper(
-        store,
-        refunder,
-        undefined,
-        config.credits.refundSweeper,
-      ),
+      createCreditRefundSweeper(store, refunder, config.credits.refundSweeper),
     ["refundFailureStore", "legacyCreditRefunder", "config"],
   );
 }

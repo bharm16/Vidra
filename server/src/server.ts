@@ -18,7 +18,6 @@ import { logger } from "./infrastructure/Logger.ts";
 import { isTransientError } from "./utils/transientErrors.ts";
 import { toError } from "@shared/utils/error";
 import type { DIContainer } from "./infrastructure/DIContainer.ts";
-import type { IPostHogClient } from "./infrastructure/PostHogClient.ts";
 import type { SpanLabelingCacheService } from "./services/cache/SpanLabelingCacheService.ts";
 import type { CreditRefundSweeper } from "./services/video-generation/refunds/CreditRefundSweeper.ts";
 import type { VideoJobWorker } from "./services/video-generation/runtime/VideoJobWorker.ts";
@@ -184,17 +183,6 @@ export function setupGracefulShutdown(
           else if (result.value === false) logger.warn("Native exports retain unresolved work for recovery");
         });
 
-        // Flush pending telemetry events before exiting.
-        const postHogClient = resolveOptional<IPostHogClient>("postHogClient");
-        if (postHogClient) {
-          try {
-            await postHogClient.shutdown();
-          } catch (err) {
-            logger.warn("PostHog shutdown failed (non-fatal)", {
-              error: err instanceof Error ? err.message : String(err),
-            });
-          }
-        }
 
         // Stop cache cleanup interval
         const spanLabelingCacheService =

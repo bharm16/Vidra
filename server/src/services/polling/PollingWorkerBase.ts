@@ -22,17 +22,6 @@ export interface PollingWorkerOptions {
    * full base interval.
    */
   initialJitter?: boolean;
-  /**
-   * Optional metrics sink. The base class records `worker_loop_crash` when an
-   * unhandled error escapes the runOnce contract (i.e. the subclass throws
-   * instead of returning false). Subclasses may use the same sink for their
-   * own alerts.
-   */
-  metrics?: PollingWorkerMetrics;
-}
-
-export interface PollingWorkerMetrics {
-  recordAlert(alertName: string, metadata?: Record<string, unknown>): void;
 }
 
 /** Public status snapshot returned by {@link PollingWorkerBase.getStatus}. */
@@ -74,7 +63,6 @@ export abstract class PollingWorkerBase {
   protected readonly maxPollIntervalMs: number;
   protected readonly backoffFactor: number;
   protected readonly initialJitter: boolean;
-  protected readonly metrics: PollingWorkerMetrics | undefined;
   protected readonly log: ReturnType<typeof logger.child>;
 
   private timer: NodeJS.Timeout | null = null;
@@ -95,7 +83,6 @@ export abstract class PollingWorkerBase {
       );
     this.backoffFactor = options.backoffFactor ?? DEFAULT_BACKOFF_FACTOR;
     this.initialJitter = options.initialJitter ?? false;
-    this.metrics = options.metrics;
     this.log = logger.child({ service: this.workerId });
     this.currentPollIntervalMs = this.basePollIntervalMs;
   }
@@ -186,9 +173,6 @@ export abstract class PollingWorkerBase {
       this.consecutiveFailuresInternal += 1;
       this.lastRunAtInternal = new Date();
       this.log.error("Worker loop failed unexpectedly", error as Error);
-      this.metrics?.recordAlert("worker_loop_crash", {
-        worker: this.workerId,
-      });
       success = false;
     }
 

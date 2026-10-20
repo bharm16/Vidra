@@ -5,11 +5,6 @@ import {
   memoryLocalCache,
   type Firestore,
 } from "firebase/firestore";
-import type { Analytics } from "firebase/analytics";
-import { logger } from "@/services/LoggingService";
-import { sanitizeError } from "@/utils/logging";
-
-const log = logger.child("firebase");
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,7 +13,6 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 /**
@@ -37,13 +31,9 @@ const firebaseConfig = {
 let app: FirebaseApp | undefined;
 let authInstance: Auth | undefined;
 let dbInstance: Firestore | undefined;
-let analyticsInstance: Analytics | null = null;
 
 function getApp(): FirebaseApp {
-  if (!app) {
-    app = initializeApp(firebaseConfig);
-    startAnalyticsLoad(app);
-  }
+  app ??= initializeApp(firebaseConfig);
   return app;
 }
 
@@ -63,33 +53,4 @@ export function getFirebaseDb(): Firestore {
     localCache: memoryLocalCache(),
   });
   return dbInstance;
-}
-
-/**
- * Null until the analytics bundle resolves, and permanently null when it
- * cannot load (SSR, dev, ad blockers). Callers must handle null — the loading
- * window is real, not a formality.
- */
-export function getFirebaseAnalytics(): Analytics | null {
-  getApp();
-  return analyticsInstance;
-}
-
-function startAnalyticsLoad(firebaseApp: FirebaseApp): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  import("firebase/analytics")
-    .then(({ getAnalytics }) => {
-      analyticsInstance = getAnalytics(firebaseApp);
-    })
-    .catch((error) => {
-      const info = sanitizeError(error);
-      log.warn("Firebase Analytics initialization failed (ok in development)", {
-        operation: "getAnalytics",
-        error: info.message,
-        errorName: info.name,
-      });
-    });
 }

@@ -15,8 +15,8 @@ export interface ApiRequestInit {
  * Make an authenticated Vidra API call and return the unwrapped `data`.
  *
  * Routes through {@link apiClient.rawRequest}, so the call inherits the shared
- * cross-cutting behaviour every apiClient request gets — Firebase auth headers,
- * the telemetry-source header, and the 401 → open-sign-in-and-retry transport —
+ * cross-cutting behaviour every apiClient request gets — Firebase auth headers
+ * and the 401 → open-sign-in-and-retry transport —
  * then validates the body against the shared success envelope and returns
  * `data`. This replaces the per-module "build auth headers + fetch + unwrap
  * `{ success, data }`" plumbing that several api/ modules had each re-derived.

@@ -21,9 +21,6 @@ vi.mock("@/components/ErrorBoundary", () => ({
   ErrorBoundary: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),
-  FeatureErrorBoundary: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
 }));
 
 vi.mock("@/features/share/SharedClip", () => ({

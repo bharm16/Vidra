@@ -10,11 +10,6 @@ import {
   buildTextPattern,
   buildTextPrefix,
 } from "./spanLabeling/key";
-import {
-  recordCacheHit,
-  recordCacheMiss,
-  type SpanLabelingCacheMetrics,
-} from "./spanLabeling/metrics";
 import { runSingleFlight } from "./singleFlight";
 
 /**
@@ -26,7 +21,6 @@ import { runSingleFlight } from "./singleFlight";
  * Features:
  * - TTL-based expiration (1 hour for exact matches, 5 min for similar texts)
  * - Cache key based on text hash + policy + template version
- * - Metrics tracking for cache hit/miss rates
  * - LRU eviction for in-memory cache
  *
  * @example
@@ -42,7 +36,6 @@ export class SpanLabelingCacheService {
   private readonly shortTTL: number;
   private readonly maxMemoryCacheSize: number;
   private readonly memoryCache: MemoryLruCache;
-  private readonly metrics: SpanLabelingCacheMetrics | undefined;
   private readonly stats: {
     hits: number;
     misses: number;
@@ -52,11 +45,7 @@ export class SpanLabelingCacheService {
   private readonly inflight = new Map<string, Promise<unknown>>();
   private cleanupInterval: NodeJS.Timeout | null = null;
 
-  constructor(
-    options: SpanLabelingCacheServiceOptions = {},
-    metricsService?: SpanLabelingCacheMetrics,
-  ) {
-    this.metrics = metricsService;
+  constructor(options: SpanLabelingCacheServiceOptions = {}) {
     this.defaultTTL = options.defaultTTL || 3600; // 1 hour
     this.shortTTL = options.shortTTL || 300; // 5 minutes
     this.maxMemoryCacheSize = options.maxMemoryCacheSize || 100;
@@ -103,14 +92,11 @@ export class SpanLabelingCacheService {
           textLength: text.length,
         });
 
-        recordCacheHit(this.metrics, "span_labeling_memory", duration);
-
         return cacheEntry.data;
       }
 
       // Cache miss
       this.stats.misses++;
-      recordCacheMiss(this.metrics, "span_labeling");
 
       const duration = Date.now() - startTime;
       logger.debug("Cache miss", {
@@ -319,9 +305,8 @@ export let spanLabelingCache: SpanLabelingCacheService | null = null;
  */
 export function initSpanLabelingCache(
   options: SpanLabelingCacheServiceOptions = {},
-  metricsService?: SpanLabelingCacheMetrics,
 ): SpanLabelingCacheService {
-  spanLabelingCache = new SpanLabelingCacheService(options, metricsService);
+  spanLabelingCache = new SpanLabelingCacheService(options);
   spanLabelingCache.startPeriodicCleanup();
   return spanLabelingCache;
 }

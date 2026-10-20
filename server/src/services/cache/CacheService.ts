@@ -5,20 +5,6 @@ import type { ILogger } from "@interfaces/ILogger";
 import { SemanticCacheEnhancer } from "./SemanticCacheService.js";
 import { runSingleFlight } from "./singleFlight.js";
 
-/** Narrow metrics interface — avoids importing the concrete MetricsService class. */
-interface CacheMetricsCollector {
-  recordCacheHit(cacheType: string): void;
-  recordCacheMiss(cacheType: string): void;
-  updateCacheHitRate(cacheType: string, hitRate: number): void;
-}
-
-/** No-op fallback when no metrics collector is provided. */
-const NULL_METRICS: CacheMetricsCollector = {
-  recordCacheHit() {},
-  recordCacheMiss() {},
-  updateCacheHitRate() {},
-};
-
 /**
  * Cache service for storing API responses.
  * Instances should be created via the DI container
@@ -80,14 +66,9 @@ export class CacheService {
   };
   private readonly config: CacheConfig;
   private readonly log: ILogger;
-  private readonly metrics: CacheMetricsCollector;
   private readonly inflight = new Map<string, Promise<unknown>>();
 
-  constructor(
-    config: CacheConfig = {},
-    metricsService?: CacheMetricsCollector,
-  ) {
-    this.metrics = metricsService ?? NULL_METRICS;
+  constructor(config: CacheConfig = {}) {
     this.log = logger.child({ service: "CacheService" });
 
     this.cache = new NodeCache({
@@ -167,7 +148,7 @@ export class CacheService {
   /**
    * Get value from cache
    * @param key - Cache key
-   * @param cacheType - Type of cache for metrics
+   * @param cacheType - Type of cache, for logs
    * @returns Cached value or null
    */
   async get<T = unknown>(
@@ -178,16 +159,12 @@ export class CacheService {
 
     if (value !== undefined) {
       this.stats.hits++;
-      this.metrics.recordCacheHit(cacheType);
-      this.updateHitRate(cacheType);
 
       logger.debug("Cache hit", { key, cacheType });
       return value;
     }
 
     this.stats.misses++;
-    this.metrics.recordCacheMiss(cacheType);
-    this.updateHitRate(cacheType);
 
     logger.debug("Cache miss", { key, cacheType });
     return null;
@@ -257,7 +234,7 @@ export class CacheService {
    * - `computed`: this caller invoked `compute` and populated the cache
    * - `coalesced`: another caller's in-flight compute satisfied this request
    *
-   * Use `setOptions.cacheType` to attribute hits/misses to a metrics bucket.
+   * `setOptions.cacheType` labels the hit/miss logs.
    */
   async getOrCompute<T>(
     key: string,
@@ -334,19 +311,6 @@ export class CacheService {
       keys: this.cache.keys().length,
       size: this.cache.getStats(),
     };
-  }
-
-  /**
-   * Update hit rate metric
-   * @private
-   */
-  private updateHitRate(cacheType: string): void {
-    const hitRate =
-      this.stats.hits + this.stats.misses > 0
-        ? (this.stats.hits / (this.stats.hits + this.stats.misses)) * 100
-        : 0;
-
-    this.metrics.updateCacheHitRate(cacheType, hitRate);
   }
 
   /**

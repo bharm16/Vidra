@@ -103,6 +103,7 @@ The server routes only the `/session` workspace used were retired with it: `/api
 
 - The legacy capability registry, `/api/capabilities` (with `/models`, `/providers` and `/registry`), its probe service and `sync:capabilities`.
 - Named assets/triggers, depth/convergence, continuity generation, storyboards/character preprocessing, recommendation, coherence/observation endpoints, paid intake and broad automatic replay workers. Legacy charged-job refunds remain until charged jobs and refund debt are drained or migrated.
+- Error tracking (Sentry), product analytics (PostHog, Firebase Analytics), web-vitals reporting, metrics sinks and speculative span-label pre-warming. Logs are Pino on the server and the console in the browser; see [observability](docs/architecture/observability.md).
 - Screens and presentations: draft comparison, management and discard screens; context or coupled-setting approval gates; technical attachment, storage and renderer repair screens; billing, checkout and credit receipts; extra retry confirmation; the three-choice "This draft changed elsewhere" modal; routine Saved/Saving and replacement-success labels; "Saved; add to conversation" notices; "What are you making?" headings; the composer action chooser.
 - Unfinished work is reached through conversation history. Retry is a direct action with a new execution identity; uncertain acceptance still reconciles the original identity. Conflict detection, retained-copy protection, data retention, media ownership, idempotency and internal recovery remain required.
 

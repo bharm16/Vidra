@@ -6,11 +6,4 @@
  * @module utils/logging
  */
 
-export {
-  sanitizeHeaders,
-  summarize,
-  redactSensitiveFields,
-  getEmailDomain,
-  sanitizeUserData,
-  sanitizeError,
-} from "./sanitize";
+export { sanitizeError } from "./sanitize";

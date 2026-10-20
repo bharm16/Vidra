@@ -12,12 +12,11 @@
  * All business logic is delegated to specialized modules.
  */
 
-// IMPORTANT: Import instrument.mjs FIRST, before any other imports
-import "./instrument.mjs";
+// Load .env before native-fonts reads PANGOCAIRO_BACKEND.
+import "dotenv/config";
 import "./src/config/native-fonts.js";
 
 import { existsSync, readdirSync } from "node:fs";
-import dotenv from "dotenv";
 import { parseEnv, emitEnvWarnings } from "@config/env";
 import { logger } from "@infrastructure/Logger";
 import { configureServices, initializeServices } from "@config/services.config";
@@ -25,9 +24,6 @@ import { NEURO_SYMBOLIC } from "@llm/span-labeling/config/SpanLabelingConfig";
 import { modelDirPath, modelPath } from "@llm/span-labeling/nlp/paths";
 import { createApp } from "./src/app.js";
 import { startServer, setupGracefulShutdown } from "./src/server.js";
-
-// Load environment variables
-dotenv.config();
 
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error));

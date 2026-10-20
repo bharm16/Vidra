@@ -11,7 +11,6 @@ import { PromptLintGateService } from "./services/PromptLintGateService";
 import { finishPrompt } from "./services/finishPrompt";
 import type { VideoPromptService } from "../video-prompt-analysis/VideoPromptService";
 import type { CacheService } from "@services/cache/CacheService";
-import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
 import type {
   CompileContext,
   CompilePromptResponse,
@@ -20,15 +19,6 @@ import type {
   OptimizationResponse,
 } from "./types";
 import { runOptimizeFlow } from "./workflows/optimizeFlow";
-
-const makeNoopTrace = (): OptimizeTrace =>
-  ({
-    recordStage: () => {},
-    recordLlmCall: () => {},
-    recordCacheHit: () => {},
-    recordError: () => {},
-    complete: () => {},
-  }) as unknown as OptimizeTrace;
 
 /**
  * Refactored Prompt Optimization Service - Orchestrator Pattern
@@ -92,8 +82,6 @@ export class PromptOptimizationService {
       );
     }
 
-    const telemetry = request.trace ?? makeNoopTrace();
-
     return runOptimizeFlow({
       request,
       log: this.log,
@@ -105,7 +93,6 @@ export class PromptOptimizationService {
         this.logOptimizationMetrics(originalPrompt, optimizedPrompt, mode),
       intentLock: this.intentLock,
       promptLint: this.promptLint,
-      telemetry,
     });
   }
 

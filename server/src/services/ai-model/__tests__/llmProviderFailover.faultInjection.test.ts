@@ -6,7 +6,6 @@ import {
   type AIResponse,
   type IAIClient,
 } from "@interfaces/IAIClient";
-import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
 import { AIModelService } from "../AIModelService";
 
 /**
@@ -100,9 +99,6 @@ function buildHarness({
     now: () => nowMs,
   });
 
-  const record = vi.fn();
-  const telemetry = { record } as unknown as LlmCallTelemetryService;
-
   const service = new AIModelService({
     clients: {
       openai: providers.openai.client,
@@ -110,7 +106,6 @@ function buildHarness({
       qwen: providers.qwen.client,
       gemini: providers.gemini.client,
     },
-    llmCallTelemetry: telemetry,
     providerCircuit: circuit,
   });
 
@@ -118,7 +113,6 @@ function buildHarness({
     service,
     provider,
     circuit,
-    record,
     advance: (ms: number) => {
       nowMs += ms;
     },
@@ -130,8 +124,8 @@ const PARAMS = { systemPrompt: "system", userMessage: "user" };
 describe.each(VIABLE_FALLBACK_OPERATIONS)(
   "fault injection: $operation ($primary → $fallback)",
   ({ operation, primary, fallback }) => {
-    it("completes on the fallback provider with correct telemetry attribution", async () => {
-      const { service, provider, record } = buildHarness();
+    it("completes on the fallback provider and reports the model that served it", async () => {
+      const { service, provider } = buildHarness();
       provider(primary).setHealthy(false);
 
       const response = await service.execute(operation, PARAMS);
@@ -139,15 +133,7 @@ describe.each(VIABLE_FALLBACK_OPERATIONS)(
       expect(provider(primary).complete).toHaveBeenCalledTimes(1);
       expect(provider(fallback).complete).toHaveBeenCalledTimes(1);
       expect(response.metadata.provider).toBe(fallback);
-      expect(record).toHaveBeenCalledTimes(1);
-      expect(record).toHaveBeenCalledWith(
-        expect.objectContaining({
-          executionType: operation,
-          provider: fallback,
-          model: `${fallback}-fake-model`,
-          outcome: "success",
-        }),
-      );
+      expect(response.metadata.model).toBe(`${fallback}-fake-model`);
     });
   },
 );
@@ -162,7 +148,7 @@ describe("circuit lifecycle through the routing layer", () => {
   const { operation, primary, fallback } = spanLabeling;
 
   it("opens after N consecutive failures and stops dialing the primary", async () => {
-    const { service, provider, circuit, record } = buildHarness({
+    const { service, provider, circuit } = buildHarness({
       threshold: 3,
     });
     provider(primary).setHealthy(false);
@@ -175,20 +161,12 @@ describe("circuit lifecycle through the routing layer", () => {
 
     provider(primary).complete.mockClear();
     provider(fallback).complete.mockClear();
-    record.mockClear();
 
     const response = await service.execute(operation, PARAMS);
 
     expect(provider(primary).complete).not.toHaveBeenCalled();
     expect(provider(fallback).complete).toHaveBeenCalledTimes(1);
     expect(response.metadata.provider).toBe(fallback);
-    expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({
-        executionType: operation,
-        provider: fallback,
-        outcome: "success",
-      }),
-    );
   });
 
   it("half-opens after cooldown; a successful probe closes the circuit", async () => {

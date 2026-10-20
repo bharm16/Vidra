@@ -3,7 +3,6 @@
  * Shared type definitions used across prompt optimization modules
  */
 import type { VideoPromptStructuredResponse } from "@server/contracts/prompt-analysis/structuredPrompt";
-import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
 import type { LockedSpan } from "@shared/schemas/optimization.schemas";
 
 /** Generation settings a request carries alongside its words. */
@@ -69,11 +68,6 @@ export interface OptimizationRequest {
   startImage?: string;
   /** Present in legacy I2V calls; ignored after the I2V pipeline removal. */
   sourcePrompt?: string;
-  /**
-   * Telemetry trace, created at the route layer. When omitted, optimization
-   * proceeds with no telemetry (test paths and direct service consumers).
-   */
-  trace?: OptimizeTrace;
 }
 
 export interface StructuredOptimizationArtifact {
@@ -128,8 +122,7 @@ export interface CompileContext {
 /**
  * Quality verdicts produced by the finishing stages.
  *
- * Server-internal: telemetry is the consumer (see OptimizeTraceCompleteSummary),
- * and the intent verdict additionally reaches the client inside
+ * Server-internal: the optimize completion log reads it, and the intent verdict additionally reaches the client inside
  * `CompilationState.intentLock`, which is already on the wire. Deliberately NOT
  * a wire field of its own — that would ship the same verdict twice for no reader.
  */

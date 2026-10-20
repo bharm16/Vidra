@@ -49,9 +49,6 @@ import {
 import { resolveFalApiKey } from "@utils/falApiKey";
 import type { ShareService } from "@services/share/ShareService";
 import type { StorageRoutesService } from "@routes/storage.routes";
-import type { OptimizeTelemetryService } from "@services/observability/OptimizeTelemetryService";
-import type { SuggestionsTelemetryService } from "@services/observability/SuggestionsTelemetryService";
-import type { SpanLabelingTelemetryService } from "@services/observability/SpanLabelingTelemetryService";
 import { STORAGE_CONFIG } from "@services/storage/config/storageConfig";
 import { resolveOptionalService } from "./resolve-utils.ts";
 
@@ -134,14 +131,8 @@ export function registerApiRoutes(
   // Main API routes
   const apiRoutes = createAPIRoutes({
     promptOptimizationService: container.resolve("promptOptimizationService"),
-    optimizeTelemetryService: container.resolve<OptimizeTelemetryService>(
-      "optimizeTelemetryService",
-    ),
     enhancementService: container.resolve("enhancementService"),
     sceneDetectionService: container.resolve("sceneDetectionService"),
-    suggestionsTelemetryService: container.resolve<SuggestionsTelemetryService>(
-      "suggestionsTelemetryService",
-    ),
     storageService: container.resolve<StorageRoutesService>("storageService"),
     sessionService: container.resolve("sessionService"),
     remintSessionPictures,
@@ -248,9 +239,6 @@ export function registerApiRoutes(
   const labelSpansRoute = createLabelSpansRoute(
     container.resolve("aiService"),
     container.resolve("spanLabelingCacheService"),
-    container.resolve<SpanLabelingTelemetryService>(
-      "spanLabelingTelemetryService",
-    ),
   );
   app.use("/api/llm/label-spans", apiAuthMiddleware, labelSpansRoute);
 

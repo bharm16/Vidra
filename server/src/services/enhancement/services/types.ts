@@ -3,7 +3,6 @@
  * Shared type definitions used across enhancement service modules
  */
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
-import type { SuggestionsTrace } from "@services/observability/SuggestionsTelemetryService";
 import type { PromptMode } from "../constants.js";
 
 /**
@@ -508,11 +507,6 @@ export interface EnhancementRequestParams {
   nearbySpans?: NearbySpan[];
   editHistory?: EditHistoryEntry[];
   debug?: boolean;
-  /**
-   * Telemetry trace, created at the route layer. When omitted, the suggestion
-   * flow proceeds with no telemetry (test paths and direct service consumers).
-   */
-  trace?: SuggestionsTrace;
 }
 
 /**

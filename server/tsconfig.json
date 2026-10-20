@@ -31,7 +31,6 @@
     "src/**/*",
     "src/types/**/*.d.ts",
     "index.ts",
-    "instrument.mjs",
     "../shared/**/*"
   ],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

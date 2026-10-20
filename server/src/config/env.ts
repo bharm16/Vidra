@@ -87,7 +87,6 @@ const firebaseSchema = z.object({
   VITE_FIREBASE_STORAGE_BUCKET: optionalString(),
   VITE_FIREBASE_MESSAGING_SENDER_ID: optionalString(),
   VITE_FIREBASE_APP_ID: optionalString(),
-  VITE_FIREBASE_MEASUREMENT_ID: optionalString(),
   GOOGLE_APPLICATION_CREDENTIALS: optionalString(),
   // Firebase Admin auth: either a service-account JSON file (PATH) or the
   // JSON blob inline (JSON). Both are read by infrastructure/firebaseAdmin.ts
@@ -172,12 +171,6 @@ const securitySchema = z.object({
   FRONTEND_URL: optionalString(),
 });
 
-const observabilitySchema = z.object({
-  SENTRY_DSN: optionalString(),
-  SENTRY_DEBUG: coerceBooleanString(false),
-  APP_VERSION: optionalString(),
-});
-
 const studioSchema = z.object({
   // Studio's only economic control (ADR-0019): estimated cents reserved
   // per user per UTC day. A malformed value fails boot instead of
@@ -250,7 +243,6 @@ const envSchema = serverSchema
   .merge(videoAssetsSchema)
   .merge(creditSchema)
   .merge(securitySchema)
-  .merge(observabilitySchema)
   .merge(studioSchema)
   .merge(sketchRelaySchema)
   .merge(enhancementSchema)
