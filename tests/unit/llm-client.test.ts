@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { FakeCircuitBreaker, mockLogger } = vi.hoisted(
+const { FakeCircuitBreaker, mockLogger, mockMetricsService } = vi.hoisted(
   () => {
     class FakeCircuitBreaker {
       public opened = false;
@@ -40,7 +40,12 @@ const { FakeCircuitBreaker, mockLogger } = vi.hoisted(
       debug: vi.fn(),
     };
 
-    return { FakeCircuitBreaker, mockLogger };
+    const mockMetricsService = {
+      recordClaudeAPICall: vi.fn(),
+      updateCircuitBreakerState: vi.fn(),
+    };
+
+    return { FakeCircuitBreaker, mockLogger, mockMetricsService };
   },
 );
 
@@ -108,6 +113,7 @@ describe("LLMClient", () => {
         providerName: "test",
         defaultModel: "model-a",
         defaultTimeout: 1234,
+        metricsService: mockMetricsService,
       });
 
       const response = await client.complete("Prompt", {});
@@ -120,6 +126,11 @@ describe("LLMClient", () => {
           model: "model-a",
           timeout: 1234,
         }),
+      );
+      expect(mockMetricsService.recordClaudeAPICall).toHaveBeenCalledWith(
+        "test-chat/completions",
+        expect.any(Number),
+        true,
       );
     });
   });

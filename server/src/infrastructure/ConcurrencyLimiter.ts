@@ -23,11 +23,23 @@ import { logger } from "@infrastructure/Logger";
  * });
  */
 
+/** Narrow metrics interface — avoids importing the concrete MetricsService class. */
+interface ConcurrencyMetrics {
+  recordGauge(name: string, value: number): void;
+  recordHistogram(name: string, value: number): void;
+}
+
+const NULL_METRICS: ConcurrencyMetrics = {
+  recordGauge() {},
+  recordHistogram() {},
+};
+
 interface ConcurrencyLimiterOptions {
   maxConcurrent?: number;
   queueTimeout?: number;
   maxQueueLength?: number;
   enableCancellation?: boolean;
+  metricsService?: ConcurrencyMetrics;
 }
 
 interface ExecutionOptions {
@@ -71,6 +83,7 @@ export class ConcurrencyLimiter {
   private readonly queue: QueueItem<unknown>[];
   private nextRequestId: number;
   private readonly stats: LimiterStats;
+  private readonly metrics: ConcurrencyMetrics;
 
   /**
    * @param options - Configuration options
@@ -78,12 +91,14 @@ export class ConcurrencyLimiter {
    * @param options.queueTimeout - Max time in queue before rejection (default: 30000ms)
    * @param options.maxQueueLength - Maximum queue depth before rejecting immediately (default: 20)
    * @param options.enableCancellation - Enable request cancellation (default: true)
+   * @param options.metricsService - Optional metrics collector for recording gauge/histogram data
    */
   constructor(options: ConcurrencyLimiterOptions = {}) {
     this.maxConcurrent = options.maxConcurrent || 5;
     this.queueTimeout = options.queueTimeout || 30000; // 30 seconds
     this.maxQueueLength = options.maxQueueLength || 20;
     this.enableCancellation = options.enableCancellation !== false;
+    this.metrics = options.metricsService ?? NULL_METRICS;
 
     // Track active requests
     this.activeCount = 0;
@@ -138,6 +153,7 @@ export class ConcurrencyLimiter {
     // Reject immediately if queue is full (load-shedding)
     if (this.queue.length >= this.maxQueueLength) {
       this.stats.totalRejected++;
+      this.metrics.recordGauge("request_queue_length", this.queue.length);
 
       logger.warn("Request rejected — queue full", {
         requestId,
@@ -254,6 +270,9 @@ export class ConcurrencyLimiter {
         queueLength: this.queue.length,
         activeCount: this.activeCount,
       });
+
+      // Record queue metric
+      this.metrics.recordGauge("request_queue_length", this.queue.length);
     });
   }
 
@@ -311,6 +330,10 @@ export class ConcurrencyLimiter {
         this.activeCount--;
         this._processQueue();
       });
+
+    // Record metrics
+    this.metrics.recordGauge("request_queue_length", this.queue.length);
+    this.metrics.recordHistogram("request_queue_time_ms", queueTime);
   }
 
   /**
@@ -339,6 +362,8 @@ export class ConcurrencyLimiter {
       queueTime: Date.now() - queueItem.timestamp,
       queueLength: this.queue.length,
     });
+
+    this.metrics.recordGauge("request_queue_length", this.queue.length);
   }
 
   /**
@@ -369,6 +394,8 @@ export class ConcurrencyLimiter {
       requestId: queueItem.id,
       queueLength: this.queue.length,
     });
+
+    this.metrics.recordGauge("request_queue_length", this.queue.length);
   }
 
   /**
@@ -408,6 +435,7 @@ export class ConcurrencyLimiter {
     }
 
     logger.info("Queue cleared", { clearedCount: count });
+    this.metrics.recordGauge("request_queue_length", 0);
   }
 
   /**
