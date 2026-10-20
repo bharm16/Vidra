@@ -8,7 +8,9 @@ import {
 
 export const CreationActionSchema = z.enum([
   "make-image", "edit-image", "upscale-image", "make-video", "animate-image",
-  "edit-video", "extend-video", "ask", "expand-description", "improve-words",
+  "edit-video", "extend-video", "upscale-video", "reframe-video",
+  "make-voiceover", "make-music", "transcribe",
+  "ask", "expand-description", "improve-words",
   "import", "accept-sketch", "export-video",
 ]);
 export type CreationAction = z.infer<typeof CreationActionSchema>;

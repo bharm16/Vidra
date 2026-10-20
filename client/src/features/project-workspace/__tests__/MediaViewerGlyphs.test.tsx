@@ -56,3 +56,24 @@ it("names an uploaded picture under its mobile preview and keeps the caption out
   rerender(<MediaViewer version={{ ...version, label: "Desk reference" }} access={access} onUseInput={vi.fn()} onReuseSetup={vi.fn()} canReuseSetup={false} />);
   expect(screen.queryByText("Desk reference · v1")).not.toBeInTheDocument();
 });
+
+it("offers Edit a region for pictures and Extend for clips under Use", async () => {
+  vi.stubGlobal("matchMedia", () => ({ matches: false, media: "(width < 768px)", onchange: null, addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn() }));
+  const user = userEvent.setup(); const onEditRegion = vi.fn(), onExtend = vi.fn();
+  const picture = render(<MediaViewer version={version} access={access} onUseInput={vi.fn()} onReuseSetup={vi.fn()} canReuseSetup={false} onEditRegion={onEditRegion} onExtend={onExtend} />);
+  await user.click(screen.getByRole("button", { name: "Use" }));
+  const region = await screen.findByRole("button", { name: "Edit a region" });
+  expect(region.querySelector("img")).toHaveAttribute("src", "/design-assets/fidelity-media-area.svg");
+  expect(screen.queryByRole("button", { name: "Extend" })).not.toBeInTheDocument();
+  await user.click(region);
+  expect(onEditRegion).toHaveBeenCalledWith(version);
+  picture.unmount();
+  const clip = MediaVersionSchema.parse({ ...version, id: "version_glyph_clip", kind: "video", label: "Run", metadata: { ...version.metadata, durationSeconds: 8 } });
+  render(<MediaViewer version={clip} access={access} onUseInput={vi.fn()} onReuseSetup={vi.fn()} canReuseSetup={false} onEditRegion={onEditRegion} onExtend={onExtend} />);
+  await user.click(screen.getByRole("button", { name: "Use" }));
+  const extend = await screen.findByRole("button", { name: "Extend" });
+  expect(extend.querySelector("img")).toHaveAttribute("src", "/design-assets/fidelity-media-extend.svg");
+  expect(screen.queryByRole("button", { name: "Edit a region" })).not.toBeInTheDocument();
+  await user.click(extend);
+  expect(onExtend).toHaveBeenCalledWith(clip);
+});

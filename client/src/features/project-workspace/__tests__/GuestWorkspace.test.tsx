@@ -33,10 +33,30 @@ it("asks for an account when the visitor makes something, carrying a claim for t
   expect(screen.getByTestId("location")).toHaveTextContent(`/signup?redirect=${encodeURIComponent(`/app?claim=${kept?.id}`)}`);
 });
 
+it("starts a new visitor on Make video", () => {
+  renderGuest();
+  fireEvent.change(screen.getByLabelText("Current request words"), { target: { value: "Waves at night" } });
+  expect(new GuestDraftStore().read()?.action).toBe("make-video");
+  expect(screen.getByRole("button", { name: "Make video" })).toBeInTheDocument();
+});
+
 it("restores kept words when the visitor comes back before signing in", () => {
   renderGuest();
   fireEvent.change(screen.getByLabelText("Current request words"), { target: { value: "Kept words" } });
   cleanup();
   renderGuest();
   expect(screen.getByLabelText("Current request words")).toHaveValue("Kept words");
+});
+
+it("keeps each output's model when a visitor switches between Video and Image", async () => {
+  renderGuest();
+  await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+  expect(await screen.findByRole("button", { name: "Model: Choose a model" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: "Image" }));
+  expect(await screen.findByRole("button", { name: "Model: Available model" })).toBeInTheDocument();
+  expect(new GuestDraftStore().read()).toMatchObject({ action: "make-image", settings: { profileId: "controlled" } });
+  fireEvent.click(screen.getByRole("radio", { name: "Video" }));
+  expect(await screen.findByRole("button", { name: "Model: Choose a model" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: "Image" }));
+  expect(await screen.findByRole("button", { name: "Model: Available model" })).toBeInTheDocument();
 });

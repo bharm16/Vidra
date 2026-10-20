@@ -503,11 +503,12 @@ it("keeps partial history failures inline after the owned project loads", async 
   expect(result.current.resourceErrors).toEqual(expect.arrayContaining([expect.stringMatching(/History could not load/)]));
 });
 
-it("C01 opens a persisted editable empty request before loading ends without preparing or dispatching media", async () => {
+it("C01 opens a persisted editable empty request that takes the first video model once models load, without preparing or dispatching media", async () => {
   vi.stubGlobal("crypto", webcrypto);
   ports.api.listDrafts.mockResolvedValue([]);
   const { result } = await loaded();
-  expect(result.current.active?.content).toMatchObject({ action: "make-image", instructions: "", inputs: [], settings: { profileId: "unselected", profileRevision: "unresolved", outputCount: 1 } });
+  expect(ports.api.createDraft.mock.calls[0]?.[3]).toMatchObject({ action: "make-video", settings: { profileId: "unselected" } });
+  await waitFor(() => expect(result.current.active?.content).toMatchObject({ action: "make-video", instructions: "", inputs: [], settings: { profileId: "controlled-video", profileRevision: "1", outputCount: 1 } }));
   expect(result.current.active?.record.id).toMatch(/^draft_initial_[a-f0-9]{64}$/);
   expect(ports.api.createDraft).toHaveBeenCalledTimes(1);
   expect(ports.api.prepare).not.toHaveBeenCalled(); expect(ports.api.submit).not.toHaveBeenCalled();

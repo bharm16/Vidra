@@ -17,7 +17,7 @@ const database = createWorkflowTestDatabase(); const projects = new ProjectStore
 const NOW = "2026-10-17T12:00:00.000Z"; const DAY = "2026-10-17";
 const store = new WorkflowExecutionStore(database, new MediaVersionIndex(database, projects), () => NOW);
 const guard = new StudioWorkflowSpendGuard(database, { dailyCapCents: 500 }, () => Date.parse(NOW));
-const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(["replicate-flux-schnell", "replicate-flux-kontext-fast"]), videoAvailable: () => true, textAvailable: true, textProvider: "controlled", textModel: "controlled-text", spendGuard: guard });
+const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(["replicate-flux-schnell", "replicate-flux-kontext-fast"]), videoAvailable: () => true, textAvailable: true, textProvider: "controlled", textModel: "controlled-text", replicateAvailable: true, spendGuard: guard });
 const outputStorage: WorkflowOutputStorage = { materialize: vi.fn() };
 afterAll(async () => { await database.terminate(); });
 
@@ -73,8 +73,8 @@ it("video uses its maximum-settings ceiling before any native call", async () =>
 });
 
 it("missing, expired or changed mappings fail closed, including unqualified text costs", () => {
-  expect(catalog.list().filter(profile => profile.output.kind !== "text").every(profile => profile.availability === "qualified")).toBe(true);
-  expect(catalog.list().filter(profile => profile.output.kind === "text").every(profile => profile.availability === "unavailable")).toBe(true);
+  expect(catalog.list().filter(profile => profile.mode !== "text-assistance").every(profile => profile.availability === "qualified")).toBe(true);
+  expect(catalog.list().filter(profile => profile.mode === "text-assistance").every(profile => profile.availability === "unavailable")).toBe(true);
   const profile = catalog.get("wan-2.5-i2v")!;
   expect(guard.qualified({ ...profile, parameters: { ...profile.parameters, durationSeconds: { policy: "editable", domain: { kind: "enum", values: [5, 10, 30] }, defaultValue: 5 } } })).toBe(false);
   expect(new StudioWorkflowSpendGuard(database, { dailyCapCents: 500 }, () => Date.parse("2027-01-01T00:00:00.000Z")).qualified(profile)).toBe(false);

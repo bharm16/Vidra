@@ -5,7 +5,8 @@
  * Boots the DI container with REPLAY_MODE=record (aiService becomes the
  * RecordReplayAiService seam) and drives StudioPolicyEngine.decideTurn
  * directly over the shared scenario pack — no HTTP, no Firestore writes,
- * no Replicate spend; the only live calls are studio_turn (gpt-4o-mini).
+ * no Replicate spend; the only live calls are studio_turn (the configured
+ * STUDIO_TURN_MODEL, gpt-5.6-luna by default).
  *
  * Every scenario's decision is checked against its behavior invariants
  * before anything is flushed: a recording where the model fumbled a

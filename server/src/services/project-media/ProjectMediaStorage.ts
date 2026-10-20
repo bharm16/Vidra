@@ -26,8 +26,8 @@ const execute = promisify(execFile);
 const ProbeSchema = z.object({ streams: z.array(z.object({ codec_type: z.string(), codec_name: z.string().optional(), width: z.number().optional(), height: z.number().optional(), sample_rate: z.coerce.number().optional(), channels: z.number().optional(), disposition: z.object({ attached_pic: z.number().optional() }).optional() })), format: z.object({ duration: z.coerce.number().positive().max(3600) }) });
 
 /** Decode local bytes only; ffprobe cannot follow playlists or network references. */
-export async function verifyImportFile(path: string, command: ImportCommand): Promise<Omit<VerifiedImport, "generation">> {
-  if (!ImportCommandSchema.safeParse(command).success) throw new WorkflowError("invalid_settings", "This file exceeds the supported size or has an unsupported type.");
+export async function verifyImportFile(path: string, command: ImportCommand, accepted: { safeParse(value: unknown): { success: boolean } } = ImportCommandSchema): Promise<Omit<VerifiedImport, "generation">> {
+  if (!accepted.safeParse(command).success) throw new WorkflowError("invalid_settings", "This file exceeds the supported size or has an unsupported type.");
   const size = (await stat(path)).size;
   if (size !== command.bytes) throw new WorkflowError("invalid_settings", "This file's size changed. Choose the original file again.");
   const hash = createHash("sha256");

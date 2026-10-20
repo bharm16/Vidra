@@ -25,6 +25,7 @@ import type { CapabilityLookupStatus } from "./ModelCreationArea";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { importedVersionId } from "@shared/schemas/workflow/import.schemas";
 import { observedDraftInputs } from "../state/inputBinding";
+import { outputGroup } from "./OutputSwitch";
 import { measurePromptSelection, type PromptSelectionPaint } from "../state/promptSelectionPaint";
 import "./composer-fidelity.css";
 
@@ -32,7 +33,7 @@ const NO_LABELS: { text: string; spans: LabeledSpan[] } = { text: "", spans: [] 
 const SuggestionResponseSchema = z.object({ suggestions: z.array(z.union([z.string(), z.object({ text: z.string() }), z.object({ suggestion: z.string() })])), isPlaceholder: z.boolean().optional() });
 function contextKey(buffer: DraftBuffer): string { return canonicalJson({ action: buffer.content.action, inputs: buffer.content.inputs, settings: buffer.content.settings, context: buffer.content.context }); }
 export function actionLabel(action: string): string {
-  const labels: Record<string, string> = { "make-image": "Make image", "edit-image": "Edit image", "upscale-image": "Upscale image", "make-video": "Make video", "animate-image": "Make video", "edit-video": "Edit clip", "extend-video": "Extend clip", ask: "Ask a question", "expand-description": "Expand description", "improve-words": "Improve wording" };
+  const labels: Record<string, string> = { "make-image": "Make image", "edit-image": "Edit image", "upscale-image": "Upscale image", "make-video": "Make video", "animate-image": "Make video", "edit-video": "Edit clip", "extend-video": "Extend clip", ask: "Ask", "expand-description": "Expand description", "improve-words": "Improve wording" };
   return labels[action] ?? "Choose action";
 }
 
@@ -87,7 +88,6 @@ export interface PromptComposerProps {
   onSubmit?(): Promise<void>;
   onActionChange?(action: CreationAction): void;
   onSketch?(): void;
-  onAreaEdit?(): void;
   submissionBlockedReason?: string;
   offline?: boolean;
   /** Signed-out visitors write and choose settings; phrase help needs an account. */
@@ -95,7 +95,7 @@ export interface PromptComposerProps {
   onAccountRequired?(): void;
 }
 
-export function PromptComposer({ controller, onChooseInput, inputControl, mediaActions, settingsPresentation = "default", capabilityLookupStatus = "ready", primaryLabel, inputLabel, renderInputPicker, inputStatus, onSubmit, onActionChange, onSketch, onAreaEdit, submissionBlockedReason, offline = false, assistance = "available", onAccountRequired }: PromptComposerProps): ReactElement {
+export function PromptComposer({ controller, onChooseInput, inputControl, mediaActions, settingsPresentation = "default", capabilityLookupStatus = "ready", primaryLabel, inputLabel, renderInputPicker, inputStatus, onSubmit, onActionChange, onSketch, submissionBlockedReason, offline = false, assistance = "available", onAccountRequired }: PromptComposerProps): ReactElement {
   const buffer = controller.active;
   const highlightDescription = useId();
   const retentionDescription = useId();
@@ -121,6 +121,9 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   const typingGroup = useRef(crypto.randomUUID());
   const bufferRef = useRef(buffer);
   bufferRef.current = buffer;
+  // Ask is a question about the words, not an output; leaving it returns to the last output.
+  const lastOutput = useRef<CreationAction>("make-video");
+  if (buffer && outputGroup(buffer.content.action)) lastOutput.current = buffer.content.action;
   const selectedKey = binding ? canonicalJson(binding) : undefined;
   const writable = buffer !== undefined && (buffer.record.status === "open" || buffer.record.status === "parked") && controller.project?.status === "active" && controller.conversation?.status === "active";
   const [labelResult, setLabels] = useState<{ text: string; spans: LabeledSpan[] }>(NO_LABELS);
@@ -335,6 +338,8 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   const retentionAtRisk = Boolean(controller.localErrors[buffer.record.id] && controller.saveErrors[buffer.record.id] && buffer.checkpointSequence !== buffer.sequence && buffer.acknowledgedSequence !== buffer.sequence);
   const retentionFailure = [controller.localErrors[buffer.record.id], controller.saveErrors[buffer.record.id]].filter(Boolean).join(" ");
   const imageEdit = buffer.content.action === "edit-image" || buffer.content.action === "upscale-image";
+  const hasWords = buffer.content.instructions.trim().length > 0;
+  const asking = buffer.content.action === "ask";
   const inputs = imageEdit ? buffer.content.inputs.filter(input => input.role === "primary" || input.role === "mask").slice(0, 1) : buffer.content.inputs;
   const maskInput = imageEdit ? buffer.content.inputs.find(input => input.role === "mask") : undefined;
   const maskVersion = maskInput?.state === "resolved" ? controller.media.find(version => version.id === maskInput.versionId) : undefined;
@@ -355,7 +360,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
         const unavailable = state === "unavailable" || (!version && input.state === "resolved") || failedRequest;
         const preview = <CompactInputPreview version={version} mask={maskVersion} unavailable={unavailable} uploading={state === "uploading" || input.state === "importing"} access={controller.access} />;
         return <div className="vf-input-tile" key={`${input.role}:${index}`}>{renderInputPicker ? renderInputPicker(input, preview) : <Button variant="ghost" type="button" className="vf-input-trigger" aria-label={`Change ${imageEdit ? "picture being edited" : input.role.replaceAll("-", " ")}`} disabled={!writable} onClick={onChooseInput}>{preview}</Button>}<FreshIconButton className="vf-input-remove" icon="close" label={`Remove ${input.role} input`} disabled={!writable} onClick={() => { const remaining = buffer.content.inputs.filter(candidate => imageEdit ? candidate.role !== "primary" && candidate.role !== "mask" : candidate !== input); controller.edit({ ...buffer.content, action: imageEdit ? "make-image" : buffer.content.action, inputs: remaining }); }} />{!imageEdit ? <span className="vf-input-caption">{inputLabel?.(input, version) ?? (input.role === "primary" ? "Extending" : input.role.replaceAll("-", " ").replace(/^./, letter => letter.toUpperCase()))}</span> : null}</div>;
-      })}</div>
+      })}<div className="vf-words-help"><FreshButton tone="quiet" className="vf-words-help-action" aria-label="Improve wording" title="Improve wording" disabled={!writable || !hasWords} onClick={improveWords}><img src="/design-assets/workspace-action-words.svg" alt="" /><span className="vf-words-help-label">Improve wording</span></FreshButton>{onActionChange ? <FreshButton tone="quiet" className="vf-words-help-action" aria-label="Ask a question" title="Ask a question" aria-pressed={asking} disabled={!writable || (!asking && !hasWords)} onClick={() => onActionChange(asking ? lastOutput.current : "ask")}><img src="/design-assets/workspace-action-question.svg" alt="" /><span className="vf-words-help-label">Ask a question</span></FreshButton> : null}</div></div>
       <div className="vf-composer-writing"><div className="vf-prompt-editor" data-selection-painted={Boolean(selectionPaint) || undefined} data-scrollable={compactTextHeight === 198 || undefined} data-input-edit={imageEdit || undefined} data-words-hint={wordsHint !== undefined || undefined} data-input-unavailable={failedPendingInput || undefined} data-painted={labels.text === buffer.content.instructions && labels.spans.length > 0 || undefined}>
         {selectionPaint ? <div className="vf-selection-paint" aria-hidden="true" data-presentation={selectionPaint.presentation} data-selection-start={selectionPaint.start} data-selection-end={selectionPaint.end} style={selectionPaint.viewport}>{selectionPaint.boxes.map((box, index) => <span key={index} style={box} />)}</div> : null}
         <div ref={painted} className="vf-word-highlights" role={labels.spans.length ? "group" : undefined} aria-label={labels.spans.length ? "Suggested phrases" : undefined}>{labels.text === buffer.content.instructions ? highlightedWords(buffer.content.instructions, labels.spans, { writable, binding, keyboardFocus: keyboardPhraseFocus, onActivate: activatePhrase }) : null}</div>
@@ -371,7 +376,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
         {labels.text === buffer.content.instructions && labels.spans.length ? <p className="vf-sr-only" id={highlightDescription}>Phrase categories: {labels.spans.map(span => `${span.quote ?? span.text}: ${span.category}`).join(". ")}. Select any phrase to find alternatives.</p> : null}
       </div>
       <CapabilitySettings profiles={controller.profiles} content={observedContent} media={controller.media} disabled={!writable} onProfile={controller.chooseProfile} onChange={next => controller.edit({ ...next, inputs: buffer.content.inputs })} presentation={settingsPresentation} lookupStatus={capabilityLookupStatus}>
-      <ComposerSubmit key={buffer.record.id} action={buffer.content.action} label={primaryLabel ?? actionLabel(buffer.content.action)} writable={writable} hasProfile={Boolean(profile)} canSubmit={Boolean(onSubmit && writable && capabilityLookupStatus === "ready" && !unavailableInput && !missingInput && !invalidSettings && !submissionBlockedReason && !controller.serviceUnavailable && !retentionAtRisk && buffer.content.instructions.trim() && !controller.preparing && !making && profile?.availability === "qualified")} busy={making || controller.preparing} onImproveWords={improveWords} onSubmit={() => { void submit(); }} {...(onActionChange ? { onActionChange } : {})} {...(onAreaEdit ? { onAreaEdit } : {})} />
+      <ComposerSubmit key={buffer.record.id} action={buffer.content.action} label={primaryLabel ?? actionLabel(buffer.content.action)} writable={writable} canSubmit={Boolean(onSubmit && writable && capabilityLookupStatus === "ready" && !unavailableInput && !missingInput && !invalidSettings && !submissionBlockedReason && !controller.serviceUnavailable && !retentionAtRisk && buffer.content.instructions.trim() && !controller.preparing && !making && profile?.availability === "qualified")} busy={making || controller.preparing} onSubmit={() => { void submit(); }} {...(onActionChange ? { onActionChange } : {})} />
       </CapabilitySettings>
       {controller.prepared?.state === "blocked" ? <ul className="vf-blocking-reasons">{controller.prepared.reasons.map((reason, index) => <li key={`${reason.code}:${index}`}>{reason.message}</li>)}</ul> : null}
       {submitError ? <p className="vf-setting-warning" role="status">{submitError}</p> : null}

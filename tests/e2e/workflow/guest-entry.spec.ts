@@ -23,9 +23,8 @@ test("words written signed out come back after sign-in and make exactly one pict
   const history = async (): Promise<unknown[]> => data(await page.request.get(`/api/projects/${home.id}/conversations/${conversationId}/requests`, { headers: authHeaders }), z.array(z.unknown()));
   expect(await history()).toHaveLength(0);
 
-  await page.getByRole("button", { name: "Choose request action", exact: true }).click();
-  await page.getByRole("button", { name: "Make an image", exact: true }).click();
-  await page.getByRole("button", { name: "Model: Choose a model", exact: true }).click();
+  await page.getByRole("radio", { name: "Image", exact: true }).click();
+  await page.getByRole("button", { name: /^Model: / }).click();
   await page.getByRole("button", { name: "Flux Schnell", exact: true }).click();
   await page.getByRole("button", { name: "Make image", exact: true }).click();
   await expect.poll(async () => (await versions(page, home.id)).some(version => version.label === text), { timeout: 20000 }).toBe(true);

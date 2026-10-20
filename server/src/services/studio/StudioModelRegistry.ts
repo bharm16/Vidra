@@ -131,6 +131,35 @@ const MODELS: readonly StudioModelEntry[] = [
     defaultAspectRatio: "1:1",
     pinnedInput: { quality: "high" },
   },
+  {
+    slug: "nano-banana-2.1",
+    displayName: "Nano Banana 2.1",
+    replicateId: "google/nano-banana-2.1",
+    capabilities: ["general", "edit"],
+    // $0.0504/image at the pinned 2K resolution (1K $0.0336, 4K $0.1134),
+    // verified 2026-10-19. ceil → 6¢ reserved.
+    costCentsPerCall: 6,
+    costVerified: true,
+    latencyHintSeconds: 20,
+    aspectRatios: COMMON_ASPECT_RATIOS,
+    defaultAspectRatio: "1:1",
+    pinnedInput: { resolution: "2K" },
+  },
+  {
+    slug: "gpt-image-2.5-sunburst",
+    displayName: "GPT Image 2.5 Sunburst",
+    replicateId: "openai/gpt-image-2.5-sunburst",
+    capabilities: ["general", "edit"],
+    // Priced by `quality`: low $0.012, medium $0.047, high $0.128, auto and
+    // xhigh $0.25, max $0.50 — verified 2026-10-19. Pinned to high.
+    // ceil → 13¢ reserved.
+    costCentsPerCall: 13,
+    costVerified: true,
+    latencyHintSeconds: 45,
+    aspectRatios: COMMON_ASPECT_RATIOS,
+    defaultAspectRatio: "1:1",
+    pinnedInput: { quality: "high" },
+  },
 ] as const;
 
 /**
@@ -371,7 +400,8 @@ export class StudioModelRegistry {
         ...pinned,
       };
     }
-    // openai/gpt-image-2 — quality tier pinned via pinnedInput.
-    return { prompt: instruction, image_input: imageUrls, ...pinned };
+    // openai/gpt-image-2 and 2.5 read source pictures from `input_images`;
+    // quality tier pinned via pinnedInput.
+    return { prompt: instruction, input_images: imageUrls, ...pinned };
   }
 }

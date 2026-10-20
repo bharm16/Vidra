@@ -2,7 +2,8 @@
  * Studio M3 conversation-policy scenario pack (behaviors 1, 2, 3, 9).
  *
  * Shared by scripts/replay/record-studio-scenarios.ts (records live
- * gpt-4o-mini decisions into server/src/replay/fixtures/studio-turn/) and
+ * decisions from the configured studio_turn model — gpt-5.6-luna by
+ * default — into server/src/replay/fixtures/studio-turn/) and
  * the replay unit test (which re-runs the SAME contexts against the
  * cassette with zero network). Sharing one definition is what keeps the
  * prompts byte-identical, so the replay request keys hit the recording.
@@ -22,6 +23,23 @@ export const STUDIO_TURN_SURFACE = "studio-turn" as const;
 export const STUDIO_TURN_SCENARIO = "m3-behaviors" as const;
 
 const registry = new StudioModelRegistry();
+
+/**
+ * The picture models the pack was recorded with. The policy behaviors under
+ * test never depend on which picture models exist — the server, not the text
+ * model, picks the model — so adding a Studio model must not invalidate the
+ * recorded decisions. Change this list only when re-recording.
+ */
+const RECORDED_ROSTER = [
+  "recraft-v4.1",
+  "recraft-v4.1-svg",
+  "recraft-v4.1-pro",
+  "recraft-v4.1-pro-svg",
+  "nano-banana-2",
+  "nano-banana-2-lite",
+  "nano-banana-pro",
+  "gpt-image-2",
+] as const;
 
 /**
  * M3's executable sets, mirroring StudioService: clarify is
@@ -126,7 +144,7 @@ function baseContext(overrides: Partial<StudioTurnContext>): StudioTurnContext {
     userMessage: "",
     projectTitle: "Untitled",
     pinnedModel: null,
-    roster: registry.listModels(),
+    roster: RECORDED_ROSTER.map((slug) => registry.getModel(slug)),
     history: [],
     selectedImageId: null,
     projectImageIds: new Set<string>(),

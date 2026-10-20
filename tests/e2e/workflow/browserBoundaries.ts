@@ -70,7 +70,7 @@ export class BrowserBoundaries {
   };
   outputStorage: WorkflowOutputStorage = { materialize: async (attempt, output) => {
     if (output.kind === "text") throw new Error("Text has no media bytes");
-    const source = output.kind === "image" ? output.storagePath : this.videoAssets.get(output.assetId);
+    const source = output.kind === "video" ? this.videoAssets.get(output.assetId) : output.storagePath;
     if (!source) throw new Error("Controlled provider bytes missing");
     const object = this.owned(attempt.ownerId, source);
     const path = `users/${attempt.ownerId}/previews/${output.kind === "image" ? "images" : "videos"}/workflow-${attempt.slotId}.${output.kind === "image" ? "webp" : "mp4"}`;

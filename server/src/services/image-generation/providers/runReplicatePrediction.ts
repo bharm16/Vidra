@@ -19,7 +19,8 @@ import {
 export interface ReplicatePrediction {
   id: string;
   status: "starting" | "processing" | "succeeded" | "failed" | "canceled";
-  output: string | string[] | null | undefined;
+  /** URLs for media models; structured objects for others (e.g. transcripts). */
+  output: unknown;
   error?: string | null;
   logs?: string | null;
 }
@@ -38,12 +39,14 @@ const MAX_CREATE_RETRIES = 2;
 const DEFAULT_RETRY_AFTER_MS = 4000;
 const POLL_INTERVAL_MS = 1000;
 
-interface RunReplicatePredictionOptions {
+export interface RunReplicatePredictionOptions {
   client: ReplicatePredictionClient;
   model: string;
   input: Record<string, unknown>;
   /** Total budget for the create + poll cycle. */
   timeoutMs: number;
+  /** Delay between polls; long video jobs poll less often. Defaults to one second. */
+  pollIntervalMs?: number;
   userId: string;
   log: ILogger;
   /** Injected so tests can march fake timers without real delays. */
@@ -90,14 +93,15 @@ async function createPredictionWithRetry(
 }
 
 /**
- * Run the create → poll → extract protocol and return the image URL.
+ * Run the create → poll protocol and return the succeeded prediction's raw,
+ * non-empty output (a URL, a list of URLs, or a structured object).
  *
  * Throws the raw underlying error (SDK message intact, so callers can classify
  * 402/429 via {@link classifyReplicateError}) on failure.
  */
-export async function runReplicatePrediction(
+export async function awaitReplicatePredictionOutput(
   opts: RunReplicatePredictionOptions,
-): Promise<string> {
+): Promise<unknown> {
   const prediction = await createPredictionWithRetry(opts);
 
   opts.log.info("Prediction created", {
@@ -130,7 +134,7 @@ export async function runReplicatePrediction(
       throw predictionError;
     }
 
-    await opts.sleep(POLL_INTERVAL_MS);
+    await opts.sleep(opts.pollIntervalMs ?? POLL_INTERVAL_MS);
     try {
       currentPrediction = await opts.client.predictions.get(prediction.id);
     } catch (pollError) {
@@ -180,6 +184,19 @@ export async function runReplicatePrediction(
     userId: opts.userId,
   });
 
+  return output;
+}
+
+/**
+ * Run the create → poll → extract protocol and return the image URL.
+ *
+ * Throws the raw underlying error (SDK message intact, so callers can classify
+ * 402/429 via {@link classifyReplicateError}) on failure.
+ */
+export async function runReplicatePrediction(
+  opts: RunReplicatePredictionOptions,
+): Promise<string> {
+  const output = await awaitReplicatePredictionOutput(opts);
   const imageUrl = extractImageUrl(output, opts.userId, opts.log);
 
   if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {

@@ -7,6 +7,8 @@ export type ParameterValue = z.infer<typeof ParameterValueSchema>;
 export const ParameterDomainSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("enum"), values: z.array(ParameterValueSchema).min(1).max(100) }),
   z.strictObject({ kind: z.literal("range"), min: z.number().finite(), max: z.number().finite(), step: z.number().positive() }).refine(value => value.min <= value.max, "Parameter range is inverted"),
+  /** Free wording the model reads as-is, such as negative wording, key terms or a language code. */
+  z.strictObject({ kind: z.literal("text"), maxLength: z.number().int().min(1).max(4000) }),
 ]);
 export type ParameterDomain = z.infer<typeof ParameterDomainSchema>;
 export type ParameterRangeDomain = Extract<ParameterDomain, { kind: "range" }>;
@@ -22,7 +24,9 @@ export function isParameterValueInRange(range: ParameterRangeDomain, value: Para
 }
 
 export function isParameterValueInDomain(domain: ParameterDomain, value: ParameterValue): boolean {
-  return domain.kind === "enum" ? domain.values.includes(value) : isParameterValueInRange(domain, value);
+  if (domain.kind === "enum") return domain.values.includes(value);
+  if (domain.kind === "text") return typeof value === "string" && value.length <= domain.maxLength;
+  return isParameterValueInRange(domain, value);
 }
 
 export const ParameterPolicySchema = z.discriminatedUnion("policy", [
@@ -54,7 +58,7 @@ export const CapabilityProfileSchema = z.strictObject({
     minDurationSeconds: z.number().positive().optional(),
     maxDurationSeconds: z.number().positive().optional(),
   }).refine(value => value.minCount <= value.maxCount, "Input limits are inverted")).max(7),
-  output: z.strictObject({ kind: z.enum(["image", "video", "text", "file"]), maxCount: z.number().int().min(1).max(8) }),
+  output: z.strictObject({ kind: z.enum(["image", "video", "audio", "text", "file"]), maxCount: z.number().int().min(1).max(8) }),
   maxContextCharacters: z.number().int().positive().max(1000000),
   parameters: z.record(z.string().min(1).max(80), ParameterPolicySchema),
   constraints: z.array(z.strictObject({

@@ -6,6 +6,9 @@ import type { ImageGenerationOptions } from "@services/image-generation/types";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
 import type { VideoGenerationOptions } from "@services/video-generation/types";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
+import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
+import { executeReplicateModel, type ReplicateModelServices } from "@services/creation-requests/replicate-models/executeReplicateModel";
+import type { ModelCall } from "@services/creation-requests/replicate-models";
 import {
   isWorkflowProfileRuntimeAvailable,
   resolveWorkflowAdapterBinding,
@@ -19,6 +22,10 @@ export interface NativeWorkflowExecutorDeps {
   imageProviders: ReadonlySet<string>;
   spendGuard?: WorkflowSpendGuard;
   inputAccess(ownerId: string, projectId: string, versionId: string): Promise<string>;
+  /** Exact native Replicate models; null when Replicate is unconfigured or replaying. */
+  models?: ReplicateModelServices | null;
+  /** The exact input version, for model checks that need its verified metadata. */
+  inputVersion?(ownerId: string, projectId: string, versionId: string): Promise<MediaVersion | undefined>;
 }
 
 /** Exact mappings only. Explicit image providers disable the native automatic fallback chain. */
@@ -38,6 +45,7 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
           (this.deps.ai?.getAvailableClients?.().includes(resolvedText.client) ?? false),
       ),
       ...(resolvedText ? { textProvider: resolvedText.client, textModel: resolvedText.model } : {}),
+      replicateAvailable: Boolean(this.deps.models),
       ...(this.deps.spendGuard ? { spendGuard: this.deps.spendGuard } : {}),
     });
   }
@@ -88,6 +96,20 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
       await reserve();
       const result = await this.deps.ai.execute(binding.operation, { systemPrompt: instruction, userMessage: sentInstructions, responseFormat: { type: "text" }, jsonMode: false, maxTokens: 4000, maxRetries: 0 });
       return NativeOutputSchema.parse({ kind: "text", text: result.text, model: result.executedBy.model, provider: result.executedBy.client });
+    }
+    if (binding.kind === "replicate" && this.deps.models) {
+      const inputs: ModelCall["inputs"] = {};
+      for (const source of request.snapshot.inputs) {
+        let version: MediaVersion | undefined;
+        let sourceUrl: string;
+        try {
+          sourceUrl = await this.deps.inputAccess(request.ownerId, request.projectId, source.versionId);
+          version = await this.deps.inputVersion?.(request.ownerId, request.projectId, source.versionId);
+        } catch { throw new WorkflowPreflightError("This selected input is unavailable"); }
+        (inputs[source.role] ??= []).push({ url: sourceUrl, ...(version ? { version } : {}) });
+      }
+      const call: ModelCall = { instructions: request.snapshot.instructions, sentInstructions, parameters, inputs, ...(slot.seed === undefined ? {} : { seed: slot.seed }) };
+      return executeReplicateModel(binding.definition, call, { ownerId: request.ownerId, slotId: slot.id }, this.deps.models, reserve);
     }
     throw new WorkflowPreflightError("This action has no supported adapter");
   }

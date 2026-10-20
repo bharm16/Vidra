@@ -173,7 +173,7 @@ export function wordsDraftContent(
 }
 
 export function mediaActionDraftContent(
-  action: "edit-image" | "edit-video" | "animate-image",
+  action: "edit-image" | "edit-video" | "animate-image" | "extend-video",
   versionId: VersionId,
   projectId: ProjectId,
   conversationId: ConversationId,

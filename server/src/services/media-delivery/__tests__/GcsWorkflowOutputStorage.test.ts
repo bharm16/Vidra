@@ -33,3 +33,13 @@ it("rejects a foreign owner's generated source before reading or copying it", as
   const storage = new GcsWorkflowOutputStorage(bucket, null);
   await expect(storage.materialize(attempt, { kind: "image", storagePath: "image-previews/another-owner/private", model: "flux", provider: "replicate" })).rejects.toMatchObject({ code: "access_denied" }); expect(copy).not.toHaveBeenCalled(); expect(sourceRead).not.toHaveBeenCalled();
 });
+
+it("rejects produced audio outside the owner's own audio folder before reading or copying it", async () => {
+  const copy = vi.fn(); const sourceRead = vi.fn();
+  const bucket = { file: (name: string) => ({ getMetadata: async () => { if (name.startsWith("users/creator/previews/audio/workflow-")) throw Object.assign(new Error("Absent"), { code: 404 }); sourceRead(); return [{ generation: "1", size: 8 }]; }, copy }) } as unknown as Bucket;
+  const storage = new GcsWorkflowOutputStorage(bucket, null);
+  for (const storagePath of ["users/another-owner/previews/audio/native-slot", "users/creator/previews/images/native-slot"]) {
+    await expect(storage.materialize(attempt, { kind: "audio", storagePath, model: "elevenlabs/v3", provider: "replicate" })).rejects.toMatchObject({ code: "access_denied" });
+  }
+  expect(copy).not.toHaveBeenCalled(); expect(sourceRead).not.toHaveBeenCalled();
+});

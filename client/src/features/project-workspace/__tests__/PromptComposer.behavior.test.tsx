@@ -346,8 +346,36 @@ it("asks a signed-out writer to sign in for phrase help and never calls the sugg
   const field = screen.getByLabelText("Current request words") as HTMLTextAreaElement;
   act(() => { field.focus(); field.setSelectionRange(0, 11); }); fireEvent.mouseUp(field);
   expect(ports.suggestions).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Choose request action" }));
-  fireEvent.click(await screen.findByRole("button", { name: /Improve wording/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Improve wording" }));
   expect(onAccountRequired).toHaveBeenCalledTimes(1);
   expect(ports.suggestions).not.toHaveBeenCalled();
+});
+
+it("keeps Improve wording and Ask a question on the words row, inert while the words are empty", () => {
+  const empty = CreationDraftSchema.parse({ ...draft, instructions: "" });
+  const onActionChange = vi.fn();
+  const { rerender } = render(<PromptComposer controller={{ ...controller(), active: openDraftBuffer(empty) }} onChooseInput={vi.fn()} onActionChange={onActionChange} />);
+  expect(screen.getByRole("button", { name: "Improve wording" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Ask a question" })).toBeDisabled();
+  rerender(<PromptComposer controller={controller()} onChooseInput={vi.fn()} onActionChange={onActionChange} />);
+  expect(screen.getByRole("button", { name: "Improve wording" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Ask a question" })).toBeEnabled();
+  expect(screen.queryByRole("button", { name: "Choose action" })).not.toBeInTheDocument();
+  expect(onActionChange).not.toHaveBeenCalled();
+});
+
+it("asks a question about the words and returns to the output it left", () => {
+  const onActionChange = vi.fn();
+  const animation = CreationDraftSchema.parse({ ...draft, action: "animate-image" });
+  const { rerender } = render(<PromptComposer controller={{ ...controller(), active: openDraftBuffer(animation) }} onChooseInput={vi.fn()} onActionChange={onActionChange} />);
+  expect(screen.getByRole("radio", { name: "Video" })).toHaveAttribute("aria-checked", "true");
+  fireEvent.click(screen.getByRole("button", { name: "Ask a question" }));
+  expect(onActionChange).toHaveBeenLastCalledWith("ask");
+  const asking = CreationDraftSchema.parse({ ...draft, action: "ask" });
+  rerender(<PromptComposer controller={{ ...controller(), active: openDraftBuffer(asking) }} onChooseInput={vi.fn()} onActionChange={onActionChange} />);
+  expect(screen.getByRole("button", { name: "Ask a question" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Ask" })).toBeInTheDocument();
+  expect(screen.getAllByRole("radio").every(radio => radio.getAttribute("aria-checked") === "false")).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Ask a question" }));
+  expect(onActionChange).toHaveBeenLastCalledWith("animate-image");
 });

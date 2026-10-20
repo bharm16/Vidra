@@ -102,6 +102,28 @@ describe("StudioModelRegistry", () => {
       });
     });
 
+    it("sends GPT Image source pictures as input_images, the key those models read", () => {
+      for (const slug of ["gpt-image-2", "gpt-image-2.5-sunburst"] as const) {
+        expect(registry.buildEditInput(slug, "make it bolder", ["https://example.com/a.webp"])).toEqual({
+          prompt: "make it bolder",
+          input_images: ["https://example.com/a.webp"],
+          quality: "high",
+        });
+      }
+    });
+
+    it("pins Nano Banana 2.1 to its 2K tier without changing Auto routing", () => {
+      expect(registry.buildGenerateInput("nano-banana-2.1", "a boat", "16:9")).toEqual({
+        prompt: "a boat",
+        aspect_ratio: "16:9",
+        output_format: "png",
+        resolution: "2K",
+      });
+      expect(registry.cheapestCapable("general").costCentsPerCall).toBeLessThan(
+        registry.getModel("nano-banana-2.1").costCentsPerCall,
+      );
+    });
+
     it("refuses edit input for models without the edit capability", () => {
       expect(() =>
         registry.buildEditInput("recraft-v4.1", "edit this", [

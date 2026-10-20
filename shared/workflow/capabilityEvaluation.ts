@@ -57,6 +57,9 @@ function fit(
   fallback: ParameterValue,
 ): ParameterValue {
   if (domain.kind === "enum") return nearest(value, domain.values, fallback);
+  if (domain.kind === "text") {
+    return typeof value === "string" && value.length <= domain.maxLength ? value : fallback;
+  }
   if (typeof value !== "number") return fallback;
   const steps = Math.round(
     (Math.min(domain.max, Math.max(domain.min, value)) - domain.min) / domain.step,

@@ -48,7 +48,7 @@ export class ActionPreparationService {
       if (profile.action !== draft.action || profile.revision !== draft.settings.profileRevision) block("profile_changed", "This action or capability profile changed. Review the current setup.");
       if (profile.availability !== "qualified") block("profile_unavailable", profile.unavailableReason ?? "This operation has not been qualified for execution.");
     }
-    if (!["import", "accept-sketch", "export-video", "upscale-image"].includes(draft.action) && !draft.instructions.trim()) block("settings_invalid", "Describe what you want to make or change.", "instructions");
+    if (!["import", "accept-sketch", "export-video", "upscale-image", "upscale-video", "reframe-video", "transcribe"].includes(draft.action) && !draft.instructions.trim()) block("settings_invalid", "Describe what you want to make or change.", "instructions");
 
     const inputs: Array<ReturnType<typeof ResolvedInputSchema.parse>> = [];
     const media: MediaVersion[] = [];
@@ -127,13 +127,13 @@ export class ActionPreparationService {
       if (domain.kind === "enum") {
         const allowed = domain.values.filter((value): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 2147483647);
         effectiveSeed = ordinal => allowed.length ? allowed[choiceFor(ordinal) % allowed.length] : undefined;
-      } else {
+      } else if (domain.kind === "range") {
         if (!Number.isInteger(domain.min) || !Number.isInteger(domain.step)) return undefined;
         const firstIndex = Math.ceil((Math.max(0, domain.min) - domain.min) / domain.step);
         const lastIndex = Math.floor((Math.min(2147483647, domain.max) - domain.min) / domain.step);
         const count = Math.max(0, lastIndex - firstIndex + 1);
         effectiveSeed = ordinal => count ? domain.min + (firstIndex + choiceFor(ordinal) % count) * domain.step : undefined;
-      }
+      } else return undefined;
     }
     return Array.from({ length: draft.settings.outputCount }, (_, index) => {
       const ordinal = index + 1;

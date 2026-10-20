@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=$(jq -r '.tool_input.file_path // empty'); if [[ \"$FILE\" =~ \\.(ts|tsx|js|jsx|css|md|json)$ ]] && [[ -f \"$FILE\" ]]; then npx --no-install prettier --config config/lint/.prettierrc --write \"$FILE\" >/dev/null 2>&1 || true; fi; exit 0"
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/format-edited-file.sh\""
           }
         ]
       }

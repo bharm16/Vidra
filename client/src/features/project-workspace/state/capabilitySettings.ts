@@ -6,7 +6,7 @@ import {
   type ParameterRangeDomain,
   type ParameterValue,
 } from "@shared/schemas/workflow/capability.schemas";
-import type { DraftContent, DraftInput } from "@shared/schemas/workflow/draft.schemas";
+import type { CreationAction, DraftContent, DraftInput } from "@shared/schemas/workflow/draft.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import {
   allowedParameterValues,
@@ -39,7 +39,7 @@ export function visibleParameters(profile: CapabilityProfile): [string, Paramete
   return orderedParameters(profile).filter(([name]) => ORDER.includes(name));
 }
 
-const CORE_SETTINGS: Record<CapabilityProfile["output"]["kind"], string[]> = { video: ["aspectRatio", "durationSeconds", "resolution", "sound"], image: ["aspectRatio"], text: [], file: [] };
+const CORE_SETTINGS: Record<CapabilityProfile["output"]["kind"], string[]> = { video: ["aspectRatio", "durationSeconds", "resolution", "sound"], image: ["aspectRatio"], audio: [], text: [], file: [] };
 /** Core settings the model has no control for keep their place in the row, without a policy. */
 export function settingEntries(profile: CapabilityProfile): [string, ParameterPolicy | undefined][] {
   const visible = visibleParameters(profile);
@@ -112,6 +112,8 @@ export function preModelParameterChoices(profiles: CapabilityProfile[], content:
     const domain = policy.domain;
     if (domain.kind === "enum") {
       for (const value of allowedParameterValues(profile, content, name) ?? []) add(value);
+    } else if (domain.kind !== "range") {
+      continue;
     } else if (restrictions.length) {
       for (const value of restrictions[0] ?? []) if (isParameterValueInRange(domain, value) && restrictions.every(values => values.includes(value))) add(value);
     } else if (!choices.ranges.some(range => range.min === domain.min && range.max === domain.max && range.step === domain.step)) {
@@ -122,7 +124,7 @@ export function preModelParameterChoices(profiles: CapabilityProfile[], content:
 }
 
 type OutputKind = CapabilityProfile["output"]["kind"];
-const OUTPUT_NOUN: Record<OutputKind, string> = { image: "image", video: "video", text: "response", file: "file" };
+const OUTPUT_NOUN: Record<OutputKind, string> = { image: "image", video: "video", audio: "audio clip", text: "response", file: "file" };
 
 export function parameterName(name: string, outputKind?: OutputKind): string {
   if (name === "outputCount") return outputKind ? `${OUTPUT_NOUN[outputKind]}s`.replace(/^./, value => value.toUpperCase()) : "Results";
@@ -291,4 +293,14 @@ export function evaluateCapabilityDraft(
       )
     : [];
   return { candidates, profile, problems, modelNotice, unsupportedSaved, fixedConflicts };
+}
+
+/** A composer always has a model: the one last used for this action, else the action's first qualified model. */
+export function settingsForOutput(content: DraftContent, action: CreationAction, profiles: readonly CapabilityProfile[], remembered?: DraftContent["settings"]): DraftContent["settings"] {
+  const qualified = profiles.filter(profile => profile.action === action && profile.availability === "qualified");
+  const prior = remembered ? qualified.find(profile => profile.id === remembered.profileId) : undefined;
+  const chosen = prior ?? qualified[0];
+  if (!chosen) return settingsForAction(content);
+  const settings = settingsForProfile(chosen, prior && remembered ? { ...content, settings: remembered } : content);
+  return { ...settings, outputCount: Math.max(1, Math.min(settings.outputCount, chosen.output.maxCount)) };
 }

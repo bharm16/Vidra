@@ -33,7 +33,7 @@ export function FrameSettings({ profile, content, disabled, onChange, presentati
   const [rate, setRate] = useState("");
   const fields = ["numFrames", "framesPerSecond"].filter(name => {
     const policy = profile.parameters[name];
-    return policy?.policy === "fixed" && typeof policy.value === "number" || policy?.policy === "editable" && (policy.domain.kind === "range" || policy.domain.values.every(value => typeof value === "number"));
+    return policy?.policy === "fixed" && typeof policy.value === "number" || policy?.policy === "editable" && (policy.domain.kind === "range" || policy.domain.kind === "enum" && policy.domain.values.every(value => typeof value === "number"));
   });
   if (!fields.length) return null;
   const valid = fields.every(name => validValue(name === "numFrames" ? frames : rate, profile.parameters[name]));

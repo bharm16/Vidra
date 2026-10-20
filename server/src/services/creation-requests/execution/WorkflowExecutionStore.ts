@@ -107,7 +107,7 @@ export class WorkflowExecutionStore {
             ownerId: request.ownerId,
             projectId: request.projectId,
             kind: current.output.kind,
-            label: request.snapshot.instructions.trim().slice(0, 160) || (current.output.kind === "image" ? "Picture" : "Clip"),
+            label: request.snapshot.instructions.trim().slice(0, 160) || (current.output.kind === "image" ? "Picture" : current.output.kind === "audio" ? "Audio" : "Clip"),
             origin: { kind: "generated", requestId: request.id, slotId: current.slotId },
             sourceInputs: request.snapshot.inputs,
             ...stored,

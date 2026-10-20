@@ -5,7 +5,7 @@ import { RecordReplayAiService } from "@server/replay/RecordReplayAiService";
 import { StudioPolicyEngine } from "../StudioPolicyEngine";
 
 /**
- * Replays the recorded gpt-4o-mini studio_turn fixtures (behaviors 1, 2,
+ * Replays the recorded studio_turn fixtures (gpt-5.6-luna; behaviors 1, 2,
  * 3, 9) with ZERO network: every client in the seam is null, so any code
  * path that tried a live provider would throw. Because the scenarios are
  * shared with the record script, the prompts are byte-identical and every

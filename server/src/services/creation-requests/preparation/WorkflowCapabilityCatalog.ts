@@ -1,6 +1,7 @@
 import { CapabilityProfileSchema, type CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import type { WorkflowProfileCatalog } from "./ActionPreparationService";
 import type { WorkflowSpendGuard } from "@services/creation-requests/execution/types";
+import { REPLICATE_MODEL_DEFINITIONS, replicateModelFor, type ReplicateModelDefinition } from "@services/creation-requests/replicate-models";
 
 export interface WorkflowRuntimeAvailability {
   imageProviders: ReadonlySet<string>;
@@ -8,13 +9,16 @@ export interface WorkflowRuntimeAvailability {
   textAvailable: boolean;
   textProvider?: string;
   textModel?: string;
+  /** Whether exact native Replicate models can run (a token, outside replay). */
+  replicateAvailable?: boolean;
   spendGuard?: Pick<WorkflowSpendGuard, "qualified" | "reason">;
 }
 
 export type WorkflowAdapterBinding =
   | { kind: "image"; providerId: "replicate-flux-schnell" | "replicate-flux-kontext-fast"; requiresPrimaryImage: boolean }
   | { kind: "video"; endpoint: string; requiresStartFrame: boolean }
-  | { kind: "text"; operation: "studio_turn"; action: "ask" | "expand-description" | "improve-words" };
+  | { kind: "text"; operation: "studio_turn"; action: "ask" | "expand-description" | "improve-words" }
+  | { kind: "replicate"; definition: ReplicateModelDefinition };
 
 const IMAGE_PROVIDER_BY_PROFILE_ID: Record<string, "replicate-flux-schnell" | "replicate-flux-kontext-fast"> = {
   "flux-schnell": "replicate-flux-schnell",
@@ -40,6 +44,8 @@ export function resolveWorkflowAdapterBinding(
       requiresStartFrame: profile.id === "wan-2.5-i2v",
     };
   }
+  const definition = replicateModelFor(profile);
+  if (definition && definition.profile.action === profile.action) return { kind: "replicate", definition };
   if (profile.action === "ask" || profile.action === "expand-description" || profile.action === "improve-words") {
     return {
       kind: "text",
@@ -60,6 +66,7 @@ export function isWorkflowProfileRuntimeAvailable(
   if (!binding) return false;
   if (binding.kind === "image") return runtime.imageProviders.has(binding.providerId);
   if (binding.kind === "video") return runtime.videoAvailable(binding.endpoint);
+  if (binding.kind === "replicate") return runtime.replicateAvailable === true;
   return (
     runtime.textAvailable &&
     (runtime.textProvider === undefined || runtime.textProvider === profile.provider) &&
@@ -97,6 +104,7 @@ export function workflowRuntimeProfiles(runtime?: WorkflowRuntimeAvailability): 
       aspectRatio: { policy: "fixed", value: "match_input_image" }, outputFormat: { policy: "fixed", value: "webp" }, outputQuality: { policy: "fixed", value: 80 }, speedMode: { policy: "fixed", value: "Juiced" },
     } },
   ];
+  profiles.push(...REPLICATE_MODEL_DEFINITIONS.map(definition => ({ ...definition.profile, ...baseAvailability })));
   for (const [action, label] of [["ask", "Ask"], ["expand-description", "Expand description"], ["improve-words", "Improve words"]] as const) profiles.push({ ...common, id: `text-${action}`, label, action, provider: runtime?.textProvider ?? "configured-text", endpoint: runtime?.textModel ?? "studio_turn", mode: "text-assistance", inputs: [], output: { kind: "text", maxCount: 1 }, ...baseAvailability, generatedAudio: "unsupported", parameters: {} });
   return profiles.map(input => {
     const profile = CapabilityProfileSchema.parse(input);
@@ -107,6 +115,7 @@ export function workflowRuntimeProfiles(runtime?: WorkflowRuntimeAvailability): 
       textAvailable: runtime.textAvailable,
       ...(runtime.textProvider !== undefined ? { textProvider: runtime.textProvider } : {}),
       ...(runtime.textModel !== undefined ? { textModel: runtime.textModel } : {}),
+      ...(runtime.replicateAvailable !== undefined ? { replicateAvailable: runtime.replicateAvailable } : {}),
     };
     if (!isWorkflowProfileRuntimeAvailable(profile, runtimeWithoutSpend)) {
       return CapabilityProfileSchema.parse({

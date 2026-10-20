@@ -26,6 +26,11 @@ export const ImportCommandSchema = z.strictObject({
 }).refine(value => !value.contentType.startsWith("image/") || value.bytes <= 10 * 1024 * 1024, "Pictures must be 10 MB or smaller")
   .refine(value => !value.contentType.startsWith("audio/") || value.bytes <= AUDIO_IMPORT_LIMITS.maxBytes, "Audio must be 100 MB or smaller");
 export type ImportCommand = z.infer<typeof ImportCommandSchema>;
+/** Generated pictures may exceed the 10 MB upload limit (4K and PNG results); verification still bounds their pixels. */
+export const GENERATED_PICTURE_MAX_BYTES = 100 * 1024 * 1024;
+export const GeneratedOutputCommandSchema = z.strictObject(ImportCommandSchema.shape)
+  .refine(value => !value.contentType.startsWith("image/") || value.bytes <= GENERATED_PICTURE_MAX_BYTES, "Generated pictures must be 100 MB or smaller")
+  .refine(value => !value.contentType.startsWith("audio/") || value.bytes <= AUDIO_IMPORT_LIMITS.maxBytes, "Audio must be 100 MB or smaller");
 export const ImportRecordSchema = z.strictObject({
   ...ImportCommandSchema.shape,
   ownerId: OwnerIdSchema, projectId: ProjectIdSchema,

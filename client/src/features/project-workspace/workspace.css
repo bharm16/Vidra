@@ -1133,11 +1133,70 @@ body:has(.vf-settings-sheet) > [data-state="open"]:not([role="dialog"]) {
   width: 100%;
   min-height: 32px;
 }
-.vf-action-choice.vf-button {
-  width: 32px;
+.vf-submit-row:has(> .vf-output-switch) {
+  align-items: center;
+  justify-content: space-between;
+}
+.vf-submit-row:has(> .vf-output-switch) > .vf-submit.vf-button {
+  width: auto;
+  flex: 1;
+}
+.vf-output-switch {
+  display: inline-flex;
   flex: none;
-  justify-content: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--vf-border);
+  border-radius: var(--vf-radius-control);
+  background: var(--vf-panel);
+}
+.vf-output-option.vf-button {
+  min-height: 26px;
+  height: 26px;
+  padding: 0 var(--vf-space-10);
+  border-radius: var(--vf-radius-small);
+  color: var(--vf-secondary);
+}
+.vf-output-option.vf-button[aria-checked="true"] {
+  color: var(--vf-white);
+}
+.vf-output-option.vf-button[aria-checked="true"]::before,
+.vf-words-help-action.vf-button[aria-pressed="true"]::before {
+  background: #f7f7f726;
+}
+.vf-words-help {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.vf-words-help-action.vf-button {
+  width: 32px;
+  min-height: 32px;
+  height: 32px;
   padding: 0;
+  justify-content: center;
+  color: var(--vf-secondary);
+}
+.vf-words-help-action.vf-button > span {
+  gap: var(--vf-space-6);
+}
+.vf-words-help-action img {
+  width: 16px;
+  height: 16px;
+}
+.vf-words-help-label {
+  display: none;
+}
+.vf-workspace[data-empty] .vf-words-help-action.vf-button,
+.vf-project-home-shell .vf-words-help-action.vf-button {
+  width: auto;
+  padding: 0 var(--vf-space-10);
+}
+.vf-workspace[data-empty] .vf-words-help-label,
+.vf-project-home-shell .vf-words-help-label {
+  display: inline;
 }
 .vf-blocking-reasons {
   margin-top: 0;
@@ -1516,13 +1575,18 @@ body:has(.vf-settings-sheet) > [data-state="open"]:not([role="dialog"]) {
   .vf-composer-writing {
     padding-bottom: var(--vf-space-20);
   }
-  .vf-submit.vf-button,
-  .vf-action-choice.vf-button {
+  .vf-submit.vf-button {
     height: 44px;
     min-height: 44px;
   }
-  .vf-action-choice.vf-button {
+  .vf-output-option.vf-button {
+    height: 38px;
+    min-height: 38px;
+  }
+  .vf-words-help-action.vf-button {
     width: 44px;
+    height: 44px;
+    min-height: 44px;
   }
   .vf-setting-chip.vf-button {
     height: 44px;
@@ -1757,12 +1821,20 @@ body:has(.vf-settings-sheet) > [data-state="open"]:not([role="dialog"]) {
   max-height: min(240px, 30dvh);
 }
 .vf-workspace[data-empty] .vf-settings {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   padding-block: var(--vf-space-4);
 }
 .vf-workspace[data-empty] .vf-submit-row {
+  width: 100%;
+  margin-left: 0;
+  flex: none;
+  justify-content: flex-end;
+}
+.vf-workspace[data-empty] .vf-submit-row:has(> .vf-output-switch) {
+  justify-content: space-between;
+}
+.vf-workspace[data-empty] .vf-submit-row > .vf-submit.vf-button {
   width: 112px;
-  margin-left: auto;
   flex: none;
 }
 .vf-workspace[data-empty] .vf-submit {
@@ -2041,12 +2113,6 @@ body:has(.vf-settings-sheet) > [data-state="open"]:not([role="dialog"]) {
 .vf-project-home-shell .vf-prompt-words {
   height: 54px;
 }
-.vf-submit.vf-button[data-choosing]::before {
-  background: #2e2e2e;
-}
-.vf-submit.vf-button[data-choosing] {
-  color: var(--vf-disabled);
-}
 .vf-compact-media-icon {
   display: grid;
   width: 50px;
@@ -2066,89 +2132,6 @@ body:has(.vf-settings-sheet) > [data-state="open"]:not([role="dialog"]) {
   min-width: 0;
   min-height: 0;
   margin: var(--vf-space-8);
-}
-.vf-action-menu {
-  width: 280px;
-  max-height: 330px;
-  padding: var(--vf-space-8);
-  border: 0;
-  border-radius: var(--vf-radius-menu);
-  box-shadow:
-    inset 0 0 0 1px var(--vf-border),
-    0 12px 18px #0006;
-}
-.vf-action-options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--vf-space-4);
-}
-.vf-action-options > .vf-button {
-  flex: none;
-}
-.vf-action-sheet.vf {
-  position: fixed;
-  inset: auto 0 0;
-  display: flex;
-  width: 100%;
-  height: 490px;
-  max-height: calc(100dvh - 16px);
-  flex-direction: column;
-  gap: var(--vf-space-8);
-  padding: var(--vf-space-24);
-  overflow: auto;
-  border: 0;
-  border-radius: var(--vf-radius-panel);
-  background: var(--vf-panel);
-}
-.vf-action-sheet > header {
-  display: flex;
-  height: 32px;
-  flex: none;
-  justify-content: flex-end;
-}
-.vf-action-sheet > header .vf-icon-button {
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
-  color: var(--vf-secondary);
-}
-.vf-action-sheet > header .vf-icon {
-  mask-image: url("/design-assets/workspace-dialog-close.svg") !important;
-}
-.vf-action-sheet > .vf-action-options {
-  width: 280px;
-  max-width: 100%;
-  padding: var(--vf-space-8);
-  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 38%));
-}
-.vf-action-sheet > button:last-child {
-  display: none;
-}
-body:has(.vf-action-sheet) > [data-state="open"]:not([role="dialog"]) {
-  background: #0b0b0b8c;
-}
-.vf-action-option.vf-button {
-  width: 100%;
-  min-height: 36px;
-  padding: var(--vf-space-8);
-  text-align: left;
-  justify-content: flex-start;
-}
-.vf-action-option.vf-button > span {
-  width: 100%;
-  gap: var(--vf-space-12);
-}
-.vf-action-option img {
-  display: block;
-  width: 16px;
-  height: 16px;
-  max-width: none;
-}
-.vf-submit[data-choosing] {
-  color: var(--vf-disabled);
-}
-.vf-submit[data-choosing]::before {
-  background: #2e2e2e;
 }
 @media (width < 768px) {
   .vf-workspace,
@@ -2190,17 +2173,10 @@ body:has(.vf-action-sheet) > [data-state="open"]:not([role="dialog"]) {
   .vf-workspace[data-empty] .vf-composer-region {
     width: min(336px, 100%);
   }
-  /* Created-project entry has its own pose; an open chooser uses B27 below. */
-  body:not(:has(.vf-action-sheet[data-state="open"]))
-    .vf-workspace[data-workspace-entry="created"][data-empty]
+  /* Created-project entry has its own pose. */
+  .vf-workspace[data-workspace-entry="created"][data-empty]
     .vf-composer-region:has(.vf-composer:not([data-has-profile])) {
     transform: translateY(calc(var(--vf-space-12) * -1));
-  }
-  /* The first-use chooser lifts the background composer while its sheet is open. */
-  body:has(.vf-action-sheet[data-state="open"])
-    .vf-workspace[data-empty]
-    .vf-composer-region:has(.vf-composer:not([data-has-profile])) {
-    transform: translateY(-72px);
   }
   .vf-workspace[data-empty] .vf-composer {
     min-height: 232px;
@@ -2220,10 +2196,22 @@ body:has(.vf-action-sheet) > [data-state="open"]:not([role="dialog"]) {
     height: 32px;
     min-height: 32px;
   }
-  .vf-workspace[data-empty] .vf-submit.vf-button,
-  .vf-workspace[data-empty] .vf-action-choice.vf-button {
+  .vf-workspace[data-empty] .vf-submit.vf-button {
     height: 32px;
     min-height: 32px;
+  }
+  .vf-workspace[data-empty] .vf-output-option.vf-button {
+    height: 26px;
+    min-height: 26px;
+  }
+  .vf-workspace[data-empty] .vf-words-help-action.vf-button {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0;
+  }
+  .vf-workspace[data-empty] .vf-words-help-label {
+    display: none;
   }
   .vf-workspace[data-area] > .vf-conversation {
     display: none;
@@ -2330,21 +2318,33 @@ body:has(.vf-action-sheet) > [data-state="open"]:not([role="dialog"]) {
   min-height: 54px;
 }
 .vf-project-home-shell .vf-settings {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   padding-block: var(--vf-space-4);
 }
 .vf-project-home-shell .vf-submit-row {
+  width: 100%;
+  margin-left: 0;
+  flex: none;
+  justify-content: flex-end;
+}
+.vf-project-home-shell .vf-submit-row:has(> .vf-output-switch) {
+  justify-content: space-between;
+}
+.vf-project-home-shell .vf-submit-row > .vf-submit.vf-button {
   width: 112px;
-  margin-left: auto;
   flex: none;
 }
 @media (width < 768px) {
-  .vf-project-home-shell .vf-settings {
-    flex-wrap: wrap;
+  .vf-project-home-shell .vf-submit-row > .vf-submit.vf-button {
+    width: auto;
+    flex: 1;
   }
-  .vf-project-home-shell .vf-submit-row {
-    width: 100%;
-    margin-left: 0;
+  .vf-project-home-shell .vf-words-help-action.vf-button {
+    width: 32px;
+    padding: 0;
+  }
+  .vf-project-home-shell .vf-words-help-label {
+    display: none;
   }
 }
 @media (width < 768px) {

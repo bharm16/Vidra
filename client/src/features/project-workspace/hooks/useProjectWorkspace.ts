@@ -20,7 +20,7 @@ import {
   resolvePendingDraftInputs,
   retrySlotDraftContent,
 } from "../state/inputBinding";
-import { settingsForAction, settingsForProfile } from "../state/capabilitySettings";
+import { settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
 function id(prefix: string): string { return `${prefix}_${crypto.randomUUID()}`; }
@@ -102,6 +102,10 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   const [view, dispatch] = useReducer(workspaceViewReducer, EMPTY_WORKSPACE_VIEW);
   const viewRef = useRef(view);
   viewRef.current = view;
+  // The model last used for each action, so switching outputs never drops back to "Choose model".
+  const rememberedSettings = useRef<Partial<Record<CreationAction, DraftContent["settings"]>>>({});
+  // Drafts this tab created; only these take a model automatically, so a draft open in two tabs never races.
+  const freshDraftIds = useRef(new Set<string>());
   const mounted = useRef(true);
   const scopeKey = `${ownerId}:${projectId}`;
   const scopeRef = useRef(scopeKey);
@@ -235,9 +239,10 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
               try {
                 const draftId = await initialDraftId(ownerId, projectId, chosen.id, drafts.map(record => record.id));
                 if (abort.signal.aborted || !inScope() || !selectionCurrent() || viewRef.current.activeDraftId) return;
-                const content = emptyDraftContent("make-image", owned.id, chosen.id, owned.instructions.revision);
+                const content = emptyDraftContent("make-video", owned.id, chosen.id, owned.instructions.revision);
                 const created = await api.createDraft(projectId, chosen.id, draftId, content);
                 if (abort.signal.aborted || !inScope() || created.ownerId !== ownerId || created.projectId !== projectId || created.conversationId !== chosen.id) return;
+                freshDraftIds.current.add(created.id);
                 const initial = viewRef.current.drafts[created.id] ?? openDraftBuffer(created);
                 if (selectionCurrent() && !viewRef.current.activeDraftId && ["open", "parked"].includes(created.status)) emit({ type: "open-draft", buffer: initial });
               } catch (failure) { if (!abort.signal.aborted && inScope() && selectionCurrent()) setResourceErrors(previous => [...previous, `The empty request could not open. Retry loading. ${message(failure)}`]); }
@@ -317,13 +322,15 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
           emit({ type: "update-buffer", buffer: { ...buffer, record } });
         }
       }
-      const content = emptyDraftContent(action, project.id, conversation.id, project.instructions.revision);
+      const empty = emptyDraftContent(action, project.id, conversation.id, project.instructions.revision);
+      const content: DraftContent = { ...empty, settings: settingsForOutput(empty, action, profiles, rememberedSettings.current[action]) };
       const record = await api.createDraft(projectId, conversation.id, id("draft"), content);
       if (!currentIntent() || record.ownerId !== ownerId || record.projectId !== projectId || record.conversationId !== conversation.id) return;
+      freshDraftIds.current.add(record.id);
       if (viewRef.current.activeDraftId !== prior || (prior && viewRef.current.drafts[prior]?.sequence !== priorSequence)) { emit({ type: "update-buffer", buffer: openDraftBuffer(record) }); return; }
       emit({ type: "open-draft", buffer: openDraftBuffer(record) }); setPrepared(undefined);
     } catch (failure) { if (currentIntent()) setError(message(failure)); }
-  }, [api, beginSelectionIntent, conversation, emit, flushId, inScope, ownerId, project, projectId]);
+  }, [api, beginSelectionIntent, conversation, emit, flushId, inScope, ownerId, profiles, project, projectId]);
 
   const chooseProfile = useCallback((profile: CapabilityProfile): void => {
     const draftId = viewRef.current.activeDraftId;
@@ -462,8 +469,20 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!buffer || action === buffer.content.action) return;
-    edit({ ...buffer.content, action, settings: settingsForAction(buffer.content) });
-  }, [edit]);
+    if (buffer.content.settings.profileId !== "unselected") rememberedSettings.current[buffer.content.action] = buffer.content.settings;
+    edit({ ...buffer.content, action, settings: settingsForOutput(buffer.content, action, profiles, rememberedSettings.current[action]) });
+  }, [edit, profiles]);
+
+  const activeDraftId = view.activeDraftId;
+  const activeNeedsModel = activeDraftId ? view.drafts[activeDraftId]?.content.settings.profileId === "unselected" : false;
+  // A composer never waits on "Choose model": a draft this tab created takes its output's model once models load.
+  useEffect(() => {
+    if (!activeDraftId || !activeNeedsModel || !profiles.length || !freshDraftIds.current.has(activeDraftId)) return;
+    const buffer = viewRef.current.drafts[activeDraftId];
+    if (!buffer) return;
+    const settings = settingsForOutput(buffer.content, buffer.content.action, profiles, rememberedSettings.current[buffer.content.action]);
+    if (settings.profileId !== "unselected") edit({ ...buffer.content, settings });
+  }, [activeDraftId, activeNeedsModel, edit, profiles]);
 
   const openConversation = useCallback(async (value: string): Promise<void> => {
     const parsed = ConversationIdSchema.safeParse(value);
@@ -591,9 +610,10 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     if (!project || !chosenConversation || project.status !== "active" || chosenConversation.status !== "active") return;
     if (activeId) await flushId(activeId);
     if (!inScope() || viewRef.current.activeDraftId !== activeId) return;
-    const content: DraftContent = current ? { ...current.content, instructions: text } : emptyDraftContent("make-image", project.id, chosenConversation.id, project.instructions.revision, text);
+    const content: DraftContent = current ? { ...current.content, instructions: text } : emptyDraftContent("make-video", project.id, chosenConversation.id, project.instructions.revision, text);
     const record = await api.createDraft(projectId, chosenConversation.id, id("draft"), content);
     if (!inScope() || viewRef.current.activeDraftId !== activeId || conversationRef.current?.id !== chosenConversation.id || (current && viewRef.current.drafts[activeId ?? ""]?.sequence !== current.sequence)) return;
+    if (!current) freshDraftIds.current.add(record.id);
     emit({ type: "open-draft", buffer: openDraftBuffer(record) }); setPrepared(undefined);
   }, [api, edit, emit, flushId, inScope, ownerId, project, projectId]);
 

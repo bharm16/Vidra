@@ -7,6 +7,7 @@ import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/requ
 export const NativeOutputSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("image"), storagePath: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("video"), assetId: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
+  z.strictObject({ kind: z.literal("audio"), storagePath: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("text"), text: z.string().min(1).max(32000), model: z.string().min(1), provider: z.string().min(1) }),
 ]);
 export type NativeOutput = z.infer<typeof NativeOutputSchema>;

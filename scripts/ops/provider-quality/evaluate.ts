@@ -78,7 +78,8 @@ function checkStudioInput(
     assert.equal(input.output_format, "png");
   if (edit)
     assert.deepEqual(
-      input.image_input,
+      // Replicate's GPT Image models read source pictures from `input_images`.
+      input[entry.replicateId.startsWith("openai/") ? "input_images" : "image_input"],
       [QUALITY_SOURCE],
       "unmodified source image",
     );

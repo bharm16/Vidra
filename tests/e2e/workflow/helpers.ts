@@ -20,8 +20,8 @@ export async function project(page: Page, action: "picture" | "clip" = "picture"
   await data(await page.request.post(`/api/projects/${created.id}/conversations`, { headers: authHeaders, data: { id: `conversation_${crypto.randomUUID()}`, name: "First ideas" } }), z.unknown());
   await page.goto(`/app/project/${created.id}`);
   await expect(page.getByLabel("Current request words", { exact: true })).toBeVisible();
-  if (action === "clip") { await page.getByRole("button", { name: "Choose request action", exact: true }).click(); await page.getByRole("button", { name: "Make a video", exact: true }).click(); }
-  await page.getByRole("button", { name: "Model: Choose a model", exact: true }).click();
+  if (action === "picture") await page.getByRole("radio", { name: "Image", exact: true }).click();
+  await page.getByRole("button", { name: /^Model: / }).click();
   await page.getByRole("button", { name: action === "clip" ? "Wan 2.2" : "Flux Schnell", exact: true }).click();
   return projectId(page);
 }

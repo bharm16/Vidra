@@ -31,7 +31,7 @@ export const PreparedActionSchema = z.discriminatedUnion("state", [
         if (typeof requested === "number" && requested >= 0) ctx.addIssue({ code: "custom", path: ["slotPlan", index, "seed"], message: "Each slot must capture its effective seed before review" });
         continue;
       }
-      const valid = policy?.policy === "fixed" ? seed === policy.value : policy?.policy === "editable" && (policy.domain.kind === "enum" ? policy.domain.values.includes(seed) : seed >= policy.domain.min && seed <= policy.domain.max && Math.abs((seed - policy.domain.min) / policy.domain.step - Math.round((seed - policy.domain.min) / policy.domain.step)) < 1e-8);
+      const valid = policy?.policy === "fixed" ? seed === policy.value : policy?.policy === "editable" && (policy.domain.kind === "enum" ? policy.domain.values.includes(seed) : policy.domain.kind === "range" && seed >= policy.domain.min && seed <= policy.domain.max && Math.abs((seed - policy.domain.min) / policy.domain.step - Math.round((seed - policy.domain.min) / policy.domain.step)) < 1e-8);
       if (!valid || (typeof requested === "number" && requested >= 0 && seed !== requested)) {
         ctx.addIssue({ code: "custom", path: ["slotPlan", index, "seed"], message: "The effective slot seed must match the reviewed seed policy and domain" });
       }

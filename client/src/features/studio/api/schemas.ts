@@ -16,6 +16,8 @@ export const StudioModelSlugSchema = z.enum([
   "nano-banana-2-lite",
   "nano-banana-pro",
   "gpt-image-2",
+  "nano-banana-2.1",
+  "gpt-image-2.5-sunburst",
 ]);
 
 export type StudioModelSlug = z.infer<typeof StudioModelSlugSchema>;

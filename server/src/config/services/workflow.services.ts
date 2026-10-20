@@ -37,6 +37,14 @@ import { GcsWorkflowManagementStorage } from "@services/workflow-sharing/GcsWork
 
 import { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
 import { WorkflowSpendPolicySchema } from "@services/creation-requests/execution/workflowSpendPolicy";
+import { ReplicateModelRunner } from "@services/creation-requests/replicate-models/ReplicateModelRunner";
+import { createAreaMaskTools } from "@services/creation-requests/replicate-models/areaMask";
+import type { ReplicateModelServices } from "@services/creation-requests/replicate-models/executeReplicateModel";
+import { GcsNativeModelOutputStore } from "@services/media-delivery/GcsNativeModelOutputStore";
+import type { VideoAssetStore } from "@services/video-generation/storage";
+import { createReplicateModelClient } from "@clients/replicateModelClient";
+import { logger } from "@infrastructure/Logger";
+import { resolveAllFlags } from "../feature-flags.ts";
 
 export function registerWorkflowServices(container: DIContainer): void {
   container.register("workflowProjectStore", () => new ProjectStore(getFirestore()), []);
@@ -49,14 +57,20 @@ export function registerWorkflowServices(container: DIContainer): void {
   container.register("workflowMediaLibrary", (projects: ProjectStore, media: MediaVersionIndex, bucket: Bucket) => new ProjectMediaService(getFirestore(), projects, media, new GcsProjectMediaStorage(bucket)), ["workflowProjectStore", "workflowMediaIndex", "gcsBucket"]);
   container.register("workflowSpendGuard", (config: ServiceConfig) => new StudioWorkflowSpendGuard(getFirestore(), { dailyCapCents: config.studio.dailyCapCents, ...(process.env.WORKFLOW_SPEND_POLICY_JSON ? { policy: WorkflowSpendPolicySchema.parse(JSON.parse(process.env.WORKFLOW_SPEND_POLICY_JSON)) } : {}) }), ["config"]);
   container.register("workflowImageProviders", (schnell: ImagePreviewProvider | null, kontext: ImagePreviewProvider | null) => new Set([schnell, kontext].filter((provider): provider is ImagePreviewProvider => provider !== null).map(provider => provider.id)), ["replicateFluxSchnellProvider", "replicateFluxKontextFastProvider"]);
-  container.register("workflowCapabilityCatalog", (providers: ReadonlySet<string>, videos: VideoGenerationService | null, ai: AIExecutionPort, spendGuard: StudioWorkflowSpendGuard) => {
+  // Exact native Replicate models make live provider calls, so replay never constructs them.
+  container.register("workflowModelServices", (config: ServiceConfig, bucket: Bucket, videoAssets: VideoAssetStore): ReplicateModelServices | null => {
+    if (resolveAllFlags(process.env).flags.replayMode === "replay") return null;
+    const client = createReplicateModelClient(config.replicate.apiToken, logger);
+    return client ? { runner: new ReplicateModelRunner(client), outputs: new GcsNativeModelOutputStore(bucket, videoAssets), tools: createAreaMaskTools() } : null;
+  }, ["config", "gcsBucket", "videoAssetStore"]);
+  container.register("workflowCapabilityCatalog", (providers: ReadonlySet<string>, videos: VideoGenerationService | null, ai: AIExecutionPort, spendGuard: StudioWorkflowSpendGuard, models: ReplicateModelServices | null) => {
     const text = ai.resolveExecution("studio_turn");
-    return new WorkflowCapabilityCatalog(undefined, { spendGuard, imageProviders: providers, videoAvailable: model => videos?.getModelAvailability(model).available === true, textAvailable: ai.getAvailableClients?.().includes(text.client) ?? false, textProvider: text.client, textModel: text.model });
-  }, ["workflowImageProviders", "videoGenerationService", "aiService", "workflowSpendGuard"]);
-  container.register("workflowExecutionService", (media: MediaVersionIndex, storage: StorageService, images: ImageGenerationService | null, videos: VideoGenerationService | null, ai: AIExecutionPort, providers: ReadonlySet<string>, bucket: Bucket, spendGuard: StudioWorkflowSpendGuard) => {
-    const executor = new NativeWorkflowExecutor({ images, videos, ai, spendGuard, imageProviders: providers, inputAccess: async (ownerId, projectId, versionId) => { const version = await media.get(ownerId, projectId, versionId); if (!version) throw new Error("This selected input is unavailable."); return (await storage.getViewUrl(ownerId, version.object.storagePath)).viewUrl; } });
+    return new WorkflowCapabilityCatalog(undefined, { spendGuard, imageProviders: providers, videoAvailable: model => videos?.getModelAvailability(model).available === true, textAvailable: ai.getAvailableClients?.().includes(text.client) ?? false, textProvider: text.client, textModel: text.model, replicateAvailable: models !== null });
+  }, ["workflowImageProviders", "videoGenerationService", "aiService", "workflowSpendGuard", "workflowModelServices"]);
+  container.register("workflowExecutionService", (media: MediaVersionIndex, storage: StorageService, images: ImageGenerationService | null, videos: VideoGenerationService | null, ai: AIExecutionPort, providers: ReadonlySet<string>, bucket: Bucket, spendGuard: StudioWorkflowSpendGuard, models: ReplicateModelServices | null) => {
+    const executor = new NativeWorkflowExecutor({ images, videos, ai, spendGuard, imageProviders: providers, models, inputVersion: (ownerId, projectId, versionId) => media.get(ownerId, projectId, versionId), inputAccess: async (ownerId, projectId, versionId) => { const version = await media.get(ownerId, projectId, versionId); if (!version) throw new Error("This selected input is unavailable."); return (await storage.getViewUrl(ownerId, version.object.storagePath)).viewUrl; } });
     return new WorkflowExecutionService(new WorkflowExecutionStore(getFirestore(), media), executor, new GcsWorkflowOutputStorage(bucket, videos));
-  }, ["workflowMediaIndex", "storageService", "imageGenerationService", "videoGenerationService", "aiService", "workflowImageProviders", "gcsBucket", "workflowSpendGuard"]);
+  }, ["workflowMediaIndex", "storageService", "imageGenerationService", "videoGenerationService", "aiService", "workflowImageProviders", "gcsBucket", "workflowSpendGuard", "workflowModelServices"]);
   container.register("workflowVideoEditStore", (projects: ProjectStore, media: MediaVersionIndex) => new VideoEditStore(getFirestore(), projects, media), ["workflowProjectStore", "workflowMediaIndex"]);
   container.register("workflowExportStorage", (bucket: Bucket) => new GcsExportStorage(bucket), ["gcsBucket"]);
   container.register("workflowVideoRenderer", (storage: GcsExportStorage) => new NativeVideoRenderer(storage), ["workflowExportStorage"]);

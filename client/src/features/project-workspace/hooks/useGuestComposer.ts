@@ -7,7 +7,7 @@ import type { PromptComposerProps } from "../components/PromptComposer";
 import type { CapabilityLookupStatus } from "../components/ModelCreationArea";
 import { fetchPublicProfiles } from "../api/workflowApi";
 import { editDraftBuffer, openDraftBuffer, redoDraftBuffer, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
-import { settingsForAction, settingsForProfile } from "../state/capabilitySettings";
+import { settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
 import { wordsDraftContent } from "../state/inputBinding";
 
 const GUEST_PROJECT = ProjectIdSchema.parse("project_guest");
@@ -39,7 +39,7 @@ export function useGuestComposer(intent: string | null, store: GuestDraftStore =
   const keeper = useRef(store);
   const [guest] = useState<GuestDraft>(() => {
     const kept = keeper.current.read();
-    const action: CreationAction = intent === "make-video" ? "make-video" : "make-image";
+    const action: CreationAction = intent === "make-image" ? "make-image" : "make-video";
     if (kept && (kept.instructions.trim() || !intent || kept.action === action)) return kept;
     return freshGuestDraft(action);
   });
@@ -73,7 +73,22 @@ export function useGuestComposer(intent: string | null, store: GuestDraftStore =
   }, [persist]);
 
   const edit = useCallback((content: DraftContent, typingGroup?: string): void => update(current => editDraftBuffer(current, { ...content, inputs: [] }, typingGroup)), [update]);
-  const changeAction = useCallback((action: CreationAction): void => update(current => action === current.content.action ? current : editDraftBuffer(current, { ...current.content, action, settings: settingsForAction(current.content) })), [update]);
+  // The model last used for each action, so switching outputs never drops back to "Choose model".
+  const remembered = useRef<Partial<Record<CreationAction, DraftContent["settings"]>>>({});
+  const changeAction = useCallback((action: CreationAction): void => update(current => {
+    if (action === current.content.action) return current;
+    if (current.content.settings.profileId !== "unselected") remembered.current[current.content.action] = current.content.settings;
+    return editDraftBuffer(current, { ...current.content, action, settings: settingsForOutput(current.content, action, profiles, remembered.current[action]) });
+  }), [profiles, update]);
+  // Once models load, a composer without one takes its output's model instead of waiting on "Choose model".
+  useEffect(() => {
+    if (!profiles.length) return;
+    update(current => {
+      if (current.content.settings.profileId !== "unselected") return current;
+      const settings = settingsForOutput(current.content, current.content.action, profiles);
+      return settings.profileId === "unselected" ? current : editDraftBuffer(current, { ...current.content, settings });
+    });
+  }, [profiles, update]);
   const keep = useCallback((): string => { persist(bufferRef.current); return guest.id; }, [guest.id, persist]);
 
   const controller = useMemo((): PromptComposerProps["controller"] => ({
