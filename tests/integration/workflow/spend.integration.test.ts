@@ -91,3 +91,19 @@ it("an explicitly qualified text ceiling shares the same cap and cannot bypass i
   const service = new WorkflowExecutionService(store, new NativeWorkflowExecutor({ images: null, videos: null, ai, imageProviders: new Set(), spendGuard: textGuard, inputAccess: vi.fn() }), outputStorage);
   await service.start(request.ownerId, request.id); await service.drain(); expect(execute).not.toHaveBeenCalled(); expect(await usage(request.ownerId)).toBe(496);
 });
+
+it("a Gemini Omni clip over 11 s is still delivered but holds its profile on every instance, before any further spend", async () => {
+  const profile = catalog.get("gemini-omni-1.1-t2v")!; const run = vi.fn(async (): Promise<unknown> => "https://replicate.delivery/clip.mp4");
+  const models = { runner: { run }, outputs: { storePicture: vi.fn(), storeAudio: vi.fn(), storeVideo: vi.fn(async () => "native-video-asset") }, tools: { blackEditMask: vi.fn() } };
+  const native = (spendGuard: StudioWorkflowSpendGuard): NativeWorkflowExecutor => new NativeWorkflowExecutor({ images: null, videos: null, ai: null, imageProviders: new Set(), spendGuard, models, inputAccess: vi.fn() });
+  const twelveSeconds: WorkflowOutputStorage = { materialize: async attempt => ({ object: { identity: "verified", assetId: attempt.slotId, storagePath: `users/${attempt.ownerId}/previews/videos/workflow-${attempt.slotId}.mp4`, generation: "1", sha256: "b".repeat(64), bytes: 20 }, metadata: { state: "verified", width: 1280, height: 720, durationSeconds: 12, audio: "present", probeVersion: "controlled" } }) };
+  const first = new StudioWorkflowSpendGuard(database, { dailyCapCents: 500 }, () => Date.parse(NOW)); const request = await accepted("omni_long", "spender_omni", profile);
+  const service = new WorkflowExecutionService(store, native(first), twelveSeconds); await service.start(request.ownerId, request.id); await service.drain();
+  expect((await store.get(request.ownerId, request.id)).slots[0]).toMatchObject({ outcome: "completed", delivery: "ready" }); expect(await usage(request.ownerId)).toBe(495);
+  expect((await database.collection("workflow_spend_holds").doc(profile.id).get()).data()).toMatchObject({ maximumOutputSeconds: 11, observedSeconds: 12, requestId: request.id });
+  expect(first.qualified(profile)).toBe(false);
+  const restarted = new StudioWorkflowSpendGuard(database, { dailyCapCents: 500 }, () => Date.parse(NOW)); const next = await accepted("omni_next", "spender_omni_next", profile);
+  const again = new WorkflowExecutionService(store, native(restarted), twelveSeconds); await again.start(next.ownerId, next.id); await again.drain();
+  expect(run).toHaveBeenCalledTimes(1); expect(await usage(next.ownerId)).toBe(0); expect(restarted.qualified(profile)).toBe(false);
+  expect((await store.get(next.ownerId, next.id)).slots[0]).toMatchObject({ outcome: "failed", error: { code: "not_started", message: expect.stringContaining("unavailable during bounded free testing") } });
+});

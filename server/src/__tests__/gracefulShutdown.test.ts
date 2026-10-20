@@ -69,10 +69,12 @@ describe("stopAllPeriodicWorkers", () => {
   it("calls .stop() on every registered periodic worker", () => {
     const creditRefundSweeper = buildStoppable();
     const videoAssetRetentionService = buildStoppable();
+    const workflowSpendGuard = buildStoppable();
 
     const container = buildContainer({
       creditRefundSweeper,
       videoAssetRetentionService,
+      workflowSpendGuard,
     });
 
     stopAllPeriodicWorkers(container as DIContainer);
@@ -82,6 +84,7 @@ describe("stopAllPeriodicWorkers", () => {
     // Pre-existing workers must still be stopped — guards against regressions.
     expect(creditRefundSweeper.stop).toHaveBeenCalledTimes(1);
     expect(videoAssetRetentionService.stop).toHaveBeenCalledTimes(1);
+    expect(workflowSpendGuard.stop).toHaveBeenCalledTimes(1);
   });
 
   it("tolerates null-registered workers (feature-flag-disabled paths)", () => {

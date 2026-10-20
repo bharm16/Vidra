@@ -1,5 +1,6 @@
 import type { VideoExportService } from "@services/video-export/VideoExportService";
 import type { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
+import type { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
 /**
  * Server Lifecycle Management
  *
@@ -129,6 +130,11 @@ export function stopAllPeriodicWorkers(container: DIContainer): void {
       "videoAssetRetentionService",
     );
   videoAssetRetentionService?.stop();
+
+  const workflowSpendGuard = resolveOptional<StudioWorkflowSpendGuard>(
+    "workflowSpendGuard",
+  );
+  workflowSpendGuard?.stop();
 }
 
 /**

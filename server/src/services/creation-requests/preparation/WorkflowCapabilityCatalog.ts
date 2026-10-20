@@ -124,22 +124,30 @@ export function workflowRuntimeProfiles(runtime?: WorkflowRuntimeAvailability): 
         unavailableReason: "This model is not configured. Choose another available model; your instructions and inputs are retained.",
       });
     }
-    if (runtime.spendGuard?.qualified(profile) !== true) {
-      return CapabilityProfileSchema.parse({
-        ...profile,
-        availability: "unavailable",
-        unavailableReason: runtime.spendGuard?.reason?.(profile) ?? "This model is unavailable during bounded free testing. Your instructions and inputs are retained.",
-      });
-    }
+    if (runtime.spendGuard?.qualified(profile) !== true) return spendUnavailable(profile, runtime.spendGuard);
     return profile;
+  });
+}
+
+function spendUnavailable(profile: CapabilityProfile, spendGuard: WorkflowRuntimeAvailability["spendGuard"]): CapabilityProfile {
+  return CapabilityProfileSchema.parse({
+    ...profile,
+    availability: "unavailable",
+    unavailableReason: spendGuard?.reason?.(profile) ?? "This model is unavailable during bounded free testing. Your instructions and inputs are retained.",
   });
 }
 
 export class WorkflowCapabilityCatalog implements WorkflowProfileCatalog {
   private readonly profiles: CapabilityProfile[];
-  constructor(profiles?: CapabilityProfile[], runtime?: WorkflowRuntimeAvailability) {
+  constructor(profiles?: CapabilityProfile[], private readonly runtime?: WorkflowRuntimeAvailability) {
     this.profiles = profiles?.map(profile => CapabilityProfileSchema.parse(profile)) ?? workflowRuntimeProfiles(runtime);
   }
-  get(id: string): CapabilityProfile | undefined { return this.profiles.find(profile => profile.id === id); }
-  list(): CapabilityProfile[] { return this.profiles.map(profile => CapabilityProfileSchema.parse(profile)); }
+  get(id: string): CapabilityProfile | undefined { const profile = this.profiles.find(candidate => candidate.id === id); return profile && this.current(profile); }
+  list(): CapabilityProfile[] { return this.profiles.map(profile => CapabilityProfileSchema.parse(this.current(profile))); }
+
+  /** Spend qualification can lapse while the server runs (a hold, or the policy's expiry); it never returns. */
+  private current(profile: CapabilityProfile): CapabilityProfile {
+    const spendGuard = this.runtime?.spendGuard;
+    return profile.availability === "qualified" && spendGuard && spendGuard.qualified(profile) !== true ? spendUnavailable(profile, spendGuard) : profile;
+  }
 }

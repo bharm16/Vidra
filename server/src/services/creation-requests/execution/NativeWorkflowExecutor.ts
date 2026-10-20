@@ -13,7 +13,7 @@ import {
   isWorkflowProfileRuntimeAvailable,
   resolveWorkflowAdapterBinding,
 } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
-import { NativeOutputSchema, WorkflowPreflightError, type NativeOutput, type WorkflowNativeExecutor, type WorkflowSpendGuard } from "./types";
+import { NativeOutputSchema, WorkflowPreflightError, type ExecutionAttempt, type NativeOutput, type VerifiedOutput, type WorkflowNativeExecutor, type WorkflowSpendGuard } from "./types";
 
 export interface NativeWorkflowExecutorDeps {
   images: Pick<ImageGenerationService, "generatePreview"> | null;
@@ -112,5 +112,9 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
       return executeReplicateModel(binding.definition, call, { ownerId: request.ownerId, slotId: slot.id }, this.deps.models, reserve);
     }
     throw new WorkflowPreflightError("This action has no supported adapter");
+  }
+
+  async checkOutput(attempt: ExecutionAttempt, verified: VerifiedOutput): Promise<void> {
+    await this.deps.spendGuard?.checkOutput?.(attempt, verified);
   }
 }

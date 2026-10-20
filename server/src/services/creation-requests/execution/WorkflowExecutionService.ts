@@ -92,6 +92,7 @@ export class WorkflowExecutionService {
     if (!attempt.output) return;
     try {
       const verified = attempt.output.kind === "text" ? undefined : await this.storage.materialize(attempt, attempt.output);
+      if (verified) await this.executor.checkOutput?.(attempt, verified);
       await this.store.publish(attempt, verified);
     } catch {
       await this.store.fail(attempt, "delivery");

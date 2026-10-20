@@ -5,7 +5,7 @@ import { sha256Hex } from "@utils/hash";
 
 export const WorkflowSpendPolicySchema = z.strictObject({
   revision: z.string().min(1).max(160), validUntil: z.iso.datetime(),
-  ceilings: z.array(z.strictObject({ profileId: z.string().min(1).max(160), profileRevision: z.string().min(1).max(160), mappingHash: z.string().regex(/^[a-f0-9]{64}$/), maximumCentsPerSlot: z.number().int().positive().max(100000), source: z.url() })).max(100),
+  ceilings: z.array(z.strictObject({ profileId: z.string().min(1).max(160), profileRevision: z.string().min(1).max(160), mappingHash: z.string().regex(/^[a-f0-9]{64}$/), maximumCentsPerSlot: z.number().int().positive().max(100000), maximumOutputSeconds: z.number().positive().max(3600).optional(), source: z.url() })).max(100),
 }).refine(policy => new Set(policy.ceilings.map(ceiling => ceiling.profileId)).size === policy.ceilings.length, "Cost policies cannot have duplicate profiles");
 export type WorkflowSpendPolicy = z.infer<typeof WorkflowSpendPolicySchema>;
 
@@ -25,6 +25,7 @@ export function workflowSpendMappingHash(profile: CapabilityProfile): string {
  * Native Replicate models, observed 2026-10-19 (ceil of maximum x 1.1 unless noted):
  * Wan 3: readme $0.20/s at 1080p (billing lists $0.10/s; the higher is used) x 20 s.
  * Gemini Omni 1.1: $0.45/s at 4K x 11 s (10 s observed output); no further headroom.
+ * It takes no duration, so a verified clip over maximumOutputSeconds holds the profile.
  * Grok extension: $0.05/s x (15 s source + 10 s continuation). Topaz video: the 4K/60
  * guide ($0.747 per 5 s) scaled to the $0.08 unit price x 20 s; no further headroom.
  * Luma reframe: $0.06/s x 10 s. Nano Banana 2.1: $0.1134 at 4K. GPT Image 2.5
@@ -41,9 +42,9 @@ export const DEFAULT_WORKFLOW_SPEND_POLICY: WorkflowSpendPolicy = WorkflowSpendP
     { profileId: "wan-2.5-i2v", profileRevision: "native/2026-10-17/1", mappingHash: "833c06f1677a73705c1996ba9bbc93a339f62ad64576ecd720d043dea9dd4ce2", maximumCentsPerSlot: 200, source: "https://replicate.com/wan-video/wan-2.5-i2v" },
     { profileId: "wan-3-t2v", profileRevision: "native/2026-10-19/1", mappingHash: "4c010ea670c30de29555c8b97e70fe5d3944d69378c74c0b6f60cdb9828ce15c", maximumCentsPerSlot: 440, source: "https://replicate.com/alibaba/wan-3" },
     { profileId: "wan-3-i2v", profileRevision: "native/2026-10-19/1", mappingHash: "42ea18d047f566104a292aa6f45aabd9d84fd52369f9a6f51cf34bb94c5fac4b", maximumCentsPerSlot: 440, source: "https://replicate.com/alibaba/wan-3" },
-    { profileId: "gemini-omni-1.1-t2v", profileRevision: "native/2026-10-19/1", mappingHash: "c5a244406e6b05bb00590bb9c1cb7603f42335bc1361dd2a0753d5cc388ffaf6", maximumCentsPerSlot: 495, source: "https://replicate.com/google/gemini-omni-1.1" },
-    { profileId: "gemini-omni-1.1-i2v", profileRevision: "native/2026-10-19/1", mappingHash: "9214777e49baae3305c6d9790e017a22034ec39af71ebc5ad322af2d866b7f5b", maximumCentsPerSlot: 495, source: "https://replicate.com/google/gemini-omni-1.1" },
-    { profileId: "gemini-omni-1.1-edit", profileRevision: "native/2026-10-19/1", mappingHash: "348e8e0921a3a54739b0166c4285ffe9cdc5c8e553903bdf90d602ab77a077f6", maximumCentsPerSlot: 495, source: "https://replicate.com/google/gemini-omni-1.1" },
+    { profileId: "gemini-omni-1.1-t2v", profileRevision: "native/2026-10-19/1", mappingHash: "c5a244406e6b05bb00590bb9c1cb7603f42335bc1361dd2a0753d5cc388ffaf6", maximumCentsPerSlot: 495, maximumOutputSeconds: 11, source: "https://replicate.com/google/gemini-omni-1.1" },
+    { profileId: "gemini-omni-1.1-i2v", profileRevision: "native/2026-10-19/1", mappingHash: "9214777e49baae3305c6d9790e017a22034ec39af71ebc5ad322af2d866b7f5b", maximumCentsPerSlot: 495, maximumOutputSeconds: 11, source: "https://replicate.com/google/gemini-omni-1.1" },
+    { profileId: "gemini-omni-1.1-edit", profileRevision: "native/2026-10-19/1", mappingHash: "348e8e0921a3a54739b0166c4285ffe9cdc5c8e553903bdf90d602ab77a077f6", maximumCentsPerSlot: 495, maximumOutputSeconds: 11, source: "https://replicate.com/google/gemini-omni-1.1" },
     { profileId: "grok-imagine-video-extension", profileRevision: "native/2026-10-19/1", mappingHash: "12bcf3a1c3aa3226e05bd324ea357477513df3dd059e9ea77f08614a9a396c48", maximumCentsPerSlot: 138, source: "https://replicate.com/xai/grok-imagine-video-extension" },
     { profileId: "topaz-video-upscale", profileRevision: "native/2026-10-19/1", mappingHash: "7d4f14f1449971e3372d3c11b38e208c0c1c37205297c686dfcd0d6889286a85", maximumCentsPerSlot: 479, source: "https://replicate.com/topazlabs/video-upscale" },
     { profileId: "luma-reframe-video", profileRevision: "native/2026-10-19/1", mappingHash: "068b628b30dd54aaff3b9e2cdd2db935b4c9340402fdbeb253d525c3ddecafd0", maximumCentsPerSlot: 66, source: "https://replicate.com/luma/reframe-video" },

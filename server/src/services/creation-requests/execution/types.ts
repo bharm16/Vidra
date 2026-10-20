@@ -27,6 +27,8 @@ export type ExecutionAttempt = z.infer<typeof ExecutionAttemptSchema>;
 export interface WorkflowNativeExecutor {
   available(profile: CapabilityProfile): boolean;
   execute(request: AcceptedRequest, slot: RequestSlot, profile: CapabilityProfile, sentInstructions: string): Promise<NativeOutput>;
+  /** Sees each verified output before it is published; a rejection retries delivery, never the invocation. */
+  checkOutput?(attempt: ExecutionAttempt, verified: VerifiedOutput): Promise<void>;
 }
 export interface WorkflowOutputStorage {
   materialize(attempt: ExecutionAttempt, output: NativeOutput): Promise<VerifiedOutput>;
@@ -37,6 +39,8 @@ export interface WorkflowSpendGuard {
   /** True only for the transaction creating this reservation; replay never authorizes another call. */
   reserve(request: AcceptedRequest, slot: RequestSlot, profile: CapabilityProfile): Promise<boolean>;
   reason?(profile: CapabilityProfile): string;
+  /** Holds a profile on every instance once a verified output runs past its ceiling's assumed length. */
+  checkOutput?(attempt: ExecutionAttempt, verified: VerifiedOutput): Promise<void>;
 }
 
 /** Only failures proven to precede invocation may be offered as a fresh attempt. */

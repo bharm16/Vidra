@@ -4,6 +4,8 @@ import { ConversationStore } from "@services/projects/ConversationStore";
 import { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
 import { CreationContextService } from "@services/creation-context/CreationContextService";
 import { ActionPreparationService } from "@services/creation-requests/preparation/ActionPreparationService";
+import { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
+import { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { createWorkflowTestDatabase } from "../helpers/workflow/emulator";
@@ -124,4 +126,21 @@ it("refuses a conversation whose persisted owner no longer matches the project",
   } });
   await database.collection("creation_projects").doc("project_prepare").collection("conversations").doc("conversation_denied").update({ ownerId: "another-owner" });
   await expect(preparation.prepare("creator", "project_prepare", "draft_conversation_denied")).rejects.toMatchObject({ code: "access_denied" });
+});
+
+it("blocks a draft for a model another server held, before acceptance", async () => {
+  const guard = new StudioWorkflowSpendGuard(database, { dailyCapCents: 500 }, () => Date.parse("2026-10-20T00:00:00.000Z"));
+  const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(), videoAvailable: () => false, textAvailable: false, replicateAvailable: true, spendGuard: guard });
+  const live = new ActionPreparationService({ database, projects, conversations, drafts, contexts, profiles: catalog, media: { get: async () => undefined } });
+  const gemini = catalog.get("gemini-omni-1.1-t2v")!;
+  await drafts.create("creator", "project_prepare", "conversation_prepare", { id: "draft_held_model", content: {
+    action: "make-video", instructions: "A runner at dusk", inputs: [],
+    settings: { profileId: gemini.id, profileRevision: gemini.revision, parameters: { aspectRatio: "16:9", resolution: "720p" }, outputCount: 1 },
+    context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 },
+    destination: { projectId: "project_prepare", conversationId: "conversation_prepare" },
+  } });
+  expect((await live.prepare("creator", "project_prepare", "draft_held_model")).state).toBe("ready");
+  await database.collection("workflow_spend_holds").doc(gemini.id).set({ profileId: gemini.id, maximumOutputSeconds: 11, observedSeconds: 12, requestId: "request_elsewhere", slotId: "slot_elsewhere", heldAt: "2026-10-20T00:00:00.000Z" });
+  await guard.start(); guard.stop();
+  expect(await live.prepare("creator", "project_prepare", "draft_held_model")).toMatchObject({ state: "blocked", reasons: [{ code: "profile_unavailable", message: expect.stringContaining("unavailable during bounded free testing") }] });
 });
