@@ -28,8 +28,7 @@ not a bucket prefix, and configured paths must be read from the deployment.
 
 Deletion of a studio project removes its records and turns, not media objects.
 Deletion of a session removes the session and cancels its jobs, not another
-record's independent media. Cross-mode replay tests exercise both deletion
-routes, reopen the surviving destination, and compare readable bytes.
+record's independent media.
 
 ## Inspect without deleting
 

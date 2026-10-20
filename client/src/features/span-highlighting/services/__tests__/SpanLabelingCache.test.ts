@@ -47,10 +47,12 @@ describe("SpanLabelingCache service", () => {
 
     await loadCacheModule();
 
-    expect(localStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEY);
-    expect(localStorage.setItem).toHaveBeenCalledWith(
-      "span_cache_version",
+    expect(localStorage.getItem(STORAGE_KEY) ?? "").not.toContain("stale");
+    expect(localStorage.getItem("span_cache_version")).toEqual(
       expect.any(String),
+    );
+    expect(localStorage.getItem("span_cache_version")).not.toBe(
+      "stale-version",
     );
   });
 

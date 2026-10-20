@@ -8,4 +8,4 @@ Current integrity boundaries include generic sessions/takes, `video_jobs`, `vide
 
 Acceptance must compare expected counts and representative identities, destinations, provenance, media handles, claim/receipt consistency and refund keys/debt states against the chosen backup. Include nested ledger rows, completion/attachment state and durable media objects. An empty unexpected collection is non-verification, not success. Reconcile discrepancies before enabling writers.
 
-Bootstrap/replay tests check application contracts against fixtures; they do not validate restored production records. Source cleanup performs no export, restore, ledger drain, mutation or media deletion.
+Bootstrap tests check application contracts against fixtures; they do not validate restored production records. Source cleanup performs no export, restore, ledger drain, mutation or media deletion.

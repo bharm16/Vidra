@@ -6,7 +6,7 @@ import { createVideoGenerateHandler } from "@routes/preview/handlers/videoGenera
 import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 import type { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
 import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
-import { InMemoryIdempotencyService } from "../integration/helpers/cross-mode/boundaryDoubles";
+import { InMemoryIdempotencyService } from "./test-helpers/inMemoryStores";
 
 /** Public HTTP prompt truth, with external persistence/provider ports controlled. */
 describe("videoGenerate prompt truth in free validation", () => {

@@ -9,7 +9,7 @@ import { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore"
 import { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import { SessionService } from "@services/sessions/SessionService";
-import { InMemorySessionStore } from "../integration/helpers/cross-mode/boundaryDoubles";
+import { InMemorySessionStore } from "./test-helpers/inMemoryStores";
 import type { SessionRecord } from "@services/sessions/types";
 import type { PreviewRoutesServices } from "@routes/types";
 

@@ -4,52 +4,6 @@ import path from "path";
 const rootDir = path.resolve(__dirname, "../../");
 
 const aliases = [
-  // Mock lucide-react icons for test environment stability
-  {
-    find: /^lucide-react$/,
-    replacement: path.resolve(__dirname, "../../tests/mocks/lucide-react.ts"),
-  },
-
-  // Client utils shim for shared @utils/cn usage in client components
-  {
-    find: /^@utils\/cn$/,
-    replacement: path.resolve(__dirname, "../../client/src/utils/cn"),
-  },
-  {
-    find: /^@utils\/subjectDescriptorCategories$/,
-    replacement: path.resolve(
-      __dirname,
-      "../../client/src/utils/subjectDescriptorCategories",
-    ),
-  },
-  {
-    find: /^@utils\/textQuoteRelocator$/,
-    replacement: path.resolve(
-      __dirname,
-      "../../client/src/utils/textQuoteRelocator",
-    ),
-  },
-  {
-    find: /^@utils\/canonicalText$/,
-    replacement: path.resolve(
-      __dirname,
-      "../../client/src/utils/canonicalText",
-    ),
-  },
-  {
-    find: /^@utils\/PromptContext\/(.*)/,
-    replacement: path.resolve(
-      __dirname,
-      "../../client/src/utils/PromptContext/$1",
-    ),
-  },
-  {
-    find: /^@utils\/PromptContext$/,
-    replacement: path.resolve(
-      __dirname,
-      "../../client/src/utils/PromptContext",
-    ),
-  },
   {
     find: /^@config\/performance\.config$/,
     replacement: path.resolve(
@@ -134,14 +88,6 @@ const aliases = [
     replacement: path.resolve(__dirname, "../../scripts/$1"),
   },
   { find: "@scripts", replacement: path.resolve(__dirname, "../../scripts") },
-  {
-    find: /^@migrations\/(.*)/,
-    replacement: path.resolve(__dirname, "../../scripts/migrations/$1"),
-  },
-  {
-    find: "@migrations",
-    replacement: path.resolve(__dirname, "../../scripts/migrations"),
-  },
 
   // Client-specific aliases (from client/tsconfig.json)
   {
@@ -235,7 +181,6 @@ const testExclude = [
   "**/node_modules/**",
   "**/dist/**",
   "**/e2e/**",
-  "**/*.performance.test.{js,jsx,ts,tsx}",
   "tests/integration/**",
   "docs/**",
   "**/.{idea,git,cache,output,temp}/**",
@@ -244,35 +189,6 @@ const testExclude = [
   // causing spurious test-file load failures. Exclude them from all runs.
   "**/.claude/worktrees/**",
   "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
-];
-
-// What counts as source for coverage. Two long-standing gaps put non-source
-// files in the denominator: the test-file globs named only .js/.jsx, so every
-// .ts/.tsx test and __tests__ helper was measured as if it were production
-// code, and "e2e/**" never matched the e2e suite's real home under tests/.
-const coverageExclude = [
-  "node_modules/",
-  "dist/",
-  "**/*.test.{js,jsx,ts,tsx}",
-  "**/*.spec.{js,jsx,ts,tsx}",
-  "**/__tests__/**",
-  "**/__fixtures__/**",
-  "**/__mocks__/**",
-  "tests/**",
-  "**/*.config.{js,ts}",
-  "vite.config.js",
-  "vitest.config.js",
-  "vitest.setup.js",
-  "vitest.setup.client.js",
-  "vitest.setup.server.js",
-  "eslint.config.js",
-  "postcss.config.js",
-  "tailwind.config.js",
-  "src/main.jsx",
-  "e2e/**",
-  "scripts/**",
-  "playwright.config.js",
-  ".claude/worktrees/**",
 ];
 
 export default defineConfig({
@@ -289,11 +205,6 @@ export default defineConfig({
   test: {
     globals: true,
     exclude: testExclude,
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
-      exclude: coverageExclude,
-    },
     testTimeout: 10000,
   },
 });

@@ -222,7 +222,7 @@ Future paid-mode screens, components and amounts have been retired from the acti
 
 ## Acceptance-case index
 
-Case links identify the design surfaces for review. The application assertions remain those in [acceptance-cases.json](acceptance-cases.json) and the [implementation test plan](implementation-tests.md); visual coverage is not a passing test.
+Case links identify the design surfaces for review. The application assertions remain those in [acceptance-cases.json](acceptance-cases.json); visual coverage is not a passing test.
 
 | Case         | Design scenes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -368,4 +368,4 @@ Supplemental cases are mapped in the JSON ledger. SUP-02 and SUP-03 concern the 
 
 ## Implementation handoff
 
-Keep the dependency order in [implementation-plan.md](implementation-plan.md). Treat the new token names as proposed CSS names, not existing implementation. Preserve the server authority, revision, receipt and recovery contracts while replacing the old UI. Do not close WP-12/G-UI until the complete design has been reviewed, or any application work package from Figma coverage alone.
+Treat the new token names as proposed CSS names, not existing implementation. Preserve the server authority, revision, receipt and recovery contracts while replacing the old UI.

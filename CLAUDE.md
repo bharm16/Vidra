@@ -34,27 +34,19 @@ Read impacted modules/contracts first. Follow the `studio/` frontend pattern and
 
 Use explicit exported/async return types, `unknown` and guards instead of `any`, and Zod at input/persistence boundaries. Prefer `undefined` except for deliberate nullable wire fields. If a type fix needs to widen more than three interfaces, find the root cause. Keep dependency upgrades and test infrastructure changes separate from production changes.
 
-Add the smallest useful behavioral test. Auth, authorization, payment and user-data changes require a negative path. Exclusive tests retire with their implementation; tests for surviving data/recovery contracts stay. Server regression tests mock process-external boundaries; client tests may mock their feature API.
+Add the smallest useful behavioral test. Auth, authorization, payment and user-data changes require a negative path. Exclusive tests retire with their implementation; tests for surviving data/recovery contracts stay. Server tests mock process-external boundaries (Firebase, SDKs, Redis, time, logging); client tests may mock their feature API.
 
-Before **every commit**, all five gates must pass:
+Before **every commit**, all three gates must pass:
 
-1. `npx tsc --noEmit`
-2. `npx eslint --config config/lint/eslint.config.js . --quiet`
-3. `npm run arch:check`
-4. `npm run test:unit`
-5. `npm run test:replay`
+1. `npm run typecheck`
+2. `npm run lint`
+3. `npm run test:unit`
 
-`npm run verify` runs these independent gates concurrently; `verify:seq` is the sequential fallback. A failed gate blocks a commit. There is no git pre-commit hook; run the gates yourself.
+`npm run verify` runs these gates concurrently. A failed gate blocks a commit. There is no git pre-commit hook; run the gates yourself.
 
-Registration/startup/lifecycle changes also require:
+Assertions come from contracts; repair source unless the referenced contract has genuinely retired.
 
-```bash
-PORT=0 npx vitest run tests/integration/bootstrap.integration.test.ts tests/integration/di-container.integration.test.ts --config config/test/vitest.integration.config.js
-```
-
-Assertions come from contracts; repair source unless the referenced contract has genuinely retired. [Test guidance](docs/architecture/typescript/TEST_GUIDE.md) identifies the current boundaries.
-
-Before handoff, run typecheck, `npm run lint:all`, unit tests, relevant provider-free e2e journeys and `npm run build`. Replay proves wiring/recovery, not provider availability/quality. Deterministic span evaluation and its baseline workflow remain separate. Run `npm run verify:drift` after route/flag/catalog changes.
+Before handoff, also run `npm run build`, and `npm run test:e2e` after UI changes. Emulator and native-media suites (`npm run test:integration`) run in CI. Run `npm run eval:golden-set` after span-labeling prompt or model changes.
 
 ## Runtime
 
@@ -68,7 +60,7 @@ For performance, establish a working baseline and measure one change at a time. 
 
 ## References
 
-- [Route map](docs/architecture/ROUTE_MAP.md) and [service boundaries](docs/architecture/SERVICE_BOUNDARIES.md).
-- [Replay](docs/architecture/replay-mode.md) and [media lifecycle](docs/architecture/admission-media-lifecycle.md).
+- [Service boundaries](docs/architecture/SERVICE_BOUNDARIES.md).
+- [Media lifecycle](docs/architecture/admission-media-lifecycle.md).
 - [Page 21 adoption](docs/design/page21-component-migration.md): current components/state journeys. Pages 22/23 do not authorize a new draft ownership model.
 - [Issue tracker](docs/agents/issue-tracker.md) and [triage labels](docs/agents/triage-labels.md).

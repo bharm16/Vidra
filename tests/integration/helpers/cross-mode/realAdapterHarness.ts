@@ -220,14 +220,11 @@ export async function startRealAdapterHarness(): Promise<RealAdapterHarness> {
 
   setEnv("NODE_ENV", "test");
   setEnv("PORT", "0");
-  // The recorded generation seams (LLM router, image providers, studio runner)
-  // stay replayed; the persistence boundaries below do not.
-  setEnv("REPLAY_MODE", "replay");
   setEnv("ENABLE_STUDIO", "true");
   setEnv("ALLOWED_API_KEYS", REAL_ADAPTER_API_KEY);
   setEnv("API_KEY", undefined);
-  setEnv("REPLICATE_API_TOKEN", "replay-only-not-a-credential");
-  setEnv("FAL_KEY", "replay-only-not-a-credential");
+  setEnv("REPLICATE_API_TOKEN", "offline-not-a-credential");
+  setEnv("FAL_KEY", "offline-not-a-credential");
   for (const key of LLM_ENV_KEYS) setEnv(key, undefined);
   setEnv("METADATA_SERVER_DETECTION", "none");
   // The project the emulators serve. CI pins it to the `--project` the

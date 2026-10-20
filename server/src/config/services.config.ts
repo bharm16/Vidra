@@ -13,7 +13,6 @@ import { registerCacheServices } from "./services/cache.services.ts";
 import { registerStorageServices } from "./services/storage.services.ts";
 import { registerRefundServices } from "./services/refund.services.ts";
 import { registerVideoJobServices } from "./services/video-jobs.services.ts";
-import { registerReplayServices } from "./services/replay.services.ts";
 import { registerLLMServices } from "./services/llm.services.ts";
 import { registerSpanLabelingServices } from "./services/span-labeling.services.ts";
 import { registerEnhancementServices } from "./services/enhancement.services.ts";
@@ -48,9 +47,8 @@ export async function configureServices(): Promise<DIContainer> {
 
   // Business logic: LLM, enhancement, video generation, image generation
   // (observation services are registered by registerCoreServices)
-  // Record/replay cassette store — must precede the seams that consume it
-  // (aiService in llm.services, image preview provider in image-generation).
-  registerReplayServices(container);
+  // Tests substitute the sketch relay's upstream fetch; null keeps global fetch.
+  container.registerValue("sketchRelayFetch", null);
   registerLLMServices(container);
   registerSpanLabelingServices(container);
   registerEnhancementServices(container);

@@ -6,7 +6,7 @@ import type { StudioTurnRecord } from "@services/studio/types";
 import type { StorageService } from "@services/storage/StorageService";
 import type { SessionStore } from "@services/sessions/SessionStore";
 import type { ImageAssetStore } from "@services/image-generation/storage";
-import { CROSS_MODE_SKETCH_INPUTS } from "@scripts/replay/goldenScenarios";
+import { CROSS_MODE_SKETCH_INPUTS } from "./helpers/cross-mode/scenarios";
 import {
   REAL_ADAPTER_USER_ID,
   apiKeyCaller,

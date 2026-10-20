@@ -11,4 +11,4 @@ The npm `overrides` section in [`package.json`](/Users/bryceharmon/Desktop/Vidra
 - `baseline-browser-mapping@2.9.18`
   Later versions caused resolution failures in the Vite build pipeline.
 
-Do not add comment keys inside `overrides`. npm treats them as package names, which breaks architecture scripts that shell through npm.
+Do not add comment keys inside `overrides`. npm treats them as package names.

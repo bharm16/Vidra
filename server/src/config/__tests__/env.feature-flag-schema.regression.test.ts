@@ -53,7 +53,6 @@ describe("feature-flag boot validation is derived from the registry", () => {
     for (const name of [
       "ENABLE_STUDIO",
       "LLM_PROVIDER_FAILOVER_ENABLED",
-      "REPLAY_MODE",
     ])
       expect(names).toContain(name);
   });

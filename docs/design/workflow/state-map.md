@@ -1,6 +1,6 @@
 # Workflow state map
 
-Generated from `state-model.json`. Edit that file, then run `python3 docs/design/workflow/validate_contract.py --write`.
+Readable view of `state-model.json`.
 
 **22 state groups · 126 named states · 348 declared transitions · 1380 state/event pairs.**
 

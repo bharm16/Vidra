@@ -19,9 +19,9 @@ import {
   extractImageUrl,
 } from "@services/image-generation/providers/replicatePrediction";
 import type {
-  LiveStudioImageRunner,
   StudioImageCall,
   StudioImageCallResult,
+  StudioImageRunner,
 } from "./types";
 
 interface ReplicatePrediction {
@@ -43,7 +43,6 @@ interface ReplicateClient {
 }
 
 export type {
-  LiveStudioImageRunner,
   StudioImageCall,
   StudioImageCallResult,
   StudioImageRunner,
@@ -67,7 +66,7 @@ export interface ReplicateStudioImageRunnerOptions {
   apiToken?: string;
 }
 
-export class ReplicateStudioImageRunner implements LiveStudioImageRunner {
+export class ReplicateStudioImageRunner implements StudioImageRunner {
   private readonly replicate: ReplicateClient | null;
   private readonly log = logger.child({
     service: "ReplicateStudioImageRunner",
@@ -77,10 +76,6 @@ export class ReplicateStudioImageRunner implements LiveStudioImageRunner {
     this.replicate = options.apiToken
       ? (new Replicate({ auth: options.apiToken }) as ReplicateClient)
       : null;
-  }
-
-  isAvailable(): boolean {
-    return this.replicate !== null;
   }
 
   async run(call: StudioImageCall): Promise<StudioImageCallResult> {

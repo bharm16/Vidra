@@ -17,47 +17,6 @@
  * Adding a code here is safe (additive).  Removing one is a BREAKING CHANGE
  * that requires a client migration.
  */
-export type ApiErrorCode =
-  | "AUTH_REQUIRED"
-  | "INVALID_REQUEST"
-  | "INSUFFICIENT_CREDITS"
-  | "RATE_LIMITED"
-  | "SERVICE_UNAVAILABLE"
-  | "LLM_UNAVAILABLE"
-  | "GENERATION_FAILED"
-  | "IDEMPOTENCY_KEY_REQUIRED"
-  | "IDEMPOTENCY_CONFLICT"
-  | "REQUEST_IN_PROGRESS"
-  | "SESSION_VERSION_CONFLICT"
-  // Operational codes. These were already emitted on the wire before they were
-  // declared here, which made `ApiErrorCodeSchema` (a z.enum over
-  // API_ERROR_CODES) reject responses the server genuinely sends — see
-  // PreviewErrorArmSchema in shared/schemas/preview.schemas.ts, which the
-  // client hard-`.parse()`s. Declaring them is the fix, not a new capability.
-  | "ROUTE_TIMEOUT"
-  | "RATE_LIMIT_UNAVAILABLE"
-  | "QUEUE_FULL"
-  | "QUEUE_TIMEOUT"
-  | "SESSION_EXPIRED"
-  | "VIDEO_PROVIDER_TIMEOUT"
-  // Same story as the operational codes above: these three were emitted via
-  // the legacy AppError class (ShareService, generateVideo workflow), which
-  // bypassed the DomainError arm's declare-your-code discipline. Declared
-  // 2026-08-27 when those sites moved onto DomainError subclasses.
-  | "SHARE_CLIP_NOT_FOUND"
-  | "SHARE_NO_MEDIA"
-  | "VIDEO_MODEL_UNAVAILABLE"
-  | "not_found"
-  | "access_denied"
-  | "read_only"
-  | "revision_conflict"
-  | "invalid_context"
-  | "input_unavailable"
-  | "capability_unavailable"
-  | "invalid_settings"
-  | "submission_conflict";
-
-/** All valid error code values, usable at runtime for validation. */
 export const API_ERROR_CODES = [
   "AUTH_REQUIRED",
   "INVALID_REQUEST",
@@ -70,12 +29,21 @@ export const API_ERROR_CODES = [
   "IDEMPOTENCY_CONFLICT",
   "REQUEST_IN_PROGRESS",
   "SESSION_VERSION_CONFLICT",
+  // Operational codes. These were already emitted on the wire before they were
+  // declared here, which made `ApiErrorCodeSchema` (a z.enum over
+  // API_ERROR_CODES) reject responses the server genuinely sends — see
+  // PreviewErrorArmSchema in shared/schemas/preview.schemas.ts, which the
+  // client hard-`.parse()`s. Declaring them is the fix, not a new capability.
   "ROUTE_TIMEOUT",
   "RATE_LIMIT_UNAVAILABLE",
   "QUEUE_FULL",
   "QUEUE_TIMEOUT",
   "SESSION_EXPIRED",
   "VIDEO_PROVIDER_TIMEOUT",
+  // Same story as the operational codes above: these three were emitted via
+  // the legacy AppError class (ShareService, generateVideo workflow), which
+  // bypassed the DomainError arm's declare-your-code discipline. Declared
+  // 2026-08-27 when those sites moved onto DomainError subclasses.
   "SHARE_CLIP_NOT_FOUND",
   "SHARE_NO_MEDIA",
   "VIDEO_MODEL_UNAVAILABLE",
@@ -88,7 +56,10 @@ export const API_ERROR_CODES = [
   "capability_unavailable",
   "invalid_settings",
   "submission_conflict",
-] as const satisfies readonly ApiErrorCode[];
+] as const;
+
+// Derived from the runtime list so the type and the client's z.enum cannot drift.
+export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
 
 // ---------------------------------------------------------------------------
 // Error response shape

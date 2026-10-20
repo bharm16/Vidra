@@ -1,6 +1,6 @@
 # Code review and implementation dependencies
 
-Source-code review below is dated 2026-10-10. The October 14 visual remediation (local record `design-critique-remediation-2026-10-14.json`) updates Figma and design contracts only; it does not revalidate these older code findings or count as application acceptance. Current implementation evidence belongs in the workflow implementation-coverage record.
+Source-code review below is dated 2026-10-10. The October 14 visual remediation (local record `design-critique-remediation-2026-10-14.json`) updates Figma and design contracts only; it does not revalidate these older code findings or count as application acceptance.
 
 ## Existing implementation
 

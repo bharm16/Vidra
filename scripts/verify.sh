@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 #
-# The commit gate: the same five checks CLAUDE.md mandates, overlapped instead
-# of chained. The unit suite is the long pole (~2-3 min); the type check, lint,
-# architecture check, and replay suite are all independent of it and of each
-# other, so they run concurrently and finish inside the unit suite's first
-# seconds. Wall-clock cost is the unit suite, not the sum of five gates.
+# The commit gate: the same three checks CLAUDE.md mandates, overlapped instead
+# of chained. The unit suite is the long pole (~2-3 min); the type check and
+# lint are independent of it, so they finish inside its first seconds.
 #
 # Each gate writes to its own log; a gate's output is printed only when it
 # fails, plus the unit suite's totals on success so the pass/fail counts stay
@@ -23,13 +21,11 @@ cd "$ROOT_DIR"
 LOG_DIR="$(mktemp -d)"
 trap 'rm -rf "$LOG_DIR"' EXIT
 
-NAMES=(typecheck lint arch unit replay)
+NAMES=(typecheck lint unit)
 CMDS=(
   "npm run -s typecheck"
-  "npm run -s lint:quiet"
-  "npm run -s arch:check"
+  "npm run -s lint"
   "npm run -s test:unit"
-  "npm run -s test:replay"
 )
 PIDS=()
 

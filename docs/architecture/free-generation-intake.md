@@ -22,4 +22,4 @@ Terminal provider failure retains failed-job/dead-letter evidence. Broad automat
 
 Paid intake, starter grants, storyboard/face-swap routes and commerce registrations are retired. `/api/preview` remains a saved-media URL compatibility prefix.
 
-Verification: free intake contracts, admission/runtime/refund tests, bootstrap/DI tests, provider-free cross-mode replay and browser journeys. These prove local behavior; provider quality and hosted release qualification remain separate evidence.
+Verification: free intake contracts, admission/runtime/refund tests, bootstrap/DI tests and browser journeys. These prove local behavior; provider quality and hosted release qualification remain separate evidence.

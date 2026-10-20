@@ -44,7 +44,6 @@ import { GcsNativeModelOutputStore } from "@services/media-delivery/GcsNativeMod
 import type { VideoAssetStore } from "@services/video-generation/storage";
 import { createReplicateModelClient } from "@clients/replicateModelClient";
 import { logger } from "@infrastructure/Logger";
-import { resolveAllFlags } from "../feature-flags.ts";
 
 export function registerWorkflowServices(container: DIContainer): void {
   container.register("workflowProjectStore", () => new ProjectStore(getFirestore()), []);
@@ -57,9 +56,7 @@ export function registerWorkflowServices(container: DIContainer): void {
   container.register("workflowMediaLibrary", (projects: ProjectStore, media: MediaVersionIndex, bucket: Bucket) => new ProjectMediaService(getFirestore(), projects, media, new GcsProjectMediaStorage(bucket)), ["workflowProjectStore", "workflowMediaIndex", "gcsBucket"]);
   container.register("workflowSpendGuard", (config: ServiceConfig) => new StudioWorkflowSpendGuard(getFirestore(), { dailyCapCents: config.studio.dailyCapCents, ...(process.env.WORKFLOW_SPEND_POLICY_JSON ? { policy: WorkflowSpendPolicySchema.parse(JSON.parse(process.env.WORKFLOW_SPEND_POLICY_JSON)) } : {}) }), ["config"]);
   container.register("workflowImageProviders", (schnell: ImagePreviewProvider | null, kontext: ImagePreviewProvider | null) => new Set([schnell, kontext].filter((provider): provider is ImagePreviewProvider => provider !== null).map(provider => provider.id)), ["replicateFluxSchnellProvider", "replicateFluxKontextFastProvider"]);
-  // Exact native Replicate models make live provider calls, so replay never constructs them.
   container.register("workflowModelServices", (config: ServiceConfig, bucket: Bucket, videoAssets: VideoAssetStore): ReplicateModelServices | null => {
-    if (resolveAllFlags(process.env).flags.replayMode === "replay") return null;
     const client = createReplicateModelClient(config.replicate.apiToken, logger);
     return client ? { runner: new ReplicateModelRunner(client), outputs: new GcsNativeModelOutputStore(bucket, videoAssets), tools: createAreaMaskTools() } : null;
   }, ["config", "gcsBucket", "videoAssetStore"]);

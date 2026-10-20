@@ -32,15 +32,3 @@ export interface StudioImageCallResult {
 export interface StudioImageRunner {
   run(call: StudioImageCall): Promise<StudioImageCallResult>;
 }
-
-/**
- * A runner backed by real credentials, which can therefore be unconfigured.
- *
- * Only the record path needs this: recording against an unavailable runner
- * would capture nothing, so `RecordReplayStudioImageRunner` refuses it up
- * front. Replay-mode fakes and test doubles are always "available" by
- * construction and implement the narrower {@link StudioImageRunner}.
- */
-export interface LiveStudioImageRunner extends StudioImageRunner {
-  isAvailable(): boolean;
-}

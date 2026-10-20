@@ -32,6 +32,12 @@ const SketchFrameSchema = z.object({
   seed: z.number().int(),
 });
 
+/** The relay's upstream call; tests substitute it. */
+export type SketchRelayFetch = (
+  url: string,
+  init?: RequestInit,
+) => Promise<globalThis.Response>;
+
 interface FalI2iRouterDeps {
   falKey: string | undefined;
   /**
@@ -39,7 +45,7 @@ interface FalI2iRouterDeps {
    * and the fail-closed posture has to hold at construction time too.
    */
   budget: SketchBudgetService;
-  fetchFn?: (url: string, init?: RequestInit) => Promise<globalThis.Response>;
+  fetchFn?: SketchRelayFetch;
   /** Backstop for hung upstream calls; the client's 8s watchdog normally wins. */
   upstreamTimeoutMs?: number;
 }

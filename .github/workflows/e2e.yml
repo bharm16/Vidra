@@ -35,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run provider-free browser tests (20 cases)
-        run: npx playwright test --config config/test/playwright.pr.config.js
+      - name: Run provider-free browser tests
+        run: npm run test:e2e
         env:
           HOME: /root
           CI: true

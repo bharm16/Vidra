@@ -10,4 +10,4 @@ Follow [../CLAUDE.md](../CLAUDE.md). Express, TypeScript/tsx, ESM, Firebase Admi
 - Generic sessions and shared schemas still read historical continuity/camera/provider fields. Their execution backends are retired.
 - Preserve media ownership, signed-URL grants and original take/session/version identity during recovery.
 
-Registration/startup changes require the root bootstrap/DI gate. Logging signatures are defined by [ILogger](src/interfaces/ILogger.ts).
+Logging signatures are defined by [ILogger](src/interfaces/ILogger.ts).

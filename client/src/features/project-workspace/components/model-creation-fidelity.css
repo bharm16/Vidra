@@ -176,7 +176,6 @@
 @media (min-width: 768px) {
   @supports (width: calc-size(max-content, round(up, size, 1px))) {
     .vf-model-creation .vf-setting-chip:not(.vf-frame-advanced) {
-      /* stylelint-disable-next-line declaration-property-value-no-unknown -- Browser support is guarded; the CSS validator does not yet recognize calc-size(). */
       width: calc-size(max-content, round(up, size, 1px));
     }
   }

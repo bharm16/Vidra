@@ -105,7 +105,7 @@ describe("LocalStoragePromptRepository", () => {
       const quotaError = new Error("quota exceeded");
       quotaError.name = "QuotaExceededError";
       const setItemSpy = vi
-        .spyOn(localStorage, "setItem")
+        .spyOn(Storage.prototype, "setItem")
         .mockImplementationOnce(() => {
           throw quotaError;
         })
@@ -133,7 +133,7 @@ describe("LocalStoragePromptRepository", () => {
       const storageError = new Error("Storage unavailable");
       storageError.name = "SecurityError";
       const setItemSpy = vi
-        .spyOn(localStorage, "setItem")
+        .spyOn(Storage.prototype, "setItem")
         .mockImplementation(() => {
           throw storageError;
         });

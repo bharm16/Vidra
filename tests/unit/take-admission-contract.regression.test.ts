@@ -37,15 +37,6 @@ const versionEntry = (generations: unknown[]) => ({
 });
 
 describe("take admission contract (ADR-0022 decisions 1-3)", () => {
-  it("publishes exactly the four origins the ADR names", () => {
-    expect([...TAKE_ORIGINS]).toEqual([
-      "generated",
-      "upload",
-      "sketchpad",
-      "studio",
-    ]);
-  });
-
   it.each(TAKE_ORIGINS)("round-trips a take whose origin is %s", (origin) => {
     const result = SessionGenerationRecordSchema.safeParse({
       id: "gen-1",

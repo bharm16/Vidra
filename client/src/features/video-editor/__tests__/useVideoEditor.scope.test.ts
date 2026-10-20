@@ -171,7 +171,7 @@ it("migrates a legacy checkpoint only after preserving it and never overwrites a
 
 it("keeps a legacy checkpoint readable when device storage refuses migration", async () => {
   const legacy = { editId: editA.id, revision: 1, operationId: "operation_legacy", command: { kind: "duration", itemId: editA.composition.items[0]!.id, displayFrames: 150 } };
-  localStorage.setItem(`${scope}:change`, JSON.stringify(legacy)); vi.spyOn(localStorage, "setItem").mockImplementation(() => { throw new Error("Storage full"); });
+  localStorage.setItem(`${scope}:change`, JSON.stringify(legacy)); vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Storage full"); });
   const rendered = renderEditor(); await waitFor(() => expect(rendered.result.current.edit?.id).toBe(editA.id));
   expect(rendered.result.current.pendingChange).toEqual(legacy); expect(JSON.parse(localStorage.getItem(`${scope}:change`) ?? "null")).toEqual(legacy); expect(localStorage.getItem(retainedKey(editA.id, "change"))).toBeNull(); rendered.unmount();
 });
@@ -202,7 +202,7 @@ it("preserves B's own history and error when A's successful observation arrives 
 
 it("does not dispatch a new change without durable recovery and can retry after storage recovers", async () => {
   const legacy = { editId: editA.id, revision: 1, operationId: "operation_legacy", command: { kind: "duration", itemId: editA.composition.items[0]!.id, displayFrames: 150 } };
-  localStorage.setItem(`${scope}:change`, JSON.stringify(legacy)); const unavailable = vi.spyOn(localStorage, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
+  localStorage.setItem(`${scope}:change`, JSON.stringify(legacy)); const unavailable = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
   const rendered = renderEditor(editB.id); await waitFor(() => expect(rendered.result.current.edit?.id).toBe(editB.id));
   await act(async () => { expect(await rendered.result.current.command({ kind: "duration", itemId: editB.composition.items[0]!.id, displayFrames: 180 })).toBe(false); });
   expect(methods.command).not.toHaveBeenCalled(); expect(rendered.result.current.edit).toEqual(editB); expect(rendered.result.current.pending).toBe(false); expect(rendered.result.current.busy).toBe(false); expect(rendered.result.current.canUndo).toBe(false); expect(rendered.result.current.error).toMatch(/could not start.*could not be saved/);
@@ -217,7 +217,7 @@ it.each(["undo", "redo"] as const)("leaves %s history unchanged if its new check
   await act(async () => { await rendered.result.current.command({ kind: "duration", itemId: editA.composition.items[0]!.id, displayFrames: 150 }); });
   if (direction === "redo") { methods.command.mockResolvedValueOnce({ ...editA, revision: 3 }); await act(async () => { await rendered.result.current.undo(); }); }
   const before = rendered.result.current.edit; const count = methods.command.mock.calls.length; const undo = rendered.result.current.canUndo; const redo = rendered.result.current.canRedo;
-  const unavailable = vi.spyOn(localStorage, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
+  const unavailable = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
   await act(async () => { await rendered.result.current[direction](); });
   expect(methods.command).toHaveBeenCalledTimes(count); expect(rendered.result.current.edit).toEqual(before); expect(rendered.result.current.canUndo).toBe(undo); expect(rendered.result.current.canRedo).toBe(redo); expect(rendered.result.current.pending).toBe(false); expect(rendered.result.current.busy).toBe(false); expect(rendered.result.current.error).toMatch(/could not start.*could not be saved/); expect(localStorage.getItem(retainedKey(editA.id, "change"))).toBeNull();
   unavailable.mockRestore(); methods.command.mockResolvedValueOnce(direction === "undo" ? { ...editA, revision: 3 } : changed(editA, 150, 4));
@@ -226,7 +226,7 @@ it.each(["undo", "redo"] as const)("leaves %s history unchanged if its new check
 
 it("does not submit an export without a durable envelope and leaves edit B independent after storage recovers", async () => {
   const rendered = renderEditor(); await waitFor(() => expect(rendered.result.current.edit?.id).toBe(editA.id));
-  const unavailable = vi.spyOn(localStorage, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
+  const unavailable = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
   await act(async () => { await rendered.result.current.exportEdit(); });
   expect(methods.startExport).not.toHaveBeenCalled(); expect(rendered.result.current.edit).toEqual(editA); expect(rendered.result.current.exports).toEqual([]); expect(rendered.result.current.pendingExport).toBe(false); expect(rendered.result.current.busy).toBe(false); expect(rendered.result.current.error).toMatch(/export could not start.*could not be saved/); expect(localStorage.getItem(retainedKey(editA.id, "export"))).toBeNull();
   rendered.rerender({ id: editB.id }); await waitFor(() => expect(rendered.result.current.edit?.id).toBe(editB.id)); expect(rendered.result.current.pendingExport).toBe(false); expect(rendered.result.current.error).toBeUndefined();
@@ -239,7 +239,7 @@ it("does not submit an export without a durable envelope and leaves edit B indep
 
 it("allows an exact readable legacy retry while new device writes are unavailable", async () => {
   const legacy = { editId: editA.id, revision: 1, operationId: "operation_legacy", command: { kind: "duration", itemId: editA.composition.items[0]!.id, displayFrames: 150 } };
-  localStorage.setItem(`${scope}:change`, JSON.stringify(legacy)); vi.spyOn(localStorage, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
+  localStorage.setItem(`${scope}:change`, JSON.stringify(legacy)); vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Storage unavailable"); });
   const rendered = renderEditor(); await waitFor(() => expect(rendered.result.current.edit?.id).toBe(editA.id)); methods.command.mockResolvedValueOnce(changed(editA, 150));
   await act(async () => { expect(await rendered.result.current.retryChange()).toBe(true); });
   expect(methods.command.mock.calls[0]).toEqual([editA.id, 1, legacy.operationId, legacy.command]); expect(rendered.result.current.edit?.revision).toBe(2); expect(rendered.result.current.pending).toBe(false); expect(rendered.result.current.error).toBeUndefined(); rendered.unmount();

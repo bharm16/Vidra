@@ -6,7 +6,6 @@ import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { MediaViewer } from "../components/MediaViewer";
 import { VersionsPanel } from "../components/VersionsPanel";
 
-vi.unmock("@promptstudio/system/components/ui/dialog");
 
 const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_picture", ownerId: "creator", projectId: "project_picture", kind: "image", label: "Stadium", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "picture", storagePath: "users/creator/picture.png" }, metadata: { state: "verified", width: 1344, height: 768, durationSeconds: 0, audio: "absent", probeVersion: "test" }, association: "linked", createdAt: "2026-10-17T00:00:00.000Z" });
 const access = async (): Promise<{ url: string }> => ({ url: "/controlled-picture.png" });

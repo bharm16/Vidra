@@ -1,105 +1,39 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/**
- * Playwright E2E Testing Configuration
- * @see https://playwright.dev/docs/test-configuration
- */
-// Single-browser (chromium) is the default for fast feedback.
-// Cross-browser coverage is opted into locally via E2E_ALL_BROWSERS=true; CI
-// runs only the provider-free Chromium suite (playwright.pr.config.js).
-const singleBrowser = process.env.E2E_ALL_BROWSERS !== "true";
+const baseURL = "http://127.0.0.1:58175";
 
+// Provider-free browser suite: exercises UI contracts against Vite alone, with
+// API calls fulfilled by page.route. Paths are relative to this file, so the
+// ../../ anchors output at the repo root, where e2e.yml uploads it.
 export default defineConfig({
   testDir: "../../tests/e2e",
-
-  // Test execution settings
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  // workers: 1 was leaving CPU on the table — multiple test files can run
-  // in parallel even when fullyParallel is on, since each worker still
-  // owns one browser context. 2 keeps memory predictable on the runner.
+  retries: 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: [
-    // open: "never" — stops Playwright from running `open --wait-apps`
-    // on the report URL, which blocks the parent shell on macOS until
-    // someone closes the browser tab. We always have the JSON report.
-    //
-    // Paths are relative to THIS file's directory (config/test/), so the
-    // ../../ anchors output at the repo root — where .gitignore and the CI
-    // upload-artifact steps (e2e.yml) expect it. When the
-    // config moved into config/test/ the bare paths silently started
-    // writing here instead, and every CI failure shipped zero artifacts.
+    // open: "never" stops Playwright blocking the shell on macOS.
     ["html", { outputFolder: "../../playwright-report", open: "never" }],
-    ["json", { outputFile: "../../playwright-report/results.json" }],
-    ["junit", { outputFile: "../../playwright-report/results.xml" }],
     ["list"],
   ],
-
-  // Traces/videos/screenshots — same root-anchoring as the reporters.
   outputDir: "../../test-results",
-
-  // Test timeout settings
   timeout: 30000,
-  expect: {
-    timeout: 5000,
-  },
-
+  expect: { timeout: 5000 },
   use: {
-    // Base URL for navigation
-    baseURL: process.env.E2E_BASE_URL || "http://localhost:5173",
-
-    // Collect trace on failure for debugging
-    trace: "on-first-retry",
+    baseURL,
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-
-    // Browser viewport
     viewport: { width: 1280, height: 720 },
-
-    // Action settings
     actionTimeout: 10000,
     navigationTimeout: 10000,
   },
-
-  // Test projects for different browsers
-  projects: singleBrowser
-    ? [
-        {
-          name: "chromium",
-          use: { ...devices["Desktop Chrome"] },
-        },
-      ]
-    : [
-        {
-          name: "chromium",
-          use: { ...devices["Desktop Chrome"] },
-        },
-        {
-          name: "firefox",
-          use: { ...devices["Desktop Firefox"] },
-        },
-        {
-          name: "webkit",
-          use: { ...devices["Desktop Safari"] },
-        },
-        // Mobile testing
-        {
-          name: "Mobile Chrome",
-          use: { ...devices["Pixel 5"] },
-        },
-        {
-          name: "Mobile Safari",
-          use: { ...devices["iPhone 12"] },
-        },
-      ],
-
-  // Web server configuration - automatically start dev server
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "npm run start",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    command: "npm run dev -- --host 127.0.0.1 --port 58175 --strictPort",
+    url: baseURL,
+    reuseExistingServer: false,
+    timeout: 120_000,
     stdout: "pipe",
     stderr: "pipe",
   },

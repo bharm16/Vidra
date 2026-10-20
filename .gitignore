@@ -145,3 +145,6 @@ docs/design/*-2026-*.html
 docs/design/*-2026-*.csv
 docs/design/*-2026-*.md
 !docs/design/figma-followups-*.md
+
+# Golden-set eval output; each run rewrites it.
+scripts/evaluation/golden-set-results-latest.json

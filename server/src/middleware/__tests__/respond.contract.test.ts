@@ -1,4 +1,3 @@
-import { API_ERROR_CODES, type ApiErrorCode } from "@shared/types/api";
 import type { Request, Response } from "express";
 import { describe, expect, it, vi } from "vitest";
 import { respond } from "../respond";
@@ -67,62 +66,5 @@ describe("respond — the canonical envelope", () => {
     });
 
     expect(res.body).not.toHaveProperty("requestId");
-  });
-});
-
-describe("respond — off-contract error codes are a compile error", () => {
-  /**
-   * The gate that replaces the old `code: string`. Each of these six codes was
-   * emitted in production while absent from `ApiErrorCode`, which made
-   * `ApiErrorCodeSchema` (a `z.enum(API_ERROR_CODES)`) reject responses the
-   * server genuinely sends. They are now declared, so they type-check here.
-   *
-   * `satisfies` is the compile-time assertion: if any of these is removed from
-   * the union, this file stops compiling — which is exactly the signal a
-   * contract change should produce.
-   */
-
-  it("keeps API_ERROR_CODES exhaustive over ApiErrorCode", () => {
-    // `satisfies readonly ApiErrorCode[]` in shared/types/api.ts already stops
-    // a bogus entry; this catches the other direction — a union member that
-    // was never added to the runtime array, which would make the client's
-    // z.enum reject a code the server can emit.
-    const runtime = new Set<string>(API_ERROR_CODES);
-    const declared: Record<ApiErrorCode, true> = {
-      AUTH_REQUIRED: true,
-      INVALID_REQUEST: true,
-      INSUFFICIENT_CREDITS: true,
-      RATE_LIMITED: true,
-      SERVICE_UNAVAILABLE: true,
-      LLM_UNAVAILABLE: true,
-      GENERATION_FAILED: true,
-      IDEMPOTENCY_KEY_REQUIRED: true,
-      IDEMPOTENCY_CONFLICT: true,
-      REQUEST_IN_PROGRESS: true,
-      SESSION_VERSION_CONFLICT: true,
-      ROUTE_TIMEOUT: true,
-      RATE_LIMIT_UNAVAILABLE: true,
-      QUEUE_FULL: true,
-      QUEUE_TIMEOUT: true,
-      SESSION_EXPIRED: true,
-      VIDEO_PROVIDER_TIMEOUT: true,
-      SHARE_CLIP_NOT_FOUND: true,
-      SHARE_NO_MEDIA: true,
-      VIDEO_MODEL_UNAVAILABLE: true,
-      not_found: true,
-      access_denied: true,
-      read_only: true,
-      revision_conflict: true,
-      invalid_context: true,
-      input_unavailable: true,
-      capability_unavailable: true,
-      invalid_settings: true,
-      submission_conflict: true,
-    };
-
-    for (const code of Object.keys(declared)) {
-      expect(runtime.has(code)).toBe(true);
-    }
-    expect(runtime.size).toBe(Object.keys(declared).length);
   });
 });

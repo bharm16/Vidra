@@ -4,43 +4,14 @@ import { logger } from "@infrastructure/Logger";
 import { StudioModelRegistry } from "@services/studio/StudioModelRegistry";
 import { StudioPolicyEngine } from "@services/studio/StudioPolicyEngine";
 import { ReplicateStudioImageRunner } from "@services/studio/providers/ReplicateStudioImageRunner";
-import type {
-  LiveStudioImageRunner,
-  StudioImageRunner,
-} from "@services/studio/providers/types";
 import { FirestoreStudioProjectStore } from "@services/studio/storage/FirestoreStudioProjectStore";
 import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
 import {
   StudioService,
   type StudioImageStorage,
 } from "@services/studio/StudioService";
-import type { CassetteStore } from "@server/replay/CassetteStore";
-import { RecordReplayStudioImageRunner } from "@server/replay/RecordReplayStudioImageRunner";
 import { resolveAllFlags } from "../feature-flags.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
-
-/**
- * Studio's image run is a recorded surface too: the policy decision goes
- * through the seamed aiService, so the run that spends the money must not
- * bypass the seam.
- */
-function throughReplaySeam(
-  runner: LiveStudioImageRunner,
-  replayCassetteStore: CassetteStore | null,
-): StudioImageRunner {
-  if (!replayCassetteStore) {
-    return runner;
-  }
-  const { flags } = resolveAllFlags(process.env);
-  if (flags.replayMode === "off") {
-    return runner;
-  }
-  return new RecordReplayStudioImageRunner({
-    mode: flags.replayMode,
-    store: replayCassetteStore,
-    inner: runner,
-  });
-}
 
 export function registerStudioServices(container: DIContainer): void {
   // Its own token for the same reason `sessionStore` is one: it is the
@@ -59,7 +30,6 @@ export function registerStudioServices(container: DIContainer): void {
       config: ServiceConfig,
       storageService: StudioImageStorage | null,
       aiService: AIExecutionPort | null,
-      replayCassetteStore: CassetteStore | null,
       studioProjectStore: StudioProjectStore,
     ) => {
       const { flags } = resolveAllFlags(process.env);
@@ -85,10 +55,7 @@ export function registerStudioServices(container: DIContainer): void {
       return new StudioService({
         store: studioProjectStore,
         registry: new StudioModelRegistry(),
-        runner: throughReplaySeam(
-          new ReplicateStudioImageRunner({ apiToken }),
-          replayCassetteStore,
-        ),
+        runner: new ReplicateStudioImageRunner({ apiToken }),
         storage: storageService,
         policy: new StudioPolicyEngine({ ai: aiService }),
         // Boot-validated (env.ts studioSchema) and centrally parsed
@@ -100,7 +67,6 @@ export function registerStudioServices(container: DIContainer): void {
       "config",
       "storageService",
       "aiService",
-      "replayCassetteStore",
       "studioProjectStore",
     ],
   );
