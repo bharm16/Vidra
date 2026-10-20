@@ -35,8 +35,6 @@ export const API_ERROR_CODES = [
   // PreviewErrorArmSchema in shared/schemas/preview.schemas.ts, which the
   // client hard-`.parse()`s. Declaring them is the fix, not a new capability.
   "ROUTE_TIMEOUT",
-  "QUEUE_FULL",
-  "QUEUE_TIMEOUT",
   "SESSION_EXPIRED",
   "VIDEO_PROVIDER_TIMEOUT",
   // Same story as the operational codes above: these three were emitted via

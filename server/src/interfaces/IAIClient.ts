@@ -26,11 +26,6 @@ export type LLMAdapterStreamOptions<
   TOptions extends LLMAdapterOptions = LLMAdapterOptions,
 > = TOptions & { onChunk: (chunk: string) => void };
 
-export interface LLMAdapterHealth {
-  healthy: boolean;
-  [key: string]: unknown;
-}
-
 /**
  * What `LLMClient` requires of an adapter.
  *
@@ -53,13 +48,11 @@ export interface LLMAdapterHealth {
  * `_applyDefaults` spreads and the index signature below swallowed the
  * difference, but the types disagreed about what a request is.
  *
- * The members added here are ones the CLIENT layer understands (retry policy,
- * concurrency priority) or that only some providers implement (prefill,
- * bookending, logprobs). Adapters ignore what they don't support.
+ * The members added here are ones the CLIENT layer understands (retry policy)
+ * or that only some providers implement (prefill, bookending, logprobs).
+ * Adapters ignore what they don't support.
  */
 export interface CompletionOptions extends LLMAdapterOptions {
-  /** Concurrency-limiter hint; consumed by LLMClient, never sent upstream. */
-  priority?: boolean;
   developerMessage?: string;
   enableBookending?: boolean;
   enableSandwich?: boolean;
@@ -166,15 +159,6 @@ export interface IAIClient {
     systemPrompt: string,
     options: CompletionOptions & { onChunk: (chunk: string) => void },
   ): Promise<string>;
-
-  /**
-   * Health check (optional)
-   */
-  healthCheck?(): Promise<{
-    healthy: boolean;
-    provider: string;
-    error?: string | undefined;
-  }>;
 
   /**
    * Capabilities declaration (optional)

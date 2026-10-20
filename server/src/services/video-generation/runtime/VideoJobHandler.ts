@@ -5,13 +5,11 @@ import type {
 import type { CreditRefunder } from "@services/video-generation/refunds/ports";
 import type { StorageService } from "@services/storage/StorageService";
 import type { VideoGenerationService } from "../VideoGenerationService";
-import type { ProviderCircuitManager } from "./ProviderCircuitManager";
 import type { VideoJobStore } from "./VideoJobStore";
 import type { VideoJobRecord } from "./types";
 import { processVideoJob, type JobSessionAppendPort } from "./processVideoJob";
 
 interface VideoJobHandlerOptions {
-  providerCircuitManager?: ProviderCircuitManager;
   metrics?: {
     recordAlert: (
       alertName: string,
@@ -49,7 +47,7 @@ export class VideoJobHandler implements JobHandler<VideoJobRecord> {
   }
 
   async process(job: VideoJobRecord, ctx: JobExecutionContext): Promise<void> {
-    const { providerCircuitManager, metrics, sessionService } = this.options;
+    const { metrics, sessionService } = this.options;
     await processVideoJob(job, {
       jobStore: this.jobStore,
       videoGenerationService: this.videoGenerationService as never,
@@ -62,14 +60,6 @@ export class VideoJobHandler implements JobHandler<VideoJobRecord> {
       dlqSource: "worker-terminal",
       refundReason: "video job worker failed",
       logPrefix: "Video job",
-      ...(providerCircuitManager
-        ? {
-            onProviderSuccess: (provider: string) =>
-              providerCircuitManager.recordSuccess(provider),
-            onProviderFailure: (provider: string) =>
-              providerCircuitManager.recordFailure(provider),
-          }
-        : {}),
       ...(metrics ? { metrics } : {}),
       ...(sessionService ? { sessionService } : {}),
     });

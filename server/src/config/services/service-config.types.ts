@@ -59,13 +59,6 @@ export interface ServiceConfig {
       leaseSeconds: number;
       maxConcurrent: number;
       heartbeatIntervalMs: number;
-      perProviderMaxConcurrent: number | undefined;
-    };
-    providerCircuit: {
-      failureRateThreshold: number;
-      minVolume: number;
-      cooldownMs: number;
-      maxSamples: number;
     };
   };
   videoAssets: {
@@ -110,21 +103,6 @@ export interface ServiceConfig {
   };
   enhancement: {
     policyVersion: string;
-  };
-  firestore: {
-    circuit: {
-      timeoutMs: number;
-      errorThresholdPercent: number;
-      resetTimeoutMs: number;
-      minVolume: number;
-      maxRetries: number;
-      retryBaseDelayMs: number;
-      retryJitterMs: number;
-    };
-    readiness: {
-      maxFailureRate: number;
-      maxLatencyMs: number;
-    };
   };
   idempotency: {
     pendingLockTtlMs: number;

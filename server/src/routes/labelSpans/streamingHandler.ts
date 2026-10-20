@@ -1,6 +1,5 @@
 import type { Response } from "express";
 import { logger } from "@infrastructure/Logger";
-import { createSseWriter } from "@middleware/sseBackpressure";
 import { labelSpansStream } from "@llm/span-labeling/SpanLabelingService";
 import type { SpanStreamFinalization } from "@llm/span-labeling/SpanLabelingService";
 import { spanCacheTtlSeconds } from "@llm/span-labeling/spanCache";
@@ -58,8 +57,6 @@ export async function handleLabelSpansStreamRequest({
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders?.();
 
-  const writer = createSseWriter(res, { label: "labelSpans.stream" });
-
   // Spans put on the wire. Used only for degraded-error reporting — the cache
   // backfill uses the stream's finalized set instead (see below).
   const collectedSpans: SpanLike[] = [];
@@ -84,13 +81,7 @@ export async function handleLabelSpansStreamRequest({
         break;
       }
       collectedSpans.push(next.value);
-      const writeResult = await writer.write(
-        JSON.stringify(toPublicSpan(next.value)) + "\n",
-      );
-      if (!writeResult.ok) {
-        clientClosed = true;
-        break;
-      }
+      res.write(JSON.stringify(toPublicSpan(next.value)) + "\n");
     }
 
     // Stream exhausted normally — mark as completed for cache backfill.
@@ -122,13 +113,7 @@ export async function handleLabelSpansStreamRequest({
       res.status(502).json(errorPayload);
       return;
     }
-    try {
-      await writer.write(JSON.stringify(errorPayload) + "\n");
-    } finally {
-      if (!res.writableEnded && !res.destroyed) {
-        res.end();
-      }
-    }
+    res.end(JSON.stringify(errorPayload) + "\n");
   } finally {
     // Abandoning the loop early (client hung up, write failed) leaves the
     // generator suspended — close it so the provider stream is torn down.

@@ -3,10 +3,9 @@ import { logger } from "@infrastructure/Logger";
 import type { LegacyCreditRefundService } from "@services/video-generation/refunds/LegacyCreditRefundService";
 import { ReplicateVideoProvider } from "@services/video-generation/providers/ReplicateVideoProvider";
 import { VeoVideoProvider } from "@services/video-generation/providers/VeoVideoProvider";
-import {
-  VIDEO_PROVIDER_IDS,
-  type VideoProvider,
-  type VideoProviderMap,
+import type {
+  VideoProvider,
+  VideoProviderMap,
 } from "@services/video-generation/providers/types";
 import {
   createReplicateVideoClient,
@@ -19,7 +18,6 @@ import { VideoJobHandler } from "@services/video-generation/runtime/VideoJobHand
 import type { SessionService } from "@services/sessions/SessionService";
 import { VideoJobWorker } from "@services/video-generation/runtime/VideoJobWorker";
 import { resumePendingAttachments } from "@services/video-generation/runtime/resumePendingAttachments";
-import { ProviderCircuitManager } from "@services/video-generation/runtime/ProviderCircuitManager";
 import type { VideoAssetStore } from "@services/video-generation/storage";
 import type { StorageService } from "@services/storage/StorageService";
 import { setTimeoutPolicyConfig } from "@services/video-generation/providers/timeoutPolicy";
@@ -104,20 +102,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
   );
 
   container.register(
-    "providerCircuitManager",
-    (config: ServiceConfig) => {
-      const pc = config.videoJobs.providerCircuit;
-      return new ProviderCircuitManager({
-        failureRateThreshold: pc.failureRateThreshold,
-        minVolume: pc.minVolume,
-        cooldownMs: pc.cooldownMs,
-        maxSamples: pc.maxSamples,
-      });
-    },
-    ["config"],
-  );
-
-  container.register(
     "videoWorkerHeartbeatStore",
     (firestoreCircuitExecutor: FirestoreCircuitExecutor) =>
       new VideoWorkerHeartbeatStore(firestoreCircuitExecutor),
@@ -131,7 +115,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       videoGenerationService: VideoGenerationService | null,
       creditService: LegacyCreditRefundService,
       storageService: StorageService,
-      providerCircuitManager: ProviderCircuitManager,
       sessionService: SessionService,
     ) => {
       if (!videoGenerationService) {
@@ -143,7 +126,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
         creditService,
         storageService,
         {
-          providerCircuitManager,
           // SessionService structurally satisfies JobSessionAppendPort; the
           // worker pipeline calls appendGenerationToVersion on successful
           // job completion so video generations are durable server-side.
@@ -156,7 +138,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       "videoGenerationService",
       "legacyCreditRefunder",
       "storageService",
-      "providerCircuitManager",
       "sessionService",
     ],
   );
@@ -176,7 +157,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
     (
       videoJobStore: VideoJobStore,
       videoJobHandler: VideoJobHandler | null,
-      providerCircuitManager: ProviderCircuitManager,
       videoWorkerHeartbeatStore: VideoWorkerHeartbeatStore,
       config: ServiceConfig,
     ) => {
@@ -194,18 +174,12 @@ export function registerVideoGenerationServices(container: DIContainer): void {
         ...(config.videoJobs.hostname
           ? { hostname: config.videoJobs.hostname }
           : {}),
-        providerCircuitManager,
         workerHeartbeatStore: videoWorkerHeartbeatStore,
-        ...(wc.perProviderMaxConcurrent !== undefined
-          ? { perProviderMaxConcurrent: wc.perProviderMaxConcurrent }
-          : {}),
-        providerIds: [...VIDEO_PROVIDER_IDS],
       });
     },
     [
       "videoJobStore",
       "videoJobHandler",
-      "providerCircuitManager",
       "videoWorkerHeartbeatStore",
       "config",
     ],

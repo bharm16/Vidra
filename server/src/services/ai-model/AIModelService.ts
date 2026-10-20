@@ -7,11 +7,10 @@ import {
 } from "@config/modelConfig";
 import { hashString } from "@utils/hash";
 import { capabilitiesFor } from "@utils/provider/ProviderDetector";
-import {
-  AIClientError,
-  type IAIClient,
-  type AIResponse,
-  type CompletionOptions,
+import type {
+  IAIClient,
+  AIResponse,
+  CompletionOptions,
 } from "@interfaces/IAIClient";
 import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
 import type { LlmCallSummary } from "@services/observability/types";
@@ -114,7 +113,7 @@ function buildLlmCallSummary({
  * - Automatic fallback support
  * - Streaming support for real-time UI
  * - Environment variable overrides
- * - Circuit breaker awareness
+ * - Provider circuit awareness (LlmProviderCircuitManager)
  */
 export class AIModelService {
   private readonly clientResolver: ClientResolver;
@@ -589,25 +588,6 @@ export class AIModelService {
 
       if (!client) {
         throw new Error(`Fallback client '${fallbackClient}' not available`);
-      }
-
-      if (fallbackClient === "qwen") {
-        const circuitState = (
-          client as {
-            getCircuitBreakerState?: () => "OPEN" | "HALF-OPEN" | "CLOSED";
-          }
-        ).getCircuitBreakerState?.();
-        if (circuitState === "OPEN") {
-          logger.warn("Skipping fallback due to open circuit breaker", {
-            operation,
-            fallbackClient,
-            fallbackModel: fallbackConfig?.model,
-          });
-          throw new AIClientError(
-            `${fallbackClient} API circuit breaker is open`,
-            503,
-          );
-        }
       }
 
       const fallbackOptions = this._buildFallbackOptions({

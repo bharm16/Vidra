@@ -44,10 +44,7 @@ describe("Logger", () => {
 
   describe("error handling", () => {
     it("includes error details in error logs", () => {
-      const logger = new Logger({
-        includeLogStack: false,
-        includeLogCaller: false,
-      });
+      const logger = new Logger();
       const error = new Error("boom");
 
       logger.error("Failure", error, { requestId: "req-1", extra: "context" });
@@ -70,10 +67,7 @@ describe("Logger", () => {
     });
 
     it("logs server errors with the error level in requestLogger", () => {
-      const logger = new Logger({
-        includeLogStack: false,
-        includeLogCaller: false,
-      });
+      const logger = new Logger();
       const middleware = logger.requestLogger();
       const next = vi.fn();
       const nowSpy = vi.spyOn(Date, "now");
@@ -121,10 +115,7 @@ describe("Logger", () => {
 
   describe("edge cases", () => {
     it("adds requestId from request context when missing", () => {
-      const logger = new Logger({
-        includeLogStack: false,
-        includeLogCaller: false,
-      });
+      const logger = new Logger();
 
       runWithRequestContext({ requestId: "ctx-123" }, () => {
         logger.info("Hello");
@@ -139,22 +130,9 @@ describe("Logger", () => {
   });
 
   describe("level filtering", () => {
-    // Pins the contract introduced when isLevelEnabled guards were added.
-    // The guards should be invisible when the level is enabled (current
-    // pino default) and should suppress meta enrichment + the underlying
-    // pino call when the level is disabled.
-
-    it("skips pino call and enrichMeta when level is disabled", () => {
+    it("skips the pino call when level is disabled", () => {
       mockPinoLogger.isLevelEnabled.mockReturnValue(false);
-      const logger = new Logger({
-        includeLogStack: true,
-        includeLogCaller: true,
-        logStackLevels: ["info", "warn", "debug", "error"],
-      });
-      const captureSpy = vi.spyOn(
-        logger as unknown as { captureLogStack: () => string[] },
-        "captureLogStack",
-      );
+      const logger = new Logger();
 
       logger.info("hi");
       logger.warn("warn");
@@ -165,9 +143,6 @@ describe("Logger", () => {
       expect(mockPinoLogger.warn).not.toHaveBeenCalled();
       expect(mockPinoLogger.debug).not.toHaveBeenCalled();
       expect(mockPinoLogger.error).not.toHaveBeenCalled();
-      // The whole point of the guard: skip the stack-capture work entirely
-      // when the level is filtered out.
-      expect(captureSpy).not.toHaveBeenCalled();
     });
   });
 });

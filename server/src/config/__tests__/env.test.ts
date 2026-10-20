@@ -26,13 +26,13 @@ describe("parseEnv", () => {
       minimalEnv({
         PORT: "4000",
         OPENAI_TIMEOUT_MS: "90000",
-        FIRESTORE_CIRCUIT_TIMEOUT_MS: "5000",
+        VIDEO_JOB_MAX_ATTEMPTS: "5",
       }),
     );
 
     expect(result.PORT).toBe(4000);
     expect(result.OPENAI_TIMEOUT_MS).toBe(90000);
-    expect(result.FIRESTORE_CIRCUIT_TIMEOUT_MS).toBe(5000);
+    expect(result.VIDEO_JOB_MAX_ATTEMPTS).toBe(5);
   });
 
   it("coerces boolean strings correctly", () => {

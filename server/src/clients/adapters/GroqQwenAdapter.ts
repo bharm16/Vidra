@@ -443,26 +443,4 @@ export class GroqQwenAdapter implements LLMAdapter<QwenCompletionOptions> {
         return 1024;
     }
   }
-
-  async healthCheck(): Promise<{
-    healthy: boolean;
-    provider: string;
-    error?: string;
-  }> {
-    try {
-      await this.complete('Respond with valid JSON: {"status": "healthy"}', {
-        maxTokens: 50,
-        timeout: Math.min(15000, this.defaultTimeout),
-        jsonMode: true,
-        retryOnValidationFailure: false,
-        reasoningEffort: "none",
-      });
-
-      return { healthy: true, provider: "groq-qwen" };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return { healthy: false, provider: "groq-qwen", error: errorMessage };
-    }
-  }
 }

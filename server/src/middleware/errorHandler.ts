@@ -125,44 +125,6 @@ export function errorHandler(
     }
   }
 
-  // Retry-able 503s: ConcurrencyLimiter backpressure (QUEUE_FULL/QUEUE_TIMEOUT,
-  // propagated from LLMClient). The retry hint travels in the `Retry-After`
-  // header, which is both the HTTP-standard channel and the only one the client
-  // reads (client/src/services/http/FetchHttpTransport.ts).
-  if (typeof err === "object" && err !== null && "code" in err) {
-    const retryableErr = err as {
-      code?: unknown;
-      retryAfter?: unknown;
-      message?: unknown;
-    };
-    const code = retryableErr.code;
-    if (code === "QUEUE_FULL" || code === "QUEUE_TIMEOUT") {
-      const retryAfter =
-        typeof retryableErr.retryAfter === "number" &&
-        Number.isFinite(retryableErr.retryAfter) &&
-        retryableErr.retryAfter > 0
-          ? retryableErr.retryAfter
-          : 5;
-      const message =
-        typeof retryableErr.message === "string" &&
-        retryableErr.message.length > 0
-          ? retryableErr.message
-          : code === "QUEUE_FULL"
-            ? "Service is busy. Please retry shortly."
-            : "Request timed out waiting in queue. Please retry shortly.";
-
-      logger.warn("Concurrency backpressure", {
-        ...meta,
-        errorCode: code,
-        retryAfter,
-      });
-
-      res.setHeader("Retry-After", String(retryAfter));
-      respond.fail(res, req, 503, { error: message, code });
-      return;
-    }
-  }
-
   // Handle any DomainError subclass (ConvergenceError, VideoProviderError, etc.)
   if (isDomainError(err)) {
     const statusCode = err.getHttpStatus();

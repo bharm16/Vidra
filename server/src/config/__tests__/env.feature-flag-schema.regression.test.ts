@@ -82,17 +82,4 @@ describe("feature-flag boot validation is derived from the registry", () => {
       }
     }
   });
-
-  it("validates the failover tuning knobs the failover flag documents", () => {
-    const defaults = parseEnv(minimalEnv());
-    expect(defaults.LLM_FAILOVER_CONSECUTIVE_FAILURES).toBe(5);
-    expect(defaults.LLM_FAILOVER_COOLDOWN_MS).toBe(30000);
-
-    expect(() =>
-      parseEnv(minimalEnv({ LLM_FAILOVER_CONSECUTIVE_FAILURES: "five" })),
-    ).toThrow("LLM_FAILOVER_CONSECUTIVE_FAILURES");
-    expect(() =>
-      parseEnv(minimalEnv({ LLM_FAILOVER_COOLDOWN_MS: "-1" })),
-    ).toThrow("LLM_FAILOVER_COOLDOWN_MS");
-  });
 });

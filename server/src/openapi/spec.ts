@@ -92,69 +92,11 @@ function buildComponentSchemas(): Record<string, JsonSchema> {
       },
     },
 
-    LivenessResponse: {
-      type: "object",
-      required: ["status", "timestamp"],
-      properties: {
-        status: { type: "string", enum: ["alive"] },
-        timestamp: { type: "string", format: "date-time" },
-      },
-    },
-
-    ReadinessResponse: {
-      type: "object",
-      required: ["status", "timestamp", "dependencies"],
-      properties: {
-        status: { type: "string", enum: ["ready", "unhealthy"] },
-        timestamp: { type: "string", format: "date-time" },
-        dependencies: {
-          type: "object",
-          description:
-            "Dependency health checks (firebase, gcs, cache, LLM providers).",
-          additionalProperties: {
-            type: "object",
-            required: ["required", "healthy"],
-            properties: {
-              required: { type: "boolean" },
-              healthy: { type: "boolean" },
-              lastChecked: {
-                type: "string",
-                format: "date-time",
-                nullable: true,
-              },
-              error: { type: "string" },
-            },
-          },
-        },
-        workers: {
-          type: "object",
-          description:
-            "Background worker statuses (informational, does not gate readiness).",
-          additionalProperties: {
-            type: "object",
-            properties: {
-              running: { type: "boolean" },
-              lastRunAt: {
-                type: "string",
-                format: "date-time",
-                nullable: true,
-              },
-              consecutiveFailures: { type: "integer" },
-            },
-          },
-        },
-      },
-    },
-
-    // -- Request schemas (from Zod) --
-    PromptCompileRequest: zodToOpenApi(compileSchema),
-
-    // -- Rate limit --
     RateLimitResponse: {
       type: "object",
       required: ["error", "code"],
       properties: {
-        error: { type: "string", example: "Too many requests from this IP" },
+        error: { type: "string", example: "Too many requests" },
         code: { type: "string", enum: ["RATE_LIMITED"] },
         details: { type: "string", example: "Retry after 60s" },
         requestId: { type: "string" },
@@ -226,59 +168,9 @@ function buildPaths(): Record<string, unknown> {
         responses: {
           "200": {
             description: "Server is running.",
-            headers: RATE_LIMIT_HEADERS,
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/HealthResponse" },
-              },
-            },
-          },
-        },
-      },
-    },
-
-    "/health/live": {
-      get: {
-        tags: ["Health"],
-        summary: "Liveness probe",
-        description:
-          "Kubernetes/Cloud Run liveness probe. Always returns 200 if the process is alive.",
-        operationId: "getLiveness",
-        responses: {
-          "200": {
-            description: "Process is alive.",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/LivenessResponse" },
-              },
-            },
-          },
-        },
-      },
-    },
-
-    "/health/ready": {
-      get: {
-        tags: ["Health"],
-        summary: "Readiness probe",
-        description:
-          "Checks all dependencies (cache, Firestore, LLM providers). " +
-          "Returns 503 if any critical dependency is unhealthy.",
-        operationId: "getReadiness",
-        responses: {
-          "200": {
-            description: "All dependencies healthy.",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ReadinessResponse" },
-              },
-            },
-          },
-          "503": {
-            description: "One or more dependencies unhealthy.",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ReadinessResponse" },
               },
             },
           },

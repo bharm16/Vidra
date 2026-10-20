@@ -26,7 +26,7 @@ const fixedSeedProfile = CapabilityProfileSchema.parse({ ...profile, id: "contro
 const preparation = new ActionPreparationService({ database, projects, conversations, drafts, contexts, profiles: { get: id => [profile, fixedSeedProfile].find(candidate => candidate.id === id) }, media: { get: async () => undefined } });
 // Real emulator transactions may back off under lock contention; keep that
 // concurrency proof independent of the production transport response deadline.
-const receipts = new RequestIdempotencyService(new FirestoreCircuitExecutor({ timeoutMs: 20000 }), { database });
+const receipts = new RequestIdempotencyService(new FirestoreCircuitExecutor(), { database });
 afterAll(async () => { await database.terminate(); });
 
 it("refuses export-tagged canonical receipt and consumed-draft identities before interpreting them as media", async () => {

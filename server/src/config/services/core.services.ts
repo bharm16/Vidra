@@ -137,35 +137,6 @@ export function registerCoreServices(container: DIContainer): void {
           20_000,
           1,
         ),
-        perProviderMaxConcurrent: (() => {
-          const v = Number.parseInt(
-            process.env.VIDEO_JOB_PER_PROVIDER_MAX_CONCURRENT || "",
-            10,
-          );
-          return Number.isFinite(v) && v > 0 ? v : undefined;
-        })(),
-      },
-      providerCircuit: {
-        failureRateThreshold: resolvePositiveNumber(
-          process.env.VIDEO_PROVIDER_CIRCUIT_FAILURE_RATE,
-          0.6,
-          0.01,
-        ),
-        minVolume: resolvePositiveNumber(
-          process.env.VIDEO_PROVIDER_CIRCUIT_MIN_VOLUME,
-          20,
-          1,
-        ),
-        cooldownMs: resolvePositiveNumber(
-          process.env.VIDEO_PROVIDER_CIRCUIT_COOLDOWN_MS,
-          60_000,
-          1,
-        ),
-        maxSamples: resolvePositiveNumber(
-          process.env.VIDEO_PROVIDER_CIRCUIT_MAX_SAMPLES,
-          50,
-          1,
-        ),
       },
     },
     videoAssets: {
@@ -261,57 +232,6 @@ export function registerCoreServices(container: DIContainer): void {
     enhancement: {
       policyVersion: process.env.ENHANCEMENT_POLICY_VERSION || "2026-03-v2a",
     },
-    firestore: {
-      circuit: {
-        timeoutMs: resolvePositiveNumber(
-          process.env.FIRESTORE_CIRCUIT_TIMEOUT_MS,
-          3000,
-          1,
-        ),
-        errorThresholdPercent: resolvePositiveNumber(
-          process.env.FIRESTORE_CIRCUIT_ERROR_THRESHOLD_PERCENT,
-          50,
-          1,
-        ),
-        resetTimeoutMs: resolvePositiveNumber(
-          process.env.FIRESTORE_CIRCUIT_RESET_TIMEOUT_MS,
-          15000,
-          1,
-        ),
-        minVolume: resolvePositiveNumber(
-          process.env.FIRESTORE_CIRCUIT_MIN_VOLUME,
-          20,
-          1,
-        ),
-        maxRetries: resolvePositiveNumber(
-          process.env.FIRESTORE_CIRCUIT_MAX_RETRIES,
-          2,
-          0,
-        ),
-        retryBaseDelayMs: resolvePositiveNumber(
-          process.env.FIRESTORE_CIRCUIT_RETRY_BASE_DELAY_MS,
-          120,
-          1,
-        ),
-        retryJitterMs: resolvePositiveNumber(
-          process.env.FIRESTORE_CIRCUIT_RETRY_JITTER_MS,
-          80,
-          0,
-        ),
-      },
-      readiness: {
-        maxFailureRate: resolvePositiveNumber(
-          process.env.FIRESTORE_READINESS_MAX_FAILURE_RATE,
-          0.5,
-          0,
-        ),
-        maxLatencyMs: resolvePositiveNumber(
-          process.env.FIRESTORE_READINESS_MAX_LATENCY_MS,
-          1500,
-          1,
-        ),
-      },
-    },
     idempotency: {
       pendingLockTtlMs: resolvePositiveNumber(
         process.env.VIDEO_GENERATE_IDEMPOTENCY_PENDING_TTL_MS,
@@ -326,27 +246,14 @@ export function registerCoreServices(container: DIContainer): void {
     },
   } satisfies ServiceConfig);
 
-  // ── Firestore circuit breaker (reads from config instead of raw env vars) ──
   container.register(
     "firestoreCircuitExecutor",
-    (config: ServiceConfig) => {
-      const fc = config.firestore.circuit;
-      const fr = config.firestore.readiness;
-      const executor = new FirestoreCircuitExecutor({
-        timeoutMs: fc.timeoutMs,
-        errorThresholdPercentage: fc.errorThresholdPercent,
-        resetTimeoutMs: fc.resetTimeoutMs,
-        volumeThreshold: fc.minVolume,
-        maxRetries: fc.maxRetries,
-        retryBaseDelayMs: fc.retryBaseDelayMs,
-        retryJitterMs: fc.retryJitterMs,
-        readinessMaxFailureRate: fr.maxFailureRate,
-        readinessMaxLatencyMs: fr.maxLatencyMs,
-      });
+    () => {
+      const executor = new FirestoreCircuitExecutor();
       setFirestoreCircuitExecutor(executor);
       return executor;
     },
-    ["config"],
+    [],
   );
 
   // Sketch relay admission budget (issue #84) — a Firestore-backed daily

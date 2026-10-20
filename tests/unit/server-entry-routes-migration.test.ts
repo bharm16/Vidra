@@ -86,86 +86,13 @@ describe("startServer", () => {
 });
 
 describe("health.routes", () => {
-  it("serves health, readiness, and live endpoints", async () => {
-    const deps = {
-      openAIClient: { getStats: () => ({ state: "CLOSED" }) },
-      groqClient: null,
-      geminiClient: null,
-      cacheService: {
-        isHealthy: () => true,
-        getCacheStats: () => ({ hits: 1, misses: 0 }),
-      },
-    };
-
+  it("serves the health endpoint", async () => {
     const app = express();
-    app.use(createHealthRoutes(deps));
+    app.use(createHealthRoutes());
 
     const health = await runSupertestRequest(() => request(app).get("/health"));
     expect(health.status).toBe(200);
     expect(health.body.status).toBe("healthy");
-
-    const live = await runSupertestRequest(() =>
-      request(app).get("/health/live"),
-    );
-    expect(live.status).toBe(200);
-    expect(live.body.status).toBe("alive");
-
-    const ready = await runSupertestRequest(() =>
-      request(app).get("/health/ready"),
-    );
-    expect(ready.status).toBe(200);
-    expect(ready.body.status).toBe("ready");
-    expect(ready.body.dependencies.cache.healthy).toBe(true);
-    expect(ready.body.dependencies.openAI.healthy).toBe(true);
-  });
-
-  it("reports not ready when Firestore circuit is open", async () => {
-    const deps = {
-      openAIClient: { getStats: () => ({ state: "CLOSED" }) },
-      groqClient: null,
-      geminiClient: null,
-      cacheService: {
-        isHealthy: () => true,
-        getCacheStats: () => ({ hits: 1, misses: 0 }),
-      },
-      firestoreCircuitExecutor: {
-        getReadinessSnapshot: () => ({
-          state: "open" as const,
-          open: true,
-          degraded: true,
-          failureRate: 1,
-          latencyMeanMs: 2000,
-          thresholds: {
-            failureRate: 0.5,
-            latencyMs: 1500,
-          },
-          stats: {
-            fires: 10,
-            failures: 5,
-            timeouts: 0,
-            rejects: 5,
-            successes: 0,
-          },
-        }),
-      } as unknown as Parameters<
-        typeof createHealthRoutes
-      >[0]["firestoreCircuitExecutor"],
-    };
-
-    const app = express();
-    app.use(
-      createHealthRoutes(deps as Parameters<typeof createHealthRoutes>[0]),
-    );
-
-    const ready = await runSupertestRequest(() =>
-      request(app).get("/health/ready"),
-    );
-    expect(ready.status).toBe(503);
-    expect(ready.body.status).toBe("unhealthy");
-    expect(ready.body.dependencies.firebase.healthy).toBe(false);
-    expect(ready.body.dependencies.firebase.error).toBe(
-      "Firestore circuit is open",
-    );
   });
 });
 

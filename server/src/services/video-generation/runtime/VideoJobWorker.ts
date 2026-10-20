@@ -2,10 +2,8 @@ import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
 import { sleep } from "@utils/sleep";
 import type { JobHandler } from "@services/jobs/JobHandler";
-import type { WorkerStatus } from "@services/jobs/WorkerStatus";
 import type { VideoJobRecord } from "./types";
 import { VideoJobStore } from "./VideoJobStore";
-import type { ProviderCircuitManager } from "./ProviderCircuitManager";
 import { HeartbeatManager } from "./HeartbeatManager";
 
 interface VideoJobWorkerOptions {
@@ -18,9 +16,6 @@ interface VideoJobWorkerOptions {
   maxPollIntervalMs?: number;
   backoffFactor?: number;
   heartbeatIntervalMs?: number;
-  providerCircuitManager?: ProviderCircuitManager;
-  perProviderMaxConcurrent?: number;
-  providerIds?: string[];
   workerHeartbeatStore?: {
     reportHeartbeat: (
       workerId: string,
@@ -60,9 +55,6 @@ export class VideoJobWorker {
   private readonly hostname: string | undefined;
   private readonly processRole: string;
   private readonly heartbeatIntervalMs: number;
-  private readonly providerCircuitManager: ProviderCircuitManager | undefined;
-  private readonly perProviderMaxConcurrent: number;
-  private readonly providerIds: string[];
   private readonly workerHeartbeatStore: VideoJobWorkerOptions["workerHeartbeatStore"];
   private readonly metrics?: VideoJobWorkerOptions["metrics"];
   private readonly resumePendingAttachments:
@@ -72,13 +64,10 @@ export class VideoJobWorker {
   private timer: NodeJS.Timeout | null = null;
   private workerHeartbeatTimer: NodeJS.Timeout | null = null;
   private activeCount = 0;
-  private readonly activeProviderCounts = new Map<string, number>();
   private currentPollIntervalMs: number;
   private isRunning = false;
   private isTicking = false;
   private readonly activeJobs = new Map<string, ActiveJobContext>();
-  private lastRunAt: Date | null = null;
-  private consecutiveFailures = 0;
   /** Max consecutive heartbeat failures before aborting a job to prevent zombie state. */
   private static readonly MAX_HEARTBEAT_FAILURES = 3;
 
@@ -105,17 +94,6 @@ export class VideoJobWorker {
     });
     this.currentPollIntervalMs = this.basePollIntervalMs;
     this.heartbeatIntervalMs = options.heartbeatIntervalMs ?? 20_000;
-    this.providerCircuitManager = options.providerCircuitManager;
-    this.perProviderMaxConcurrent =
-      options.perProviderMaxConcurrent ??
-      Math.max(1, Math.ceil(this.maxConcurrent / 2));
-    this.providerIds = options.providerIds ?? [
-      "replicate",
-      "openai",
-      "luma",
-      "kling",
-      "gemini",
-    ];
     this.workerHeartbeatStore = options.workerHeartbeatStore;
     this.metrics = options.metrics;
     this.resumePendingAttachments = options.resumePendingAttachments;
@@ -200,28 +178,6 @@ export class VideoJobWorker {
     }
   }
 
-  getStatus(): WorkerStatus {
-    return {
-      running: this.isRunning,
-      lastRunAt: this.lastRunAt,
-      consecutiveFailures: this.consecutiveFailures,
-    };
-  }
-
-  /** Reset poll interval to base and reschedule — used by circuit breaker recovery to resume fast polling. */
-  resetPollInterval(): void {
-    if (!this.isRunning) return;
-    this.currentPollIntervalMs = this.basePollIntervalMs;
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-    this.scheduleNextTick(this.basePollIntervalMs);
-    this.log.info("Poll interval reset by circuit recovery", {
-      pollIntervalMs: this.basePollIntervalMs,
-    });
-  }
-
   async shutdown(drainTimeoutMs: number): Promise<void> {
     this.stop();
     const deadline = Date.now() + Math.max(1_000, drainTimeoutMs);
@@ -302,16 +258,8 @@ export class VideoJobWorker {
     let claimedJobs = 0;
     let shouldScheduleNextTick = false;
     try {
-      if (this.providerCircuitManager) {
-        claimedJobs = await this.tickProviderAware();
-      } else {
-        claimedJobs = await this.tickLegacy();
-      }
-      this.lastRunAt = new Date();
-      this.consecutiveFailures = 0;
+      claimedJobs = await this.claimJobs();
     } catch (error) {
-      this.lastRunAt = new Date();
-      this.consecutiveFailures += 1;
       this.log.error("Video job worker tick failed", error as Error, {
         workerId: this.workerId,
       });
@@ -335,7 +283,7 @@ export class VideoJobWorker {
     }
   }
 
-  private async tickLegacy(): Promise<number> {
+  private async claimJobs(): Promise<number> {
     let claimed = 0;
     while (this.activeCount < this.maxConcurrent) {
       const job = await this.jobStore.claimNextJob(this.workerId, this.leaseMs);
@@ -348,90 +296,11 @@ export class VideoJobWorker {
     return claimed;
   }
 
-  private async tickProviderAware(): Promise<number> {
-    const providers = this.buildDispatchableProviders();
-    let claimed = 0;
-
-    for (const provider of providers) {
-      if (this.activeCount >= this.maxConcurrent) {
-        break;
-      }
-
-      const activeForProvider = this.activeProviderCounts.get(provider) ?? 0;
-      let slotsAvailable = Math.min(
-        this.perProviderMaxConcurrent - activeForProvider,
-        this.maxConcurrent - this.activeCount,
-      );
-
-      while (slotsAvailable > 0) {
-        const job = await this.jobStore.claimNextJob(
-          this.workerId,
-          this.leaseMs,
-          provider,
-        );
-        if (!job) {
-          break;
-        }
-
-        this.providerCircuitManager!.markDispatched(provider);
-        claimed += 1;
-        this.startJob(job);
-        slotsAvailable -= 1;
-      }
-    }
-
-    // Attempt to claim untagged/unknown-provider jobs with remaining global slots
-    if (this.activeCount < this.maxConcurrent) {
-      const unknownJob = await this.jobStore.claimNextJob(
-        this.workerId,
-        this.leaseMs,
-        "unknown",
-      );
-      if (unknownJob) {
-        claimed += 1;
-        this.startJob(unknownJob);
-      }
-    }
-
-    return claimed;
-  }
-
-  private buildDispatchableProviders(): string[] {
-    const dispatchable: string[] = [];
-
-    for (const provider of this.providerIds) {
-      if (this.providerCircuitManager!.canDispatch(provider)) {
-        dispatchable.push(provider);
-      } else {
-        this.log.debug("Skipping circuit-open provider", { provider });
-      }
-    }
-
-    // Shuffle for fairness (Fisher-Yates)
-    for (let i = dispatchable.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [dispatchable[i], dispatchable[j]] = [dispatchable[j]!, dispatchable[i]!];
-    }
-
-    return dispatchable;
-  }
-
   private startJob(job: VideoJobRecord): void {
-    const provider = job.provider ?? "unknown";
     this.activeCount += 1;
-    this.activeProviderCounts.set(
-      provider,
-      (this.activeProviderCounts.get(provider) ?? 0) + 1,
-    );
 
     void this.processJob(job).finally(() => {
       this.activeCount = Math.max(0, this.activeCount - 1);
-      const current = this.activeProviderCounts.get(provider) ?? 1;
-      if (current <= 1) {
-        this.activeProviderCounts.delete(provider);
-      } else {
-        this.activeProviderCounts.set(provider, current - 1);
-      }
     });
   }
 

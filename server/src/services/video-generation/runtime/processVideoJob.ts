@@ -122,10 +122,6 @@ export interface ProcessVideoJobDeps {
   heartbeatIntervalMs?: number | undefined;
   /** AbortSignal for cancellation (e.g., heartbeat abort in worker). */
   signal?: AbortSignal | undefined;
-  /** Callback on provider-level success (circuit breaker). */
-  onProviderSuccess?: ((provider: string) => void) | undefined;
-  /** Callback on provider-level failure (circuit breaker). */
-  onProviderFailure?: ((provider: string) => void) | undefined;
   /** Metrics recorder for alerts. */
   metrics?:
     | {
@@ -177,8 +173,6 @@ export async function processVideoJob(
     workerId,
     leaseMs,
     signal,
-    onProviderSuccess,
-    onProviderFailure,
     metrics,
     dlqSource = "worker-terminal",
     refundReason = "video job failed",
@@ -393,10 +387,6 @@ export async function processVideoJob(
         logPrefix,
       });
     }
-
-    if (onProviderSuccess && job.provider && job.provider !== "unknown") {
-      onProviderSuccess(job.provider);
-    }
   } catch (error) {
     const stageAware = withStage(
       error,
@@ -418,17 +408,6 @@ export async function processVideoJob(
       category: classifiedError.category,
       stage: classifiedError.stage,
     });
-
-    if (
-      onProviderFailure &&
-      job.provider &&
-      job.provider !== "unknown" &&
-      (classifiedError.stage === "generation" ||
-        classifiedError.category === "provider" ||
-        classifiedError.category === "timeout")
-    ) {
-      onProviderFailure(job.provider);
-    }
 
     if (classifiedError.stage === "persistence") {
       metrics?.recordAlert("video_job_persistence_failure", {

@@ -4,73 +4,11 @@ import type { Bucket } from "@google-cloud/storage";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { getAuth, getFirestore } from "@infrastructure/firebaseAdmin";
-import type { LLMClient } from "@clients/LLMClient";
 import { getRuntimeFlags, resolveAllFlags } from "./feature-flags.ts";
 
 // ────────────────────────────────────────────────────────────────
 // Shared helpers
 // ────────────────────────────────────────────────────────────────
-
-interface HealthCheckResult {
-  healthy: boolean;
-  error?: string;
-  responseTime?: number;
-}
-
-interface LLMClientValidationConfig {
-  client: LLMClient;
-  serviceName: string;
-  successMessage: string;
-  unhealthyMessage: string;
-  failureMessage: string;
-  allowUnhealthy?: boolean;
-  disableUnhealthyMessage?: string;
-  keepUnhealthyMessage?: string;
-}
-
-async function validateLLMClient(
-  container: DIContainer,
-  config: LLMClientValidationConfig,
-): Promise<void> {
-  try {
-    const health = (await config.client.healthCheck()) as HealthCheckResult;
-
-    if (!health.healthy) {
-      logger.warn(config.unhealthyMessage, {
-        error: health.error,
-      });
-
-      if (!config.allowUnhealthy) {
-        if (config.disableUnhealthyMessage) {
-          logger.warn(config.disableUnhealthyMessage);
-        }
-        container.registerValue(config.serviceName, null);
-      } else if (config.keepUnhealthyMessage) {
-        logger.warn(config.keepUnhealthyMessage);
-      }
-
-      return;
-    }
-
-    logger.info(config.successMessage, {
-      responseTime: health.responseTime,
-    });
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    logger.warn(config.failureMessage, {
-      error: errorMessage,
-    });
-
-    if (!config.allowUnhealthy) {
-      if (config.disableUnhealthyMessage) {
-        logger.warn(config.disableUnhealthyMessage);
-      }
-      container.registerValue(config.serviceName, null);
-    } else if (config.keepUnhealthyMessage) {
-      logger.warn(config.keepUnhealthyMessage);
-    }
-  }
-}
 
 export const STARTUP_CHECK_TIMEOUT_MS = 20_000;
 
@@ -101,7 +39,6 @@ async function initializeCommon(container: DIContainer): Promise<void> {
     process.env.NODE_ENV === "test" ||
     process.env.VITEST ||
     process.env.VITEST_WORKER_ID;
-  const runtimeFlags = getRuntimeFlags();
 
   // Infrastructure startup checks (skip in test) — run in parallel
   if (!isTestEnv) {
@@ -139,82 +76,6 @@ async function initializeCommon(container: DIContainer): Promise<void> {
     }
   }
 
-  // Validate LLM clients — run in parallel
-  const openAIClient = container.resolve<LLMClient | null>("openAIClient");
-  const groqClient = container.resolve<LLMClient | null>("groqClient");
-  const qwenClient = container.resolve<LLMClient | null>("qwenClient");
-  const geminiClient = container.resolve<LLMClient | null>("geminiClient");
-
-  const llmValidations: Promise<void>[] = [];
-
-  if (openAIClient) {
-    logger.info("Validating OpenAI API key...");
-    llmValidations.push(
-      validateLLMClient(container, {
-        client: openAIClient,
-        serviceName: "openAIClient",
-        successMessage: "✅ OpenAI API key validated successfully",
-        unhealthyMessage:
-          "⚠️  OpenAI API key validation failed - OpenAI adapter disabled",
-        failureMessage:
-          "⚠️  Failed to validate OpenAI API key - OpenAI adapter disabled",
-      }),
-    );
-  } else {
-    logger.warn("OpenAI client not configured; relying on other providers");
-  }
-
-  if (groqClient) {
-    logger.info("Groq client initialized for adapter-based routing");
-    llmValidations.push(
-      validateLLMClient(container, {
-        client: groqClient,
-        serviceName: "groqClient",
-        successMessage: "✅ Groq API key validated successfully",
-        unhealthyMessage:
-          "⚠️  Groq API key validation failed - Groq adapter disabled",
-        failureMessage:
-          "⚠️  Failed to validate Groq API key - Groq adapter disabled",
-      }),
-    );
-  }
-
-  if (qwenClient) {
-    logger.info("Qwen client initialized for adapter-based routing");
-    llmValidations.push(
-      validateLLMClient(container, {
-        client: qwenClient,
-        serviceName: "qwenClient",
-        successMessage: "✅ Qwen API key validated successfully",
-        unhealthyMessage:
-          "⚠️  Qwen API key validation failed - adapter disabled",
-        failureMessage:
-          "⚠️  Failed to validate Qwen API key - adapter disabled",
-      }),
-    );
-  }
-
-  if (geminiClient) {
-    logger.info("Gemini client initialized for adapter-based routing");
-    const allowUnhealthyGemini = runtimeFlags.allowUnhealthyGemini;
-    llmValidations.push(
-      validateLLMClient(container, {
-        client: geminiClient,
-        serviceName: "geminiClient",
-        successMessage: "✅ Gemini API key validated successfully",
-        unhealthyMessage: "⚠️  Gemini API key validation failed",
-        failureMessage: "⚠️  Failed to validate Gemini API key",
-        allowUnhealthy: allowUnhealthyGemini,
-        disableUnhealthyMessage:
-          "⚠️  Gemini adapter disabled (health check failed)",
-        keepUnhealthyMessage:
-          "Keeping Gemini adapter enabled despite failed health check",
-      }),
-    );
-  }
-
-  await Promise.all(llmValidations);
-
   // Pre-resolve critical services to catch configuration errors early
   const serviceNames = [
     "promptOptimizationService",
@@ -239,29 +100,6 @@ async function initializeCommon(container: DIContainer): Promise<void> {
         `Service initialization failed for ${serviceName}: ${errorMessage}`,
       );
     }
-  }
-
-  // Pre-warm LLM provider connections in the background (non-blocking)
-  const llmClientsToWarm = [
-    openAIClient,
-    groqClient,
-    qwenClient,
-    geminiClient,
-  ].filter((c): c is LLMClient => c !== null);
-  if (llmClientsToWarm.length > 0 && !isTestEnv) {
-    Promise.allSettled(
-      llmClientsToWarm.map((client) =>
-        client.healthCheck().catch(() => {
-          /* best-effort warmup */
-        }),
-      ),
-    ).then((results) => {
-      const warmed = results.filter((r) => r.status === "fulfilled").length;
-      logger.info("LLM connection pre-warming complete", {
-        warmed,
-        total: llmClientsToWarm.length,
-      });
-    });
   }
 
   logger.info("All services initialized and validated successfully");
@@ -314,9 +152,7 @@ async function initializeWorkerServices(container: DIContainer): Promise<void> {
   };
   startIfResolved("creditRefundSweeper");
   startIfResolved("videoAssetRetentionService");
-  const worker = container.resolve<
-    (Startable & { resetPollInterval(): void }) | null
-  >("videoJobWorker");
+  const worker = container.resolve<Startable | null>("videoJobWorker");
   if (!getRuntimeFlags().videoWorkerDisabled) {
     const recoverAttachments = container.resolve<() => Promise<void>>(
       "resumePendingVideoAttachments",
@@ -331,10 +167,6 @@ async function initializeWorkerServices(container: DIContainer): Promise<void> {
     });
     worker?.start();
   }
-  const circuits = container.resolve<{
-    onRecovery(cb: (provider: string) => void): void;
-  }>("providerCircuitManager");
-  if (worker) circuits.onRecovery(() => worker.resetPollInterval());
 }
 
 export async function initializeServices(

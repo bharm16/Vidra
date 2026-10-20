@@ -1,63 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { FakeCircuitBreaker, mockLogger, mockMetricsService } = vi.hoisted(
-  () => {
-    class FakeCircuitBreaker {
-      public opened = false;
-      public halfOpen = false;
-      public stats = { fires: 0 };
-      public readonly options: Record<string, unknown>;
-      private readonly fn: (...args: unknown[]) => Promise<unknown>;
-      private handlers = new Map<string, () => void>();
-
-      constructor(
-        fn: (...args: unknown[]) => Promise<unknown>,
-        options: Record<string, unknown>,
-      ) {
-        this.fn = fn;
-        this.options = options;
-      }
-
-      fire(...args: unknown[]) {
-        this.stats.fires += 1;
-        return this.fn(...args);
-      }
-
-      on(event: string, handler: () => void) {
-        this.handlers.set(event, handler);
-        return this;
-      }
-
-      emit(event: string) {
-        this.handlers.get(event)?.();
-      }
-    }
-
-    const mockLogger = {
-      error: vi.fn(),
-      warn: vi.fn(),
-      info: vi.fn(),
-      debug: vi.fn(),
-    };
-
-    const mockMetricsService = {
-      recordClaudeAPICall: vi.fn(),
-      updateCircuitBreakerState: vi.fn(),
-    };
-
-    return { FakeCircuitBreaker, mockLogger, mockMetricsService };
+const { mockLogger } = vi.hoisted(() => ({
+  mockLogger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
   },
-);
-
-vi.mock("opossum", () => ({
-  default: FakeCircuitBreaker,
 }));
 
 vi.mock("@infrastructure/Logger", () => ({
   logger: mockLogger,
 }));
 
-import { LLMClient, TimeoutError } from "@clients/LLMClient";
+import { LLMClient } from "@clients/LLMClient";
 
 const createAdapter = (overrides: Record<string, unknown> = {}) => ({
   complete: vi.fn().mockResolvedValue({ text: "ok", metadata: {} }),
@@ -84,24 +40,16 @@ describe("LLMClient", () => {
       ).rejects.toThrow("onChunk callback is required for streaming");
     });
 
-    it("wraps queue timeouts from concurrency limiter", async () => {
-      const adapter = createAdapter();
-      const concurrencyLimiter = {
-        execute: vi
-          .fn()
-          .mockRejectedValue(
-            Object.assign(new Error("timeout"), { code: "QUEUE_TIMEOUT" }),
-          ),
-      };
-      const client = new LLMClient({
-        adapter,
-        providerName: "test",
-        concurrencyLimiter,
+    it("propagates adapter failures unchanged", async () => {
+      const failure = Object.assign(new Error("upstream 500"), {
+        statusCode: 500,
       });
+      const adapter = createAdapter({
+        complete: vi.fn().mockRejectedValue(failure),
+      });
+      const client = new LLMClient({ adapter, providerName: "test" });
 
-      await expect(client.complete("Prompt", {})).rejects.toBeInstanceOf(
-        TimeoutError,
-      );
+      await expect(client.complete("Prompt", {})).rejects.toBe(failure);
     });
   });
 
@@ -113,7 +61,6 @@ describe("LLMClient", () => {
         providerName: "test",
         defaultModel: "model-a",
         defaultTimeout: 1234,
-        metricsService: mockMetricsService,
       });
 
       const response = await client.complete("Prompt", {});
@@ -126,11 +73,6 @@ describe("LLMClient", () => {
           model: "model-a",
           timeout: 1234,
         }),
-      );
-      expect(mockMetricsService.recordClaudeAPICall).toHaveBeenCalledWith(
-        "test-chat/completions",
-        expect.any(Number),
-        true,
       );
     });
   });

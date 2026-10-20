@@ -265,33 +265,6 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
     }
   }
 
-  async healthCheck(): Promise<{
-    healthy: boolean;
-    provider: string;
-    error?: string;
-  }> {
-    try {
-      await this.complete(
-        'Respond with valid JSON containing: {"status": "healthy"}',
-        {
-          maxTokens: 50,
-          timeout: Math.min(20000, this.defaultTimeout),
-          jsonMode: true,
-        },
-      );
-
-      return { healthy: true, provider: this.providerName };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return {
-        healthy: false,
-        provider: this.providerName,
-        error: errorMessage,
-      };
-    }
-  }
-
   /**
    * Process SSE stream from Gemini API
    */

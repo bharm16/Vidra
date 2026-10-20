@@ -24,8 +24,6 @@ const optionalString = () => z.string().optional();
 const optionalApiKey = () => z.string().min(1).optional();
 const coercePositiveInt = (fallback: number) =>
   z.coerce.number().int().positive().default(fallback);
-const coerceNonNegativeNumber = (fallback: number) =>
-  z.coerce.number().min(0).default(fallback);
 const coerceBooleanString = (fallback: boolean) =>
   z
     .string()
@@ -97,28 +95,16 @@ function buildFeatureFlagShape(): FeatureFlagShape {
 
 const featureFlagSchema = z.object(buildFeatureFlagShape());
 
-// Tuning knobs for LLM_PROVIDER_FAILOVER_ENABLED. Read straight from
-// process.env by the DI layer; validated here so a malformed value fails boot
-// rather than silently falling back to the hardcoded default.
-const llmFailoverSchema = z.object({
-  LLM_FAILOVER_CONSECUTIVE_FAILURES: coercePositiveInt(5),
-  LLM_FAILOVER_COOLDOWN_MS: coercePositiveInt(30000),
-});
-
 const openaiSchema = z.object({
   OPENAI_API_KEY: optionalApiKey(),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
   OPENAI_TIMEOUT_MS: coercePositiveInt(60000),
-  OPENAI_MAX_CONCURRENT: coercePositiveInt(5),
-  OPENAI_QUEUE_TIMEOUT_MS: coercePositiveInt(30000),
 });
 
 const groqSchema = z.object({
   GROQ_API_KEY: optionalApiKey(),
   GROQ_MODEL: z.string().default(DEFAULT_GROQ_MODEL),
   GROQ_TIMEOUT_MS: coercePositiveInt(5000),
-  GROQ_MAX_CONCURRENT: coercePositiveInt(5),
-  GROQ_QUEUE_TIMEOUT_MS: coercePositiveInt(30000),
 });
 
 const geminiSchema = z.object({
@@ -126,8 +112,6 @@ const geminiSchema = z.object({
   GOOGLE_API_KEY: optionalApiKey(),
   GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
   GEMINI_TIMEOUT_MS: coercePositiveInt(30000),
-  GEMINI_MAX_CONCURRENT: coercePositiveInt(5),
-  GEMINI_QUEUE_TIMEOUT_MS: coercePositiveInt(30000),
   GEMINI_BASE_URL: z
     .string()
     .default("https://generativelanguage.googleapis.com/v1beta"),
@@ -205,15 +189,6 @@ const videoJobSchema = z.object({
   VIDEO_WORKFLOW_TIMEOUT_MS: coercePositiveInt(300000),
   VIDEO_JOB_POLL_INTERVAL_MS: coercePositiveInt(2000),
   VIDEO_JOB_MAX_CONCURRENT: coercePositiveInt(2),
-  VIDEO_JOB_PER_PROVIDER_MAX_CONCURRENT: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional(),
-  VIDEO_PROVIDER_CIRCUIT_FAILURE_RATE: coerceNonNegativeNumber(0.6),
-  VIDEO_PROVIDER_CIRCUIT_MIN_VOLUME: coercePositiveInt(20),
-  VIDEO_PROVIDER_CIRCUIT_COOLDOWN_MS: coercePositiveInt(60000),
-  VIDEO_PROVIDER_CIRCUIT_MAX_SAMPLES: coercePositiveInt(50),
   VIDEO_GENERATE_IDEMPOTENCY_PENDING_TTL_MS: coercePositiveInt(360000),
   VIDEO_GENERATE_IDEMPOTENCY_REPLAY_TTL_MS: coercePositiveInt(86400000),
   VIDEO_WORKER_SHUTDOWN_DRAIN_SECONDS: coercePositiveInt(45),
@@ -226,18 +201,6 @@ const videoAssetsSchema = z.object({
   VIDEO_ASSET_RETENTION_HOURS: coercePositiveInt(24),
   VIDEO_ASSET_CLEANUP_INTERVAL_MINUTES: coercePositiveInt(15),
   VIDEO_ASSET_CLEANUP_BATCH_SIZE: coercePositiveInt(100),
-});
-
-const firestoreCircuitSchema = z.object({
-  FIRESTORE_CIRCUIT_TIMEOUT_MS: coercePositiveInt(3000),
-  FIRESTORE_CIRCUIT_ERROR_THRESHOLD_PERCENT: coercePositiveInt(50),
-  FIRESTORE_CIRCUIT_RESET_TIMEOUT_MS: coercePositiveInt(15000),
-  FIRESTORE_CIRCUIT_MIN_VOLUME: coercePositiveInt(20),
-  FIRESTORE_CIRCUIT_MAX_RETRIES: coerceNonNegativeNumber(2),
-  FIRESTORE_CIRCUIT_RETRY_BASE_DELAY_MS: coercePositiveInt(120),
-  FIRESTORE_CIRCUIT_RETRY_JITTER_MS: coerceNonNegativeNumber(80),
-  FIRESTORE_READINESS_MAX_FAILURE_RATE: coerceNonNegativeNumber(0.5),
-  FIRESTORE_READINESS_MAX_LATENCY_MS: coercePositiveInt(1500),
 });
 
 const creditSchema = z.object({
@@ -257,23 +220,6 @@ const observabilitySchema = z.object({
   SENTRY_DSN: optionalString(),
   SENTRY_DEBUG: coerceBooleanString(false),
   APP_VERSION: optionalString(),
-  // Structured logging stack-trace controls — consumed by infrastructure/Logger.ts
-  LOG_STACK: coerceBooleanString(false),
-  LOG_STACK_LEVELS: z.string().default("warn,error"),
-  LOG_STACK_DEPTH: coercePositiveInt(6),
-  LOG_STACK_LIMIT: z.coerce.number().int().positive().optional(),
-  LOG_CALLER: coerceBooleanString(false),
-});
-
-const startupSchema = z.object({
-  SERVICE_STARTUP_HEALTHCHECKS: coerceBooleanString(false),
-  SERVICE_STARTUP_PRE_RESOLVE: coerceBooleanString(false),
-});
-
-const capabilitiesSchema = z.object({
-  CAPABILITIES_PROBE_URL: optionalString(),
-  CAPABILITIES_PROBE_PATH: optionalString(),
-  CAPABILITIES_PROBE_REFRESH_MS: coercePositiveInt(6 * 60 * 60 * 1000),
 });
 
 const studioSchema = z.object({
@@ -337,7 +283,6 @@ const devSchema = z.object({
 
 const envSchema = serverSchema
   .merge(featureFlagSchema)
-  .merge(llmFailoverSchema)
   .merge(openaiSchema)
   .merge(groqSchema)
   .merge(geminiSchema)
@@ -347,12 +292,9 @@ const envSchema = serverSchema
   .merge(videoGenerationSchema)
   .merge(videoJobSchema)
   .merge(videoAssetsSchema)
-  .merge(firestoreCircuitSchema)
   .merge(creditSchema)
   .merge(securitySchema)
   .merge(observabilitySchema)
-  .merge(startupSchema)
-  .merge(capabilitiesSchema)
   .merge(studioSchema)
   .merge(sketchRelaySchema)
   .merge(enhancementSchema)

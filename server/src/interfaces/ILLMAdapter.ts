@@ -18,7 +18,6 @@ import type {
   AIResponse,
   LLMAdapterOptions,
   LLMAdapterStreamOptions,
-  LLMAdapterHealth,
 } from "./IAIClient";
 
 /**
@@ -38,8 +37,6 @@ export interface LLMAdapter<
     systemPrompt: string,
     options: LLMAdapterStreamOptions<TOptions>,
   ): Promise<string>;
-
-  healthCheck?(): Promise<LLMAdapterHealth>;
 
   capabilities?: {
     streaming?: boolean;

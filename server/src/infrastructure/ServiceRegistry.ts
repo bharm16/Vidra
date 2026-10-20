@@ -24,7 +24,6 @@ import type { PromptOptimizationService } from "@services/prompt-optimization/Pr
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
 import type { VideoJobWorker } from "@services/video-generation/runtime/VideoJobWorker";
-import type { ProviderCircuitManager } from "@services/video-generation/runtime/ProviderCircuitManager";
 import type { VideoWorkerHeartbeatStore } from "@services/video-generation/runtime/VideoWorkerHeartbeatStore";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
@@ -68,7 +67,6 @@ export interface ServiceRegistry {
 
   // Workers (nullable — only started in worker role)
   videoJobWorker: VideoJobWorker | null;
-  providerCircuitManager: ProviderCircuitManager | null;
   videoWorkerHeartbeatStore: VideoWorkerHeartbeatStore | null;
   videoAssetRetentionService: VideoAssetRetentionService | null;
 

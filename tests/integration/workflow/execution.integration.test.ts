@@ -131,7 +131,7 @@ it("real prepare/submit HTTP admission reaches owned media and reloadable reques
   const drafts = new CreationDraftStore(database, projects, conversations);
   const draft = await drafts.create("creator", project.id, conversation.id, { id: "draft_route_dispatch", content: { action: "make-image", instructions: "A red boat", inputs: [], settings: { profileId: profile.id, profileRevision: profile.revision, parameters: { aspectRatio: "16:9" }, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination: { projectId: project.id, conversationId: conversation.id } } });
   const preparation = new ActionPreparationService({ database, projects, conversations, drafts, contexts: new CreationContextService(database, projects), profiles: catalog, media: new MediaVersionIndex(database, projects) });
-  const receipts = new RequestIdempotencyService(new FirestoreCircuitExecutor({ timeoutMs: 20000 }), { database });
+  const receipts = new RequestIdempotencyService(new FirestoreCircuitExecutor(), { database });
   const calls = vi.fn(native.execute); const service = new WorkflowExecutionService(store, { ...native, execute: calls }, storage);
   const app = express(); app.use(express.json()); app.use((req, _res, next) => { (req as RequestWithUser).user = { uid: "creator" }; next(); }); app.use("/requests", createCreationRequestRoutes({ preparation, receipts, execution: service })); app.use(errorHandler);
   const prepared = await request(app).post("/requests/prepare").send({ projectId: project.id, draftId: draft.id }); expect(prepared.body.data.state).toBe("ready");

@@ -56,14 +56,6 @@ describe("Server Bootstrap (integration)", () => {
     expect(typeof body.timestamp).toBe("string");
   });
 
-  it("serves GET /health/live through full middleware and route registration", async () => {
-    const response = await fetch(`${baseUrl}/health/live`);
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.status).toBe("alive");
-  });
-
   it("returns the canonical 404 envelope for unknown paths", async () => {
     const response = await fetch(`${baseUrl}/route-that-does-not-exist`);
     const body = await response.json();

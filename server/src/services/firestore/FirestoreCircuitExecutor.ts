@@ -1,65 +1,22 @@
-import CircuitBreaker from "opossum";
 import { logger } from "@infrastructure/Logger";
 import { RetryPolicy } from "@utils/RetryPolicy";
 import { isTransientFirestoreError } from "@utils/transientErrors";
 
-const DEFAULT_TIMEOUT_MS = 3_000;
-const DEFAULT_ERROR_THRESHOLD_PERCENT = 50;
-const DEFAULT_RESET_TIMEOUT_MS = 15_000;
-const DEFAULT_VOLUME_THRESHOLD = 20;
 const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_RETRY_BASE_DELAY_MS = 120;
 const DEFAULT_RETRY_JITTER_MS = 80;
-const DEFAULT_READINESS_MAX_FAILURE_RATE = 0.5;
-const DEFAULT_READINESS_MAX_LATENCY_MS = 1_500;
 
-type FirestoreOperation = () => Promise<unknown>;
-type FirestoreCircuitState = "open" | "half-open" | "closed";
 type FirestoreOperationKind = "read" | "write";
 
-interface CircuitStats {
-  failures: number;
-  timeouts: number;
-  rejects: number;
-  fires: number;
-  successes: number;
-  latencyMean: number;
-}
-
 interface FirestoreCircuitExecutorOptions {
-  timeoutMs?: number;
-  errorThresholdPercentage?: number;
-  resetTimeoutMs?: number;
-  volumeThreshold?: number;
   maxRetries?: number;
   retryBaseDelayMs?: number;
   retryJitterMs?: number;
-  readinessMaxFailureRate?: number;
-  readinessMaxLatencyMs?: number;
 }
 
 interface ExecuteOptions {
   retries?: number;
   kind?: FirestoreOperationKind;
-}
-
-export interface FirestoreCircuitReadinessSnapshot {
-  state: FirestoreCircuitState;
-  open: boolean;
-  degraded: boolean;
-  failureRate: number;
-  latencyMeanMs: number;
-  thresholds: {
-    failureRate: number;
-    latencyMs: number;
-  };
-  stats: {
-    fires: number;
-    failures: number;
-    timeouts: number;
-    rejects: number;
-    successes: number;
-  };
 }
 
 function toError(error: unknown): Error {
@@ -70,80 +27,18 @@ function toError(error: unknown): Error {
   return new Error(String(error));
 }
 
-function computeFailureRate(stats: CircuitStats): number {
-  if (stats.fires <= 0) {
-    return 0;
-  }
-
-  const failures = stats.failures + stats.timeouts + stats.rejects;
-  return failures / stats.fires;
-}
-
-function normalizeCircuitStats(rawStats: unknown): CircuitStats {
-  const stats = (rawStats ?? {}) as Record<string, unknown>;
-
-  const asNumber = (value: unknown): number =>
-    typeof value === "number" && Number.isFinite(value) ? value : 0;
-
-  return {
-    failures: asNumber(stats.failures),
-    timeouts: asNumber(stats.timeouts),
-    rejects: asNumber(stats.rejects),
-    fires: asNumber(stats.fires),
-    successes: asNumber(stats.successes),
-    latencyMean: asNumber(stats.latencyMean),
-  };
-}
-
+/** Runs Firestore operations, retrying transient failures with backoff. */
 export class FirestoreCircuitExecutor {
   private readonly log = logger.child({ service: "FirestoreCircuitExecutor" });
-  private readonly breaker: CircuitBreaker<[FirestoreOperation], unknown>;
-  private readonly resetTimeoutMs: number;
   private readonly maxRetries: number;
   private readonly retryBaseDelayMs: number;
   private readonly retryJitterMs: number;
-  private readonly readinessMaxFailureRate: number;
-  private readonly readinessMaxLatencyMs: number;
 
   constructor(options: FirestoreCircuitExecutorOptions = {}) {
-    const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const errorThresholdPercentage =
-      options.errorThresholdPercentage ?? DEFAULT_ERROR_THRESHOLD_PERCENT;
-    this.resetTimeoutMs = options.resetTimeoutMs ?? DEFAULT_RESET_TIMEOUT_MS;
-    const volumeThreshold = options.volumeThreshold ?? DEFAULT_VOLUME_THRESHOLD;
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.retryBaseDelayMs =
       options.retryBaseDelayMs ?? DEFAULT_RETRY_BASE_DELAY_MS;
     this.retryJitterMs = options.retryJitterMs ?? DEFAULT_RETRY_JITTER_MS;
-    this.readinessMaxFailureRate =
-      options.readinessMaxFailureRate ?? DEFAULT_READINESS_MAX_FAILURE_RATE;
-    this.readinessMaxLatencyMs =
-      options.readinessMaxLatencyMs ?? DEFAULT_READINESS_MAX_LATENCY_MS;
-
-    this.breaker = new CircuitBreaker(
-      async (operation: FirestoreOperation) => await operation(),
-      {
-        name: "firestore",
-        timeout: timeoutMs,
-        errorThresholdPercentage,
-        resetTimeout: this.resetTimeoutMs,
-        volumeThreshold,
-        rollingCountTimeout: 10_000,
-        rollingCountBuckets: 10,
-      },
-    );
-
-    this.breaker.on("open", () => {
-      this.log.error("Firestore circuit opened");
-    });
-
-    this.breaker.on("halfOpen", () => {
-      this.log.warn("Firestore circuit half-open");
-    });
-
-    this.breaker.on("close", () => {
-      this.log.info("Firestore circuit closed");
-    });
   }
 
   async executeRead<T>(
@@ -182,92 +77,33 @@ export class FirestoreCircuitExecutor {
     const operationKind = options.kind ?? "read";
 
     try {
-      const result = await this.breaker.fire(async () => {
-        return await RetryPolicy.execute(operation, {
-          maxRetries: retries,
-          shouldRetry: (error) => isTransientFirestoreError(error),
-          getDelayMs: RetryPolicy.exponentialBackoff({
-            baseDelayMs: this.retryBaseDelayMs,
-            jitterMs: this.retryJitterMs,
-          }),
-          onRetry: (error, attempt) => {
-            this.log.warn(
-              "Retrying Firestore operation after transient failure",
-              {
-                operation: operationName,
-                kind: operationKind,
-                attempt,
-                maxAttempts: retries + 1,
-                error: error.message,
-              },
-            );
-          },
-          logRetries: false, // We handle logging in onRetry above
-        });
+      return await RetryPolicy.execute(operation, {
+        maxRetries: retries,
+        shouldRetry: (error) => isTransientFirestoreError(error),
+        getDelayMs: RetryPolicy.exponentialBackoff({
+          baseDelayMs: this.retryBaseDelayMs,
+          jitterMs: this.retryJitterMs,
+        }),
+        onRetry: (error, attempt) => {
+          this.log.warn("Retrying Firestore operation after transient failure", {
+            operation: operationName,
+            kind: operationKind,
+            attempt,
+            maxAttempts: retries + 1,
+            error: error.message,
+          });
+        },
+        logRetries: false, // We handle logging in onRetry above
       });
-      return result as T;
     } catch (error) {
       const err = toError(error);
-      this.log.warn("Firestore circuit execution failed", {
+      this.log.warn("Firestore operation failed", {
         operation: operationName,
         kind: operationKind,
         error: err.message,
-        circuitState: this.getState(),
       });
       throw err;
     }
-  }
-
-  isOpen(): boolean {
-    return this.breaker.opened;
-  }
-
-  isWriteAllowed(): boolean {
-    return !this.breaker.opened;
-  }
-
-  getRetryAfterSeconds(): number {
-    return Math.max(1, Math.ceil(this.resetTimeoutMs / 1000));
-  }
-
-  getState(): FirestoreCircuitState {
-    if (this.breaker.opened) {
-      return "open";
-    }
-    if (this.breaker.halfOpen) {
-      return "half-open";
-    }
-    return "closed";
-  }
-
-  getReadinessSnapshot(): FirestoreCircuitReadinessSnapshot {
-    const stats = normalizeCircuitStats(this.breaker.stats);
-    const state = this.getState();
-    const failureRate = computeFailureRate(stats);
-    const latencyMeanMs = stats.latencyMean;
-    const degraded =
-      state === "open" ||
-      failureRate >= this.readinessMaxFailureRate ||
-      latencyMeanMs >= this.readinessMaxLatencyMs;
-
-    return {
-      state,
-      open: state === "open",
-      degraded,
-      failureRate,
-      latencyMeanMs,
-      thresholds: {
-        failureRate: this.readinessMaxFailureRate,
-        latencyMs: this.readinessMaxLatencyMs,
-      },
-      stats: {
-        fires: stats.fires,
-        failures: stats.failures,
-        timeouts: stats.timeouts,
-        rejects: stats.rejects,
-        successes: stats.successes,
-      },
-    };
   }
 }
 

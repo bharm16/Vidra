@@ -161,10 +161,7 @@ async function harness(): Promise<{
   generateVideo: ReturnType<typeof vi.fn>;
   services: PreviewRoutesServices;
 }> {
-  const executor = new FirestoreCircuitExecutor({
-    maxRetries: 0,
-    volumeThreshold: 1000,
-  });
+  const executor = new FirestoreCircuitExecutor({ maxRetries: 0 });
   const jobs = new VideoJobStore(executor);
   const receipts = new RequestIdempotencyService(executor);
   const sessions = new InMemorySessionStore();

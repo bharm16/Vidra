@@ -409,28 +409,4 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
       throw errorObj;
     }
   }
-
-  async healthCheck(): Promise<{
-    healthy: boolean;
-    provider: string;
-    error?: string;
-  }> {
-    try {
-      await this.complete(
-        'Respond with valid JSON containing: {"status": "healthy"}',
-        {
-          maxTokens: 50,
-          timeout: Math.min(15000, this.defaultTimeout),
-          jsonMode: true,
-          retryOnValidationFailure: false,
-        },
-      );
-
-      return { healthy: true, provider: "groq" };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return { healthy: false, provider: "groq", error: errorMessage };
-    }
-  }
 }
