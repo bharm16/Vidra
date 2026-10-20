@@ -108,8 +108,7 @@ jobs:
         run: npm ci
 
       - name: Type-check (root + server configs)
-        # Mirrors the local pre-commit gate documented in CLAUDE.md so
-        # `git commit --no-verify` cannot smuggle type errors past CI.
+        # Mirrors the typecheck gate documented in CLAUDE.md.
         # The script also compiles server/tsconfig.json (lib: ES2022, node
         # types) — the only check that catches server code reaching for a
         # DOM global. That coverage used to arrive via a unit test that

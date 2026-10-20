@@ -146,7 +146,6 @@
     "format:check": "prettier --check \"**/*.{js,jsx,json,css,md}\" --config config/lint/.prettierrc",
     "test": "vitest --config config/test/vitest.unit.config.js",
     "test:integration": "vitest run --config config/test/vitest.integration.config.js",
-    "prepare": "bash scripts/install-hooks.sh",
     "test:unit": "vitest run --config config/test/vitest.unit.config.js",
     "test:watch": "vitest --config config/test/vitest.unit.config.js",
     "test:ui": "vitest --ui --config config/test/vitest.unit.config.js",

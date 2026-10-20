@@ -44,7 +44,7 @@ Before **every commit**, all five gates must pass:
 4. `npm run test:unit`
 5. `npm run test:replay`
 
-`npm run verify` runs these independent gates concurrently; `verify:seq` is the sequential fallback. A failed gate blocks a commit. Install hooks with `bash scripts/install-hooks.sh`, preserving custom hooks.
+`npm run verify` runs these independent gates concurrently; `verify:seq` is the sequential fallback. A failed gate blocks a commit. There is no git pre-commit hook; run the gates yourself.
 
 Registration/startup/lifecycle changes also require:
 

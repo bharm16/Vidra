@@ -14,9 +14,8 @@ COPY package*.json ./
 COPY packages ./packages
 
 # Install dependencies
-# --ignore-scripts: skip lifecycle hooks (e.g. `prepare` runs install-hooks.sh,
-# which depends on files not yet copied into this layer and is irrelevant in
-# a production container — there's no .git directory to install hooks into).
+# --ignore-scripts: skip lifecycle scripts, which are irrelevant in a
+# production container.
 RUN npm ci --only=production --ignore-scripts && npm cache clean --force
 
 # Download model assets during build (cached when inputs are unchanged)
