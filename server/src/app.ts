@@ -28,7 +28,6 @@ export function createApp(container: DIContainer): Application {
   // Order matters: security, compression, rate limiting, CORS, parsing, logging
   configureMiddleware(app, {
     logger: container.resolve("logger"),
-    redisClient: container.resolve("redisClient"),
   });
 
   // Register all routes and error handlers

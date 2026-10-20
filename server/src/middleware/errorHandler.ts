@@ -126,12 +126,7 @@ export function errorHandler(
   }
 
   // Retry-able 503s: ConcurrencyLimiter backpressure (QUEUE_FULL/QUEUE_TIMEOUT,
-  // propagated from LLMClient) and the fail-closed rate limiter
-  // (RATE_LIMIT_UNAVAILABLE, raised when the Redis-backed store is unhealthy so
-  // LLM routes reject rather than silently degrade to per-instance limits).
-  //
-  // All three answer the same question — "come back later" — so they share one
-  // branch and one envelope. The retry hint travels in the `Retry-After`
+  // propagated from LLMClient). The retry hint travels in the `Retry-After`
   // header, which is both the HTTP-standard channel and the only one the client
   // reads (client/src/services/http/FetchHttpTransport.ts).
   if (typeof err === "object" && err !== null && "code" in err) {
@@ -141,11 +136,7 @@ export function errorHandler(
       message?: unknown;
     };
     const code = retryableErr.code;
-    if (
-      code === "QUEUE_FULL" ||
-      code === "QUEUE_TIMEOUT" ||
-      code === "RATE_LIMIT_UNAVAILABLE"
-    ) {
+    if (code === "QUEUE_FULL" || code === "QUEUE_TIMEOUT") {
       const retryAfter =
         typeof retryableErr.retryAfter === "number" &&
         Number.isFinite(retryableErr.retryAfter) &&
@@ -158,16 +149,13 @@ export function errorHandler(
           ? retryableErr.message
           : code === "QUEUE_FULL"
             ? "Service is busy. Please retry shortly."
-            : code === "QUEUE_TIMEOUT"
-              ? "Request timed out waiting in queue. Please retry shortly."
-              : "Rate limiter temporarily unavailable, please retry.";
+            : "Request timed out waiting in queue. Please retry shortly.";
 
-      logger.warn(
-        code === "RATE_LIMIT_UNAVAILABLE"
-          ? "Rate limiter unavailable"
-          : "Concurrency backpressure",
-        { ...meta, errorCode: code, retryAfter },
-      );
+      logger.warn("Concurrency backpressure", {
+        ...meta,
+        errorCode: code,
+        retryAfter,
+      });
 
       res.setHeader("Retry-After", String(retryAfter));
       respond.fail(res, req, 503, { error: message, code });

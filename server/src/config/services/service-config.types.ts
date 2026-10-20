@@ -34,7 +34,7 @@ export interface ServiceConfig {
     /** Estimated cost of one dispatched sketch frame, in millicents (1 cent = 1000). */
     sketchFrameCostMillicents: number;
   };
-  redis: {
+  spanLabelingCache: {
     defaultTTL: number;
     shortTTL: number;
     maxMemoryCacheSize: number;

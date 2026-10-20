@@ -14,10 +14,6 @@ vi.mock("../infrastructure/Logger.ts", () => ({
   },
 }));
 
-vi.mock("../config/redis.ts", () => ({
-  closeRedisClient: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock("../config/feature-flags.ts", () => ({
   getRuntimeFlags: vi.fn(() => ({
     unhandledRejectionMode: "classified",

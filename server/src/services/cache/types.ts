@@ -24,23 +24,9 @@ export interface Logger {
 }
 
 /**
- * Redis client interface (minimal)
- */
-export interface RedisClient {
-  status?: string;
-  get?: (key: string) => Promise<string | null>;
-  set?: (
-    ...args: [string, string | number, ...(string | number)[]]
-  ) => Promise<unknown>;
-  del?: (...keys: string[]) => Promise<number>;
-  keys?: (pattern: string) => Promise<string[]>;
-}
-
-/**
  * Span labeling cache service options
  */
 export interface SpanLabelingCacheServiceOptions {
-  redis?: RedisClient | null;
   defaultTTL?: number;
   shortTTL?: number;
   maxMemoryCacheSize?: number;
@@ -64,7 +50,6 @@ export interface SpanLabelingCacheStats {
   errors: number;
   hitRate: string;
   cacheSize: number;
-  redisConnected: boolean;
 }
 
 /**

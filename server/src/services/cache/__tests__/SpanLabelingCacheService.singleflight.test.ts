@@ -16,7 +16,7 @@ describe("SpanLabelingCacheService single-flight", () => {
   });
 
   it("invokes compute exactly once when 5 concurrent callers miss the same key", async () => {
-    const service = new SpanLabelingCacheService({ redis: null });
+    const service = new SpanLabelingCacheService();
 
     let callCount = 0;
     const slowCompute = async (): Promise<{ spans: string[] }> => {
@@ -52,7 +52,7 @@ describe("SpanLabelingCacheService single-flight", () => {
   });
 
   it("runs compute a second time after the first flight completes and cache expires", async () => {
-    const service = new SpanLabelingCacheService({ redis: null });
+    const service = new SpanLabelingCacheService();
 
     let callCount = 0;
     const compute = async (): Promise<{ value: number }> => {
@@ -71,7 +71,7 @@ describe("SpanLabelingCacheService single-flight", () => {
   });
 
   it("releases inflight slot after compute rejects so retries can re-run", async () => {
-    const service = new SpanLabelingCacheService({ redis: null });
+    const service = new SpanLabelingCacheService();
 
     let attempts = 0;
     const flaky = async (): Promise<string> => {

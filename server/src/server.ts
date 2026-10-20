@@ -13,10 +13,8 @@ import type { StudioWorkflowSpendGuard } from "@services/creation-requests/execu
 
 import type { Application } from "express";
 import type { Server } from "http";
-import type Redis from "ioredis";
 import type { ServiceConfig } from "./config/services.config.ts";
 import { logger } from "./infrastructure/Logger.ts";
-import { closeRedisClient } from "./config/redis.ts";
 import { isTransientError } from "./utils/transientErrors.ts";
 import { toError } from "@shared/utils/error";
 import type { DIContainer } from "./infrastructure/DIContainer.ts";
@@ -186,10 +184,6 @@ export function setupGracefulShutdown(
           if (result.status === "rejected") logger.warn("Executor shutdown needs durable recovery", { executor: ["video-jobs", "workflow", "exports"][index], error: result.reason instanceof Error ? result.reason.message : String(result.reason) });
           else if (result.value === false) logger.warn("Native exports retain unresolved work for recovery");
         });
-
-        // Close Redis connection
-        const redisClient = container.resolve<Redis | null>("redisClient");
-        await closeRedisClient(redisClient);
 
         // Flush pending telemetry events before exiting.
         const postHogClient = resolveOptional<IPostHogClient>("postHogClient");

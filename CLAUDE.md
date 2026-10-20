@@ -34,7 +34,7 @@ Read impacted modules/contracts first. Follow the `studio/` frontend pattern and
 
 Use explicit exported/async return types, `unknown` and guards instead of `any`, and Zod at input/persistence boundaries. Prefer `undefined` except for deliberate nullable wire fields. If a type fix needs to widen more than three interfaces, find the root cause. Keep dependency upgrades and test infrastructure changes separate from production changes.
 
-Add the smallest useful behavioral test. Auth, authorization, payment and user-data changes require a negative path. Exclusive tests retire with their implementation; tests for surviving data/recovery contracts stay. Server tests mock process-external boundaries (Firebase, SDKs, Redis, time, logging); client tests may mock their feature API.
+Add the smallest useful behavioral test. Auth, authorization, payment and user-data changes require a negative path. Exclusive tests retire with their implementation; tests for surviving data/recovery contracts stay. Server tests mock process-external boundaries (Firebase, SDKs, time, logging); client tests may mock their feature API.
 
 Before **every commit**, all three gates must pass:
 
@@ -50,7 +50,7 @@ Before handoff, also run `npm run build`, and `npm run test:e2e` after UI change
 
 ## Runtime
 
-Node 20+, ESM, React/Vite, Express/TypeScript. Commands live in `package.json`. Vite proxies `/api` to the API server; use that proxy in client URLs. Redis is optional.
+Node 20+, ESM, React/Vite, Express/TypeScript. Commands live in `package.json`. Vite proxies `/api` to the API server; use that proxy in client URLs. Caches and the costly-route rate limiter are in-memory per instance; daily spend caps are the cost control.
 
 Server startup needs valid Firebase Admin credentials via `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_SERVICE_ACCOUNT_PATH` or `GOOGLE_APPLICATION_CREDENTIALS`. Startup probes are skipped only in test mode. The Vite client runs independently, with API calls requiring the server.
 

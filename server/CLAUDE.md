@@ -1,6 +1,6 @@
 # Server
 
-Follow [../CLAUDE.md](../CLAUDE.md). Express, TypeScript/tsx, ESM, Firebase Admin, optional Redis and Pino.
+Follow [../CLAUDE.md](../CLAUDE.md). Express, TypeScript/tsx, ESM, Firebase Admin and Pino.
 
 - Use constructor injection and canonical domain imports. Keep response shaping in thin routes and coordinate domains through explicit ports at registration.
 - Validate requests with Zod; use canonical envelopes from `middleware/respond.ts` and typed domain errors for error middleware.

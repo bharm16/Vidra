@@ -19,8 +19,8 @@ import type { AIResponse } from "@interfaces/IAIClient";
  * The backfill now writes the stream's finalized set (post merge / dedupe /
  * overlap / truncation) and preserves the template version.
  *
- * Faked here: the HTTP response socket and the cache store (Redis in
- * production). The span pipeline runs for real.
+ * Faked here: the HTTP response socket and the cache store. The span
+ * pipeline runs for real.
  */
 
 const TEXT =

@@ -1,7 +1,6 @@
 import { logger } from "@infrastructure/Logger";
 import type {
   SpanLabelingCacheServiceOptions,
-  RedisClient,
   SpanLabelingCacheStats,
   SpanLabelingPolicy,
 } from "./types";
@@ -12,12 +11,6 @@ import {
   buildTextPrefix,
 } from "./spanLabeling/key";
 import {
-  deleteRedisKey,
-  deleteRedisPattern,
-  getRedisValue,
-  setRedisValue,
-} from "./spanLabeling/redisStore";
-import {
   recordCacheHit,
   recordCacheMiss,
   type SpanLabelingCacheMetrics,
@@ -27,18 +20,17 @@ import { runSingleFlight } from "./singleFlight";
 /**
  * SpanLabelingCacheService - Server-side caching for span labeling results
  *
- * Implements a cache-aside pattern with Redis (or in-memory fallback) to reduce
- * OpenAI API calls by 70-90%. Provides fast (<5ms) retrieval for cached results.
+ * Implements an in-memory cache-aside pattern to reduce OpenAI API calls by
+ * 70-90%. Provides fast (<5ms) retrieval for cached results.
  *
  * Features:
- * - Redis-backed persistence with automatic fallback to in-memory
  * - TTL-based expiration (1 hour for exact matches, 5 min for similar texts)
  * - Cache key based on text hash + policy + template version
  * - Metrics tracking for cache hit/miss rates
  * - LRU eviction for in-memory cache
  *
  * @example
- * const cacheService = new SpanLabelingCacheService({ redis: redisClient });
+ * const cacheService = new SpanLabelingCacheService();
  * const cached = await cacheService.get(text, policy, templateVersion);
  * if (!cached) {
  *   const result = await openAI.labelSpans(text);
@@ -46,7 +38,6 @@ import { runSingleFlight } from "./singleFlight";
  * }
  */
 export class SpanLabelingCacheService {
-  private readonly redis: RedisClient | null;
   private readonly defaultTTL: number;
   private readonly shortTTL: number;
   private readonly maxMemoryCacheSize: number;
@@ -66,12 +57,11 @@ export class SpanLabelingCacheService {
     metricsService?: SpanLabelingCacheMetrics,
   ) {
     this.metrics = metricsService;
-    this.redis = options.redis || null;
     this.defaultTTL = options.defaultTTL || 3600; // 1 hour
     this.shortTTL = options.shortTTL || 300; // 5 minutes
     this.maxMemoryCacheSize = options.maxMemoryCacheSize || 100;
 
-    // In-memory fallback cache (LRU)
+    // In-memory cache (LRU)
     this.memoryCache = new MemoryLruCache(this.maxMemoryCacheSize);
 
     // Metrics
@@ -83,7 +73,6 @@ export class SpanLabelingCacheService {
     };
 
     logger.info("SpanLabelingCacheService initialized", {
-      redisEnabled: !!this.redis,
       defaultTTL: this.defaultTTL,
       shortTTL: this.shortTTL,
       maxMemoryCacheSize: this.maxMemoryCacheSize,
@@ -103,26 +92,6 @@ export class SpanLabelingCacheService {
     const cacheKey = generateCacheKey(text, policy, templateVersion, provider);
 
     try {
-      // Try Redis first
-      const cached = await getRedisValue(this.redis, cacheKey);
-
-      if (cached) {
-        const result = JSON.parse(cached);
-        this.stats.hits++;
-
-        const duration = Date.now() - startTime;
-        logger.debug("Cache hit (Redis)", {
-          cacheKey,
-          duration,
-          textLength: text.length,
-        });
-
-        recordCacheHit(this.metrics, "span_labeling_redis", duration);
-
-        return result;
-      }
-
-      // Try in-memory cache
       const cacheEntry = this.memoryCache.get(cacheKey);
       if (cacheEntry) {
         this.stats.hits++;
@@ -177,23 +146,6 @@ export class SpanLabelingCacheService {
     const ttl = options.ttl || this.defaultTTL;
 
     try {
-      const serialized = JSON.stringify(result);
-
-      // Set in Redis
-      const redisReady =
-        !!this.redis &&
-        this.redis.status === "ready" &&
-        typeof this.redis.set === "function";
-      await setRedisValue(this.redis, cacheKey, serialized, ttl);
-
-      if (redisReady) {
-        logger.debug("Cache set (Redis)", {
-          cacheKey,
-          ttl,
-          textLength: text.length,
-        });
-      }
-
       // Set in memory cache (with LRU eviction)
       this.memoryCache.set(cacheKey, result, ttl);
 
@@ -258,13 +210,7 @@ export class SpanLabelingCacheService {
       const cacheKey = generateCacheKey(text, policy, templateVersion);
 
       try {
-        // Delete from Redis
-        let deletedCount = await deleteRedisKey(this.redis, cacheKey);
-
-        // Delete from memory cache
-        if (this.memoryCache.delete(cacheKey)) {
-          deletedCount++;
-        }
+        const deletedCount = this.memoryCache.delete(cacheKey) ? 1 : 0;
 
         logger.debug("Cache invalidated", { cacheKey, deletedCount });
         return deletedCount;
@@ -278,9 +224,7 @@ export class SpanLabelingCacheService {
     const prefix = buildTextPrefix(text);
 
     try {
-      let deletedCount = await deleteRedisPattern(this.redis, pattern);
-
-      // Delete from memory cache
+      let deletedCount = 0;
       for (const key of this.memoryCache.keys()) {
         if (key.startsWith(prefix)) {
           this.memoryCache.delete(key);
@@ -303,10 +247,6 @@ export class SpanLabelingCacheService {
    */
   async clear(): Promise<boolean> {
     try {
-      // Clear Redis
-      await deleteRedisPattern(this.redis, "span:*");
-
-      // Clear memory cache
       this.memoryCache.clear();
 
       logger.info("Cache cleared");
@@ -328,7 +268,6 @@ export class SpanLabelingCacheService {
       ...this.stats,
       hitRate: hitRate.toFixed(2) + "%",
       cacheSize: this.memoryCache.size(),
-      redisConnected: this.redis ? this.redis.status === "ready" : false,
     };
   }
 
@@ -372,7 +311,7 @@ export class SpanLabelingCacheService {
   }
 }
 
-// Singleton instance (will be initialized with Redis in server/index.js)
+// Singleton instance (initialized by the DI container)
 export let spanLabelingCache: SpanLabelingCacheService | null = null;
 
 /**

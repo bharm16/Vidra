@@ -299,46 +299,6 @@ describe("errorHandler", () => {
     });
   });
 
-  describe("RATE_LIMIT_UNAVAILABLE fail-closed mapping", () => {
-    it("maps RATE_LIMIT_UNAVAILABLE to 503 with Retry-After from error.retryAfter", () => {
-      const req = createMockRequest({ id: "rlu-1" });
-      const res = createMockResponse();
-      const error = Object.assign(new Error("limiter down"), {
-        code: "RATE_LIMIT_UNAVAILABLE",
-        retryAfter: 5,
-      });
-
-      errorHandler(error, req, res, mockNext);
-
-      expect(res.statusCode).toBe(503);
-      expect(res.headers["Retry-After"]).toBe("5");
-      expect(res.responseBody).toMatchObject({
-        success: false,
-        error: "limiter down",
-        code: "RATE_LIMIT_UNAVAILABLE",
-        requestId: "rlu-1",
-      });
-    });
-
-    it("maps RATE_LIMIT_UNAVAILABLE with default Retry-After when retryAfter missing", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const error = Object.assign(new Error(""), {
-        code: "RATE_LIMIT_UNAVAILABLE",
-      });
-
-      errorHandler(error, req, res, mockNext);
-
-      expect(res.statusCode).toBe(503);
-      expect(res.headers["Retry-After"]).toBe("5");
-      expect(res.responseBody).toMatchObject({
-        success: false,
-        error: "Rate limiter temporarily unavailable, please retry.",
-        code: "RATE_LIMIT_UNAVAILABLE",
-      });
-    });
-  });
-
   describe("sensitive data redaction", () => {
     it("omits sketch bytes and working words from failure logs", async () => {
       const { logger } = await import("@infrastructure/Logger");

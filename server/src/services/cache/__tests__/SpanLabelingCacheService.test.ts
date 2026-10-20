@@ -10,20 +10,6 @@ vi.mock("@infrastructure/Logger", () => ({
   },
 }));
 
-function createRedisMock() {
-  return {
-    status: "ready" as const,
-    get: vi.fn(async (_key: string): Promise<string | null> => null),
-    set: vi.fn(
-      async (
-        ..._args: [string, string | number, ...(string | number)[]]
-      ): Promise<unknown> => "OK",
-    ),
-    del: vi.fn(async (...keys: string[]): Promise<number> => keys.length),
-    keys: vi.fn(async (_pattern: string): Promise<string[]> => []),
-  };
-}
-
 describe("SpanLabelingCacheService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,28 +19,8 @@ describe("SpanLabelingCacheService", () => {
     vi.useRealTimers();
   });
 
-  it("returns cached result from redis when available", async () => {
-    const redis = createRedisMock();
-    redis.get.mockResolvedValueOnce(
-      JSON.stringify({
-        spans: [{ text: "shot", role: "subject" }],
-        meta: { version: "v1", notes: "ok" },
-      }),
-    );
-    const service = new SpanLabelingCacheService({ redis });
-
-    const cached = await service.get("shot prompt", { strict: true }, "v1");
-
-    expect(cached).toEqual({
-      spans: [{ text: "shot", role: "subject" }],
-      meta: { version: "v1", notes: "ok" },
-    });
-    expect(redis.get).toHaveBeenCalledTimes(1);
-    expect(service.getStats().hits).toBe(1);
-  });
-
-  it("falls back to memory cache and tracks misses/hits", async () => {
-    const service = new SpanLabelingCacheService({ redis: null });
+  it("tracks misses and hits in the memory cache", async () => {
+    const service = new SpanLabelingCacheService();
 
     const miss = await service.get("text", null, null);
     expect(miss).toBeNull();
@@ -72,9 +38,8 @@ describe("SpanLabelingCacheService", () => {
     expect(service.getStats().hits).toBe(1);
   });
 
-  it("writes entries to redis and memory with TTL", async () => {
-    const redis = createRedisMock();
-    const service = new SpanLabelingCacheService({ redis, defaultTTL: 120 });
+  it("writes entries to memory with TTL", async () => {
+    const service = new SpanLabelingCacheService({ defaultTTL: 120 });
 
     const success = await service.set(
       "prompt",
@@ -85,14 +50,14 @@ describe("SpanLabelingCacheService", () => {
     );
 
     expect(success).toBe(true);
-    expect(redis.set).toHaveBeenCalledTimes(1);
+    expect(
+      await service.get("prompt", { policy: "strict" }, "v1", "openai"),
+    ).toEqual({ spans: [], meta: { version: "v1", notes: "ok" } });
     expect(service.getStats().sets).toBe(1);
   });
 
   it("invalidates specific keys and pattern keys", async () => {
-    const redis = createRedisMock();
-    redis.keys.mockResolvedValue(["k1", "k2"]);
-    const service = new SpanLabelingCacheService({ redis });
+    const service = new SpanLabelingCacheService();
 
     await service.set("prompt", { policy: 1 }, "v1", {
       spans: [],
@@ -111,12 +76,11 @@ describe("SpanLabelingCacheService", () => {
     });
     const patternDeleted = await service.invalidate("prompt");
     expect(patternDeleted).toBeGreaterThan(0);
-    expect(redis.keys).toHaveBeenCalledTimes(1);
   });
 
   it("expires in-memory entries based on ttl", async () => {
     vi.useFakeTimers();
-    const service = new SpanLabelingCacheService({ redis: null });
+    const service = new SpanLabelingCacheService();
 
     await service.set(
       "ttl-test",

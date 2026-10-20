@@ -246,16 +246,6 @@ const creditSchema = z.object({
   CREDIT_REFUND_MAX_ATTEMPTS: coercePositiveInt(20),
 });
 
-const redisSchema = z.object({
-  REDIS_URL: optionalString(),
-  REDIS_HOST: z.string().default("localhost"),
-  REDIS_PORT: z.coerce.number().int().min(1).max(65535).default(6379),
-  REDIS_PASSWORD: optionalString(),
-  REDIS_DB: z.coerce.number().int().min(0).default(0),
-  REDIS_DISABLED: coerceBooleanString(false),
-  REDIS_ENABLE_OFFLINE_QUEUE: coerceBooleanString(false),
-});
-
 const securitySchema = z.object({
   API_KEY: optionalApiKey(),
   ALLOWED_API_KEYS: optionalString(),
@@ -359,7 +349,6 @@ const envSchema = serverSchema
   .merge(videoAssetsSchema)
   .merge(firestoreCircuitSchema)
   .merge(creditSchema)
-  .merge(redisSchema)
   .merge(securitySchema)
   .merge(observabilitySchema)
   .merge(startupSchema)

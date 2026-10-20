@@ -53,27 +53,6 @@ describe("GET /health/ready", () => {
     expect(result.body.dependencies.gcs.healthy).toBe(true);
   });
 
-  it("returns 200 when a non-required dependency (redis) is unhealthy", async () => {
-    const app = express();
-    app.use(
-      createHealthRoutes({
-        cacheService: { isHealthy: () => true },
-        checkFirestore: async () => undefined,
-        gcsBucket: { exists: async () => [true] as [boolean] },
-        getRedisStatus: () => "disconnected",
-      }),
-    );
-
-    const result = await request(app).get("/health/ready");
-
-    expect(result.status).toBe(200);
-    expect(result.body.status).toBe("ready");
-    expect(result.body.dependencies.redis).toMatchObject({
-      required: false,
-      healthy: false,
-    });
-  });
-
   it("returns 503 when GCS bucket does not exist", async () => {
     const app = express();
     app.use(

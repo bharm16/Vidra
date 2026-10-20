@@ -110,7 +110,7 @@ function buildComponentSchemas(): Record<string, JsonSchema> {
         dependencies: {
           type: "object",
           description:
-            "Dependency health checks (firebase, gcs, cache, redis, LLM providers).",
+            "Dependency health checks (firebase, gcs, cache, LLM providers).",
           additionalProperties: {
             type: "object",
             required: ["required", "healthy"],

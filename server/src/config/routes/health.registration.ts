@@ -9,7 +9,6 @@ import type { Application } from "express";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { getFirestore } from "@infrastructure/firebaseAdmin";
-import { getRedisStatus } from "@config/redis";
 import { createHealthRoutes } from "@routes/health.routes";
 import { createOpenApiDevRoute } from "../../openapi/devRoute.ts";
 import { resolveOptionalService } from "./resolve-utils.ts";
@@ -115,7 +114,6 @@ export function registerHealthRoutes(
       }
     },
     workers,
-    getRedisStatus,
   });
 
   app.use("/", healthRoutes);

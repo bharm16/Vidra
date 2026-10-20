@@ -25,8 +25,8 @@ import type { ResolvedExecution } from "@services/ai-model/types";
  * is exactly the divergence that used to be invisible.
  *
  * Faked here: the AIExecutionPort (the LLM SDK boundary), the cache store
- * (Redis in production) and the HTTP response socket. The span pipeline and
- * both route paths run for real.
+ * and the HTTP response socket. The span pipeline and both route paths run
+ * for real.
  */
 
 const TEXT =

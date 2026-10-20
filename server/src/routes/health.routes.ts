@@ -4,7 +4,6 @@ import { createRouteTimeout } from "@middleware/routeTimeout";
 import { logger } from "@infrastructure/Logger";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import type { WorkerStatus } from "@services/jobs/WorkerStatus";
-import type { RedisStatus } from "@config/redis";
 
 interface WorkerStatusProvider {
   getStatus(): WorkerStatus;
@@ -39,8 +38,6 @@ interface HealthDependencies {
   firestoreCircuitExecutor?: FirestoreCircuitExecutor;
   /** Optional background worker status providers for health reporting. */
   workers?: Record<string, WorkerStatusProvider | null>;
-  /** Optional Redis status provider for health reporting. */
-  getRedisStatus?: () => RedisStatus;
   /**
    * Optional GCS bucket. When provided, `bucket.exists()` is called to verify
    * connectivity. When absent, gcs is reported as healthy: true with
@@ -65,7 +62,6 @@ export function createHealthRoutes(dependencies: HealthDependencies): Router {
     checkFirestore,
     firestoreCircuitExecutor,
     workers,
-    getRedisStatus: getRedisStatusFn,
     gcsBucket,
   } = dependencies;
 
@@ -172,21 +168,6 @@ export function createHealthRoutes(dependencies: HealthDependencies): Router {
       // Synchronous check against the in-process cache adapter.
       const cacheHealthy = cacheService.isHealthy();
 
-      // ---- redis (not required — falls back to in-memory) --------------------
-      const redisStatus = getRedisStatusFn?.();
-      let redisHealthy = true;
-      let redisError: string | undefined;
-      if (redisStatus !== undefined) {
-        redisHealthy =
-          redisStatus === "connected" || redisStatus === "disabled";
-        if (!redisHealthy) {
-          redisError =
-            redisStatus === "disconnected"
-              ? "Redis disconnected — using in-memory fallback"
-              : "Redis reconnecting";
-        }
-      }
-
       // ---- LLM circuit breakers (not required — informational) ---------------
       const openAIStats = openAIClient?.getStats();
       const groqStats = groqClient?.getStats();
@@ -215,16 +196,6 @@ export function createHealthRoutes(dependencies: HealthDependencies): Router {
             : {}),
         },
       };
-
-      // Redis: only include when the status provider is wired.
-      if (getRedisStatusFn) {
-        dependencies.redis = {
-          required: false,
-          healthy: redisHealthy,
-          lastChecked: now,
-          ...(redisError !== undefined ? { error: redisError } : {}),
-        };
-      }
 
       // LLM circuit breakers: only include when client is wired.
       if (openAIStats) {
@@ -262,7 +233,7 @@ export function createHealthRoutes(dependencies: HealthDependencies): Router {
       }
 
       // 503 fires only when a required dependency is unhealthy. Non-required
-      // deps (redis, LLM circuit breakers) are informational.
+      // deps (LLM circuit breakers) are informational.
       const isReady = Object.values(dependencies).every(
         (d) => !d.required || d.healthy,
       );

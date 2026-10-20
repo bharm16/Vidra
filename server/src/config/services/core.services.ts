@@ -74,7 +74,7 @@ export function registerCoreServices(container: DIContainer): void {
         1,
       ),
     },
-    redis: {
+    spanLabelingCache: {
       defaultTTL: 3600,
       shortTTL: 300,
       maxMemoryCacheSize: 100,
