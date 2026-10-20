@@ -11,13 +11,12 @@ import { FirestoreSketchBudgetStore } from "@services/sketch-budget/storage/Fire
 import { resolveFalApiKey } from "@utils/falApiKey";
 import { SIGNED_URL_TTL_MS } from "@config/signedUrlPolicy";
 import { resolvePositiveNumber, resolveSignedUrlTtlMs } from "./env-utils.ts";
-import { resolveAllFlags } from "../feature-flags.ts";
+import { getFeatureFlags } from "../feature-flags.ts";
 import { DEFAULT_VIDEO_JOB_LEASE_SECONDS } from "../env.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
 
 export function registerCoreServices(container: DIContainer): void {
-  // Single-source-of-truth flag resolution. See feature-flags.ts for the canonical flag registry.
-  const { flags } = resolveAllFlags(process.env);
+  const flags = getFeatureFlags();
 
   container.registerValue("logger", logger);
 

@@ -8,13 +8,6 @@
 
 import { z } from "zod";
 import { logger } from "@infrastructure/Logger";
-import {
-  FLAG_DEFINITIONS,
-  type BoolFlagDef,
-  type EnumFlagDef,
-  type FlagDef,
-  type FlagName,
-} from "./feature-flags.ts";
 import { DEFAULT_QWEN_MODEL } from "./modelConfig.ts";
 import { DEFAULT_GROQ_MODEL } from "./llmModelDefaults";
 
@@ -32,20 +25,14 @@ const coerceBooleanString = (fallback: boolean) =>
 
 /**
  * Strict boolean env var: requires exactly "true" or "false". Fails validation
- * on other values (e.g. "yes", "1", "garbage"). Use for canonical flag names
- * where typos should surface at boot rather than silently falling to `false`.
+ * on other values (e.g. "yes", "1", "garbage"). Use for feature flags, where
+ * typos should surface at boot rather than silently falling to the default.
  */
 const strictBooleanString = (fallback: boolean) =>
   z
     .enum(["true", "false"])
     .default(String(fallback) as "true" | "false")
     .transform((v) => v === "true");
-
-/** Strict enum env var with a declared default. Unlisted values fail boot. */
-const strictEnumString = <T extends string>(
-  values: readonly T[],
-  fallback: T,
-) => z.enum(values).default(fallback);
 
 // ─── Domain schemas ────────────────────────────────────────────
 
@@ -58,42 +45,11 @@ const serverSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
 });
 
-// The flag registry in feature-flags.ts is the single source of truth for
-// WHICH toggles exist; this schema is derived from it so the two lists can
-// never drift. Adding a flag to the registry automatically makes a typo
-// (ENABLE_STUDIO=ture) fail boot instead of silently resolving to the
-// default. Booleans require exactly "true"/"false"; enums require a declared
-// value. Alias handling stays in feature-flags.ts — aliases are legacy names
-// the registry translates, not names the boot schema constrains.
-//
-// The dependency direction is deliberate: feature-flags.ts must stay free of
-// infrastructure imports (it is read from early-boot paths), so env.ts imports
-// the registry and never the reverse.
-
-type FlagSchema<D extends FlagDef> = D extends BoolFlagDef
-  ? ReturnType<typeof strictBooleanString>
-  : D extends EnumFlagDef<infer V>
-    ? ReturnType<typeof strictEnumString<V>>
-    : never;
-
-type FeatureFlagShape = {
-  [K in FlagName as (typeof FLAG_DEFINITIONS)[K]["envName"]]: FlagSchema<
-    (typeof FLAG_DEFINITIONS)[K]
-  >;
-};
-
-function buildFeatureFlagShape(): FeatureFlagShape {
-  const shape: Record<string, z.ZodType> = {};
-  for (const def of Object.values(FLAG_DEFINITIONS) as FlagDef[]) {
-    shape[def.envName] =
-      def.kind === "bool"
-        ? strictBooleanString(def.default)
-        : strictEnumString(def.values, def.default);
-  }
-  return shape as FeatureFlagShape;
-}
-
-const featureFlagSchema = z.object(buildFeatureFlagShape());
+// Kill switches for the worker's background jobs, read by feature-flags.ts.
+const featureFlagSchema = z.object({
+  CREDIT_REFUND_SWEEPER_ENABLED: strictBooleanString(true),
+  VIDEO_ASSET_RETENTION_ENABLED: strictBooleanString(true),
+});
 
 const openaiSchema = z.object({
   OPENAI_API_KEY: optionalApiKey(),
@@ -346,7 +302,7 @@ export function parseEnv(env: NodeJS.ProcessEnv = process.env): ValidatedEnv {
       .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
       .join("\n");
     throw new Error(
-      `Environment validation failed:\n${formatted}\n\nThe Zod schema in server/src/config/env.ts is the authoritative list of required/optional vars. Feature-flag toggles live in server/src/config/feature-flags.ts (see CLAUDE.md "Feature Flags").`,
+      `Environment validation failed:\n${formatted}\n\nThe Zod schema in server/src/config/env.ts is the authoritative list of required/optional vars.`,
     );
   }
 

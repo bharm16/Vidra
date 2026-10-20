@@ -220,7 +220,6 @@ export async function startRealAdapterHarness(): Promise<RealAdapterHarness> {
 
   setEnv("NODE_ENV", "test");
   setEnv("PORT", "0");
-  setEnv("ENABLE_STUDIO", "true");
   setEnv("ALLOWED_API_KEYS", REAL_ADAPTER_API_KEY);
   setEnv("API_KEY", undefined);
   setEnv("REPLICATE_API_TOKEN", "offline-not-a-credential");

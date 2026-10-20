@@ -1,18 +1,11 @@
 import type { Server } from "http";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { setupGracefulShutdown } from "@server/server";
 
 type ProcessHandler = (...args: unknown[]) => void;
 
 describe("regression: unhandled rejection classification", () => {
-  const originalMode = process.env.UNHANDLED_REJECTION_MODE;
-
-  beforeEach(() => {
-    process.env.UNHANDLED_REJECTION_MODE = "classified";
-  });
-
   afterEach(() => {
-    process.env.UNHANDLED_REJECTION_MODE = originalMode;
     vi.restoreAllMocks();
   });
 

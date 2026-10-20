@@ -1,316 +1,51 @@
 /**
- * Single source of truth for server feature flags.
- *
- * Every boolean/enum toggle the server honors is declared here with a canonical
- * env var name, default value, and (optionally) legacy aliases kept alive for
- * back-compat. Non-flag scalars (ports, timeouts, URLs, API keys) are NOT in
- * scope — those stay in env.ts as Zod-validated config.
+ * The server's environment toggles, read straight from the environment.
+ * env.ts validates their values at boot, so a typo such as `ture` fails
+ * startup instead of resolving to the default.
  *
  * This file must remain free of infrastructure imports (no logger, no DI).
  * It is consumed from early-boot code paths where those may not be ready.
  */
 
-export type FlagCategory =
-  | "mode"
-  | "worker"
-  | "killswitch"
-  | "provider"
-  | "experimental"
-  | "debug";
-
-export interface FlagAlias {
-  envName: string;
-  /**
-   * When true, the alias lives in the opposite truth-space from the canonical
-   * flag. Used for the `*_DISABLED` → `*_ENABLED` rename: legacy alias value
-   * "true" means the new flag resolves to `false`.
-   */
-  inverted?: boolean;
-}
-
-interface BaseFlagDef {
-  envName: string;
-  description: string;
-  category: FlagCategory;
-  aliases?: readonly FlagAlias[];
-  /**
-   * Declarative list of external env vars this flag depends on. Consumed by
-   * doc generation and readiness probes that surface dependency requirements;
-   * the registry itself does not enforce that the env vars are set. Each
-   * consuming service is responsible for checking the env at boot and degrading
-   * gracefully when its dependencies are missing.
-   *
-   * Example: ENABLE_FACE_EMBEDDING requiresEnv: ["REPLICATE_API_TOKEN"].
-   */
-  requiresEnv?: readonly string[];
-  /**
-   * Declarative list of other flag envNames that should resolve true for this
-   * flag to be meaningful. Consumed by doc generation and readiness probes;
-   * the registry does not currently enforce composition. Useful for surfacing
-   * flag relationships during operational audits and architecture-map output.
-   *
-   * Example: ENABLE_FACE_EMBEDDING dependsOn: ["ENABLE_CONVERGENCE"].
-   */
-  dependsOn?: readonly string[];
-}
-
-export interface BoolFlagDef extends BaseFlagDef {
-  kind: "bool";
-  default: boolean;
-}
-
-export interface EnumFlagDef<T extends string = string> extends BaseFlagDef {
-  kind: "enum";
-  values: readonly T[];
-  default: T;
-}
-
-export type FlagDef = BoolFlagDef | EnumFlagDef;
-
-export interface FlagResolution<T> {
-  value: T;
-  /** "default" when nothing was set; "env" when the canonical name was; "alias" when a legacy name was. */
-  source: "default" | "env" | "alias";
-  /** The env var name that actually provided the value (empty when source === "default"). */
-  sourceName: string;
-  /** Populated when an alias was used — caller should log as a deprecation warning. */
-  deprecationNotice?: string;
-}
-
-// ─── Flag registry ─────────────────────────────────────────────────
-
-const MODE_FLAGS = {
-  studio: {
-    kind: "bool",
-    envName: "ENABLE_STUDIO",
-    default: true,
-    description:
-      "Enables the Studio conversational image workspace (ADR-0019). When false, studioService resolves to null and /api/studio is not mounted.",
-    category: "mode",
-    requiresEnv: ["REPLICATE_API_TOKEN"],
-  },
-} as const satisfies Record<string, FlagDef>;
-
-const WORKER_FLAGS = {
-  videoJobWorkerDisabled: {
-    kind: "bool",
-    envName: "VIDEO_JOB_WORKER_DISABLED",
-    default: false,
-    description:
-      "Forces video worker loops off even when PROCESS_ROLE=worker. Used for emergency drain.",
-    category: "worker",
-  },
-} as const satisfies Record<string, FlagDef>;
-
-/**
- * Kill switches for background services. Canonical naming is `*_ENABLED`
- * (default `true`).
- */
-const KILLSWITCH_FLAGS = {
-  creditRefundSweeperEnabled: {
-    kind: "bool",
-    envName: "CREDIT_REFUND_SWEEPER_ENABLED",
-    default: true,
-    description: "Credit refund sweeper background service.",
-    category: "killswitch",
-  },
-  videoAssetRetentionEnabled: {
-    kind: "bool",
-    envName: "VIDEO_ASSET_RETENTION_ENABLED",
-    default: true,
-    description: "Video asset cleanup/retention service.",
-    category: "killswitch",
-  },
-} as const satisfies Record<string, FlagDef>;
-
-const PROVIDER_FLAGS = {
-  llmProviderFailoverEnabled: {
-    kind: "bool",
-    envName: "LLM_PROVIDER_FAILOVER_ENABLED",
-    default: true,
-    description:
-      "Health-based LLM provider failover in the aiService routing layer: a per-provider circuit breaker opens after consecutive failures and routes operations to their configured fallback provider until the primary recovers. Tune via LLM_FAILOVER_CONSECUTIVE_FAILURES (default 5) and LLM_FAILOVER_COOLDOWN_MS (default 30000).",
-    category: "provider",
-  },
-  allowUnhealthyGemini: {
-    kind: "bool",
-    envName: "ALLOW_UNHEALTHY_GEMINI",
-    default: false,
-    description:
-      "Use Gemini even when the provider health check fails. Useful for dev/debug; not recommended in production.",
-    category: "provider",
-  },
-} as const satisfies Record<string, FlagDef>;
-
-const EXPERIMENTAL_FLAGS = {} as const satisfies Record<string, FlagDef>;
-
-const DEBUG_FLAGS = {
-  unhandledRejectionMode: {
-    kind: "enum",
-    envName: "UNHANDLED_REJECTION_MODE",
-    values: ["classified", "strict"] as const,
-    default: "classified",
-    description:
-      "How unhandled promise rejections are categorized. `strict` exits the process; `classified` logs and continues.",
-    category: "debug",
-  },
-} as const satisfies Record<string, FlagDef>;
-
-export const FLAG_DEFINITIONS = {
-  ...MODE_FLAGS,
-  ...WORKER_FLAGS,
-  ...KILLSWITCH_FLAGS,
-  ...PROVIDER_FLAGS,
-  ...EXPERIMENTAL_FLAGS,
-  ...DEBUG_FLAGS,
-} as const;
-
-export type FlagName = keyof typeof FLAG_DEFINITIONS;
-
-// ─── Resolution ────────────────────────────────────────────────────
-
-function parseBool(raw: string): boolean | undefined {
+function readBool(raw: string | undefined, fallback: boolean): boolean {
   if (raw === "true") return true;
   if (raw === "false") return false;
-  return undefined;
+  return fallback;
 }
 
-function resolveBoolFlag(
-  def: BoolFlagDef,
-  env: NodeJS.ProcessEnv,
-): FlagResolution<boolean> {
-  const canonical = env[def.envName];
-  if (canonical !== undefined) {
-    const parsed = parseBool(canonical);
-    if (parsed !== undefined) {
-      return { value: parsed, source: "env", sourceName: def.envName };
-    }
-  }
-
-  for (const alias of def.aliases ?? []) {
-    const raw = env[alias.envName];
-    if (raw === undefined) continue;
-    const parsed = parseBool(raw);
-    if (parsed === undefined) continue;
-    const value = alias.inverted ? !parsed : parsed;
-    return {
-      value,
-      source: "alias",
-      sourceName: alias.envName,
-      deprecationNotice: `Env var "${alias.envName}" is deprecated. Use "${def.envName}" instead${
-        alias.inverted ? " (note: value semantics are inverted)" : ""
-      }.`,
-    };
-  }
-
-  return { value: def.default, source: "default", sourceName: "" };
+/** Kill switches for the worker role's background jobs. Both default on. */
+export interface FeatureFlags {
+  /** CREDIT_REFUND_SWEEPER_ENABLED: legacy failed-refund recovery. */
+  creditRefundSweeperEnabled: boolean;
+  /** VIDEO_ASSET_RETENTION_ENABLED: deletes expired video assets. */
+  videoAssetRetentionEnabled: boolean;
 }
 
-function resolveEnumFlag<T extends string>(
-  def: EnumFlagDef<T>,
-  env: NodeJS.ProcessEnv,
-): FlagResolution<T> {
-  const canonical = env[def.envName];
-  if (canonical !== undefined && def.values.includes(canonical as T)) {
-    return { value: canonical as T, source: "env", sourceName: def.envName };
-  }
-  return { value: def.default, source: "default", sourceName: "" };
-}
-
-/** Type helper: infer the resolved TypeScript type of a flag definition. */
-export type FlagValue<K extends FlagName> =
-  (typeof FLAG_DEFINITIONS)[K] extends BoolFlagDef
-    ? boolean
-    : (typeof FLAG_DEFINITIONS)[K] extends EnumFlagDef<infer V>
-      ? V
-      : never;
-
-type ResolvedFlags = {
-  [K in FlagName]: FlagValue<K>;
-};
-
-export interface FlagResolveResult {
-  flags: ResolvedFlags;
-  /** Deprecation notices to be logged by the caller. One entry per legacy alias that was read. */
-  deprecations: string[];
-}
-
-/**
- * Resolve every registered flag against the provided env. Returns typed values
- * plus any deprecation notices accumulated during resolution.
- */
-export function resolveAllFlags(
+export function getFeatureFlags(
   env: NodeJS.ProcessEnv = process.env,
-): FlagResolveResult {
-  const flags = {} as ResolvedFlags;
-  const deprecations: string[] = [];
-
-  for (const [name, def] of Object.entries(FLAG_DEFINITIONS) as Array<
-    [FlagName, FlagDef]
-  >) {
-    const resolution =
-      def.kind === "bool"
-        ? resolveBoolFlag(def, env)
-        : resolveEnumFlag(def, env);
-
-    // Safe: ResolvedFlags is a mapped type over FLAG_DEFINITIONS; we preserve
-    // the compile-time association between `name` and `resolution.value`.
-    (flags as Record<FlagName, boolean | string>)[name] = resolution.value;
-    if (resolution.deprecationNotice) {
-      deprecations.push(resolution.deprecationNotice);
-    }
-  }
-
-  return { flags, deprecations };
+): FeatureFlags {
+  return {
+    creditRefundSweeperEnabled: readBool(
+      env.CREDIT_REFUND_SWEEPER_ENABLED,
+      true,
+    ),
+    videoAssetRetentionEnabled: readBool(
+      env.VIDEO_ASSET_RETENTION_ENABLED,
+      true,
+    ),
+  };
 }
-
-/** Convenience: list the canonical env names for doc generation. */
-export function getFlagEnvNames(): Array<{
-  name: FlagName;
-  envName: string;
-  aliases: string[];
-  defaultValue: string;
-  description: string;
-  category: FlagCategory;
-  requiresEnv?: readonly string[];
-  dependsOn?: readonly string[];
-}> {
-  return (Object.entries(FLAG_DEFINITIONS) as Array<[FlagName, FlagDef]>).map(
-    ([name, def]) => ({
-      name,
-      envName: def.envName,
-      aliases: (def.aliases ?? []).map((a) => a.envName),
-      defaultValue: String(def.default),
-      description: def.description,
-      category: def.category,
-      ...(def.requiresEnv !== undefined && { requiresEnv: def.requiresEnv }),
-      ...(def.dependsOn !== undefined && { dependsOn: def.dependsOn }),
-    }),
-  );
-}
-
-// ─── Runtime flags ─────────────────────────────────────────────────
-// Composite view used by bootstrap, route registration, and DI config.
-// `processRole` is not in the flag registry because it's a process-mode
-// selector, not a toggle.
 
 export interface RuntimeFlags {
   processRole: "api" | "worker";
   videoWorkerDisabled: boolean;
   videoWorkerShutdownDrainSeconds: number;
-  allowUnhealthyGemini: boolean;
-  unhandledRejectionMode: "classified" | "strict";
-}
-
-function resolveProcessRole(env: NodeJS.ProcessEnv): "api" | "worker" {
-  return env.PROCESS_ROLE === "worker" ? "worker" : "api";
 }
 
 export function getRuntimeFlags(
   env: NodeJS.ProcessEnv = process.env,
 ): RuntimeFlags {
-  const processRole = resolveProcessRole(env);
-  const { flags } = resolveAllFlags(env);
+  const processRole = env.PROCESS_ROLE === "worker" ? "worker" : "api";
   const drainParsed = Number.parseInt(
     env.VIDEO_WORKER_SHUTDOWN_DRAIN_SECONDS ?? "",
     10,
@@ -318,11 +53,8 @@ export function getRuntimeFlags(
 
   return {
     processRole,
-    videoWorkerDisabled:
-      processRole !== "worker" || flags.videoJobWorkerDisabled,
+    videoWorkerDisabled: processRole !== "worker",
     videoWorkerShutdownDrainSeconds:
       Number.isFinite(drainParsed) && drainParsed > 0 ? drainParsed : 45,
-    allowUnhealthyGemini: flags.allowUnhealthyGemini,
-    unhandledRejectionMode: flags.unhandledRejectionMode,
   };
 }

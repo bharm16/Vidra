@@ -4,7 +4,7 @@ import type { Bucket } from "@google-cloud/storage";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { getAuth, getFirestore } from "@infrastructure/firebaseAdmin";
-import { getRuntimeFlags, resolveAllFlags } from "./feature-flags.ts";
+import { getRuntimeFlags } from "./feature-flags.ts";
 
 // ────────────────────────────────────────────────────────────────
 // Shared helpers
@@ -174,14 +174,6 @@ export async function initializeServices(
 ): Promise<DIContainer> {
   logger.info("Initializing services...");
   const runtimeFlags = getRuntimeFlags();
-
-  // Surface any deprecated env var names once at startup so operators know to
-  // update their deploy configs. Legacy names still work — this is a heads-up.
-  const { flags, deprecations } = resolveAllFlags(process.env);
-  logger.info("Feature flags resolved", { flags });
-  for (const notice of deprecations) {
-    logger.warn(notice, { operation: "featureFlags.deprecation" });
-  }
 
   const isTestEnv =
     process.env.NODE_ENV === "test" ||

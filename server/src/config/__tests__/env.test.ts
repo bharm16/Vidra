@@ -38,12 +38,12 @@ describe("parseEnv", () => {
   it("coerces boolean strings correctly", () => {
     const result = parseEnv(
       minimalEnv({
-        ENABLE_STUDIO: "false",
+        CREDIT_REFUND_SWEEPER_ENABLED: "false",
         SENTRY_DEBUG: "true",
       }),
     );
 
-    expect(result.ENABLE_STUDIO).toBe(false);
+    expect(result.CREDIT_REFUND_SWEEPER_ENABLED).toBe(false);
     expect(result.SENTRY_DEBUG).toBe(true);
   });
 

@@ -278,9 +278,8 @@ export function registerApiRoutes(
     }),
   );
 
-  // Studio conversational image workspace (ADR-0019). Null when the
-  // ENABLE_STUDIO flag is off or REPLICATE_API_TOKEN is missing — the
-  // surface simply isn't mounted then.
+  // Studio conversational image workspace (ADR-0019). Null when
+  // REPLICATE_API_TOKEN is missing — the surface simply isn't mounted then.
   const studioService = resolveOptionalService<StudioService | null>(
     container,
     "studioService",

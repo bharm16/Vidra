@@ -10,21 +10,20 @@ vi.mock("@infrastructure/Logger", () => ({
 }));
 
 import { parseEnv } from "../env";
-import { FLAG_DEFINITIONS, type FlagDef } from "../feature-flags";
 
 /**
- * Regression: the boot schema in env.ts once hand-maintained a SECOND list of
- * feature flags covering only 11 of the registry's 18. Flags missing from that
- * list — ENABLE_STUDIO, VIDEO_JOB_WORKER_DISABLED, LLM_PROVIDER_FAILOVER_ENABLED,
- * ALLOW_UNHEALTHY_GEMINI, ENABLE_FACE_EMBEDDING, REPLAY_MODE — were never
- * validated, so `ENABLE_STUDIO=ture` silently resolved to the default and a
- * whole surface (ADR-0019) stayed on when the operator meant to turn it off.
+ * Regression: flags missing from the boot schema were never validated, so
+ * `ENABLE_STUDIO=ture` once silently resolved to the default and a whole
+ * surface stayed on when the operator meant to turn it off.
  *
- * Invariant under test: EVERY flag declared in FLAG_DEFINITIONS is validated at
- * boot. A value the registry cannot parse must fail boot rather than fall
- * through to the default. This fails the day a flag is added to the registry
- * without the boot schema being derived from it.
+ * Invariant under test: each feature flag fails boot on a value other than
+ * "true"/"false" rather than falling through to its default.
  */
+
+const FLAGS = [
+  "CREDIT_REFUND_SWEEPER_ENABLED",
+  "VIDEO_ASSET_RETENTION_ENABLED",
+] as const;
 
 /** Minimal env that satisfies the 2 hard-required vars. */
 function minimalEnv(overrides: Record<string, string> = {}): NodeJS.ProcessEnv {
@@ -35,51 +34,25 @@ function minimalEnv(overrides: Record<string, string> = {}): NodeJS.ProcessEnv {
   };
 }
 
-const ALL_FLAGS = Object.values(FLAG_DEFINITIONS) as FlagDef[];
-
-describe("feature-flag boot validation is derived from the registry", () => {
-  it("declares every registered flag (registry and boot schema cannot drift)", () => {
-    const parsed = parseEnv(minimalEnv()) as Record<string, unknown>;
-
-    for (const def of ALL_FLAGS) {
-      expect(
-        parsed[def.envName],
-        `${def.envName} is in FLAG_DEFINITIONS but absent from the boot schema`,
-      ).toBe(def.default);
-    }
-    // Guards the loop above against silently iterating an empty registry.
-    expect(ALL_FLAGS.length).toBeGreaterThan(0);
-    const names = ALL_FLAGS.map((flag) => flag.envName);
-    for (const name of [
-      "ENABLE_STUDIO",
-      "LLM_PROVIDER_FAILOVER_ENABLED",
-    ])
-      expect(names).toContain(name);
+describe("feature-flag boot validation", () => {
+  it("defaults every flag to on", () => {
+    const parsed = parseEnv(minimalEnv());
+    for (const name of FLAGS) expect(parsed[name]).toBe(true);
   });
 
-  it("rejects an unparseable value for every registered flag", () => {
-    for (const def of ALL_FLAGS) {
-      const garbage = def.kind === "bool" ? "ture" : "not-a-declared-value";
+  it("rejects an unparseable value for every flag", () => {
+    for (const name of FLAGS) {
       expect(
-        () => parseEnv(minimalEnv({ [def.envName]: garbage })),
-        `${def.envName}=${garbage} silently resolved to a default instead of failing boot`,
-      ).toThrow(def.envName);
+        () => parseEnv(minimalEnv({ [name]: "ture" })),
+        `${name}=ture silently resolved to a default instead of failing boot`,
+      ).toThrow(name);
     }
   });
 
-  it("accepts every declared value for every registered flag", () => {
-    for (const def of ALL_FLAGS) {
-      const accepted: readonly string[] =
-        def.kind === "bool" ? ["true", "false"] : def.values;
-
-      for (const value of accepted) {
-        const parsed = parseEnv(minimalEnv({ [def.envName]: value })) as Record<
-          string,
-          unknown
-        >;
-        const expected = def.kind === "bool" ? value === "true" : value;
-        expect(parsed[def.envName]).toBe(expected);
-      }
+  it("accepts true and false for every flag", () => {
+    for (const name of FLAGS) {
+      expect(parseEnv(minimalEnv({ [name]: "false" }))[name]).toBe(false);
+      expect(parseEnv(minimalEnv({ [name]: "true" }))[name]).toBe(true);
     }
   });
 });

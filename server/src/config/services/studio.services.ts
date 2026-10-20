@@ -10,7 +10,6 @@ import {
   StudioService,
   type StudioImageStorage,
 } from "@services/studio/StudioService";
-import { resolveAllFlags } from "../feature-flags.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
 
 export function registerStudioServices(container: DIContainer): void {
@@ -32,12 +31,6 @@ export function registerStudioServices(container: DIContainer): void {
       aiService: AIExecutionPort | null,
       studioProjectStore: StudioProjectStore,
     ) => {
-      const { flags } = resolveAllFlags(process.env);
-      if (!flags.studio) {
-        logger.info("Studio disabled by ENABLE_STUDIO flag");
-        return null;
-      }
-
       const apiToken = config.replicate.apiToken;
       if (!apiToken) {
         logger.warn("REPLICATE_API_TOKEN not provided, studio disabled");

@@ -145,7 +145,6 @@ export function setupGracefulShutdown(
   server: Server,
   container: DIContainer,
 ): void {
-  const runtimeFlags = getRuntimeFlags();
   const resolveOptional = <T>(serviceName: string): T | null => {
     try {
       return container.resolve<T>(serviceName);
@@ -240,22 +239,13 @@ export function setupGracefulShutdown(
 
   process.on("unhandledRejection", (reason, promise) => {
     const error = toError(reason);
-    const shouldShutdown =
-      runtimeFlags.unhandledRejectionMode === "strict" ||
-      isFatalUnhandledRejection(reason);
 
-    if (shouldShutdown) {
-      logger.error("Unhandled rejection (fatal)", error, {
-        mode: runtimeFlags.unhandledRejectionMode,
-        promise,
-      });
+    if (isFatalUnhandledRejection(reason)) {
+      logger.error("Unhandled rejection (fatal)", error, { promise });
       shutdown("UNHANDLED_REJECTION_FATAL");
       return;
     }
 
-    logger.error("Unhandled rejection (non-fatal)", error, {
-      mode: runtimeFlags.unhandledRejectionMode,
-      promise,
-    });
+    logger.error("Unhandled rejection (non-fatal)", error, { promise });
   });
 }

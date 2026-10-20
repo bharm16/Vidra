@@ -16,7 +16,6 @@ vi.mock("../infrastructure/Logger.ts", () => ({
 
 vi.mock("../config/feature-flags.ts", () => ({
   getRuntimeFlags: vi.fn(() => ({
-    unhandledRejectionMode: "classified",
     videoWorkerShutdownDrainSeconds: 5,
     processRole: "api",
     videoWorkerDisabled: false,
