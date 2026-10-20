@@ -12,12 +12,6 @@ import { processVideoJob, type JobSessionAppendPort } from "./processVideoJob";
 
 interface VideoJobHandlerOptions {
   providerCircuitManager?: ProviderCircuitManager;
-  metrics?: {
-    recordAlert: (
-      alertName: string,
-      metadata?: Record<string, unknown>,
-    ) => void;
-  };
   /**
    * ISSUE-12: when provided, processVideoJob calls
    * sessionService.appendGenerationToVersion after markCompleted succeeds,
@@ -49,7 +43,7 @@ export class VideoJobHandler implements JobHandler<VideoJobRecord> {
   }
 
   async process(job: VideoJobRecord, ctx: JobExecutionContext): Promise<void> {
-    const { providerCircuitManager, metrics, sessionService } = this.options;
+    const { providerCircuitManager, sessionService } = this.options;
     await processVideoJob(job, {
       jobStore: this.jobStore,
       videoGenerationService: this.videoGenerationService as never,
@@ -70,7 +64,6 @@ export class VideoJobHandler implements JobHandler<VideoJobRecord> {
               providerCircuitManager.recordFailure(provider),
           }
         : {}),
-      ...(metrics ? { metrics } : {}),
       ...(sessionService ? { sessionService } : {}),
     });
   }

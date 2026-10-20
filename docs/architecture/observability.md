@@ -1,23 +1,17 @@
-# Operational telemetry
+# Observability
 
-Current operational telemetry remains active; the retired Measurement Program, synthetic traffic jobs, quality judge and calibration schedules are removed.
+Vidra runs no error-tracking, analytics or metrics service. Server and client Sentry, PostHog operational events, Firebase Analytics, web-vitals reporting and the optional metrics sinks were removed on 2026-10-20: server Sentry was never initialized, PostHog was off in production, and nobody read the rest. Add a collector only together with the person who will read it.
 
-## Source and attribution
+## Server logs
 
-Request-source discrimination is defined by [telemetry types](../../shared/types/telemetry.ts), request telemetry middleware and the PostHog wrapper. Historical `synthetic` event values remain readable; they do not imply an installed harness or nightly program. Preserve source/actor/trace attribution and the existing event allowlists when changing instrumentation.
+- [Logger](../../server/src/infrastructure/Logger.ts) writes Pino structured logs. Signatures live in [ILogger](../../server/src/interfaces/ILogger.ts).
+- [requestId middleware](../../server/src/middleware/requestId.ts) sets `X-Request-Id` and the AsyncLocalStorage [request context](../../server/src/infrastructure/requestContext.ts); every log line inside a request carries that `requestId`.
+- [errorHandler](../../server/src/middleware/errorHandler.ts) redacts PII from the request body it logs and from error details it returns. Keep sanitization at the boundaries where data leaves the process.
 
-## Owners
+## Client logs
 
-- [OptimizeTelemetryService](../../server/src/services/observability/OptimizeTelemetryService.ts): optimization stages, cache, completion and deterministic intent/lint outcomes.
-- [SuggestionsTelemetryService](../../server/src/services/observability/SuggestionsTelemetryService.ts): selected-phrase suggestions and outcomes.
-- [SpanLabelingTelemetryService](../../server/src/services/observability/SpanLabelingTelemetryService.ts): labeling execution and completion.
-- [LlmCallTelemetryService](../../server/src/services/observability/LlmCallTelemetryService.ts): external LLM calls through `aiService`.
-- [PostHogClient](../../server/src/infrastructure/PostHogClient.ts): emission and shutdown behavior.
+[LoggingService](../../client/src/services/LoggingService.ts) is a thin console wrapper. Console output stays in the browser, so it is not redacted; redact only data that is sent off the device.
 
-Services tolerate unavailable telemetry without changing product outcomes. Preserve logging sanitization and trace/event contracts; operational events are not proof of provider output quality.
+## Evaluation
 
-## Evaluation and proof
-
-Deterministic span-labeling evaluation uses `scripts/evaluation/golden-set-relaxed-f1.ts` and its blessed baselines.
-
-Server logging signatures live in [ILogger](../../server/src/interfaces/ILogger.ts); browser logging lives in [LoggingService](../../client/src/services/LoggingService.ts).
+Deterministic span-labeling evaluation uses `scripts/evaluation/golden-set-relaxed-f1.ts` and its blessed baselines. It writes `scripts/evaluation/golden-set-results-latest.json` and exits non-zero on a regression.

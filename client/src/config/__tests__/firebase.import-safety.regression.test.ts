@@ -24,9 +24,6 @@ vi.mock("firebase/firestore", () => ({
   initializeFirestore: initializeFirestoreSpy,
   memoryLocalCache: () => ({ kind: "memory" }),
 }));
-vi.mock("firebase/analytics", () => ({
-  getAnalytics: vi.fn(() => ({ kind: "analytics" })),
-}));
 
 // The shared client setup stubs @/config/firebase for every jsdom test. This
 // is the one file that must exercise the real module — otherwise it would

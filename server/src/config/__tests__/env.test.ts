@@ -39,12 +39,12 @@ describe("parseEnv", () => {
     const result = parseEnv(
       minimalEnv({
         ENABLE_STUDIO: "false",
-        SENTRY_DEBUG: "true",
+        LOG_STACK: "true",
       }),
     );
 
     expect(result.ENABLE_STUDIO).toBe(false);
-    expect(result.SENTRY_DEBUG).toBe(true);
+    expect(result.LOG_STACK).toBe(true);
   });
 
   it("collects ALL errors rather than stopping at the first", () => {

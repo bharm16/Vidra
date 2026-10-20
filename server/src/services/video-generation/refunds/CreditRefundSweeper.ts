@@ -2,11 +2,6 @@ import type { CreditRefunder } from "./ports";
 import type { RefundFailureStore } from "./RefundFailureStore";
 import { PollingWorkerBase } from "@services/polling/PollingWorkerBase";
 
-/** Narrow metrics interface — avoids importing the concrete MetricsService class. */
-interface SweeperMetrics {
-  recordAlert(name: string, labels: Record<string, unknown>): void;
-}
-
 interface CreditRefundSweeperOptions {
   sweepIntervalMs: number;
   maxSweepIntervalMs?: number;
@@ -20,14 +15,12 @@ export class CreditRefundSweeper extends PollingWorkerBase {
   private readonly userCreditService: CreditRefunder;
   private readonly maxPerRun: number;
   private readonly maxAttempts: number;
-  private readonly sweeperMetrics: SweeperMetrics | undefined;
   private running = false;
 
   constructor(
     failureStore: RefundFailureStore,
     userCreditService: CreditRefunder,
     options: CreditRefundSweeperOptions,
-    metricsService?: SweeperMetrics,
   ) {
     super({
       workerId: "CreditRefundSweeper",
@@ -38,13 +31,11 @@ export class CreditRefundSweeper extends PollingWorkerBase {
       ...(options.backoffFactor !== undefined
         ? { backoffFactor: options.backoffFactor }
         : {}),
-      ...(metricsService ? { metrics: metricsService } : {}),
     });
     this.failureStore = failureStore;
     this.userCreditService = userCreditService;
     this.maxPerRun = options.maxPerRun;
     this.maxAttempts = options.maxAttempts;
-    this.sweeperMetrics = metricsService;
   }
 
   protected async runOnce(): Promise<boolean> {
@@ -99,12 +90,6 @@ export class CreditRefundSweeper extends PollingWorkerBase {
                 severity: "critical",
               },
             );
-            this.sweeperMetrics?.recordAlert("credit_refund_escalated", {
-              refundKey: next.refundKey,
-              userId: next.userId,
-              amount: next.amount,
-              attempts: nextAttempts,
-            });
           } else {
             await this.failureStore.releaseForRetry(
               next.refundKey,
@@ -137,7 +122,6 @@ interface RefundSweeperConfig {
 export function createCreditRefundSweeper(
   failureStore: RefundFailureStore,
   userCreditService: CreditRefunder,
-  metricsService: SweeperMetrics | undefined,
   config: RefundSweeperConfig,
 ): CreditRefundSweeper | null {
   if (config.disabled) {
@@ -153,16 +137,11 @@ export function createCreditRefundSweeper(
     return null;
   }
 
-  return new CreditRefundSweeper(
-    failureStore,
-    userCreditService,
-    {
-      sweepIntervalMs,
-      maxSweepIntervalMs: sweepIntervalMs * 8,
-      backoffFactor: 2,
-      maxPerRun: config.maxPerRun,
-      maxAttempts: config.maxAttempts,
-    },
-    metricsService,
-  );
+  return new CreditRefundSweeper(failureStore, userCreditService, {
+    sweepIntervalMs,
+    maxSweepIntervalMs: sweepIntervalMs * 8,
+    backoffFactor: 2,
+    maxPerRun: config.maxPerRun,
+    maxAttempts: config.maxAttempts,
+  });
 }

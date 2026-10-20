@@ -6,7 +6,6 @@ import { GroqLlamaAdapter } from "@clients/adapters/GroqLlamaAdapter";
 import { GroqQwenAdapter } from "@clients/adapters/GroqQwenAdapter";
 import { OpenAICompatibleAdapter } from "@clients/adapters/OpenAICompatibleAdapter";
 import { AIModelService } from "@services/ai-model/index";
-import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
 import { setProviderSettings } from "@services/ai-model/routing/ExecutionPlan";
 import { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
 import { resolveAllFlags } from "../feature-flags.ts";
@@ -200,7 +199,6 @@ export function registerLLMServices(container: DIContainer): void {
       qwenClient: LLMClient | null,
       geminiClient: LLMClient | null,
       config: ServiceConfig,
-      llmCallTelemetry: LlmCallTelemetryService | undefined,
       llmProviderCircuitManager: LlmProviderCircuitManager | null,
     ) => {
       setProviderSettings({
@@ -219,7 +217,6 @@ export function registerLLMServices(container: DIContainer): void {
 
       return new AIModelService({
         clients,
-        ...(llmCallTelemetry ? { llmCallTelemetry } : {}),
         ...(llmProviderCircuitManager
           ? { providerCircuit: llmProviderCircuitManager }
           : {}),
@@ -231,7 +228,6 @@ export function registerLLMServices(container: DIContainer): void {
       "qwenClient",
       "geminiClient",
       "config",
-      "llmCallTelemetryService",
       "llmProviderCircuitManager",
     ],
   );

@@ -30,7 +30,7 @@ it("reflows explicit caption placement into native portrait output while preserv
   const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "test", TSX_TSCONFIG_PATH: `${root}server/tsconfig.json`, TMPDIR: directory, TMP: directory, TEMP: directory };
   delete env.PANGOCAIRO_BACKEND;
   const source = `
-    import ${JSON.stringify(moduleUrl("server/instrument.mjs"))};
+    import "dotenv/config";
     import ${JSON.stringify(moduleUrl("server/src/config/native-fonts.ts"))};
     import { NativeVideoRenderer } from ${JSON.stringify(moduleUrl("server/src/services/video-export/NativeVideoRenderer.ts"))};
     import { rasterizeCaption, videoFontPath } from ${JSON.stringify(moduleUrl("server/src/services/video-export/CaptionRasterizer.ts"))};

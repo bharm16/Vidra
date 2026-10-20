@@ -63,15 +63,6 @@ const silentLog = () => ({
   child: vi.fn(),
 });
 
-const noopTelemetry = () =>
-  ({
-    recordStage: vi.fn(),
-    recordLlmCall: vi.fn(),
-    recordCacheHit: vi.fn(),
-    recordError: vi.fn(),
-    complete: vi.fn(),
-  }) as never;
-
 describe("regression: targeted optimize reuses structured artifacts", () => {
   it("compiles from the artifact and returns preview/generic prompts as typed fields", async () => {
     const structuredArtifact = createArtifact();
@@ -125,7 +116,6 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
       logOptimizationMetrics: vi.fn(),
       intentLock: passingIntentLock(),
       promptLint: passingLint(),
-      telemetry: noopTelemetry(),
     });
 
     expect(optimizeStructured).toHaveBeenCalledTimes(1);
@@ -178,7 +168,6 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
       logOptimizationMetrics: vi.fn(),
       intentLock: passingIntentLock(),
       promptLint: passingLint(),
-      telemetry: noopTelemetry(),
     };
 
     const miss = await runOptimizeFlow({

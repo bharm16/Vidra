@@ -3,7 +3,6 @@ import { ApiClient } from "@/services/ApiClient";
 import { API_CONFIG } from "@/config/api.config";
 import { createFirebaseTokenInterceptor } from "@/services/http/AuthInterceptors";
 import { getAuthRepository } from "@/repositories/index";
-import { setupTelemetrySource } from "@/services/http/TelemetrySourceInterceptor";
 import { ApiErrorResponseSchema, ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 import { ChangeProjectCommandSchema, CreateConversationCommandSchema, CreateProjectCommandSchema, ProjectSchema, ConversationSchema, type Project, type Conversation, ConversationListingSchema, type ConversationListing } from "@shared/schemas/workflow/project.schemas";
 import { CreationDraftSchema, CreateDraftCommandSchema, SaveDraftCommandSchema, RestoreDraftCommandSchema, DraftConflictSchema, type CreationDraft, type DraftContent, type SaveDraftResult } from "@shared/schemas/workflow/draft.schemas";
@@ -46,7 +45,6 @@ export function createWorkflowClient(expectedOwnerId?: string): ApiClient {
     if (expectedOwnerId !== undefined && getAuthRepository().getCurrentUser()?.uid !== expectedOwnerId) throw new WorkflowApiError("The account changed before the request was sent. Your draft is retained.", 401, "AUTH_REQUIRED");
     return authenticated;
   });
-  setupTelemetrySource(client);
   return client;
 }
 

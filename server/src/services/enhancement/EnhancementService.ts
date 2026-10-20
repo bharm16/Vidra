@@ -10,7 +10,6 @@ import { CacheKeyFactory } from "./utils/CacheKeyFactory";
 import { PROMPT_MODES } from "./constants";
 import { SpanContextBuilder } from "./services/SpanContextBuilder";
 import { EnhancementV2Engine } from "./v2/index.js";
-import type { SuggestionsTrace } from "@services/observability/SuggestionsTelemetryService";
 import type {
   EnhancementV2Config,
   EnhancementV2Execution,
@@ -26,14 +25,6 @@ import type {
   EnhancementMetrics,
   Suggestion,
 } from "./services/types";
-
-const makeNoopSuggestionsTrace = (): SuggestionsTrace =>
-  ({
-    recordStage: () => {},
-    recordCacheHit: () => {},
-    recordError: () => {},
-    complete: () => {},
-  }) as unknown as SuggestionsTrace;
 
 interface EnhancementServiceDependencies {
   aiService: AIExecutionPort;
@@ -127,16 +118,7 @@ export class EnhancementService {
     nearbySpans = [],
     editHistory = [],
     debug = false,
-    trace,
   }: EnhancementRequestParams): Promise<EnhancementResult> {
-    const t = trace ?? makeNoopSuggestionsTrace();
-    let currentStage:
-      | "video_context"
-      | "span_context"
-      | "cache"
-      | "v2_engine"
-      | "post_processing" = "video_context";
-    let v2Execution: EnhancementV2Execution | null = null;
 
     const metrics: EnhancementMetrics = {
       total: 0,
@@ -154,7 +136,6 @@ export class EnhancementService {
     let isVideoPrompt = false;
     let modelTarget: string | null = null;
     let promptSection: string | null = null;
-    let phraseRoleForTelemetry: string | null = null;
 
     const operation = "getEnhancementSuggestions";
 
@@ -168,8 +149,6 @@ export class EnhancementService {
         editHistoryLength: editHistory?.length || 0,
       });
 
-      currentStage = "video_context";
-      const videoContextStart = performance.now();
       const videoContext = this.core.videoPromptService.detectVideoContext({
         fullPrompt,
         highlightedText,
@@ -179,7 +158,6 @@ export class EnhancementService {
         highlightedCategoryConfidence: highlightedCategoryConfidence ?? null,
         metrics,
       });
-      t.recordStage("video_context", performance.now() - videoContextStart);
 
       isVideoPrompt = videoContext.isVideoPrompt;
       modelTarget = videoContext.modelTarget;
@@ -190,11 +168,8 @@ export class EnhancementService {
         );
       const highlightWordCount = videoContext.highlightWordCount;
       const phraseRole = videoContext.phraseRole;
-      phraseRoleForTelemetry = phraseRole;
       const videoConstraints = videoContext.videoConstraints;
 
-      currentStage = "span_context";
-      const spanContextStart = performance.now();
       const spanContext = this.pipeline.spanContextBuilder.buildSpanContext({
         allLabeledSpans,
         nearbySpans,
@@ -203,7 +178,6 @@ export class EnhancementService {
         highlightedCategory: highlightedCategory ?? null,
         phraseRole,
       });
-      t.recordStage("span_context", performance.now() - spanContextStart);
 
       const focusGuidance =
         this.core.videoPromptService.getCategoryFocusGuidance(
@@ -214,7 +188,6 @@ export class EnhancementService {
           editHistory,
         ) || undefined;
 
-      currentStage = "cache";
       const cacheStart = Date.now();
       const cacheKey = CacheKeyFactory.generateKey(
         `${this.cacheConfig.namespace}:v2`,
@@ -245,7 +218,6 @@ export class EnhancementService {
         "enhancement",
       );
       metrics.cacheCheck = Date.now() - cacheStart;
-      t.recordStage("cache", metrics.cacheCheck);
 
       if (cached && !debug) {
         metrics.cache = true;
@@ -263,27 +235,6 @@ export class EnhancementService {
           totalTime: metrics.total,
           promptMode: metrics.promptMode,
           suggestionCount: this._countSuggestions(cached.suggestions),
-        });
-        t.recordCacheHit();
-        t.complete({
-          outcome: "success",
-          promptLength: fullPrompt?.length ?? 0,
-          suggestionCount: this._countSuggestions(cached.suggestions),
-          highlightedCategory: highlightedCategory ?? null,
-          isVideoPrompt,
-          isPlaceholder: cached.isPlaceholder,
-          modelTarget,
-          promptSection,
-          phraseRole,
-          policyVersion: this.enhancementConfig.policyVersion,
-          categoryId: null,
-          engineMode: null,
-          modelCallCount: 0,
-          fallbackApplied: false,
-          debug,
-          highlightedText: highlightedText ?? "",
-          fullPrompt: fullPrompt ?? "",
-          suggestions: this._flattenSuggestionTexts(cached.suggestions),
         });
         return { ...cached, fromCache: true };
       }
@@ -319,8 +270,6 @@ export class EnhancementService {
 
       const postStart = Date.now();
 
-      currentStage = "v2_engine";
-      const v2EngineStart = performance.now();
       const execution = await this._executeEnhancementV2({
         highlightedText,
         contextBefore,
@@ -343,11 +292,6 @@ export class EnhancementService {
         ...(focusGuidance !== undefined ? { focusGuidance } : {}),
         debug,
       });
-      t.recordStage("v2_engine", performance.now() - v2EngineStart);
-      v2Execution = execution;
-
-      currentStage = "post_processing";
-      const postProcessingStart = performance.now();
 
       result = execution.result;
       // Snapshot clones feed the `_debug` payload below — only needed when
@@ -434,28 +378,6 @@ export class EnhancementService {
         };
       }
 
-      t.recordStage("post_processing", performance.now() - postProcessingStart);
-      t.complete({
-        outcome: "success",
-        promptLength: fullPrompt?.length ?? 0,
-        suggestionCount: this._countSuggestions(result.suggestions),
-        highlightedCategory: highlightedCategory ?? null,
-        isVideoPrompt,
-        isPlaceholder,
-        modelTarget,
-        promptSection,
-        phraseRole,
-        policyVersion: execution.debug.policyVersion,
-        categoryId: execution.debug.categoryId,
-        engineMode: execution.debug.mode,
-        modelCallCount: execution.debug.modelCallCount,
-        fallbackApplied: result.fallbackApplied,
-        debug,
-        highlightedText: highlightedText ?? "",
-        fullPrompt: fullPrompt ?? "",
-        suggestions: this._flattenSuggestionTexts(result.suggestions),
-      });
-
       return result;
     } catch (error) {
       metrics.total = Date.now() - startTotal;
@@ -470,30 +392,6 @@ export class EnhancementService {
         },
         error as Error,
       );
-
-      t.recordError(currentStage, error);
-      t.complete({
-        outcome: "error",
-        promptLength: fullPrompt?.length ?? 0,
-        suggestionCount: 0,
-        highlightedCategory: highlightedCategory ?? null,
-        isVideoPrompt,
-        isPlaceholder: false,
-        modelTarget,
-        promptSection,
-        phraseRole: phraseRoleForTelemetry,
-        policyVersion:
-          v2Execution?.debug.policyVersion ??
-          this.enhancementConfig.policyVersion,
-        categoryId: v2Execution?.debug.categoryId ?? null,
-        engineMode: v2Execution?.debug.mode ?? null,
-        modelCallCount: v2Execution?.debug.modelCallCount ?? 0,
-        fallbackApplied: v2Execution?.result.fallbackApplied ?? false,
-        debug,
-        highlightedText: highlightedText ?? "",
-        fullPrompt: fullPrompt ?? "",
-        suggestions: [],
-      });
 
       this.log.error("Operation failed.", error as Error, {
         operation,
@@ -637,35 +535,6 @@ export class EnhancementService {
       }, 0);
     }
     return suggestions.length;
-  }
-
-  /**
-   * Flattens the polymorphic suggestion shape (flat array vs grouped array)
-   * to a plain string[] of suggestion texts, for the telemetry event content.
-   * Lets dashboards show the actual alternatives the model returned.
-   */
-  private _flattenSuggestionTexts(
-    suggestions: EnhancementResult["suggestions"] | undefined,
-  ): string[] {
-    if (!Array.isArray(suggestions)) return [];
-    const first = suggestions[0] as { suggestions?: unknown } | undefined;
-    if (first && Array.isArray(first.suggestions)) {
-      const out: string[] = [];
-      for (const group of suggestions) {
-        const groupSuggestions = (group as { suggestions?: unknown })
-          .suggestions;
-        if (Array.isArray(groupSuggestions)) {
-          for (const s of groupSuggestions) {
-            const text = (s as { text?: unknown })?.text;
-            if (typeof text === "string") out.push(text);
-          }
-        }
-      }
-      return out;
-    }
-    return suggestions
-      .map((s) => (s as { text?: unknown })?.text)
-      .filter((t): t is string => typeof t === "string");
   }
 
   private _getEnhancementTemperature(): number {

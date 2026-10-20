@@ -27,7 +27,7 @@ export function createRequestLoggingInterceptor(): (
   request: BuiltRequest,
 ) => BuiltRequest {
   return (request: BuiltRequest): BuiltRequest => {
-    const traceId = logger.generateTraceId();
+    const traceId = `trace-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const url = new URL(request.url, window.location.origin);
     const endpoint = url.pathname;
 
@@ -50,7 +50,6 @@ export function createRequestLoggingInterceptor(): (
       }
     }
 
-    logger.setTraceId(traceId);
     logger.debug("API request", {
       operation: "apiRequest",
       requestId: traceId,
@@ -58,13 +57,7 @@ export function createRequestLoggingInterceptor(): (
       endpoint,
       url: request.url,
       direction: "outbound",
-      headers: Object.fromEntries(
-        Object.entries(request.init.headers || {}).filter(
-          ([key]) =>
-            !key.toLowerCase().includes("auth") &&
-            !key.toLowerCase().includes("key"),
-        ),
-      ),
+      headers: request.init.headers,
       body: body ? summarizePayload(body) : undefined,
     });
 
@@ -87,10 +80,6 @@ export function createResponseLoggingInterceptor(): (
       ? Math.round(performance.now() - metadata.startTime)
       : undefined;
     const endpoint = new URL(url).pathname;
-
-    if (metadata?.traceId) {
-      logger.setTraceId(metadata.traceId);
-    }
 
     // Clone response to read body without consuming it
     const clonedResponse = response.clone();
@@ -143,7 +132,6 @@ export function createResponseLoggingInterceptor(): (
       });
     }
 
-    logger.clearTraceId();
     return response;
   };
 }

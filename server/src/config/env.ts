@@ -147,7 +147,6 @@ const firebaseSchema = z.object({
   VITE_FIREBASE_STORAGE_BUCKET: optionalString(),
   VITE_FIREBASE_MESSAGING_SENDER_ID: optionalString(),
   VITE_FIREBASE_APP_ID: optionalString(),
-  VITE_FIREBASE_MEASUREMENT_ID: optionalString(),
   GOOGLE_APPLICATION_CREDENTIALS: optionalString(),
   // Firebase Admin auth: either a service-account JSON file (PATH) or the
   // JSON blob inline (JSON). Both are read by infrastructure/firebaseAdmin.ts
@@ -264,9 +263,6 @@ const securitySchema = z.object({
 });
 
 const observabilitySchema = z.object({
-  SENTRY_DSN: optionalString(),
-  SENTRY_DEBUG: coerceBooleanString(false),
-  APP_VERSION: optionalString(),
   // Structured logging stack-trace controls — consumed by infrastructure/Logger.ts
   LOG_STACK: coerceBooleanString(false),
   LOG_STACK_LEVELS: z.string().default("warn,error"),

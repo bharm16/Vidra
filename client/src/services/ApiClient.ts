@@ -16,7 +16,6 @@ import { ApiError } from "./http/ApiError";
 import { ApiErrorFactory } from "./http/ApiErrorFactory";
 import { ApiResponseHandler } from "./http/ApiResponseHandler";
 import { setupApiAuth } from "./http/AuthInterceptors";
-import { setupTelemetrySource } from "./http/TelemetrySourceInterceptor";
 import { AuthRetryTransport } from "./http/AuthRetryTransport";
 import { buildFirebaseAuthHeaders } from "./http/firebaseAuth";
 import { getFirebaseAuth } from "@/config/firebase";
@@ -186,7 +185,6 @@ const authRetryTransport = new AuthRetryTransport({
 export const apiClient = new ApiClient({ transport: authRetryTransport });
 
 setupApiAuth(apiClient);
-setupTelemetrySource(apiClient);
 
 // Enable logging in development
 if ((import.meta as { env?: { MODE?: string } }).env?.MODE === "development") {

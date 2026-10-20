@@ -46,22 +46,12 @@ function createApp(overrides?: {
     ...overrides?.sceneDetectionService,
   };
 
-  const suggestionsTelemetryService = {
-    startSuggestionsTrace: vi.fn(() => ({
-      recordStage: vi.fn(),
-      recordCacheHit: vi.fn(),
-      recordError: vi.fn(),
-      complete: vi.fn(),
-    })),
-  };
-
   const app = express();
   app.use(express.json());
   app.use(
     createEnhancementRoutes({
       enhancementService,
       sceneDetectionService,
-      suggestionsTelemetryService: suggestionsTelemetryService as never,
     }),
   );
 

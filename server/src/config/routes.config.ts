@@ -58,30 +58,6 @@ function registerRoutes(app: Application, container: DIContainer): void {
  * Must be called AFTER all routes are registered
  */
 export function registerErrorHandlers(app: Application): void {
-  // Sentry error handler (must be before other error handlers)
-  // Sentry.setupExpressErrorHandler(app); // Disabled
-
-  // Optional fallthrough error handler
-  app.use(function onError(
-    err: Error,
-    req: Request,
-    res: Response & { sentry?: string },
-    next: (err?: Error) => void,
-  ): void {
-    // Only short-circuit when Sentry has attached an error id.
-    if (res.headersSent) {
-      next(err);
-      return;
-    }
-    if (res.sentry) {
-      res.statusCode = 500;
-      res.end(`${res.sentry}\n`);
-      return;
-    }
-    next(err);
-  });
-
-  // Custom error handler (must be last)
   app.use(errorHandler);
 }
 

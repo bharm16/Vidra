@@ -25,7 +25,6 @@ export const runOptimizeFlow = async ({
   logOptimizationMetrics,
   intentLock,
   promptLint,
-  telemetry: t,
 }: OptimizeFlowArgs): Promise<OptimizationResponse> => {
   const startTime = performance.now();
   const operation = "optimize";
@@ -43,17 +42,6 @@ export const runOptimizeFlow = async ({
     signal,
     targetModel,
   } = request;
-
-  const inputSummary = {
-    promptLength: prompt.length,
-    lockedSpanCount: lockedSpans.length,
-    targetModel: targetModel ?? null,
-    mode: mode as "video",
-    hasContext: !!context,
-    hasBrainstormContext: !!brainstormContext,
-    hasShotPlan: !!shotPlan,
-    inputPrompt: prompt,
-  };
 
   const originalUserPrompt =
     typeof brainstormContext?.originalUserPrompt === "string" &&
@@ -88,7 +76,7 @@ export const runOptimizeFlow = async ({
 
   /**
    * Single exit for a successful optimization: cache the response as one
-   * record, log, and close the trace. Both branches below route through it, so
+   * record and log. Both branches below route through it, so
    * neither can forget a step the other does.
    */
   const complete = (response: OptimizationResponse): OptimizationResponse => {
@@ -113,20 +101,6 @@ export const runOptimizeFlow = async ({
       promptLintOk: response.quality.lint.ok,
     });
 
-    t.complete({
-      outcome: "success",
-      outputLength: response.prompt.length,
-      outputPrompt: response.prompt,
-      intentLockPassed: response.quality.intentLock.passed,
-      intentLockRepaired: response.quality.intentLock.repaired,
-      promptLintOk: response.quality.lint.ok,
-      promptLintOverBudget: Boolean(response.quality.lint.overBudget),
-      ...(response.previewPrompt
-        ? { previewPrompt: response.previewPrompt }
-        : {}),
-      ...inputSummary,
-    });
-
     return response;
   };
 
@@ -139,20 +113,6 @@ export const runOptimizeFlow = async ({
         mode,
         duration: Math.round(performance.now() - startTime),
       });
-      t.recordCacheHit();
-      t.complete({
-        outcome: "success",
-        outputLength: cached.prompt.length,
-        outputPrompt: cached.prompt,
-        intentLockPassed: cached.quality.intentLock.passed,
-        intentLockRepaired: cached.quality.intentLock.repaired,
-        promptLintOk: cached.quality.lint.ok,
-        promptLintOverBudget: Boolean(cached.quality.lint.overBudget),
-        ...(cached.previewPrompt
-          ? { previewPrompt: cached.previewPrompt }
-          : {}),
-        ...inputSummary,
-      });
       return cached;
     }
   } else {
@@ -161,11 +121,9 @@ export const runOptimizeFlow = async ({
 
   let interpretedShotPlan = shotPlan;
   if (!interpretedShotPlan && !shotPlanAttempted) {
-    const shotStart = performance.now();
     try {
       throwIfAborted(signal);
       interpretedShotPlan = await shotInterpreter.interpret(prompt, signal);
-      t.recordLlmCall();
     } catch (interpError) {
       log.warn(
         "Shot interpretation (single-stage) failed, proceeding without plan",
@@ -174,8 +132,6 @@ export const runOptimizeFlow = async ({
           error: (interpError as Error).message,
         },
       );
-    } finally {
-      t.recordStage("shot_interpreter", performance.now() - shotStart);
     }
   }
 
@@ -193,21 +149,11 @@ export const runOptimizeFlow = async ({
       ...(signal ? { signal } : {}),
     };
 
-    const strategyStart = performance.now();
-    let structuredArtifact;
-    let optimizedPrompt: string;
-    try {
-      structuredArtifact = await strategy.optimizeStructured(strategyRequest);
-      t.recordLlmCall();
-      optimizedPrompt = strategy.renderStructuredPrompt(
-        structuredArtifact.structuredPrompt,
-      );
-    } catch (err) {
-      t.recordError("strategy", err);
-      throw err;
-    } finally {
-      t.recordStage("strategy", performance.now() - strategyStart);
-    }
+    const structuredArtifact =
+      await strategy.optimizeStructured(strategyRequest);
+    const optimizedPrompt = strategy.renderStructuredPrompt(
+      structuredArtifact.structuredPrompt,
+    );
 
     const artifactKey = optimizationCache.buildStructuredArtifactKeyFromInputs({
       prompt,
@@ -225,7 +171,6 @@ export const runOptimizeFlow = async ({
     // Step 2: No target model — finish here (intent repair, then lint)
     // -----------------------------------------------------------------------
     if (!targetModel || !compilationService) {
-      const intentStart = performance.now();
       const finished = finishPrompt({
         prompt: optimizedPrompt,
         originalPrompt: originalUserPrompt,
@@ -235,7 +180,6 @@ export const runOptimizeFlow = async ({
         intentLock,
         promptLint,
       });
-      t.recordStage("intent_lock", performance.now() - intentStart);
 
       const response: OptimizationResponse = {
         prompt: finished.prompt,
@@ -261,7 +205,6 @@ export const runOptimizeFlow = async ({
     // prompt against the target model's word budget, and compilation is about to
     // rewrite it anyway. Step 4 finishes what compilation produces.
     // -----------------------------------------------------------------------
-    const intentStart = performance.now();
     const genericIntent = applyIntentLockPolicy({
       intentLock,
       originalPrompt: originalUserPrompt,
@@ -269,37 +212,25 @@ export const runOptimizeFlow = async ({
       shotPlan: interpretedShotPlan,
       phase: "generic",
     });
-    t.recordStage("intent_lock", performance.now() - intentStart);
     const genericPrompt = genericIntent.prompt;
 
-    let compiled: {
+    const compiled: {
       prompt: string;
       metadata: MetadataMap | null;
       compilation: CompilationState;
       artifactKey?: string;
-    };
-    const compilationStart = performance.now();
-    try {
-      compiled = await compilationService.compile({
-        operation,
-        targetModel,
-        source: { kind: "artifact", artifact: structuredArtifact },
-        fallbackPrompt: genericPrompt,
-        artifactKey,
-      });
-      t.recordLlmCall();
-    } catch (err) {
-      t.recordError("compilation", err);
-      throw err;
-    } finally {
-      t.recordStage("compilation", performance.now() - compilationStart);
-    }
+    } = await compilationService.compile({
+      operation,
+      targetModel,
+      source: { kind: "artifact", artifact: structuredArtifact },
+      fallbackPrompt: genericPrompt,
+      artifactKey,
+    });
 
     // -----------------------------------------------------------------------
     // Step 4: Finish the compiled prompt — validate-only intent (a repair here
     // would flatten model-specific structure), then lint.
     // -----------------------------------------------------------------------
-    const lintStart = performance.now();
     const finished = finishPrompt({
       prompt: compiled.prompt,
       originalPrompt: originalUserPrompt,
@@ -310,7 +241,6 @@ export const runOptimizeFlow = async ({
       promptLint,
       compilation: compiled.compilation,
     });
-    t.recordStage("prompt_lint", performance.now() - lintStart);
 
     if (!finished.quality.intentLock.passed) {
       log.warn("Post-compilation intent validation failed (not repaired)", {
@@ -336,12 +266,6 @@ export const runOptimizeFlow = async ({
     return complete(response);
   } catch (error) {
     if ((error as Error)?.name === "AbortError") {
-      t.complete({
-        outcome: "aborted",
-        outputLength: 0,
-        outputPrompt: null,
-        ...inputSummary,
-      });
       log.info("Operation aborted.", {
         operation,
         duration: Math.round(performance.now() - startTime),
@@ -349,12 +273,6 @@ export const runOptimizeFlow = async ({
       });
       throw error;
     }
-    t.complete({
-      outcome: "error",
-      outputLength: 0,
-      outputPrompt: null,
-      ...inputSummary,
-    });
     log.error("Operation failed.", error as Error, {
       operation,
       duration: Math.round(performance.now() - startTime),

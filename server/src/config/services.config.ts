@@ -8,7 +8,6 @@ import { registerAdmissionServices } from "./services/admission.services.ts";
 
 import { createContainer, type DIContainer } from "@infrastructure/DIContainer";
 import { registerCoreServices } from "./services/core.services.ts";
-import { registerObservabilityServices } from "./services/observability.services.ts";
 import { registerCacheServices } from "./services/cache.services.ts";
 import { registerStorageServices } from "./services/storage.services.ts";
 import { registerRefundServices } from "./services/refund.services.ts";
@@ -34,9 +33,8 @@ export type { ServiceConfig } from "./services/service-config.types.ts";
 export async function configureServices(): Promise<DIContainer> {
   const container = createContainer();
 
-  // Foundation: logging, metrics, circuit breaker, config
+  // Foundation: logging, circuit breaker, config
   registerCoreServices(container);
-  registerObservabilityServices(container);
   registerCacheServices(container);
   registerStorageServices(container);
 

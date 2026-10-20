@@ -66,6 +66,5 @@ vi.mock("@/config/firebase", () => {
   return {
     getFirebaseAuth: () => auth,
     getFirebaseDb: () => db,
-    getFirebaseAnalytics: () => null,
   };
 });

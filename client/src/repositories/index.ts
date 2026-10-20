@@ -6,23 +6,15 @@
  */
 
 import { getFirebaseAuth } from "../config/firebase";
-import { setSentryUser, addSentryBreadcrumb } from "../config/sentry";
 import { AuthRepository, MockAuthRepository } from "./AuthRepository";
 import { PromptRepository } from "./PromptRepository";
 import { LocalStoragePromptRepository } from "./LocalStoragePromptRepository";
-import type { SentryIntegration } from "./AuthRepository";
 import { z } from "zod";
 
 const E2EAuthUserSchema = z.object({
   uid: z.string().trim().min(1),
   email: z.string().email().default("test@example.com"),
 });
-
-// Sentry integration adapter
-const sentryAdapter: SentryIntegration = {
-  setUser: setSentryUser,
-  addBreadcrumb: addSentryBreadcrumb,
-};
 
 // Singleton instances
 let authRepository: AuthRepository | null = null;
@@ -46,7 +38,7 @@ export function getAuthRepository(): AuthRepository {
       authRepository = mockRepo as unknown as AuthRepository;
       return authRepository;
     }
-    authRepository = new AuthRepository(getFirebaseAuth(), sentryAdapter);
+    authRepository = new AuthRepository(getFirebaseAuth());
   }
   return authRepository;
 }

@@ -48,8 +48,6 @@ export function useAsyncScheduler(
 
   const schedule = useCallback(
     (payload: SpanLabelingPayload, immediate = false): void => {
-      performance.mark("span-labeling-start");
-
       cancelPending();
 
       if (!options.enabled) {
@@ -70,21 +68,7 @@ export function useAsyncScheduler(
 
       const run = async (controller: AbortController): Promise<void> => {
         try {
-          performance.mark("span-api-start");
-
           const result = await callbacks.onExecute(payload, controller.signal);
-
-          performance.mark("span-api-complete");
-          performance.measure(
-            "span-api-duration",
-            "span-api-start",
-            "span-api-complete",
-          );
-          performance.measure(
-            "span-labeling-total",
-            "span-labeling-start",
-            "span-api-complete",
-          );
 
           // Check for stale requests
           if (

@@ -27,7 +27,6 @@ import compression from "compression";
 
 import { requestIdMiddleware } from "@middleware/requestId";
 import { respond } from "@middleware/respond";
-import { telemetrySourceMiddleware } from "@middleware/telemetrySource";
 import {
   createFailClosedLlmRateLimit,
   setRedisRateLimitHealth,
@@ -215,7 +214,6 @@ const COMPRESSION_CONFIG: compression.CompressionOptions = {
  */
 export function applyRequestIdMiddleware(app: Application): void {
   app.use(requestIdMiddleware);
-  app.use(telemetrySourceMiddleware);
 }
 
 /**
@@ -641,7 +639,6 @@ export function applyCorsMiddleware(app: Application): void {
         "Authorization",
         "X-API-Key",
         "X-Firebase-Token",
-        "X-Telemetry-Source",
       ],
       exposedHeaders: ["X-Request-Id"],
       maxAge: 86400, // 24 hours

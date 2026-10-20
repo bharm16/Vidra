@@ -18,12 +18,6 @@ interface ProviderCircuitManagerOptions {
   maxSamples?: number;
   /** Max time (ms) a half-open probe can be in-flight before it's considered stuck. Defaults to 5 minutes. */
   halfOpenProbeTimeoutMs?: number;
-  metrics?: {
-    recordAlert?: (
-      alertName: string,
-      metadata?: Record<string, unknown>,
-    ) => void;
-  };
 }
 
 export interface ProviderCircuitSnapshot {
@@ -48,7 +42,6 @@ export class ProviderCircuitManager {
   private readonly cooldownMs: number;
   private readonly maxSamples: number;
   private readonly halfOpenProbeTimeoutMs: number;
-  private readonly metrics: ProviderCircuitManagerOptions["metrics"];
   private readonly recoveryCallbacks = new Set<(provider: string) => void>();
 
   /** Returns snapshots for all tracked providers. Useful for startup logging and diagnostics. */
@@ -84,7 +77,6 @@ export class ProviderCircuitManager {
       Number.isFinite(options.halfOpenProbeTimeoutMs)
         ? Math.max(10_000, Math.trunc(options.halfOpenProbeTimeoutMs))
         : DEFAULT_HALF_OPEN_PROBE_TIMEOUT_MS;
-    this.metrics = options.metrics;
   }
 
   canDispatch(provider: string): boolean {
@@ -117,10 +109,6 @@ export class ProviderCircuitManager {
           probeAge: now - record.halfOpenProbeDispatchedAtMs,
           timeoutMs: this.halfOpenProbeTimeoutMs,
         });
-        this.metrics?.recordAlert?.("video_provider_half_open_probe_timeout", {
-          provider,
-          timeoutMs: this.halfOpenProbeTimeoutMs,
-        });
       }
       return !record.halfOpenProbeInFlight;
     }
@@ -149,9 +137,6 @@ export class ProviderCircuitManager {
         "Provider circuit closed after successful half-open probe",
         { provider },
       );
-      this.metrics?.recordAlert?.("video_provider_circuit_closed", {
-        provider,
-      });
       this.notifyRecovery(provider);
       return;
     }
@@ -230,11 +215,6 @@ export class ProviderCircuitManager {
       cooldownMs: this.cooldownMs,
       failureRate: this.computeFailureRate(record.outcomes),
       sampleSize: record.outcomes.length,
-    });
-    this.metrics?.recordAlert?.("video_provider_circuit_opened", {
-      provider,
-      reason,
-      cooldownMs: this.cooldownMs,
     });
   }
 

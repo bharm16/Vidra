@@ -86,13 +86,6 @@ describe("runOptimizeFlow intent lock wiring", () => {
         repaired: false,
       })),
     },
-    telemetry: {
-      recordStage: vi.fn(),
-      recordLlmCall: vi.fn(),
-      recordCacheHit: vi.fn(),
-      recordError: vi.fn(),
-      complete: vi.fn(),
-    },
   };
 
   it("uses originalUserPrompt from brainstorm context when enforcing intent lock", async () => {

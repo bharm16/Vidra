@@ -45,8 +45,6 @@ import {
   type EvaluationReport,
 } from "./baseline-gate.js";
 import { createBaselineStore } from "./baseline-store.js";
-import { createEvalEmitter, resolveDistinctId } from "./posthog-emitter.js";
-import type { Outcome, SpanLabelingF1Metrics } from "./eval-event-types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -246,193 +244,111 @@ function toEvaluationReport(
 
 async function main(): Promise<number> {
   const opts = parseArgs(process.argv.slice(2));
-  const emitter = createEvalEmitter();
-  const startedAt = Date.now();
-  let outcome: Outcome = "setup_error";
-  let metrics: SpanLabelingF1Metrics | undefined;
-  let errorMessage: string | undefined;
-  let promptCount = 0;
-  let errorCount = 0;
-  let resolvedProviderForEmit: "groq" | "openai" | undefined;
-  // Per-prompt examples surfaced in eval.completed for dashboard quality
-  // review. Populated after labeling runs; remains empty on setup_error.
-  let evalExamples: import("./eval-event-types.js").EvalExample[] = [];
 
-  try {
-    console.log("Golden Set Relaxed F1 Evaluation");
-    console.log(`  mode: ${opts.bless ? "bless" : "gate"}`);
-    console.log(
-      `  fixtures: ${opts.fixtures ? opts.fixtures.join(",") : "all"}`,
+  console.log("Golden Set Relaxed F1 Evaluation");
+  console.log(`  mode: ${opts.bless ? "bless" : "gate"}`);
+  console.log(
+    `  fixtures: ${opts.fixtures ? opts.fixtures.join(",") : "all"}`,
+  );
+
+  const fixtures = loadFixtures(opts.fixtures);
+  const allPrompts = fixtures.flatMap((f) => f.prompts);
+  console.log(
+    `  loaded ${fixtures.length} fixture(s), ${allPrompts.length} prompts`,
+  );
+
+  const { service, provider, model } = createGoldenSetAIService(
+    opts.provider,
+    process.env,
+  );
+  console.log(`  provider: ${provider}`);
+  console.log(`  model: ${model}`);
+
+  console.log("\nWarming up NLP services...");
+  await warmupNlpServices();
+
+  console.log("Running span labeling...");
+  const results = await runLabeling(allPrompts, service, opts.concurrency);
+
+  const errorCount = results.filter((r) => r.error !== null).length;
+  const errorRate = errorCount / results.length;
+  console.log(
+    `\n  errors: ${errorCount}/${results.length} (${(errorRate * 100).toFixed(1)}%)`,
+  );
+
+  if (errorRate > MAX_ERROR_RATE) {
+    console.error(
+      `\n❌ Error rate ${(errorRate * 100).toFixed(1)}% exceeds threshold ${(MAX_ERROR_RATE * 100).toFixed(0)}%. Aborting — partial F1 numbers can't be trusted.`,
     );
-
-    const fixtures = loadFixtures(opts.fixtures);
-    const allPrompts = fixtures.flatMap((f) => f.prompts);
-    promptCount = allPrompts.length;
-    console.log(
-      `  loaded ${fixtures.length} fixture(s), ${allPrompts.length} prompts`,
-    );
-
-    const { service, provider, model } = createGoldenSetAIService(
-      opts.provider,
-      process.env,
-    );
-    resolvedProviderForEmit = provider;
-    console.log(`  provider: ${provider}`);
-    console.log(`  model: ${model}`);
-
-    console.log("\nWarming up NLP services...");
-    await warmupNlpServices();
-
-    console.log("Running span labeling...");
-    const results = await runLabeling(allPrompts, service, opts.concurrency);
-
-    errorCount = results.filter((r) => r.error !== null).length;
-    const errorRate = errorCount / results.length;
-    console.log(
-      `\n  errors: ${errorCount}/${results.length} (${(errorRate * 100).toFixed(1)}%)`,
-    );
-
-    if (errorRate > MAX_ERROR_RATE) {
-      console.error(
-        `\n❌ Error rate ${(errorRate * 100).toFixed(1)}% exceeds threshold ${(MAX_ERROR_RATE * 100).toFixed(0)}%. Aborting — partial F1 numbers can't be trusted.`,
-      );
-      outcome = "setup_error";
-      errorMessage = `Error rate ${(errorRate * 100).toFixed(1)}% exceeds threshold`;
-      return 2;
-    }
-
-    const evaluator = new RelaxedF1Evaluator();
-    const report = toEvaluationReport(results, evaluator);
-
-    // Capture per-prompt content so PostHog dashboards can show predicted
-    // vs ground-truth spans for individual prompts — not just aggregate F1.
-    evalExamples = results.map((r) => ({
-      promptId: r.promptId,
-      predicted: r.predicted.map((s) => ({ text: s.text, role: s.role })),
-      groundTruth: r.groundTruth.map((s) => ({ text: s.text, role: s.role })),
-      ...(r.error ? { error: r.error } : {}),
-    }));
-
-    console.log("\nReport:");
-    console.log(`  overall F1:        ${report.summary.relaxedF1.toFixed(3)}`);
-    console.log(
-      `  taxonomy accuracy: ${report.summary.taxonomyAccuracy.toFixed(3)}`,
-    );
-    console.log(
-      `  categories scored: ${Object.keys(report.byCategory).length}`,
-    );
-
-    // Write the full results JSON for CI artifact upload / debugging
-    writeFileSync(
-      RESULTS_PATH,
-      JSON.stringify(
-        {
-          timestamp: new Date().toISOString(),
-          provider,
-          model,
-          commit: opts.commit ?? null,
-          report,
-          // Full per-prompt records including predicted and ground-truth
-          // spans. Required for confusion-matrix and per-prompt diagnostics
-          // (`scripts/evaluation/diagnose-failures.ts`). The file is tracked
-          // in git (~110KB for 67 prompts) so cross-PR baseline drift shows
-          // up in `git diff` — accept the per-run timestamp churn as the
-          // cost of that observability.
-          perPrompt: results.map((r) => ({
-            promptId: r.promptId,
-            predictedCount: r.predicted.length,
-            groundTruthCount: r.groundTruth.length,
-            predicted: r.predicted,
-            groundTruth: r.groundTruth,
-            error: r.error,
-          })),
-        },
-        null,
-        2,
-      ),
-      "utf8",
-    );
-    console.log(`  results: ${RESULTS_PATH}`);
-
-    metrics = {
-      overallF1: report.summary.relaxedF1,
-      overallPrecision: report.summary.precision,
-      overallRecall: report.summary.recall,
-      perCategoryF1: Object.fromEntries(
-        Object.entries(report.byCategory).map(([k, v]) => [k, v.f1]),
-      ),
-    };
-
-    if (opts.bless) {
-      const baseline = buildBaseline(report, {
-        provider,
-        ...(opts.commit !== undefined && { commit: opts.commit }),
-      });
-      baselineStore.write(baseline.provider, baseline);
-      console.log(`\n✅ Baseline blessed: ${baselineStore.path(provider)}`);
-      outcome = "passed";
-      return 0;
-    }
-
-    const baseline = baselineStore.read(provider);
-    if (!baseline) {
-      console.error(
-        `\n❌ No baseline at ${baselineStore.path(provider)}. Run with --bless first to establish one.`,
-      );
-      outcome = "setup_error";
-      errorMessage = `No baseline at ${baselineStore.path(provider)}`;
-      return 2;
-    }
-
-    if (baseline.commit !== undefined) {
-      metrics.baselineCommit = baseline.commit;
-    }
-
-    const gate = compareToBaseline(report, baseline);
-    console.log("\n" + formatGateResult(gate));
-
-    if (gate.passed) {
-      outcome = "passed";
-      return 0;
-    }
-    outcome = "regression";
-    errorMessage = `${gate.regressions.length} regression(s) detected`;
-    return 1;
-  } catch (err) {
-    errorMessage = err instanceof Error ? err.message : String(err);
-    outcome = "setup_error";
-    throw err;
-  } finally {
-    try {
-      emitter.emit({
-        distinctId: resolveDistinctId(),
-        event: "eval.completed",
-        properties: {
-          evalType: "span_labeling_f1",
-          outcome,
-          ...(errorMessage !== undefined && { errorMessage }),
-          commit: opts.commit ?? "unknown",
-          provider: resolvedProviderForEmit ?? null,
-          ...(process.env.GITHUB_RUN_ID !== undefined && {
-            runId: process.env.GITHUB_RUN_ID,
-          }),
-          durationMs: Date.now() - startedAt,
-          promptCount,
-          errorCount,
-          metrics: metrics ?? {
-            overallF1: 0,
-            overallPrecision: 0,
-            overallRecall: 0,
-            perCategoryF1: {},
-          },
-          ...(evalExamples.length > 0 && { examples: evalExamples }),
-        },
-      });
-      await emitter.shutdown();
-    } catch {
-      // never fail the eval on telemetry hiccup
-    }
+    return 2;
   }
+
+  const evaluator = new RelaxedF1Evaluator();
+  const report = toEvaluationReport(results, evaluator);
+
+  console.log("\nReport:");
+  console.log(`  overall F1:        ${report.summary.relaxedF1.toFixed(3)}`);
+  console.log(
+    `  taxonomy accuracy: ${report.summary.taxonomyAccuracy.toFixed(3)}`,
+  );
+  console.log(
+    `  categories scored: ${Object.keys(report.byCategory).length}`,
+  );
+
+  // Write the full results JSON for CI artifact upload / debugging
+  writeFileSync(
+    RESULTS_PATH,
+    JSON.stringify(
+      {
+        timestamp: new Date().toISOString(),
+        provider,
+        model,
+        commit: opts.commit ?? null,
+        report,
+        // Full per-prompt records including predicted and ground-truth
+        // spans. Required for confusion-matrix and per-prompt diagnostics
+        // (`scripts/evaluation/diagnose-failures.ts`). The file is tracked
+        // in git (~110KB for 67 prompts) so cross-PR baseline drift shows
+        // up in `git diff` — accept the per-run timestamp churn as the
+        // cost of that observability.
+        perPrompt: results.map((r) => ({
+          promptId: r.promptId,
+          predictedCount: r.predicted.length,
+          groundTruthCount: r.groundTruth.length,
+          predicted: r.predicted,
+          groundTruth: r.groundTruth,
+          error: r.error,
+        })),
+      },
+      null,
+      2,
+    ),
+    "utf8",
+  );
+  console.log(`  results: ${RESULTS_PATH}`);
+
+  if (opts.bless) {
+    const baseline = buildBaseline(report, {
+      provider,
+      ...(opts.commit !== undefined && { commit: opts.commit }),
+    });
+    baselineStore.write(baseline.provider, baseline);
+    console.log(`\n✅ Baseline blessed: ${baselineStore.path(provider)}`);
+    return 0;
+  }
+
+  const baseline = baselineStore.read(provider);
+  if (!baseline) {
+    console.error(
+      `\n❌ No baseline at ${baselineStore.path(provider)}. Run with --bless first to establish one.`,
+    );
+    return 2;
+  }
+
+  const gate = compareToBaseline(report, baseline);
+  console.log("\n" + formatGateResult(gate));
+
+  return gate.passed ? 0 : 1;
 }
 
 main()

@@ -35,8 +35,8 @@ const DisplayNameSchema = z.string().trim().min(1).max(80);
 /**
  * User-scoped local state must not survive sign-out: the next visitor on
  * this browser is a guest (or a different user), and the local history
- * mirror and persisted logs carry the previous user's content — session
- * titles, prompts, media references. Firebase clears its own auth
+ * mirror carries the previous user's content — session titles, prompts,
+ * media references. Firebase clears its own auth
  * persistence in signOut(); everything the app wrote is cleared here.
  * Runs only after the provider sign-out succeeds — a failed sign-out
  * leaves the still-signed-in user's state alone.
@@ -46,16 +46,6 @@ async function clearUserScopedLocalState(): Promise<void> {
     "./LocalStoragePromptRepository"
   );
   await new LocalStoragePromptRepository().clear();
-  logger.clearStoredLogs();
-}
-
-export interface SentryIntegration {
-  setUser: (user: User | null) => void;
-  addBreadcrumb: (
-    category: string,
-    message: string,
-    data?: Record<string, unknown>,
-  ) => void;
 }
 
 /**
@@ -63,12 +53,10 @@ export interface SentryIntegration {
  */
 export class AuthRepository {
   private auth: Auth;
-  private sentry: SentryIntegration | null;
   private googleProvider: GoogleAuthProvider;
 
-  constructor(auth: Auth, sentryIntegration: SentryIntegration | null = null) {
+  constructor(auth: Auth) {
     this.auth = auth;
-    this.sentry = sentryIntegration;
     this.googleProvider = new GoogleAuthProvider();
   }
 
@@ -78,16 +66,6 @@ export class AuthRepository {
   async signInWithGoogle(): Promise<User> {
     try {
       const result = await signInWithPopup(this.auth, this.googleProvider);
-
-      // Update Sentry user context if integration is provided
-      if (this.sentry) {
-        const mappedUser = this._mapFirebaseUser(result.user);
-        this.sentry.setUser(mappedUser);
-        this.sentry.addBreadcrumb("auth", "User signed in with Google", {
-          userId: result.user.uid,
-        });
-      }
-
       return this._mapFirebaseUser(result.user);
     } catch (error) {
       const errObj =
@@ -111,15 +89,6 @@ export class AuthRepository {
         email,
         password,
       );
-
-      if (this.sentry) {
-        const mappedUser = this._mapFirebaseUser(result.user);
-        this.sentry.setUser(mappedUser);
-        this.sentry.addBreadcrumb("auth", "User signed in with email", {
-          userId: result.user.uid,
-        });
-      }
-
       return this._mapFirebaseUser(result.user);
     } catch (error) {
       const errObj =
@@ -154,14 +123,6 @@ export class AuthRepository {
         await updateProfile(result.user, { displayName: normalizedName });
       }
 
-      if (this.sentry) {
-        const mappedUser = this._mapFirebaseUser(result.user);
-        this.sentry.setUser(mappedUser);
-        this.sentry.addBreadcrumb("auth", "User signed up with email", {
-          userId: result.user.uid,
-        });
-      }
-
       return this._mapFirebaseUser(result.user);
     } catch (error) {
       const errObj =
@@ -188,9 +149,6 @@ export class AuthRepository {
         await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
       } else {
         await sendPasswordResetEmail(this.auth, email);
-      }
-      if (this.sentry) {
-        this.sentry.addBreadcrumb("auth", "Password reset email requested");
       }
     } catch (error) {
       const errObj =
@@ -226,12 +184,6 @@ export class AuthRepository {
       } else {
         await sendEmailVerification(currentUser);
       }
-
-      if (this.sentry) {
-        this.sentry.addBreadcrumb("auth", "Verification email requested", {
-          userId: currentUser.uid,
-        });
-      }
     } catch (error) {
       const errObj =
         error instanceof Error
@@ -250,9 +202,6 @@ export class AuthRepository {
   async verifyEmailWithCode(oobCode: string): Promise<void> {
     try {
       await applyActionCode(this.auth, oobCode);
-      if (this.sentry) {
-        this.sentry.addBreadcrumb("auth", "Email verified via action code");
-      }
     } catch (error) {
       const errObj =
         error instanceof Error
@@ -295,12 +244,6 @@ export class AuthRepository {
   ): Promise<void> {
     try {
       await confirmPasswordReset(this.auth, oobCode, newPassword);
-      if (this.sentry) {
-        this.sentry.addBreadcrumb(
-          "auth",
-          "Password reset confirmed via action code",
-        );
-      }
     } catch (error) {
       const errObj =
         error instanceof Error
@@ -325,11 +268,7 @@ export class AuthRepository {
       if (this.auth.currentUser?.uid !== currentUser.uid) {
         throw new AuthRepositoryError("The signed-in account changed.", null);
       }
-      const mapped = this._mapFirebaseUser(currentUser);
-      if (this.sentry) {
-        this.sentry.setUser(mapped);
-      }
-      return mapped;
+      return this._mapFirebaseUser(currentUser);
     } catch (error) {
       const errObj =
         error instanceof Error
@@ -367,15 +306,9 @@ export class AuthRepository {
     try {
       if (expectedOwnerId !== undefined && this.auth.currentUser?.uid !== expectedOwnerId) throw new AuthRepositoryError("The signed-in account changed.", null);
       await signOut(this.auth);
-      // A later sign-in owns any new local state and Sentry identity.
+      // A later sign-in owns any new local state.
       if (this.auth.currentUser) return;
       await clearUserScopedLocalState();
-
-      // Clear Sentry user context if integration is provided
-      if (this.sentry) {
-        this.sentry.setUser(null);
-        this.sentry.addBreadcrumb("auth", "User signed out");
-      }
     } catch (error) {
       const errObj =
         error instanceof Error
@@ -402,11 +335,6 @@ export class AuthRepository {
       const mappedUser = firebaseUser
         ? this._mapFirebaseUser(firebaseUser)
         : null;
-
-      // Update Sentry user context if integration is provided
-      if (this.sentry) {
-        this.sentry.setUser(mappedUser);
-      }
 
       callback(mappedUser);
     });

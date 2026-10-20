@@ -9,12 +9,8 @@ interface MetricsParams {
 }
 
 /**
- * EnhancementMetricsService - Handles enhancement-pipeline timing logs
- * and latency-threshold warnings.
- *
- * Production observability now flows through PostHog via
- * SuggestionsTelemetryService; this service only logs structured stage
- * timings to Pino for local debugging and ops triage.
+ * EnhancementMetricsService - Logs enhancement-pipeline stage timings to
+ * Pino and warns when a request crosses the latency threshold.
  */
 export class EnhancementMetricsService {
   private readonly latencyThreshold = 2000; // 2 seconds

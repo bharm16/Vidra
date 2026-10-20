@@ -28,12 +28,6 @@ interface VideoJobWorkerOptions {
     ) => Promise<void>;
     markStopped: (workerId: string) => Promise<void>;
   };
-  metrics?: {
-    recordAlert: (
-      alertName: string,
-      metadata?: Record<string, unknown>,
-    ) => void;
-  };
   /**
    * ADR-0022 decision 6: settle the clip attachments a previous worker died
    * holding. Runs once at start, never blocks the poll loop, and never touches
@@ -64,7 +58,6 @@ export class VideoJobWorker {
   private readonly perProviderMaxConcurrent: number;
   private readonly providerIds: string[];
   private readonly workerHeartbeatStore: VideoJobWorkerOptions["workerHeartbeatStore"];
-  private readonly metrics?: VideoJobWorkerOptions["metrics"];
   private readonly resumePendingAttachments:
     | VideoJobWorkerOptions["resumePendingAttachments"]
     | undefined;
@@ -117,7 +110,6 @@ export class VideoJobWorker {
       "gemini",
     ];
     this.workerHeartbeatStore = options.workerHeartbeatStore;
-    this.metrics = options.metrics;
     this.resumePendingAttachments = options.resumePendingAttachments;
 
     // Validate heartbeat interval is meaningfully shorter than the lease period.
@@ -242,11 +234,6 @@ export class VideoJobWorker {
         drainTimeoutMs,
       },
     );
-    this.metrics?.recordAlert("video_job_worker_drain_timeout", {
-      activeCount: this.activeCount,
-      drainTimeoutMs,
-      workerId: this.workerId,
-    });
 
     const releases = Array.from(this.activeJobs.entries()).map(
       async ([jobId, context]) => {
@@ -444,18 +431,11 @@ export class VideoJobWorker {
         // worker pod could claim the requeued record while the DLQ reprocessor
         // also re-ran the DLQ entry. If the job fails terminally on the next
         // claim, processVideoJob handles DLQ enqueuing via dlqSource="worker-terminal".
-        const released = await this.jobStore.releaseClaim(
+        await this.jobStore.releaseClaim(
           job.id,
           this.workerId,
           "worker shutdown before completion",
         );
-        if (released) {
-          this.metrics?.recordAlert("video_job_shutdown_release", {
-            jobId: job.id,
-            attempt: job.attempts,
-            workerId: this.workerId,
-          });
-        }
       },
     });
 
@@ -472,11 +452,6 @@ export class VideoJobWorker {
       logger: this.log,
       logPrefix: "Video job lease heartbeat",
       onAbort: (reason) => {
-        this.metrics?.recordAlert("video_job_heartbeat_abort", {
-          jobId: job.id,
-          workerId: this.workerId,
-          consecutiveFailures: VideoJobWorker.MAX_HEARTBEAT_FAILURES,
-        });
         heartbeatAbort.abort(reason);
       },
     });

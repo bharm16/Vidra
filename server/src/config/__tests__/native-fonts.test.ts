@@ -7,7 +7,6 @@ import { expect, it } from "vitest";
 
 const execute = promisify(execFile);
 const startupUrl = new URL("../native-fonts.js", import.meta.url).href;
-const instrumentUrl = new URL("../../../instrument.mjs", import.meta.url).href;
 const rasterizerUrl = new URL("../../services/video-export/CaptionRasterizer.ts", import.meta.url).href;
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const marker = "__VIDRA_FONT_PROBE__";
@@ -27,13 +26,13 @@ async function probe(code: string, backend?: string): Promise<unknown> {
   return JSON.parse(result.slice(marker.length)) as unknown;
 }
 
-it("keeps instrumentation first and configures native fonts before application imports", async () => {
+it("loads .env first and configures native fonts before application imports", async () => {
   const source = await readFile(new URL("../../../index.ts", import.meta.url), "utf8");
   const entry = ts.createSourceFile("index.ts", source, ts.ScriptTarget.Latest);
   const imports = entry.statements.filter(ts.isImportDeclaration).map(statement =>
     ts.isStringLiteral(statement.moduleSpecifier) ? statement.moduleSpecifier.text : "",
   );
-  expect(imports.slice(0, 2)).toEqual(["./instrument.mjs", "./src/config/native-fonts.js"]);
+  expect(imports.slice(0, 2)).toEqual(["dotenv/config", "./src/config/native-fonts.js"]);
 });
 
 it("defaults only an unset macOS backend and preserves explicit operator choices", async () => {
@@ -59,7 +58,7 @@ it.runIf(process.platform === "darwin")("selects bundled Inter in the real raste
   // These static imports reproduce the entry point's first two imports, then
   // load the actual native caption implementation in a fresh, uninitialized process.
   const result = await probe(`
-    import ${JSON.stringify(instrumentUrl)};
+    import "dotenv/config";
     import ${JSON.stringify(startupUrl)};
     import { rasterizeCaption, videoFontPath } from ${JSON.stringify(rasterizerUrl)};
     import sharp from "sharp";

@@ -13,8 +13,6 @@ import {
   type AIResponse,
   type CompletionOptions,
 } from "@interfaces/IAIClient";
-import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
-import type { LlmCallSummary } from "@services/observability/types";
 import type { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
 import { LLMUnavailableError } from "./LLMUnavailableError";
 import { buildRequestOptions } from "./request/RequestOptionsBuilder";
@@ -33,65 +31,6 @@ import type {
 } from "./types";
 
 export type { ExecuteParams, StreamParams } from "./types";
-
-/**
- * Builds the per-LLM-call telemetry summary from a successful response or an
- * error. Reads token counts from `response.metadata.usage` (snake_case from
- * OpenAI/Groq) and emits camelCase fields, leaving null when the provider
- * didn't surface usage data.
- */
-function buildLlmCallSummary({
-  executionType,
-  durationMs,
-  response,
-  error,
-}: {
-  executionType: string;
-  durationMs: number;
-  response: RoutedAIResponse | undefined;
-  error: unknown;
-}): LlmCallSummary {
-  const usage = response?.metadata?.usage as
-    | {
-        prompt_tokens?: number;
-        completion_tokens?: number;
-        total_tokens?: number;
-      }
-    | undefined;
-  // Deliberately the adapter's metadata, not `response.executedBy`: metadata
-  // carries what the provider echoed back — the model that actually produced
-  // these tokens — while `executedBy` carries what the router asked for. They
-  // differ when a provider serves an aliased or substituted model, and cost
-  // attribution wants the served one.
-  const provider = (response?.metadata?.provider as string | undefined) ?? null;
-  const model = (response?.metadata?.model as string | undefined) ?? null;
-  const finishReason =
-    (response?.metadata?.finishReason as string | undefined) ?? null;
-  const promptTokens =
-    typeof usage?.prompt_tokens === "number" ? usage.prompt_tokens : null;
-  const completionTokens =
-    typeof usage?.completion_tokens === "number"
-      ? usage.completion_tokens
-      : null;
-  const totalTokens =
-    typeof usage?.total_tokens === "number" ? usage.total_tokens : null;
-
-  const errorMessage =
-    error instanceof Error ? error.message : error ? String(error) : undefined;
-
-  return {
-    executionType,
-    durationMs,
-    provider,
-    model,
-    promptTokens,
-    completionTokens,
-    totalTokens,
-    finishReason,
-    outcome: error ? "error" : "success",
-    ...(errorMessage ? { errorMessage } : {}),
-  };
-}
 
 /**
  * AI Model Service - Unified Router for LLM Operations
@@ -120,19 +59,15 @@ export class AIModelService {
   private readonly clientResolver: ClientResolver;
   private readonly planResolver: ExecutionPlanResolver;
   private readonly hasAnyClient: boolean;
-  private readonly llmCallTelemetry: LlmCallTelemetryService | undefined;
   private readonly providerCircuit: LlmProviderCircuitManager | undefined;
 
   constructor({
     clients,
-    llmCallTelemetry,
     providerCircuit,
   }: {
     clients: ClientsMap;
-    llmCallTelemetry?: LlmCallTelemetryService;
     providerCircuit?: LlmProviderCircuitManager;
   }) {
-    this.llmCallTelemetry = llmCallTelemetry;
     this.providerCircuit = providerCircuit;
     if (!clients || typeof clients !== "object") {
       throw new Error("AIModelService requires clients object");
@@ -162,53 +97,9 @@ export class AIModelService {
   }
 
   /**
-   * Execute an AI operation with automatic routing and fallback.
-   *
-   * Wraps `_executeImpl` with fire-and-forget per-call telemetry. The telemetry
-   * captures the OUTER call duration (primary + any fallback work), which is
-   * what cost / latency dashboards want — one logical "LLM call" per
-   * `execute()`, even when a fallback ran underneath.
-   *
-   * @param operation - Operation name from ModelConfig
-   * @param params - Request parameters
-   */
-  async execute(
-    operation: OperationName,
-    params: ExecuteParams,
-  ): Promise<RoutedAIResponse> {
-    const telemetry = this.llmCallTelemetry;
-    if (!telemetry) {
-      return this._executeImpl(operation, params);
-    }
-    const startedAt = performance.now();
-    let response: RoutedAIResponse | undefined;
-    let executionError: unknown;
-    try {
-      response = await this._executeImpl(operation, params);
-      return response;
-    } catch (err) {
-      executionError = err;
-      throw err;
-    } finally {
-      try {
-        telemetry.record(
-          buildLlmCallSummary({
-            executionType: operation,
-            durationMs: performance.now() - startedAt,
-            response,
-            error: executionError,
-          }),
-        );
-      } catch {
-        // Telemetry must never throw upstream.
-      }
-    }
-  }
-
-  /**
    * The one place that decides which client runs an operation.
    *
-   * `_executeImpl` and `resolveExecution` both route through here, so a
+   * `execute` and `resolveExecution` both route through here, so a
    * caller's pre-flight answer and the actual dispatch cannot disagree. Note
    * that `canDispatch` transitions an expired-cooldown circuit to half-open,
    * so this is not a pure read — it is the same transition dispatch would
@@ -284,7 +175,13 @@ export class AIModelService {
     return { client, provider, model, viaFallback };
   }
 
-  private async _executeImpl(
+  /**
+   * Execute an AI operation with automatic routing and fallback.
+   *
+   * @param operation - Operation name from ModelConfig
+   * @param params - Request parameters
+   */
+  async execute(
     operation: OperationName,
     params: ExecuteParams,
   ): Promise<RoutedAIResponse> {
