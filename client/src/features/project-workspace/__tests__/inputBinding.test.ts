@@ -1,5 +1,7 @@
 import { expect, it } from "vitest";
-import { DraftInputSchema } from "@shared/schemas/workflow/draft.schemas";
+import { CapabilityProfileSchema, type CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
+import { DraftInputSchema, type DraftContent, type DraftInput } from "@shared/schemas/workflow/draft.schemas";
+import { settingsForProfile } from "@shared/workflow/capabilityEvaluation";
 import { ConversationIdSchema, ProjectIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { importedVersionId } from "@shared/schemas/workflow/import.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
@@ -10,10 +12,13 @@ import {
   emptyDraftContent,
   followupDraftForRequest,
   initialDraftId,
+  modelChoices,
   observedDraftInputs,
+  offeredInputRoles,
   resolvePendingDraftInputs,
+  withoutDraftInput,
 } from "../state/inputBinding";
-import { veo, wan25 } from "./fixtures/modelCreationFixtures";
+import { veo, wan22, wan25 } from "./fixtures/modelCreationFixtures";
 
 const first = DraftInputSchema.parse({ state: "resolved", role: "reference", versionId: "version_first" });
 const second = DraftInputSchema.parse({ state: "resolved", role: "reference", versionId: "version_second" });
@@ -117,4 +122,76 @@ it("derives deterministic imported version IDs and resolves importing/pending dr
     noticeKind: "edit-unavailable",
     content: { action: "make-image", destination: { projectId, conversationId } },
   });
+});
+
+// One model offered as a words version and a start-frame version, plus a picture model that takes no pictures.
+const wordsClip = CapabilityProfileSchema.parse({ ...wan22, id: "family-words", label: "Family" });
+const framesClip = CapabilityProfileSchema.parse({ ...wan25, id: "family-frames", label: "Family", action: "animate-image", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }, { role: "end-frame", kinds: ["image"], minCount: 0, maxCount: 1 }] });
+const referencesClip = CapabilityProfileSchema.parse({ ...wordsClip, inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 3 }] });
+const wordsPicture = CapabilityProfileSchema.parse({ ...wan22, id: "words-picture", label: "Words picture", action: "make-image", mode: "text-to-image", output: { kind: "image", maxCount: 4 } });
+const otherFrames = CapabilityProfileSchema.parse({ ...framesClip, id: "other-frames", label: "Other" });
+const referencesOther = CapabilityProfileSchema.parse({ ...referencesClip, id: "refs-words", label: "Refs" });
+const referencesPicture = CapabilityProfileSchema.parse({ ...wordsPicture, id: "refs-picture", label: "Refs picture", inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 14 }] });
+const picture = { state: "resolved", versionId: VersionIdSchema.parse("version_picture"), kind: "image" } as const;
+const start = DraftInputSchema.parse({ state: "resolved", role: "start-frame", versionId: "version_picture" });
+const end = DraftInputSchema.parse({ state: "resolved", role: "end-frame", versionId: "version_end" });
+const reference = DraftInputSchema.parse({ state: "resolved", role: "reference", versionId: "version_reference" });
+function drafted(profile: CapabilityProfile, inputs: DraftInput[] = []): DraftContent {
+  const content = emptyDraftContent(profile.action, ProjectIdSchema.parse("project_test"), ConversationIdSchema.parse("conversation_test"), 1);
+  return { ...content, inputs, settings: settingsForProfile(profile, content) };
+}
+
+it("offers the picture inputs any model for the output can take beside the current inputs", () => {
+  expect(offeredInputRoles(drafted(wordsPicture), [wordsPicture])).toEqual([]);
+  expect(offeredInputRoles(drafted(wordsPicture), [wordsPicture, referencesPicture])).toEqual(["reference"]);
+  expect(offeredInputRoles(drafted(wordsClip), [wordsClip, otherFrames])).toEqual(["start-frame"]);
+  expect(offeredInputRoles(drafted(wordsClip), [wordsClip])).toEqual([]);
+  expect(offeredInputRoles(drafted(wordsClip), [wordsClip, framesClip])).toEqual(["start-frame"]);
+  expect(offeredInputRoles(drafted(referencesClip), [referencesClip, framesClip])).toEqual(["start-frame", "reference"]);
+  expect(offeredInputRoles(drafted(framesClip, [start]), [referencesClip, framesClip])).toEqual(["end-frame"]);
+  expect(offeredInputRoles(drafted(referencesClip, [reference]), [referencesClip, framesClip])).toEqual(["reference"]);
+});
+
+it("turns a words clip into its model's start-frame version when a start frame is added, and back when it is removed", () => {
+  const profiles = [wordsClip, framesClip];
+  const animated = applyDraftInputSource(drafted(wordsClip), profiles, picture, "start-frame");
+  expect(animated).toMatchObject({ action: "animate-image", settings: { profileId: framesClip.id }, inputs: [start] });
+  // A sketch or result used without naming a role takes the start frame the same way.
+  expect(applyDraftInputSource(drafted(wordsClip), profiles, picture)).toEqual(animated);
+  expect(withoutDraftInput(animated, profiles, animated.inputs[0] as DraftInput)).toMatchObject({ action: "make-video", settings: { profileId: wordsClip.id }, inputs: [] });
+  // An end frame left behind keeps the start-frame version, which asks for its start frame again.
+  const framed = { ...animated, inputs: [start, end] };
+  expect(withoutDraftInput(framed, profiles, start)).toMatchObject({ action: "animate-image", settings: { profileId: framesClip.id }, inputs: [end] });
+});
+
+it("keeps a picture as a reference on a model that takes references", () => {
+  expect(applyDraftInputSource(drafted(referencesClip), [referencesClip, framesClip], picture)).toMatchObject({
+    action: "make-video",
+    settings: { profileId: referencesClip.id },
+    inputs: [{ state: "resolved", role: "reference", versionId: "version_picture" }],
+  });
+});
+
+it("moves to another model that takes an attached input, preferring the selected model's own version", () => {
+  expect(applyDraftInputSource(drafted(wordsPicture), [wordsPicture, referencesPicture], picture, "reference")).toMatchObject({
+    action: "make-image",
+    settings: { profileId: referencesPicture.id },
+    inputs: [{ state: "resolved", role: "reference", versionId: "version_picture" }],
+  });
+  expect(applyDraftInputSource(drafted(wordsClip), [wordsClip, otherFrames, framesClip], picture, "start-frame")).toMatchObject({ action: "animate-image", settings: { profileId: framesClip.id } });
+  const elsewhere = applyDraftInputSource(drafted(wordsClip), [wordsClip, otherFrames], picture, "start-frame");
+  expect(elsewhere).toMatchObject({ action: "animate-image", settings: { profileId: otherFrames.id }, inputs: [start] });
+  expect(withoutDraftInput(elsewhere, [wordsClip, otherFrames], elsewhere.inputs[0] as DraftInput)).toMatchObject({ action: "make-video", settings: { profileId: wordsClip.id }, inputs: [] });
+});
+
+it("lists one model menu entry per name and greys out models that cannot take the attached inputs", () => {
+  const profiles = [wordsClip, framesClip, otherFrames, referencesOther];
+  const summary = (content: DraftContent): [string, boolean, boolean][] => modelChoices(content, profiles).map(choice => [choice.profile.id, choice.takesInputs, choice.selected]);
+  expect(summary(drafted(wordsClip))).toEqual([[wordsClip.id, true, true], [otherFrames.id, false, false], [referencesOther.id, true, false]]);
+  expect(summary(drafted(framesClip, [start]))).toEqual([[framesClip.id, true, true], [otherFrames.id, true, false], [referencesOther.id, false, false]]);
+});
+
+it("does not attach a named input when no model for the output takes it", () => {
+  const content = drafted(wordsPicture);
+  expect(applyDraftInputSource(content, [wordsPicture], picture, "reference")).toBe(content);
 });

@@ -11,6 +11,7 @@ import { importedVersionId } from "@shared/schemas/workflow/import.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
+import { settingsForProfile } from "@shared/workflow/capabilityEvaluation";
 
 /** Deterministic across tabs/reloads, so a lost create response reuses the same empty draft. */
 export async function initialDraftId(
@@ -101,9 +102,14 @@ export function applyDraftInputSource(
   replacing?: DraftInput,
 ): DraftContent {
   const profile = profiles.find(candidate => candidate.id === content.settings.profileId);
+  const candidates = candidateModels(content, profiles);
   const role =
     requestedRole ??
     profile?.inputs.find(rule => rule.minCount > 0 && rule.kinds.includes(source.kind))?.role ??
+    // A model that takes no such input defers to the output's models that do: a picture becomes a words clip's start frame.
+    (profile?.inputs.some(rule => rule.kinds.includes(source.kind))
+      ? undefined
+      : candidates.flatMap(candidate => candidate.inputs).find(rule => rule.minCount > 0 && rule.kinds.includes(source.kind))?.role) ??
     (content.action === "edit-image"
       ? "primary"
       : content.action === "animate-image"
@@ -111,7 +117,9 @@ export function applyDraftInputSource(
         : source.kind === "video"
           ? "clip"
           : "reference");
-  const rule = profile?.inputs.find(candidate => candidate.role === role && candidate.kinds.includes(source.kind));
+  const rule = candidates
+    .flatMap(candidate => candidate.inputs)
+    .find(candidate => candidate.role === role && candidate.kinds.includes(source.kind));
   if (requestedRole && profile && !rule) return content;
   const nextInput: DraftInput =
     source.state === "resolved"
@@ -123,7 +131,104 @@ export function applyDraftInputSource(
     rule?.maxCount ?? (role === "reference" ? 16 : 1),
     replacing,
   );
-  return inputs === content.inputs ? content : { ...content, inputs };
+  return inputs === content.inputs ? content : settleModel({ ...content, inputs }, profiles);
+}
+
+/** Video makes a clip from words or from a start frame; either action serves the same composer output. */
+const INTERCHANGEABLE_ACTIONS: Partial<Record<CreationAction, readonly CreationAction[]>> = {
+  "make-video": ["make-video", "animate-image"],
+  "animate-image": ["make-video", "animate-image"],
+};
+const OFFERED_ROLES = ["primary", "start-frame", "end-frame", "reference"] as const satisfies readonly DraftInput["role"][];
+export type OfferedInputRole = (typeof OFFERED_ROLES)[number];
+
+/** Actions whose models one composer output switches between as its inputs change. */
+export function interchangeableActions(action: CreationAction): readonly CreationAction[] {
+  return INTERCHANGEABLE_ACTIONS[action] ?? [action];
+}
+
+const sameModel = (a: CapabilityProfile, b: CapabilityProfile): boolean => a.provider === b.provider && a.label === b.label;
+
+/** Models that could serve the request, preferred first: the selected one, its other versions, then the output's other qualified models. */
+function candidateModels(content: DraftContent, profiles: readonly CapabilityProfile[]): CapabilityProfile[] {
+  const profile = profiles.find(candidate => candidate.id === content.settings.profileId);
+  const actions = interchangeableActions(content.action);
+  const pool = profiles.filter(
+    candidate => candidate !== profile && candidate.availability === "qualified" && actions.includes(candidate.action),
+  );
+  if (!profile) return pool;
+  return [profile, ...pool.filter(candidate => sameModel(candidate, profile)), ...pool.filter(candidate => !sameModel(candidate, profile))];
+}
+
+function takesRoles(profile: CapabilityProfile, roles: readonly DraftInput["role"][]): boolean {
+  return (
+    roles.every(role => profile.inputs.some(rule => rule.role === role)) &&
+    profile.inputs.every(rule => {
+      const count = roles.filter(role => role === rule.role).length;
+      return count >= rule.minCount && count <= rule.maxCount;
+    })
+  );
+}
+
+/** Inputs decide the model: when the selected one cannot take them, the first candidate that can takes over. */
+function settleModel(content: DraftContent, profiles: readonly CapabilityProfile[]): DraftContent {
+  const roles = content.inputs.map(input => input.role);
+  const profile = profiles.find(candidate => candidate.id === content.settings.profileId);
+  if (profile && takesRoles(profile, roles)) return content;
+  const next = candidateModels(content, profiles).find(candidate => candidate !== profile && takesRoles(candidate, roles));
+  return next ? { ...content, action: next.action, settings: settingsForProfile(next, content) } : content;
+}
+
+/** Picture inputs the request can still take: some model for the output accepts each beside the current inputs. */
+export function offeredInputRoles(content: DraftContent, profiles: readonly CapabilityProfile[]): OfferedInputRole[] {
+  const candidates = candidateModels(content, profiles);
+  const roles = content.inputs.map(input => input.role);
+  return OFFERED_ROLES.filter(role =>
+    candidates.some(
+      candidate =>
+        candidate.inputs.some(rule => rule.role === role && rule.kinds.includes("image")) &&
+        takesRoles(candidate, [...roles, role]),
+    ),
+  );
+}
+
+export interface ModelChoice {
+  /** The version chosen with this entry: one that takes the current inputs when the model has it. */
+  profile: CapabilityProfile;
+  selected: boolean;
+  takesInputs: boolean;
+}
+
+/** One model menu entry per model name across the output; a model that cannot take the current inputs is greyed out. */
+export function modelChoices(content: DraftContent, profiles: readonly CapabilityProfile[]): ModelChoice[] {
+  const actions = interchangeableActions(content.action);
+  const roles = content.inputs.map(input => input.role);
+  const models: CapabilityProfile[][] = [];
+  for (const candidate of profiles) {
+    if (!actions.includes(candidate.action)) continue;
+    const versions = models.find(group => group.some(version => sameModel(version, candidate)));
+    if (versions) versions.push(candidate);
+    else models.push([candidate]);
+  }
+  return models.flatMap(versions => {
+    const fitting = versions.filter(version => takesRoles(version, roles));
+    const profile =
+      fitting.find(version => version.action === content.action) ??
+      fitting[0] ??
+      versions.find(version => version.action === content.action) ??
+      versions[0];
+    if (!profile) return [];
+    return [{ profile, selected: versions.some(version => version.id === content.settings.profileId), takesInputs: fitting.length > 0 }];
+  });
+}
+
+/** Removes one input; the request moves to a model that takes what remains, such as a words clip once its start frame goes. */
+export function withoutDraftInput(
+  content: DraftContent,
+  profiles: readonly CapabilityProfile[],
+  input: DraftInput,
+): DraftContent {
+  return settleModel({ ...content, inputs: content.inputs.filter(candidate => candidate !== input) }, profiles);
 }
 
 /** Upgrades pending slot inputs to resolved version inputs once the target request slot completes and media is linked. */

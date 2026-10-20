@@ -16,6 +16,7 @@ import {
   emptyDraftContent,
   followupDraftForRequest,
   initialDraftId,
+  interchangeableActions,
   mediaActionDraftContent,
   resolvePendingDraftInputs,
   retrySlotDraftContent,
@@ -335,8 +336,8 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   const chooseProfile = useCallback((profile: CapabilityProfile): void => {
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
-    if (!buffer || profile.action !== buffer.content.action) return;
-    edit({ ...buffer.content, settings: settingsForProfile(profile, buffer.content) });
+    if (!buffer || !interchangeableActions(buffer.content.action).includes(profile.action)) return;
+    edit({ ...buffer.content, action: profile.action, settings: settingsForProfile(profile, buffer.content) });
   }, [edit]);
 
   const prepare = useCallback(async (): Promise<void> => {

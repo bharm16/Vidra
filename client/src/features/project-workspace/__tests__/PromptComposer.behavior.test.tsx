@@ -39,6 +39,19 @@ it("offers one direct action and automatic highlights without saved/review/undo 
   expect(state.edit).not.toHaveBeenCalled();
 });
 
+it("offers the input tiles some model for the output takes, even when the selected one does not", () => {
+  render(<PromptComposer controller={controller()} onChooseInput={vi.fn()} onSketch={vi.fn()} />);
+  expect(screen.queryByRole("button", { name: "Reference" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Sketch" })).not.toBeInTheDocument();
+  cleanup();
+  const state = controller(); state.profiles = [profile, { ...profile, id: "controlled-references", label: "References model", inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 4 }] }];
+  const onChooseInput = vi.fn();
+  render(<PromptComposer controller={state} onChooseInput={onChooseInput} onSketch={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Reference" }));
+  expect(onChooseInput).toHaveBeenCalledWith("reference");
+  expect(screen.getByRole("button", { name: "Sketch" })).toBeInTheDocument();
+});
+
 it("an unqualified model cannot dispatch but preserves its current words", () => {
   const state = controller(); state.profiles = [{ ...profile, availability: "unqualified", unavailableReason: "This operation has not been qualified." }];
   const onSubmit = vi.fn(async () => undefined);

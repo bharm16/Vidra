@@ -25,9 +25,11 @@ it("lets a signed-out visitor write a request and keeps the words on this device
 });
 
 it("asks for an account when the visitor makes something, carrying a claim for the kept words", async () => {
+  const video = CapabilityProfileSchema.parse({ ...profile, id: "controlled-video", label: "Video model", action: "make-video", endpoint: "controlled/video", mode: "text-to-video", inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 3 }], output: { kind: "video", maxCount: 1 } });
+  fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ success: true, data: [profile, video] }), { status: 200, headers: { "content-type": "application/json" } }));
   renderGuest("/app?intent=make-video");
   fireEvent.change(screen.getByLabelText("Current request words"), { target: { value: "Waves at night" } });
-  fireEvent.click(screen.getByRole("button", { name: "Reference" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Reference" }));
   const kept = new GuestDraftStore().read();
   expect(kept).toMatchObject({ action: "make-video", instructions: "Waves at night" });
   expect(screen.getByTestId("location")).toHaveTextContent(`/signup?redirect=${encodeURIComponent(`/app?claim=${kept?.id}`)}`);

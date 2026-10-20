@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
-import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
+import { DraftInputSchema, type DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { CapabilitySettings } from "../components/CapabilitySettings";
 import { evaluateCapabilityDraft, settingsForProfile } from "../state/capabilitySettings";
 import { modelContent, veo, wan22 } from "./fixtures/modelCreationFixtures";
@@ -58,4 +58,16 @@ it("evaluates capability draft candidates, unsupported saved settings, and fixed
   expect(evaluation.candidates.map(item => item.id)).toEqual([veo.id, wan22.id]);
   expect(evaluation.unsupportedSaved).toEqual(["retiredParam"]);
   expect(evaluation.fixedConflicts.map(([name]) => name)).toEqual(["framesPerSecond"]);
+});
+
+it("keeps every model for the output in the menu and greys out those that cannot take the attached inputs", () => {
+  const frames = CapabilityProfileSchema.parse({ ...wan22, id: "controlled-frames", label: "Frames", action: "animate-image", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
+  const base = modelContent(wan22);
+  const animated: DraftContent = { ...base, action: "animate-image", inputs: [DraftInputSchema.parse({ state: "resolved", role: "start-frame", versionId: "version_runner" })], settings: settingsForProfile(frames, base) };
+  const chosen = vi.fn();
+  render(<CapabilitySettings profiles={[wan22, frames]} content={animated} media={[]} disabled={false} onProfile={chosen} onChange={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Model: Frames" }));
+  expect(screen.getByRole("button", { name: "Wan 2.2" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Frames" }));
+  expect(chosen).toHaveBeenCalledWith(frames);
 });

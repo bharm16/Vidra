@@ -8,7 +8,7 @@ import type { CapabilityLookupStatus } from "../components/ModelCreationArea";
 import { fetchPublicProfiles } from "../api/workflowApi";
 import { editDraftBuffer, openDraftBuffer, redoDraftBuffer, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
 import { settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
-import { wordsDraftContent } from "../state/inputBinding";
+import { interchangeableActions, wordsDraftContent } from "../state/inputBinding";
 
 const GUEST_PROJECT = ProjectIdSchema.parse("project_guest");
 const UNSELECTED = { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 } as const;
@@ -96,7 +96,7 @@ export function useGuestComposer(intent: string | null, store: GuestDraftStore =
     project: { status: "active" }, conversation: { status: "active" }, view: { requests: [] },
     edit,
     newDraft: async action => changeAction(action),
-    chooseProfile: profile => update(current => profile.action !== current.content.action ? current : editDraftBuffer(current, { ...current.content, settings: settingsForProfile(profile, current.content) })),
+    chooseProfile: profile => update(current => !interchangeableActions(current.content.action).includes(profile.action) ? current : editDraftBuffer(current, { ...current.content, action: profile.action, settings: settingsForProfile(profile, current.content) })),
     flush: async () => true,
     undo: () => update(undoDraftBuffer),
     redo: () => update(redoDraftBuffer),
