@@ -7,6 +7,9 @@ import { X } from "./icons";
 
 import { cn } from "@promptstudio/system/lib/utils";
 
+/** Radix types forceMount as the literal `true`, so it is spread only when set. */
+const mounting = (forceMount: true | undefined): { forceMount?: true } => (forceMount ? { forceMount } : {});
+
 const Sheet = SheetPrimitive.Root;
 
 const SheetTrigger = SheetPrimitive.Trigger;
@@ -20,10 +23,7 @@ const SheetOverlay = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
-    className={cn(
-      "fixed inset-0 z-drawer bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className,
-    )}
+    className={cn("fixed inset-0 z-drawer bg-black/80", className)}
     {...props}
     ref={ref}
   />
@@ -31,16 +31,14 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetContentVariants = cva(
-  "fixed z-drawer gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-300",
+  "fixed z-drawer gap-4 bg-background p-6 shadow-lg",
   {
     variants: {
       side: {
-        top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
-        bottom:
-          "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-        left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
-        right:
-          "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
+        top: "inset-x-0 top-0 border-b",
+        bottom: "inset-x-0 bottom-0 border-t",
+        left: "inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
+        right: "inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
       },
     },
     defaultVariants: {
@@ -52,12 +50,16 @@ const sheetContentVariants = cva(
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> &
-    VariantProps<typeof sheetContentVariants>
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
+    VariantProps<typeof sheetContentVariants> & {
+      overlayRef?: React.Ref<HTMLDivElement>;
+    }
+>(({ side = "right", className, children, forceMount, overlayRef, ...props }, ref) => (
+  // forceMount keeps a closing sheet mounted while the client folds it back into its trigger.
+  <SheetPortal {...mounting(forceMount)}>
+    <SheetOverlay ref={overlayRef} {...mounting(forceMount)} />
     <SheetPrimitive.Content
       ref={ref}
+      {...mounting(forceMount)}
       className={cn(sheetContentVariants({ side }), className)}
       {...props}
     >

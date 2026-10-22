@@ -142,9 +142,174 @@
   line-height: 18px;
   letter-spacing: 0.13px;
 }
+.vf-auth-switch a {
+  position: relative;
+  isolation: isolate;
+}
 .vf-auth-switch a[aria-current] {
-  background: rgb(247 247 247 / 15%);
   color: var(--vf-white);
+}
+/* The selected half: a pill that a view transition stretches to the other half (frame 2715). */
+.vf-auth-pill {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: rgb(247 247 247 / 15%);
+  view-transition-name: vf-auth-pill;
+}
+.vf-auth-card {
+  view-transition-name: vf-auth-card;
+}
+/* The words and footer travel as one group, nested so the card clips them as it changes size. */
+.vf-auth-body {
+  view-transition-name: vf-auth-body;
+  view-transition-group: nearest;
+}
+.vf-auth-email {
+  view-transition-name: vf-auth-email;
+}
+
+/*
+ * Auth view transitions (frame 2715). The page itself never fades; the card paints its own
+ * box while it changes size so its corners never stretch; its words cross through a blur.
+ * The pseudo-elements hang off <html>, outside .vf, so they take the card's paint as literals.
+ */
+html[data-motion-transition]::view-transition-old(root),
+html[data-motion-transition]::view-transition-new(root) {
+  animation: none;
+}
+html[data-motion-transition]::view-transition-group(vf-auth-card) {
+  border: 1px solid #363636;
+  border-radius: 16px;
+  background: #1a1a1a;
+}
+html[data-motion-transition]::view-transition-old(vf-auth-card),
+html[data-motion-transition]::view-transition-new(vf-auth-card) {
+  animation: none;
+  opacity: 0;
+}
+html[data-motion-transition]::view-transition-group-children(vf-auth-card) {
+  overflow: clip;
+}
+html[data-motion-transition="reshape"]::view-transition-group(vf-auth-card),
+html[data-motion-transition="reshape"]::view-transition-group(vf-auth-body),
+html[data-motion-transition="reshape"]::view-transition-group(vf-auth-email) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--m-spring-b10, cubic-bezier(0.22, 1, 0.36, 1));
+}
+/* The switch pill and a field that comes or goes travel with the words around them. */
+html[data-motion-transition="reshape"]::view-transition-old(vf-auth-body),
+html[data-motion-transition="reshape"]::view-transition-old(vf-auth-pill),
+html[data-motion-transition="reshape"]::view-transition-old(vf-auth-email):only-child {
+  animation: vf-auth-leave 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html[data-motion-transition="reshape"]::view-transition-new(vf-auth-body),
+html[data-motion-transition="reshape"]::view-transition-new(vf-auth-pill),
+html[data-motion-transition="reshape"]::view-transition-new(vf-auth-email):only-child {
+  animation: vf-auth-arrive 200ms cubic-bezier(0.22, 1, 0.36, 1) var(--vf-auth-arrive-delay, 120ms) both;
+}
+/* Sign in ↔ Create account: the new words fade in over the old ones, so the button never dims. */
+html[data-motion-transition^="switch"]::view-transition-old(vf-auth-body) {
+  animation: none;
+}
+html[data-motion-transition^="switch"]::view-transition-new(vf-auth-body) {
+  animation: vf-auth-layer 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html[data-motion-transition^="switch"]::view-transition-group(vf-auth-pill) {
+  border-radius: 6px;
+  background: rgb(247 247 247 / 15%);
+}
+html[data-motion-transition^="switch"]::view-transition-old(vf-auth-pill),
+html[data-motion-transition^="switch"]::view-transition-new(vf-auth-pill) {
+  animation: none;
+  opacity: 0;
+}
+/*
+ * The leading edge reaches the other half in 0.1s; the trailing edge follows with a b12 spring.
+ * Two animations, because Chrome ignores var() in a keyframe's timing function.
+ */
+html[data-motion-transition="switch-right"]::view-transition-group(vf-auth-pill) {
+  animation: vf-auth-pill-right-lead 100ms cubic-bezier(0.22, 1, 0.36, 1) both, vf-auth-pill-right-trail 240ms var(--m-spring-b12) 100ms forwards;
+}
+html[data-motion-transition="switch-left"]::view-transition-group(vf-auth-pill) {
+  animation: vf-auth-pill-left-lead 100ms cubic-bezier(0.22, 1, 0.36, 1) both, vf-auth-pill-left-trail 240ms var(--m-spring-b12) 100ms forwards;
+}
+@keyframes vf-auth-pill-right-lead {
+  from {
+    translate: calc(var(--vf-auth-pill-shift) * -1) 0;
+    width: var(--vf-auth-pill-width);
+  }
+  to {
+    translate: calc(var(--vf-auth-pill-shift) * -1) 0;
+    width: var(--vf-auth-pill-span);
+  }
+}
+@keyframes vf-auth-pill-right-trail {
+  from {
+    translate: calc(var(--vf-auth-pill-shift) * -1) 0;
+    width: var(--vf-auth-pill-span);
+  }
+  to {
+    translate: 0 0;
+    width: var(--vf-auth-pill-width);
+  }
+}
+@keyframes vf-auth-pill-left-lead {
+  from {
+    translate: var(--vf-auth-pill-shift) 0;
+    width: var(--vf-auth-pill-width);
+  }
+  to {
+    translate: 0 0;
+    width: var(--vf-auth-pill-span);
+  }
+}
+@keyframes vf-auth-pill-left-trail {
+  from {
+    width: var(--vf-auth-pill-span);
+  }
+  to {
+    width: var(--vf-auth-pill-width);
+  }
+}
+@keyframes vf-auth-leave {
+  to {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+@keyframes vf-auth-arrive {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+@keyframes vf-auth-layer {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+/* Reduced motion: nothing travels or resizes; what changed cross-fades in place. */
+html[data-motion-transition="reduced"]::view-transition-group(*) {
+  animation: none;
+}
+html[data-motion-transition="reduced"]::view-transition-old(*) {
+  animation: vf-auth-fade-out 120ms ease-out both;
+}
+html[data-motion-transition="reduced"]::view-transition-new(*) {
+  animation: vf-auth-fade-in 120ms ease-out both;
+}
+@keyframes vf-auth-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vf-auth-fade-in {
+  from {
+    opacity: 0;
+  }
 }
 .vf-auth-field {
   display: flex;

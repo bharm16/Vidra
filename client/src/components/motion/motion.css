@@ -1,0 +1,30 @@
+/* Static states for Vidra's motion primitives; the motion itself runs as Web Animations. */
+
+/* A thumbnail that carries a progress ring: the ring sits 3px outside its edge. */
+.m-thumb {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 64px;
+  height: 36px;
+}
+.m-thumb > img,
+.m-thumb > video,
+.m-thumb > .m-thumb-slate {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--vf-control, #2e2e2e);
+}
+.m-progress-ring {
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  overflow: visible;
+  pointer-events: none;
+}
+.m-progress-ring:not([data-active]) {
+  opacity: 0;
+}

@@ -14,7 +14,7 @@ export function MediaCard({ version, access, onOpen, onEdit, onCopy, onHide, sel
   const failed = (): void => { if (reload === 0) setReload(1); else setUnavailable(true); };
   const seconds = version.metadata.state === "verified" ? version.metadata.durationSeconds : 0;
   const duration = `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
-  return <article className="vf-media-card" data-selected={selected || undefined} data-hidden={version.hidden || undefined}>
+  return <article className="vf-media-card" data-version-id={version.id} data-selected={selected || undefined} data-hidden={version.hidden || undefined}>
     <Button variant="ghost" className="vf-card-picture !h-auto" onClick={onOpen} aria-label={`Open ${version.label}`} disabled={unavailable}>
       {unavailable ? <span>Unavailable</span> : url ? version.kind === "video" || version.kind === "export" ? <video src={url} muted playsInline preload="metadata" onError={failed} /> : version.kind === "audio" ? <span className="vf-audio-slate"><FreshIcon name="volume" />Audio</span> : <img src={url} alt="" onError={failed} /> : <span className="vf-card-loader" aria-label="Loading media" />}
       {version.hidden ? <span className="vf-hidden-chip">Hidden</span> : null}

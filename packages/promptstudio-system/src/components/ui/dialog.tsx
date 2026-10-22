@@ -4,6 +4,9 @@ import closeIcon from "./dialog-close.svg";
 
 import { cn } from "@promptstudio/system/lib/utils";
 
+/** Radix types forceMount as the literal `true`, so it is spread only when set. */
+const mounting = (forceMount: true | undefined): { forceMount?: true } => (forceMount ? { forceMount } : {});
+
 const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -18,10 +21,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn(
-      "z-modal data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 bg-black/80",
-      className,
-    )}
+    className={cn("z-modal fixed inset-0 bg-black/80", className)}
     {...props}
   />
 ));
@@ -32,14 +32,17 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     hideClose?: boolean;
     overlayClassName?: string;
+    overlayRef?: React.Ref<HTMLDivElement>;
   }
->(({ className, children, hideClose = false, overlayClassName, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay className={overlayClassName} />
+>(({ className, children, hideClose = false, overlayClassName, overlayRef, forceMount, ...props }, ref) => (
+  // forceMount keeps a closing dialog mounted while the client folds it into its target.
+  <DialogPortal {...mounting(forceMount)}>
+    <DialogOverlay ref={overlayRef} className={overlayClassName} {...mounting(forceMount)} />
     <DialogPrimitive.Content
       ref={ref}
+      {...mounting(forceMount)}
       className={cn(
-        "bg-[var(--vidra-dialog-surface)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] z-modal fixed left-[50%] top-[50%] grid w-[calc(100%_-_32px)] max-w-[480px] translate-x-[-50%] translate-y-[-50%] gap-5 rounded-xl border-0 p-6 ring-[0.5px] ring-inset ring-white duration-200",
+        "bg-[var(--vidra-dialog-surface)] z-modal fixed left-[50%] top-[50%] grid w-[calc(100%_-_32px)] max-w-[480px] translate-x-[-50%] translate-y-[-50%] gap-5 rounded-xl border-0 p-6 ring-[0.5px] ring-inset ring-white",
         className,
       )}
       {...props}
