@@ -1106,7 +1106,8 @@
     no-repeat;
   content: "";
 }
-body:has(.vf-settings-sheet) > [data-state="open"]:not([role="dialog"]) {
+/* Any state: a closing sheet keeps its backdrop while both fold away. */
+body:has(.vf-settings-sheet) > [data-state]:not([role="dialog"]) {
   background: #0b0b0b8c;
 }
 .vf-range-setting {
@@ -1149,13 +1150,20 @@ body:has(.vf-settings-sheet) > [data-state="open"]:not([role="dialog"]) {
   border: 1px solid var(--vf-border);
   border-radius: var(--vf-radius-control);
   background: var(--vf-panel);
+  isolation: isolate;
 }
+/*
+ * The options share the switch's layer so the stretching selection passes behind both labels,
+ * and the labels trade colour in 0.12s as it does (frame 2681).
+ */
 .vf-output-option.vf-button {
   min-height: 26px;
   height: 26px;
   padding: 0 var(--vf-space-10);
   border-radius: var(--vf-radius-small);
   color: var(--vf-secondary);
+  isolation: auto;
+  transition: color 120ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .vf-output-option.vf-button[aria-checked="true"] {
   color: var(--vf-white);

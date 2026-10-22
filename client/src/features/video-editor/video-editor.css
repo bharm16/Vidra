@@ -957,7 +957,7 @@
   align-items: center;
   gap: var(--vf-space-12);
 }
-:root .ve-export-header > video,
+:root .ve-export-header .m-thumb > video,
 :root .ve-export-thumbnail {
   width: 64px;
   height: 36px;
@@ -968,13 +968,6 @@
 }
 :root .ve-export-header > div {
   flex: 1;
-}
-:root .ve-export-header progress {
-  display: block;
-  width: 100%;
-  height: 4px;
-  margin-top: var(--vf-space-6);
-  accent-color: var(--vf-white);
 }
 :root .ve-export-actions {
   display: flex;
@@ -1151,28 +1144,12 @@
 :root .ve-export-popover .vf-button::before {
   inset: 0;
 }
-:root .ve-export-header > img {
+:root .ve-export-header .m-thumb > img {
   width: 64px;
   height: 36px;
   flex: none;
   object-fit: cover;
   border-radius: var(--vf-radius-small);
-}
-:root .ve-export-header progress {
-  appearance: none;
-  overflow: hidden;
-  border: 0;
-  border-radius: var(--vf-radius-pill);
-  background: var(--vf-control);
-}
-:root .ve-export-header progress::-webkit-progress-bar {
-  background: var(--vf-control);
-}
-:root .ve-export-header progress::-webkit-progress-value {
-  background: var(--vf-white);
-}
-:root .ve-export-header progress::-moz-progress-bar {
-  background: var(--vf-white);
 }
 :root .ve-media-search .ve-search-icon {
   flex: none;
@@ -3442,7 +3419,8 @@
   background-color: currentColor;
   mask: url("/design-assets/fidelity-sketch-loader.svg") center / contain
     no-repeat;
-  animation: ve-export-spin 1s linear infinite;
+  /* 4 turns in 3.7s in the Export timeline (frame 2694). */
+  animation: ve-export-spin 925ms linear infinite;
 }
 @keyframes ve-export-spin {
   to {

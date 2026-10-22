@@ -11,6 +11,13 @@ import { GoogleGlyph } from "./GoogleGlyph";
 import { Spinner } from "./Spinner";
 import { safeRedirect } from "./authParams";
 import { authErrorCopy } from "./authErrorCopy";
+import { useTransitionLink } from "@/components/motion/viewTransition";
+
+/** The switch pill stretches to the other half and contracts behind it (frame 2715), so it needs this switch's geometry. */
+function pillGeometry(nav: HTMLElement | null): Record<string, string> {
+  const [first, second] = Array.from(nav?.querySelectorAll("a") ?? []).map(link => link.getBoundingClientRect());
+  return first && second ? { "--vf-auth-pill-width": `${first.width}px`, "--vf-auth-pill-shift": `${second.left - first.left}px`, "--vf-auth-pill-span": `${second.right - first.left}px` } : {};
+}
 
 export function AuthEntryPage({ mode }: { mode: "signin" | "signup" }): ReactElement {
   const location = useLocation();
@@ -30,8 +37,12 @@ export function AuthEntryPage({ mode }: { mode: "signin" | "signup" }): ReactEle
   const [passwordError, setPasswordError] = useState<string>();
   const emailId = useId();
   const passwordId = useId();
+  const switcher = useRef<HTMLElement>(null);
   const query = `?redirect=${encodeURIComponent(redirect)}`;
   const modeLink = (path: string): string => location.search ? `${path}${location.search}` : path;
+  const transitionLink = useTransitionLink();
+  const switchTo = (direction: "switch-right" | "switch-left", path: string) => transitionLink(direction, modeLink(path), { state: { email } }, () => pillGeometry(switcher.current));
+  const forgotLink = `/forgot-password${query}${email.trim() ? `&email=${encodeURIComponent(email.trim())}` : ""}`;
 
   useEffect(() => () => { operation.current += 1; }, []);
   useEffect(() => { if (user && !suppressAutoRedirect.current) navigate(redirect, { replace: true }); }, [user, navigate, redirect]);
@@ -75,12 +86,12 @@ export function AuthEntryPage({ mode }: { mode: "signin" | "signup" }): ReactEle
   const handleSubmit = (event: FormEvent): void => { event.preventDefault(); void submit("email"); };
 
   return <AuthModalCard footer>
-    <nav className="vf-auth-switch" aria-label="Sign in or create account"><Link to={modeLink("/signin")} state={{ email }} aria-current={!isSignUp ? "page" : undefined}>Sign in</Link><Link to={modeLink("/signup")} state={{ email }} aria-current={isSignUp ? "page" : undefined}>Create account</Link></nav>
+    <nav ref={switcher} className="vf-auth-switch" aria-label="Sign in or create account"><Link to={modeLink("/signin")} state={{ email }} onClick={isSignUp ? switchTo("switch-left", "/signin") : undefined} aria-current={!isSignUp ? "page" : undefined}>{!isSignUp ? <span className="vf-auth-pill" aria-hidden="true" /> : null}Sign in</Link><Link to={modeLink("/signup")} state={{ email }} onClick={isSignUp ? undefined : switchTo("switch-right", "/signup")} aria-current={isSignUp ? "page" : undefined}>{isSignUp ? <span className="vf-auth-pill" aria-hidden="true" /> : null}Create account</Link></nav>
     {error ? <AuthNotice>{error}</AuthNotice> : null}
     <div className="vf-auth-fields"><FreshButton className="vf-auth-provider" large disabled={Boolean(busy)} onClick={() => { void submit("google"); }}>{busy === "google" ? <Spinner /> : <GoogleGlyph />}Continue with Google</FreshButton><AuthEmailAlternative /></div>
     <form className="vf-auth-form" noValidate onSubmit={handleSubmit} aria-label={isSignUp ? "Create account" : "Sign in"}>
-      <div className="vf-auth-fields"><div className="vf-auth-field"><label className="vf-auth-label" htmlFor={emailId}>Email</label><input id={emailId} className="vf-field" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={event => setEmail(event.target.value)} disabled={Boolean(busy)} aria-invalid={Boolean(emailError)} aria-describedby={emailError ? `${emailId}-error` : undefined} />{emailError ? <AuthFieldError id={`${emailId}-error`}>{emailError}</AuthFieldError> : null}</div>
-      <AuthPasswordField id={passwordId} label="Password" value={password} onChange={setPassword} visible={visible} onToggle={() => setVisible(value => !value)} autoComplete={isSignUp ? "new-password" : "current-password"} placeholder="" disabled={Boolean(busy)} error={passwordError} labelAside={isSignUp ? <small>At least 6 characters</small> : <Link to={`/forgot-password${query}${email.trim() ? `&email=${encodeURIComponent(email.trim())}` : ""}`}>Forgot password?</Link>} /></div>
+      <div className="vf-auth-fields"><div className="vf-auth-field vf-auth-email"><label className="vf-auth-label" htmlFor={emailId}>Email</label><input id={emailId} className="vf-field" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={event => setEmail(event.target.value)} disabled={Boolean(busy)} aria-invalid={Boolean(emailError)} aria-describedby={emailError ? `${emailId}-error` : undefined} />{emailError ? <AuthFieldError id={`${emailId}-error`}>{emailError}</AuthFieldError> : null}</div>
+      <AuthPasswordField id={passwordId} label="Password" value={password} onChange={setPassword} visible={visible} onToggle={() => setVisible(value => !value)} autoComplete={isSignUp ? "new-password" : "current-password"} placeholder="" disabled={Boolean(busy)} error={passwordError} labelAside={isSignUp ? <small>At least 6 characters</small> : <Link to={forgotLink} onClick={transitionLink("reshape", forgotLink)}>Forgot password?</Link>} /></div>
       <FreshButton type="submit" tone="primary" large disabled={Boolean(busy)} data-loading={busy === "email" || undefined}>{busy === "email" ? <Spinner /> : null}{busy === "email" ? isSignUp ? "Creating account…" : "Signing in…" : isSignUp ? "Create account" : "Sign in"}</FreshButton>
     </form>
   </AuthModalCard>;
