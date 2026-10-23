@@ -36,7 +36,7 @@ export class GcsWorkflowOutputStorage implements WorkflowOutputStorage {
           if (!owned || output.storagePath.includes("..") || output.storagePath.includes("://")) throw new WorkflowError("access_denied", `The produced ${output.kind === "image" ? "picture" : "audio"} is not owned by this creator.`);
           const [source] = await this.bucket.file(output.storagePath).getMetadata();
           if (!source.generation || Number(source.size) <= 0 || Number(source.size) > limit) throw new WorkflowError("invalid_settings", `The produced ${output.kind === "image" ? "picture" : "audio"} is unavailable or too large.`);
-          await this.bucket.file(output.storagePath, { generation: source.generation }).copy(destination, { preconditionOpts: { ifGenerationMatch: 0 }, metadata: provenance });
+          await this.bucket.file(output.storagePath, { generation: source.generation }).copy(destination, { preconditionOpts: { ifGenerationMatch: 0 }, ...(source.contentType ? { contentType: source.contentType } : {}), metadata: provenance });
         } else {
           const source = await this.videos?.getVideoContent(output.assetId);
           if (!source || (source.contentLength !== undefined && source.contentLength > MAX_BYTES)) throw new WorkflowError("input_unavailable", "The produced clip is unavailable or too large.");

@@ -9,6 +9,15 @@ const SSN_RE = /\b\d{3}-\d{2}-\d{4}\b/g;
 const CARD_RE = /\b\d{16}\b/g;
 const PHONE_RE = /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g;
 const KEY_RE = /\b[A-Za-z0-9]{32,}\b/g;
+export const INTERNAL_ERROR_MESSAGE = "Something went wrong on our side. Try again.";
+
+/**
+ * Whether a non-domain error's own message may reach the client. Server failures and
+ * provider errors (whose status is the provider's, e.g. a 429 quota body) stay internal.
+ */
+export function exposesErrorMessage(error: unknown, statusCode: number): boolean {
+  return statusCode < 500 && !(error instanceof Error && error.name === "APIError");
+}
 
 /**
  * Redact sensitive data from strings
@@ -170,8 +179,15 @@ export function errorHandler(
       ? (httpErr.code as ApiErrorCode)
       : undefined;
 
+  // An unexpected server failure is logged in full above; its message and details
+  // (store errors, provider bodies, console links) never reach the client.
+  if (!exposesErrorMessage(err, statusCode)) {
+    respond.fail(res, req, statusCode, { error: INTERNAL_ERROR_MESSAGE, ...(code ? { code } : {}) });
+    return;
+  }
+
   respond.fail(res, req, statusCode, {
-    error: errorObj.message || "Internal server error",
+    error: errorObj.message || INTERNAL_ERROR_MESSAGE,
     ...(code ? { code } : {}),
     ...(details ? { details } : {}),
   });

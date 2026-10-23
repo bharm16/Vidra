@@ -8,6 +8,7 @@ import type { ExportStorage } from "@services/video-export/ExportStorage";
 import { WorkflowError } from "@services/projects/WorkflowError";
 import { isOwnedPicturePath } from "@services/owned-media";
 import { StoredFrameSchema, parseByteRange, type FrameOperation, type StoredFrame, type StoredShare, type WorkflowContent, type WorkflowManagementStorage } from "./types";
+import { mediaDownloadName } from "@shared/workflow/mediaFilename";
 
 const ALLOWED = new Set(["image/png", "image/jpeg", "image/webp", "video/mp4", "video/webm"]);
 function errorCode(error: unknown): unknown { return typeof error === "object" && error !== null && "code" in error ? error.code : undefined; }
@@ -33,7 +34,7 @@ export class GcsWorkflowManagementStorage implements WorkflowManagementStorage {
     const file = this.bucket.file(version.object.storagePath, generation ? { generation } : {});
     try { await file.getMetadata(); } catch { throw new WorkflowError("not_found", "This stored file is unavailable."); }
     const expiry = Date.now() + 15 * 60_000;
-    const [url] = await file.getSignedUrl({ version: "v4", action: "read", expires: expiry, responseDisposition: `attachment; filename="vidra-media"; filename*=UTF-8''${encodeURIComponent(version.label)}`, ...(generation ? { queryParams: { generation } } : {}) });
+    const [url] = await file.getSignedUrl({ version: "v4", action: "read", expires: expiry, responseDisposition: `attachment; filename="vidra-media"; filename*=UTF-8''${encodeURIComponent(mediaDownloadName(version))}`, ...(generation ? { queryParams: { generation } } : {}) });
     return { url, expiresAt: new Date(expiry).toISOString() };
   }
 

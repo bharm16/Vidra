@@ -169,6 +169,9 @@ describe("DraftCheckpointStore writer copies", () => {
     const reader = tab();
     expect(await reader.get("creator", "project_one", "draft_one")).toMatchObject({ sequence: 4, updatedAt: "2026-10-17T00:00:09.000Z" });
     expect(await reader.list("creator", "project_one")).toHaveLength(2);
+    await reader.save(checkpoint({ draftId: "draft_two" }));
+    await reader.remove("creator", "project_one", "draft_one");
+    expect((await reader.list("creator", "project_one")).map(item => item.draftId)).toEqual(["draft_two"]);
   });
 
   it("requires an explicit recovery choice when closed tabs retained competing words", async () => {

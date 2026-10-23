@@ -30,18 +30,20 @@ export function RequestSlotStatus({ request, slot, presentation = "card", onRetr
   const kind = request.snapshot.action === "animate-image" ? "video" : request.snapshot.action.includes("image") ? "image" : "video";
   if (slot.outcome === "cancelled") return <p className="vf-slot-status">{request.slots.length > 1 ? `Result ${slot.ordinal} cancelled` : "Request cancelled"}</p>;
   if (!failed && !pending && !unknown) return null;
-  const message = failed ? `Could not make this ${kind}` : unknown ? "Checking this request…" : slot.outcome === "queued" ? "In the queue" : `Making your ${kind}`;
+  // A made result whose save failed is repaired by reconcile, not remade.
+  const unsaved = slot.delivery === "storage-failed" || slot.delivery === "attachment-failed";
+  const message = failed ? `Could not ${unsaved ? "save" : "make"} this ${kind}` : unknown ? "Checking this request…" : slot.outcome === "queued" ? "In the queue" : `Making your ${kind}`;
   if (presentation === "tile") {
     const label = `Result ${slot.ordinal}: ${message}`;
     const icon = <img src={`/design-assets/prompt-history/batch-${failed ? "failure" : "loader"}.svg`} width="20" height="20" alt="" />;
     if (onInspect) return <FreshButton className="vf-history-status-tile" tone="quiet" aria-label={`${label}. View request results`} title={slot.error?.message ?? message} onClick={onInspect}>{icon}</FreshButton>;
-    return failed && onRetry && request.slots.length === 1 ? <FreshButton className="vf-history-status-tile" tone="quiet" aria-label={`${message}. Retry`} title={slot.error?.message ?? message} onClick={() => onRetry(request, slot.id)}>{icon}</FreshButton> : <div className="vf-history-status-tile" role="status" aria-label={label} title={slot.error?.message ?? message}>{icon}</div>;
+    return failed && onRetry && request.slots.length === 1 ? <FreshButton className="vf-history-status-tile" tone="quiet" aria-label={`${message}. ${unsaved ? "Retry saving" : "Retry"}`} title={slot.error?.message ?? message} onClick={() => onRetry(request, slot.id)}>{icon}</FreshButton> : <div className="vf-history-status-tile" role="status" aria-label={label} title={slot.error?.message ?? message}>{icon}</div>;
   }
-  if (failed && presentation === "inline") return <div className="vf-output-history-failure" role="status"><div><img src="/design-assets/prompt-history/failure-inline.svg" alt="" /><p>{message}</p></div>{slot.error?.message ? <p className="vf-output-failure-reason">{slot.error.message}</p> : null}{onRetry ? <FreshButton className="vf-output-history-retry" aria-label={request.slots.length > 1 ? `Retry result ${slot.ordinal}` : "Retry"} onClick={() => onRetry(request, slot.id)}>Retry</FreshButton> : null}</div>;
+  if (failed && presentation === "inline") return <div className="vf-output-history-failure" role="status"><div><img src="/design-assets/prompt-history/failure-inline.svg" alt="" /><p>{message}</p></div>{slot.error?.message ? <p className="vf-output-failure-reason">{slot.error.message}</p> : null}{onRetry ? <FreshButton className="vf-output-history-retry" aria-label={request.slots.length > 1 ? `${unsaved ? "Retry saving" : "Retry"} result ${slot.ordinal}` : unsaved ? "Retry saving" : "Retry"} onClick={() => onRetry(request, slot.id)}>{unsaved ? "Retry saving" : "Retry"}</FreshButton> : null}</div>;
   return <div className="vf-output-status" data-presentation={presentation} data-failed={failed || undefined} role="status" title={failed ? slot.error?.message : undefined}>
     <div className="vf-output-progress"><img src={`/design-assets/prompt-history/${failed ? "failure" : presentation === "inline" ? "loader-inline" : "loader"}.svg`} alt="" /><p>{message}</p></div>
     {caption ? <p className="vf-output-caption">{caption}</p> : null}
-    {failed && onRetry ? <div className="vf-output-retry"><FreshButton className="vf-output-retry-button" aria-label={request.slots.length > 1 ? `Try again result ${slot.ordinal}` : "Try again"} onClick={() => onRetry(request, slot.id)}>Try again</FreshButton></div> : null}
+    {failed && onRetry ? <div className="vf-output-retry"><FreshButton className="vf-output-retry-button" aria-label={request.slots.length > 1 ? `${unsaved ? "Retry saving" : "Try again"} result ${slot.ordinal}` : unsaved ? "Retry saving" : "Try again"} onClick={() => onRetry(request, slot.id)}>{unsaved ? "Retry saving" : "Try again"}</FreshButton></div> : null}
   </div>;
 }
 

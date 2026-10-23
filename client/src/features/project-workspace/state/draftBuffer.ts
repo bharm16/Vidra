@@ -17,6 +17,26 @@ export function draftContent(draft: CreationDraft): DraftContent {
   return { action: draft.action, instructions: draft.instructions, inputs: draft.inputs, settings: draft.settings, context: draft.context, destination: draft.destination, ...(draft.contextualTarget ? { contextualTarget: draft.contextualTarget } : {}) };
 }
 
+interface DeviceDraftCopy { draftId: string; record: CreationDraft; serverRevision: number; content: DraftContent }
+
+/**
+ * Sorts one conversation's device copies. A copy holds unsaved work only when its words differ from the
+ * server record it was saved against; hydration already restores such a copy on the current revision, and a
+ * submitted or discarded draft has nothing left to recover, so its copies are settled and can be removed.
+ */
+export function sortDeviceCopies<T extends DeviceDraftCopy>(copies: T[], drafts: CreationDraft[], conversationId: string): { recoverable: T[]; settled: T[] } {
+  const recoverable: T[] = []; const settled: T[] = [];
+  for (const copy of copies) {
+    if (copy.record.conversationId !== conversationId) continue;
+    const saved = drafts.find(record => record.id === copy.draftId);
+    if (saved && (saved.status === "submitted" || saved.status === "discarded")) { settled.push(copy); continue; }
+    const unsaved = canonicalJson(copy.content) !== canonicalJson(draftContent(copy.record));
+    if (!unsaved) continue;
+    if (!saved || (copy.serverRevision !== saved.revision && canonicalJson(copy.content) !== canonicalJson(draftContent(saved)))) recoverable.push(copy);
+  }
+  return { recoverable, settled };
+}
+
 export function openDraftBuffer(record: CreationDraft): DraftBuffer {
   return { record, content: draftContent(record), sequence: 0, serverRevision: record.revision, checkpointSequence: undefined, acknowledgedSequence: 0, past: [], future: [], typingGroup: undefined };
 }

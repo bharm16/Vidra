@@ -9,7 +9,7 @@ import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { PreparedAction } from "@shared/schemas/workflow/preparation.schemas";
 import { DraftCheckpointStore, type DraftCheckpoint, type SubmissionCheckpoint } from "@/repositories/workflow/DraftCheckpointStore";
 import { WorkflowApi, WorkflowApiError } from "../api/workflowApi";
-import { acknowledgeDraftBuffer, draftContent, draftHasSafeRetention, openDraftBuffer, redoDraftBuffer, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
+import { acknowledgeDraftBuffer, draftContent, draftHasSafeRetention, openDraftBuffer, redoDraftBuffer, sortDeviceCopies, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
 import { EMPTY_WORKSPACE_VIEW, workspaceViewReducer, type WorkspaceViewEvent, type WorkspaceViewState } from "../state/workspaceState";
 import {
   applyDraftInputSource,
@@ -226,10 +226,9 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
           }
           try {
             const copies = await device.list(ownerId, projectId);
-            if (!abort.signal.aborted && inScope()) setDeviceCopies(copies.filter(copy => {
-              const saved = drafts.find(record => record.id === copy.draftId);
-              return !saved || canonicalJson(copy.content) !== canonicalJson(draftContent(saved));
-            }));
+            const { recoverable, settled } = sortDeviceCopies(copies, ownedDrafts, chosen.id);
+            if (!abort.signal.aborted && inScope()) setDeviceCopies(recoverable);
+            for (const copy of settled) void device.remove(ownerId, projectId, copy.draftId).catch(() => undefined);
           } catch (failure) { if (!abort.signal.aborted && inScope()) setResourceErrors(previous => [...previous, `Device recovery copies could not load. ${message(failure)}`]); }
           try {
             const history = await api.history(projectId, chosen.id, abort.signal);

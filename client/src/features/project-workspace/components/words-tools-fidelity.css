@@ -55,6 +55,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.vf-words-tools .vf-words-tools-improved.vf-button {
+  width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  padding: var(--vf-space-12);
+  text-align: left;
+  white-space: normal;
+}
+.vf-words-tools .vf-words-tools-improved.vf-button::before {
+  background: var(--vf-control);
+}
+.vf-words-tools-improved.vf-button > span {
+  overflow-wrap: anywhere;
+  line-height: 20px;
+}
 .vf-words-tools .vf-words-tools-alternatives.vf-button {
   width: 100%;
   min-height: 32px;

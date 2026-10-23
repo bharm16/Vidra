@@ -84,7 +84,7 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
       if (startImage) Object.assign(options, { startImage, seconds: String(z.number().parse(parameters.durationSeconds)), size: z.string().parse(parameters.resolution) });
       else {
         const aspectRatio = z.enum(["16:9", "9:16"]).parse(parameters.aspectRatio);
-        Object.assign(options, { aspectRatio, size: aspectRatio === "16:9" ? "1280*720" : "720*1280", numFrames: z.number().int().parse(parameters.numFrames), fps: z.number().positive().parse(parameters.framesPerSecond) });
+        Object.assign(options, { aspectRatio, size: z.string().parse(parameters.resolution), numFrames: z.number().int().parse(parameters.numFrames), fps: z.number().positive().parse(parameters.framesPerSecond) });
       }
       await reserve();
       const result = await this.deps.videos.generateVideo(sentInstructions, options);

@@ -101,11 +101,15 @@ export class DraftCheckpointStore {
     return values.map(value => CopySchema.parse(value).checkpoint).filter(checkpoint => checkpoint.ownerId === ownerId && checkpoint.projectId === projectId);
   }
 
+  /** Removes the legacy draft and every tab's copy of it. */
   async remove(ownerId: string, projectId: string, draftId: string): Promise<void> {
     const db = await this.open();
-    const transaction = db.transaction("drafts", "readwrite");
+    const transaction = db.transaction(["drafts", "draft-copies"], "readwrite");
     const done = committed(transaction);
     transaction.objectStore("drafts").delete([ownerId, projectId, draftId]);
+    const copies = transaction.objectStore("draft-copies");
+    const values: unknown[] = await result(copies.index("by-draft").getAll(IDBKeyRange.only([ownerId, projectId, draftId])));
+    for (const value of values) { const copy = CopySchema.parse(value); copies.delete([copy.ownerId, copy.projectId, copy.draftId, copy.writerId]); }
     await done;
   }
 

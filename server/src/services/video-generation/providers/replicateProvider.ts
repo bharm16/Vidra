@@ -37,6 +37,9 @@ const WAN_I2V_MODEL_MAP: Record<string, string> = {
 const WAN_T2V_FALLBACK_MODEL = "wan-video/wan-2.2-t2v-fast";
 
 const isWan25Model = (modelId: string): boolean => modelId.includes("wan-2.5");
+// wan-2.2-{t2v,i2v}-fast take `resolution` (480p/720p) and, for t2v, `aspect_ratio`; they have no `size` or negative prompt.
+const isWan22FastModel = (modelId: string): boolean =>
+  modelId.includes("wan-2.2") && modelId.endsWith("-fast");
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -87,6 +90,18 @@ function resolveWan25Resolution(rawSize?: string): string | null {
     return `${match[2]}p`;
   }
   return null;
+}
+
+function resolveWan22Resolution(rawSize?: string): "480p" | "720p" {
+  const cleaned = rawSize?.trim().toLowerCase() ?? "";
+  const progressive = cleaned.match(/^(\d+)p$/);
+  const dimensions = cleaned.match(/^(\d{2,5})[x*](\d{2,5})$/);
+  const lines = progressive
+    ? Number(progressive[1])
+    : dimensions
+      ? Math.min(Number(dimensions[1]), Number(dimensions[2]))
+      : 720;
+  return lines >= 720 ? "720p" : "480p";
 }
 
 function resolveWan25Duration(options: VideoGenerationOptions): number | null {
@@ -190,6 +205,23 @@ export function buildReplicateInput(
     }
     if (options.startImage) {
       input.image = options.startImage;
+    }
+    return input;
+  }
+
+  if (isWan22FastModel(modelId)) {
+    input.resolution = resolveWan22Resolution(options.size);
+    input.num_frames = options.numFrames || 81;
+    input.frames_per_second = options.fps || 16;
+    input.go_fast = true;
+    input.sample_shift = 12;
+    if (options.startImage) {
+      input.image = options.startImage;
+    } else {
+      input.aspect_ratio = options.aspectRatio === "9:16" ? "9:16" : "16:9";
+      if (typeof options.promptExtend === "boolean") {
+        input.optimize_prompt = options.promptExtend;
+      }
     }
     return input;
   }

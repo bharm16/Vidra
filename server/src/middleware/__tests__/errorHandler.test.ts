@@ -101,7 +101,7 @@ describe("errorHandler", () => {
 
       expect(res.statusCode).toBe(500);
       expect(res.responseBody).toMatchObject({
-        error: "null",
+        error: "Something went wrong on our side. Try again.",
         requestId: "req-123",
       });
     });
@@ -114,7 +114,7 @@ describe("errorHandler", () => {
 
       expect(res.statusCode).toBe(500);
       expect(res.responseBody).toMatchObject({
-        error: "Something went wrong",
+        error: "Something went wrong on our side. Try again.",
       });
     });
   });
@@ -251,8 +251,34 @@ describe("errorHandler", () => {
       errorHandler(error, req, res, mockNext);
 
       expect(res.responseBody).toMatchObject({
-        error: "Internal server error",
+        error: "Something went wrong on our side. Try again.",
       });
+    });
+
+    it("never sends an unexpected server failure's message or details to the client", () => {
+      const req = createMockRequest();
+      const res = createMockResponse();
+      const error = Object.assign(new Error("9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/flibberai/firestore/indexes"), { code: 9, details: "The query requires an index." });
+
+      errorHandler(error, req, res, mockNext);
+
+      expect(res.statusCode).toBe(500);
+      const body = JSON.stringify(res.responseBody);
+      expect(body).not.toContain("FAILED_PRECONDITION");
+      expect(body).not.toContain("console.firebase.google.com");
+      expect(res.responseBody).not.toHaveProperty("details");
+    });
+
+    it("keeps a provider's error body internal even when it carries a 4xx status", () => {
+      const req = createMockRequest();
+      const res = createMockResponse();
+      const error = Object.assign(new Error('openai API error: 429 - { "message": "You have no credits remaining." }'), { name: "APIError", statusCode: 429 });
+
+      errorHandler(error, req, res, mockNext);
+
+      expect(res.statusCode).toBe(429);
+      expect(JSON.stringify(res.responseBody)).not.toContain("openai");
+      expect(res.responseBody).toMatchObject({ error: "Something went wrong on our side. Try again." });
     });
   });
 });

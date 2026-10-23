@@ -23,6 +23,8 @@ import {
   type StudioTurnSubmission,
 } from "@shared/schemas/studio.schemas";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
+import { isDomainError } from "@server/errors/DomainError";
+import { exposesErrorMessage, INTERNAL_ERROR_MESSAGE } from "@middleware/errorHandler";
 
 const CreateProjectSchema = z.object({
   title: z.string().max(120).optional(),
@@ -225,7 +227,11 @@ export function createStudioRouter(studioService: StudioService): Router {
             : 500;
         writeEvent({
           type: "error",
-          error: error instanceof Error ? error.message : "Studio turn failed",
+          error: isDomainError(error)
+            ? error.getUserMessage()
+            : error instanceof Error && exposesErrorMessage(error, statusCode)
+              ? error.message
+              : INTERNAL_ERROR_MESSAGE,
           statusCode,
         });
         res.end();

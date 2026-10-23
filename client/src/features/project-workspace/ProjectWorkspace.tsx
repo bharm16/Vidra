@@ -45,6 +45,7 @@ import { SystemRoutePage } from "@/features/public-site/SystemPage";
 import { ShareVersionPanel } from "@/features/workflow-sharing/ShareVersionPanel";
 import { registerWorkspaceRetention } from "@/repositories/workflow/WorkspaceRetention";
 import "./workspace.css";
+import { mediaDownloadName } from "@shared/workflow/mediaFilename";
 
 type Panel = "none" | "recovery" | "options" | "leave" | "rename" | "area";
 interface ResultFeedback { conversationId: string; draftId: string; versionId: string; kind: "setup" | "frame"; }
@@ -267,7 +268,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       }
     });
   };
-  const download = (version: MediaVersion): void => { void perform(async () => { const grant = await mediaActions.download(version.id); if (!scopeAlive.current) return; const link = document.createElement("a"); link.href = grant.url; link.download = version.label; link.rel = "noreferrer"; link.click(); }); };
+  const download = (version: MediaVersion): void => { void perform(async () => { const grant = await mediaActions.download(version.id); if (!scopeAlive.current) return; const link = document.createElement("a"); link.href = grant.url; link.download = mediaDownloadName(version); link.rel = "noreferrer"; link.click(); }); };
   const newDraft = async (action: CreationAction): Promise<void> => { consumeCreationTicket(entryTicket?.entryId ?? entryBinding?.entryId ?? navigationEntry?.entryId); setEntryTicket(undefined); setEntryBinding(binding => binding?.kind === "created" ? undefined : binding); await controller.newDraft(action); if (scopeAlive.current) { showView(); setPanel("none"); setPane("conversation"); setViewerOrigin("conversation"); } };
   const edit = (version: MediaVersion): void => { void perform(async () => { await controller.editMedia(version); if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); } }); };
   /** A change to existing media starts from the media itself, bound in the role its action uses. */

@@ -26,20 +26,33 @@ describe("buildReplicateInput", () => {
     expect(input.seed).toBe(0);
   });
 
-  it("defaults prompt_extend to true for Wan inputs", () => {
-    const modelId = "wan-video/wan-2.2-t2v-fast" as VideoModelId;
-    const input = buildReplicateInput(modelId, "prompt", {});
-
-    expect(input.prompt_extend).toBe(true);
-  });
-
-  it("respects promptExtend override for Wan inputs", () => {
+  it("maps Wan 2.2 text-to-video settings onto the model's resolution and aspect_ratio inputs", () => {
     const modelId = "wan-video/wan-2.2-t2v-fast" as VideoModelId;
     const input = buildReplicateInput(modelId, "prompt", {
+      aspectRatio: "9:16",
+      size: "720p",
+      numFrames: 121,
+      fps: 16,
       promptExtend: false,
+      negativePrompt: "blurry",
     });
 
-    expect(input.prompt_extend).toBe(false);
+    expect(input).toMatchObject({ resolution: "720p", aspect_ratio: "9:16", num_frames: 121, frames_per_second: 16, optimize_prompt: false });
+    expect(input.size).toBeUndefined();
+    expect(input.prompt_extend).toBeUndefined();
+    expect(input.negative_prompt).toBeUndefined();
+  });
+
+  it("maps Wan 2.2 image-to-video sizes to a supported resolution without an aspect ratio", () => {
+    const modelId = "wan-video/wan-2.2-i2v-fast" as VideoModelId;
+    const input = buildReplicateInput(modelId, "prompt", {
+      size: "720*1280",
+      startImage: "https://example.com/image.png",
+    });
+
+    expect(input).toMatchObject({ resolution: "720p", image: "https://example.com/image.png" });
+    expect(input.aspect_ratio).toBeUndefined();
+    expect(buildReplicateInput(modelId, "prompt", { size: "480p", startImage: "x" }).resolution).toBe("480p");
   });
 
   it("maps Wan 2.5 inputs to resolution/duration and prompt expansion flag", () => {

@@ -7,6 +7,7 @@ import type { ProjectWorkspaceController } from "../hooks/useProjectWorkspace";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { applyPhraseChange, bindPhrase, reviewPhraseChange, type PhraseBinding } from "../state/phraseChange";
 import { requestEnhancementSuggestions } from "@/api/enhancementSuggestionsApi";
+import { requestImprovedWords } from "@/api/promptOptimizationApi";
 import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 import { z } from "zod";
 import { fetchCustomSuggestions } from "@/features/prompt-optimizer/api/customSuggestionsApi";
@@ -104,6 +105,8 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   const highlightDescription = useId();
   const retentionDescription = useId();
   const [replacementPresentation, setReplacementPresentation] = useState<"alternatives" | "words">("alternatives");
+  // Improve wording with nothing selected rewrites the whole request instead of swapping one phrase.
+  const [wholeWords, setWholeWords] = useState(false);
   const [phrasePosition, setPhrasePosition] = useState({ left: 12, top: 12 });
   const [hoveredPhrase, setHoveredPhrase] = useState<{ category: string; left: number; top: number }>();
   const [keyboardPhraseFocus, setKeyboardPhraseFocus] = useState(false);
@@ -248,14 +251,16 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
       setPhraseOutcomePresentation({ kind: "dismissed", draftId: current.record.id, sequence: current.sequence, contextKey: contextKey(current) });
     }
     if (selectedKey) customByTarget.current.set(selectedKey, custom);
-    fetchEpoch.current += 1; setBinding(undefined); setKeyboardPhraseFocus(false); setSuggestionError(undefined); setSuggesting(false);
+    fetchEpoch.current += 1; setBinding(undefined); setKeyboardPhraseFocus(false); setSuggestionError(undefined); setSuggesting(false); setWholeWords(false);
   };
-  const loadSuggestions = async (target: PhraseBinding, direction?: string): Promise<void> => {
+  const loadSuggestions = async (target: PhraseBinding, direction?: string, whole = false): Promise<void> => {
     const epoch = ++fetchEpoch.current;
     setSuggesting(true); setSuggestionError(undefined);
     try {
       let values: string[];
-      if (direction) {
+      const action = bufferRef.current?.content.action ?? "";
+      if (whole) values = [await requestImprovedWords(target.text, action.includes("image") && action !== "animate-image")];
+      else if (direction) {
         const result = await fetchCustomSuggestions({ highlightedText: target.text, customRequest: direction, fullPrompt: target.sourceText, contextBefore: target.sourceText.slice(0, target.start), contextAfter: target.sourceText.slice(target.end), metadata: { draftId: target.draftId, revision: target.sequence, startIndex: target.start, endIndex: target.end, contextKey: target.contextKey } });
         values = result.map(suggestion => suggestion.text ?? "").filter(value => value.trim().length > 0);
       } else {
@@ -280,7 +285,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
     try {
       const target = bindPhrase({ id: current.record.id, sequence: current.sequence, contextKey: contextKey(current), instructions: current.content.instructions, writable }, field.selectionStart, field.selectionEnd);
       const key = canonicalJson(target);
-      setReplacementPresentation("alternatives"); setBinding(target); setCustom(customByTarget.current.get(key) ?? ""); setSuggestions([]);
+      setReplacementPresentation("alternatives"); setWholeWords(false); setBinding(target); setCustom(customByTarget.current.get(key) ?? ""); setSuggestions([]);
       void loadSuggestions(target);
     } catch { setSuggestionError("Select complete characters in the current words."); }
   };
@@ -298,7 +303,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
     const selected = field.selectionStart !== field.selectionEnd;
     try {
       const target = bindPhrase({ id: current.record.id, sequence: current.sequence, contextKey: contextKey(current), instructions: current.content.instructions, writable }, selected ? field.selectionStart : 0, selected ? field.selectionEnd : current.content.instructions.length);
-      setReplacementPresentation("words"); setBinding(target); setSuggestions([]); setCustom(""); setHoveredPhrase(undefined); void loadSuggestions(target);
+      setReplacementPresentation("words"); setWholeWords(!selected); setBinding(target); setSuggestions([]); setCustom(""); setHoveredPhrase(undefined); void loadSuggestions(target, undefined, !selected);
     } catch { setSuggestionError("Select complete characters in the current words."); }
   };
 
@@ -358,7 +363,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   return <div className="vf-composer-region" data-autosize={compactTextHeight !== undefined || undefined} data-phrase-outcome={phraseOutcome} data-phrase-applied={appliedPresentation || undefined} style={compactTextHeight === undefined ? undefined : { "--vf-words-height": `${compactTextHeight}px`, "--vf-natural-words-height": `${naturalTextHeight}px` } as CSSProperties}>
     {hoveredPhrase && !binding ? createPortal(<SemanticTooltip category={hoveredPhrase.category} style={{ left: hoveredPhrase.left, top: hoveredPhrase.top }} />, document.body) : null}
     {labeling.status === "error" ? <HighlightingUnavailable onRetry={() => labeling.refresh()} /> : null}
-    {binding && matchingBinding ? createPortal(replacementPresentation === "words" ? <WordsTools phrase={binding.text} choices={suggestions} style={phrasePosition} disabled={suggesting || !writable} onChoose={apply} onSuggestAlternatives={() => setReplacementPresentation("alternatives")} onClose={() => { close(); textarea.current?.focus(); }} /> : <PhraseReplacements suggestions={suggestions} custom={custom} suggesting={suggesting} {...(suggestionError ? { error: suggestionError, errorMode: suggestionError.includes("phrase") ? "target" : custom.trim() ? "custom" : "alternatives" } : {})} style={phrasePosition} onKeyboardNavigation={() => setKeyboardPhraseFocus(true)} onApply={apply} onCustomChange={value => { setCustom(value); if (selectedKey) customByTarget.current.set(selectedKey, value); }} onSuggest={() => { void loadSuggestions(binding, custom.trim()); }} onRetry={() => { void loadSuggestions(binding, custom.trim() || undefined); }} onClose={() => { close(); textarea.current?.focus(); }} />, document.body) : null}
+    {binding && matchingBinding ? createPortal(replacementPresentation === "words" ? <WordsTools phrase={binding.text} choices={suggestions} whole={wholeWords} busy={suggesting} error={suggestionError} style={phrasePosition} disabled={suggesting || !writable} onChoose={apply} onSuggestAlternatives={() => setReplacementPresentation("alternatives")} onClose={() => { close(); textarea.current?.focus(); }} /> : <PhraseReplacements suggestions={suggestions} custom={custom} suggesting={suggesting} {...(suggestionError ? { error: suggestionError, errorMode: suggestionError.includes("phrase") ? "target" : custom.trim() ? "custom" : "alternatives" } : {})} style={phrasePosition} onKeyboardNavigation={() => setKeyboardPhraseFocus(true)} onApply={apply} onCustomChange={value => { setCustom(value); if (selectedKey) customByTarget.current.set(selectedKey, value); }} onSuggest={() => { void loadSuggestions(binding, custom.trim()); }} onRetry={() => { void loadSuggestions(binding, custom.trim() || undefined); }} onClose={() => { close(); textarea.current?.focus(); }} />, document.body) : null}
     <div className="vf-composer" data-action={buffer.content.action} data-has-profile={Boolean(profile) || undefined} style={appliedPresentation && compactTextHeight !== undefined ? { minHeight: profile ? 272 : 232 } : undefined}>
       <div ref={mediaRow} className="vf-composer-media"><FlipScope watch={reshape.output} root={mediaRow} items=":scope > .vf-media-action, :scope > .vf-input-tile" onFlip={reshape.tiles} />{mediaActions}{mediaActions === undefined && (!imageEdit || !inputs.length) ? <>{offeredRoles.map(role => inputControl ? <span key={role} className="vf-media-action">{inputControl(role, INPUT_TILE_LABELS[role])}<span>{INPUT_TILE_LABELS[role]}</span></span> : <Button key={role} variant="ghost" type="button" className="vf-media-action" disabled={!writable} onClick={() => onChooseInput(role)}><span className="vf-compact-media-icon"><img src="/design-assets/workspace-compact-reference.svg" alt="" /></span><span>{INPUT_TILE_LABELS[role]}</span></Button>)}{onSketch && offeredRoles.length ? <Button variant="ghost" type="button" className="vf-media-action" disabled={!writable} onClick={onSketch}><span className="vf-compact-media-icon"><img src="/design-assets/workspace-compact-sketch.svg" alt="" /></span><span>Sketch</span></Button> : null}</> : null}{inputs.map((input, index) => {
         const version = input.state === "resolved" ? controller.media.find(candidate => candidate.id === input.versionId) : input.state === "importing" ? controller.media.find(candidate => candidate.id === importedVersionId(input.importId)) : undefined;

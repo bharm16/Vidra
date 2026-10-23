@@ -98,6 +98,12 @@ it("describes image animation as video work in pending and failed statuses", () 
   expect(screen.getByText("Making your video")).toBeInTheDocument();
   rerender(<RequestSlotStatus request={current} slot={failed} />);
   expect(screen.getByText("Could not make this video")).toBeInTheDocument();
+  const onRetry = vi.fn();
+  const unsaved = { ...failed, outcome: "completed" as const, delivery: "storage-failed" as const };
+  rerender(<RequestSlotStatus request={current} slot={unsaved} onRetry={onRetry} />);
+  expect(screen.getByText("Could not save this video")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: `Retry saving result ${unsaved.ordinal}` }));
+  expect(onRetry).toHaveBeenCalledWith(current, unsaved.id);
 });
 
 it("keeps an unfinished two-slot animation request in the ordinary video status presentation", async () => {
@@ -120,6 +126,16 @@ it("keeps quick wording choices separate from requesting more alternatives", () 
   fireEvent.click(screen.getByRole("button", { name: "Suggest alternatives" })); expect(onSuggestAlternatives).toHaveBeenCalledTimes(1); expect(onChoose).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Golden hour" })); expect(onChoose).toHaveBeenCalledWith("Golden hour");
   fireEvent.keyDown(screen.getByRole("region", { name: "Words tools" }), { key: "Escape" }); expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+it("offers a whole-request rewrite without phrase directions when nothing is selected", () => {
+  const onChoose = vi.fn(); const props = { phrase: "a dog on a beach", whole: true, onChoose, onSuggestAlternatives: vi.fn(), onClose: vi.fn() };
+  const { rerender } = render(<WordsTools {...props} choices={[]} busy />);
+  expect(screen.getByRole("status")).toHaveTextContent("Improving your words…");
+  expect(screen.queryByRole("button", { name: "Suggest alternatives" })).not.toBeInTheDocument();
+  rerender(<WordsTools {...props} choices={["A golden retriever sprinting across wet sand at sunrise"]} />);
+  fireEvent.click(screen.getByRole("button", { name: "A golden retriever sprinting across wet sand at sunrise" }));
+  expect(onChoose).toHaveBeenCalledWith("A golden retriever sprinting across wet sand at sunrise");
 });
 
 function phraseProps(): PhraseReplacementsProps {

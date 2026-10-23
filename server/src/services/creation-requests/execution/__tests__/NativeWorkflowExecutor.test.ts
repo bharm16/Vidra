@@ -30,7 +30,7 @@ it("uses the explicit native image provider without a picture-to-clip prerequisi
 it("maps exact text-video parameters directly and retains start-frame ownership for animation", async () => {
   const deps = dependencies(); const executor = new NativeWorkflowExecutor(deps); const text = captured("wan-2.2-t2v");
   await executor.execute(text, text.slots[0]!, catalog.get("wan-2.2-t2v")!, "A red boat");
-  expect(deps.videos?.generateVideo).toHaveBeenLastCalledWith("A red boat", expect.objectContaining({ model: "wan-video/wan-2.2-t2v-fast", size: "1280*720", numFrames: 81, fps: 16, promptExtend: false }));
+  expect(deps.videos?.generateVideo).toHaveBeenLastCalledWith("A red boat", expect.objectContaining({ model: "wan-video/wan-2.2-t2v-fast", size: "720p", numFrames: 81, fps: 16, promptExtend: false }));
   const animation = captured("wan-2.5-i2v"); await executor.execute(animation, animation.slots[0]!, catalog.get("wan-2.5-i2v")!, "A red boat");
   expect(deps.inputAccess).toHaveBeenCalledWith("creator", "project_native", "version_source");
   expect(deps.videos?.generateVideo).toHaveBeenLastCalledWith("A red boat", expect.objectContaining({ startImage: "https://media.test/owned-input", seconds: "5", size: "720p" }));

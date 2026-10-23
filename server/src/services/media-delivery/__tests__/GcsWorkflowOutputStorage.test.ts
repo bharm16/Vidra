@@ -14,8 +14,9 @@ it("creates one deterministic owned file and verifies actual bytes/geometry agai
   const bytes = await sharp({ create: { width: 19, height: 13, channels: 3, background: "red" } }).webp().toBuffer();
   const sourcePath = "image-previews/creator/native-picture";
   const targetPath = "users/creator/previews/images/workflow-slot_storage.webp";
-  const records = new Map<string, { data: Buffer; metadata: { generation: string; size: number; contentType: string; metadata?: Record<string, string> } }>([[sourcePath, { data: bytes, metadata: { generation: "1", size: bytes.length, contentType: "image/webp" } }]]);
-  const copy = vi.fn(async (target: { name: string }, options: { preconditionOpts: { ifGenerationMatch: number }; metadata: Record<string, string> }) => { expect(options.preconditionOpts.ifGenerationMatch).toBe(0); records.set(target.name, { data: bytes, metadata: { generation: "2", size: bytes.length, contentType: "image/webp", metadata: options.metadata } }); });
+  const records = new Map<string, { data: Buffer; metadata: { generation: string; size: number; contentType?: string; metadata?: Record<string, string> } }>([[sourcePath, { data: bytes, metadata: { generation: "1", size: bytes.length, contentType: "image/webp" } }]]);
+  // A GCS copy that supplies metadata replaces the destination resource, keeping only the content type it is given.
+  const copy = vi.fn(async (target: { name: string }, options: { preconditionOpts: { ifGenerationMatch: number }; contentType?: string; metadata: Record<string, string> }) => { expect(options.preconditionOpts.ifGenerationMatch).toBe(0); records.set(target.name, { data: bytes, metadata: { generation: "2", size: bytes.length, ...(options.contentType ? { contentType: options.contentType } : {}), metadata: options.metadata } }); });
   const bucket = { file: (name: string) => ({ name, copy, getMetadata: async () => { const stored = records.get(name); if (!stored) throw Object.assign(new Error("Absent"), { code: 404 }); return [stored.metadata]; }, createReadStream: () => Readable.from([records.get(name)!.data]) }) } as unknown as Bucket;
   const storage = new GcsWorkflowOutputStorage(bucket, null);
   const output = { kind: "image" as const, storagePath: sourcePath, model: "flux", provider: "replicate" };
