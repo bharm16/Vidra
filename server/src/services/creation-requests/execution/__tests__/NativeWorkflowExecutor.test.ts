@@ -7,6 +7,7 @@ import {
   resolveWorkflowAdapterBinding,
 } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
 import { NativeWorkflowExecutor, type NativeWorkflowExecutorDeps } from "../NativeWorkflowExecutor";
+import { instructionsFor } from "../types";
 
 const qualifiedSpend = { qualified: (): boolean => true, reserve: vi.fn(async (): Promise<boolean> => true) };
 const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(["replicate-flux-schnell", "replicate-flux-kontext-fast"]), videoAvailable: () => true, textAvailable: true, spendGuard: qualifiedSpend });
@@ -118,4 +119,12 @@ it("delivers transcripts as text and voiceovers as staged audio", async () => {
   const script = captured("elevenlabs-v3");
   await expect(new NativeWorkflowExecutor({ ...dependencies(), models: voice }).execute(script, script.slots[0]!, nativeCatalog.get("elevenlabs-v3")!, "Context\n\nA red boat")).resolves.toEqual({ kind: "audio", storagePath: "users/creator/previews/audio/native-slot_native", model: "elevenlabs/v3", provider: "replicate" });
   expect(voice.runner.run).toHaveBeenCalledWith(expect.objectContaining({ input: expect.objectContaining({ prompt: "A red boat" }) }));
+});
+
+it("sends a picture or clip model only the project instructions and current words, keeping history for text answers", () => {
+  const withHistory = (profileId: string): ReturnType<typeof AcceptedRequestSchema.parse> => { const base = captured(profileId); return AcceptedRequestSchema.parse({ ...base, snapshot: { ...base.snapshot, context: { origin: "branch", parentRequestId: "request_earlier", requestIds: ["request_earlier"], projectInstructionsRevision: 1 } }, materializedContext: { projectInstructions: "Warm film look", entries: [{ requestId: "request_earlier", instructions: "A golden retriever on a beach" }] } }); };
+  const picture = catalog.get("flux-schnell"); const text = catalog.get("text-ask");
+  if (!picture || !text) throw new Error("Missing fixture profiles");
+  expect(instructionsFor(withHistory("flux-schnell"), picture)).toBe("Project instructions:\nWarm film look\n\nA red boat");
+  expect(instructionsFor(withHistory("text-ask"), text)).toContain("Previous request:\nA golden retriever on a beach");
 });

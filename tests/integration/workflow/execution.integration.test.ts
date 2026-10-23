@@ -103,7 +103,7 @@ it("captures only exact ready answers as context, counts their allowance and nev
   const selected = { origin: "explicit", requestIds: [captured.id], projectInstructionsRevision: 1 };
   const materialized = await contexts.materialize("creator", captured.projectId, selected);
   expect(materialized.entries).toEqual([{ requestId: captured.id, instructions: "Private instructions", textOutputs: [{ slotId: captured.slots[0]!.id, text: answer }] }]);
-  expect(instructionsFor({ ...captured, materializedContext: materialized })).toContain(answer);
+  expect(instructionsFor({ ...captured, materializedContext: materialized }, catalog.get("text-ask")!)).toContain(answer);
   const conversations = new ConversationStore(database, projects); await conversations.create("creator", captured.projectId, { id: captured.conversationId, name: "Advice" });
   const drafts = new CreationDraftStore(database, projects, conversations);
   const draft = await drafts.create("creator", captured.projectId, captured.conversationId, { id: "draft_answer_context", content: { ...captured.snapshot, instructions: "Keep my own words", settings: { ...captured.snapshot.settings, parameters: {} }, context: selected } });

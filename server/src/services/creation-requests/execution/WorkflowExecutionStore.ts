@@ -47,7 +47,7 @@ export class WorkflowExecutionStore {
         transaction.set(this.ref(id), next);
         return { request: next };
       }
-      const attempt = ExecutionAttemptSchema.parse({ requestId: id, slotId, ownerId: owner, projectId: request.projectId, token: randomUUID(), snapshotHash: request.snapshotHash, state: "running", startedAt: this.now(), deadlineAt: new Date(Date.parse(this.now()) + outbox.profile.recovery.deadlineSeconds * 1000).toISOString(), profile: outbox.profile, sentInstructions: instructionsFor(request) });
+      const attempt = ExecutionAttemptSchema.parse({ requestId: id, slotId, ownerId: owner, projectId: request.projectId, token: randomUUID(), snapshotHash: request.snapshotHash, state: "running", startedAt: this.now(), deadlineAt: new Date(Date.parse(this.now()) + outbox.profile.recovery.deadlineSeconds * 1000).toISOString(), profile: outbox.profile, sentInstructions: instructionsFor(request, outbox.profile) });
       const next = this.replaceSlot(request, slotId, { outcome: "running" });
       transaction.create(ref, attempt);
       transaction.set(this.ref(id), next);

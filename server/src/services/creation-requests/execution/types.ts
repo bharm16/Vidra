@@ -46,10 +46,16 @@ export interface WorkflowSpendGuard {
 /** Only failures proven to precede invocation may be offered as a fresh attempt. */
 export class WorkflowPreflightError extends Error {}
 
-export function instructionsFor(request: AcceptedRequest): string {
+/**
+ * Words sent to the provider. Conversation history is context for a text answer only: a picture or clip
+ * model reads everything as one prompt, so earlier subjects would leak into the new result.
+ */
+export function instructionsFor(request: AcceptedRequest, profile: Pick<CapabilityProfile, "output">): string {
+  const project = request.materializedContext.projectInstructions ? `Project instructions:\n${request.materializedContext.projectInstructions}` : "";
+  if (profile.output.kind !== "text") return [project, request.snapshot.instructions].filter(Boolean).join("\n\n");
   const summaryIds = new Set(request.snapshot.context.summary?.requestIds ?? []);
   return [
-    request.materializedContext.projectInstructions ? `Project instructions:\n${request.materializedContext.projectInstructions}` : "",
+    project,
     request.snapshot.context.summary ? `Selected history summary:\n${request.snapshot.context.summary.text}` : "",
     ...request.materializedContext.entries.filter(entry => !summaryIds.has(entry.requestId)).map(entry => [`Previous request:\n${entry.instructions}`, ...(entry.textOutputs ?? []).map(output => `Previous response:\n${output.text}`)].join("\n\n")),
     request.snapshot.instructions,

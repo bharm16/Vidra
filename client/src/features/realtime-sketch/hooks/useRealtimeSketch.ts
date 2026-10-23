@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import {
   sendSketchFrame,
@@ -67,6 +67,7 @@ export function useRealtimeSketch(
     }
     lastSentRef.current = frame.requestId;
     const controller = new AbortController();
+    let settled = false;
     const watchdog = setTimeout(() => {
       // Lost/stuck frame: cancel it, surface it, promote the newest drawing.
       controller.abort();
@@ -89,6 +90,7 @@ export function useRealtimeSketch(
       controller.signal,
     )
       .then((raw) => {
+        settled = true;
         clearTimeout(watchdog);
         if (controller.signal.aborted) {
           return;
@@ -127,6 +129,7 @@ export function useRealtimeSketch(
         });
       })
       .catch((error: unknown) => {
+        settled = true;
         clearTimeout(watchdog);
         // Aborts are already handled (watchdog dispatched) or intentional
         // (unmount) — only real failures surface here.
@@ -156,16 +159,26 @@ export function useRealtimeSketch(
         });
       });
     return () => {
-      // Runs only after this frame settled (inFlight changed) or on unmount;
-      // late results are request-id-guarded in the reducer regardless.
+      // Runs after this frame settled (inFlight changed), on unmount, or when the
+      // effect re-runs for the same frame (StrictMode, a new sender). Aborting an
+      // unsettled frame also cancels its watchdog, so it must be sent again or the
+      // loop stays blocked behind a frame that can never settle.
       clearTimeout(watchdog);
       controller.abort();
+      if (!settled && lastSentRef.current === frame.requestId) {
+        lastSentRef.current = null;
+      }
     };
   }, [state.inFlight, sendFrameFn]);
 
   const captureSnapshot = useCallback(
     (dataUri: string, encodeMs: number): void => {
-      dispatch({ type: "snapshot", dataUri, encodeMs, at: Date.now() });
+      const at = Date.now();
+      // Stroke events and the capture timer would otherwise dispatch at different
+      // priorities; React then applies them out of order and replays the earlier one,
+      // creating a second frame with the same request id and aborting the first send.
+      // One lane keeps snapshots in capture order.
+      startTransition(() => dispatch({ type: "snapshot", dataUri, encodeMs, at }));
     },
     [],
   );

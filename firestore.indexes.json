@@ -121,20 +121,6 @@
       ]
     },
     {
-      "collectionGroup": "credit_transactions",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "createdAtMs",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "convergence_sessions",
       "queryScope": "COLLECTION",
       "fields": [
@@ -190,10 +176,6 @@
         },
         {
           "fieldPath": "updatedAtMs",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
           "order": "DESCENDING"
         }
       ]
@@ -212,10 +194,6 @@
         },
         {
           "fieldPath": "updatedAtMs",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
           "order": "DESCENDING"
         }
       ]

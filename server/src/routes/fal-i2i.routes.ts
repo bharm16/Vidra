@@ -2,6 +2,7 @@ import express, { type Request, type Response, type Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { requireCreatorId } from "@middleware/intake";
+import { logger } from "@infrastructure/Logger";
 import type { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import type { SketchFrameRefusal } from "@shared/schemas/sketch.schemas";
 
@@ -127,6 +128,9 @@ export function createFalI2iRouter(deps: FalI2iRouterDeps): Router {
           signal: controller.signal,
         });
         const bodyText = await upstream.text();
+        if (!upstream.ok) {
+          logger.warn("fal refused a sketch frame", { status: upstream.status, creatorId });
+        }
         res.status(upstream.status).type("application/json").send(bodyText);
       } catch (error) {
         if (abortCause === "client-gone") {
