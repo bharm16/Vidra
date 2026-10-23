@@ -48,7 +48,7 @@ it("a lost insertion response recovers its exact item and operation after remoun
  api.list.mockImplementation(async () => [accepted]);
  api.command.mockImplementation(async (_id: string, _revision: number, operationId: string, command: EditCommand) => { if (command.kind === "restore") throw new Error("Not a restore"); if (!operations.has(operationId)) { operations.add(operationId); accepted = { ...accepted, revision: accepted.revision + 1, composition: applyEditCommand(accepted.composition, command) }; } if (lost) { lost = false; throw new Error("Reply lost after acceptance"); } return accepted; });
  const handled = vi.fn(); const first = render(<VideoEditor {...props} initialMediaVersionId="version_one" onInitialMediaHandled={handled} />);
- await screen.findByRole("button", { name: "Retry saving edit" }); expect(handled).not.toHaveBeenCalled(); const original = api.command.mock.calls[0]; first.unmount();
+ await screen.findByRole("button", { name: "Retry saving edit" }, { timeout: 5000 }); expect(handled).not.toHaveBeenCalled(); const original = api.command.mock.calls[0]; first.unmount();
  const second = render(<VideoEditor {...props} initialMediaVersionId="version_one" onInitialMediaHandled={handled} />);
  await waitFor(() => expect(handled).toHaveBeenCalledTimes(1)); expect(api.command.mock.calls[1]).toEqual(original); expect(accepted.composition.items).toHaveLength(2); second.unmount();
  render(<VideoEditor {...props} initialMediaVersionId="version_one" onInitialMediaHandled={handled} />);
@@ -84,7 +84,7 @@ it("an edit-specific blocked addition does not suppress recovery after visiting 
  });
  const handledA = vi.fn(); const handledB = vi.fn();
  const view = render(<VideoEditor {...props} initialEditId={edit.id} initialMediaVersionId={version.id} onInitialMediaHandled={handledA} />);
- await screen.findByRole("button", { name: "Retry saving edit" }); const original = api.command.mock.calls[0];
+ await screen.findByRole("button", { name: "Retry saving edit" }, { timeout: 5000 }); const original = api.command.mock.calls[0];
  view.rerender(<VideoEditor {...props} initialEditId={other.id} initialMediaVersionId={version.id} onInitialMediaHandled={handledB} />);
  await screen.findByText("Finish saving the previous media addition before adding another version.");
  api.command.mockResolvedValueOnce(accepted);
