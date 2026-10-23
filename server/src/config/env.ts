@@ -199,10 +199,7 @@ const enhancementSchema = z.object({
 });
 
 const spanLabelingSchema = z.object({
-  // Provider/model for span-labeling LLM calls. Independent of main LLM config
-  // so span labeling can run on a cheaper/faster model than primary prompts.
-  SPAN_PROVIDER: optionalString(),
-  SPAN_MODEL: optionalString(),
+  // Span labeling's model is chosen in config/modelConfig.ts, not here.
   SPAN_LABELING_PROVIDER: optionalString(),
 });
 
@@ -217,13 +214,12 @@ const devSchema = z.object({
 // per-LLM-call overrides that should be *absent* in normal runtime.
 // Validating them here would force callers to set them.
 //
-// Eval overrides: CATEGORIZE_MODEL, CATEGORIZE_PROVIDER, ENHANCE_MODEL,
-//   ENHANCE_PROVIDER, JUDGE_MODEL, JUDGE_PROVIDER, JUDGE_GENERAL_MODEL,
-//   JUDGE_GENERAL_PROVIDER, OPTIMIZE_MODEL, OPTIMIZE_PROVIDER,
+// Text operations take no model overrides: their models are chosen in
+//   config/modelConfig.ts, and evals pin a candidate in-process.
+// Eval overrides: CATEGORIZE_MODEL, CATEGORIZE_PROVIDER,
 //   QUESTION_MODEL, QUESTION_PROVIDER, ROLE_MODEL, ROLE_PROVIDER,
 //   I2V_PARSE_MODEL, I2V_PARSE_PROVIDER, IMAGE_OBSERVATION_MODEL,
-//   IMAGE_OBSERVATION_PROVIDER, VIDEO_PROMPT_IR_MODEL,
-//   VIDEO_PROMPT_REWRITE_MODEL, VIDEO_MODEL, VIDEO_PROVIDER,
+//   IMAGE_OBSERVATION_PROVIDER, VIDEO_MODEL, VIDEO_PROVIDER,
 //   DRAFT_I2V_MODEL, WAN_2_5_I2V_MODEL, PROVIDER, CUSTOM_PROVIDER,
 //   MODEL_TIER_REQUIREMENTS, FACE_SWAP_TEST_FACE_URL, FACE_SWAP_TEST_TARGET_URL.
 // Test-runner vars set by Vitest/Codex: VITEST, VITEST_WORKER_ID, CODEX_SANDBOX.

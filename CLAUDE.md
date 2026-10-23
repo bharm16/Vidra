@@ -10,6 +10,7 @@ Use current source, tests and `CONTEXT.md` for implementation scope. ADRs preser
 - Shared code is pure types, schemas, constants and data utilities, without framework, network, database or filesystem dependencies. Run `npx tsc --noEmit` immediately after a shared contract change, before changing other files.
 - Services use constructor injection and canonical domain imports. `container.resolve()` belongs only in DI configuration and route factories.
 - Text LLM calls go through `aiService`. Cross-domain coordination belongs in a route factory or an orchestrator with explicit ports.
+- Each text operation's model is chosen in `server/src/config/modelConfig.ts`; environment variables carry keys and timeouts, never model choices. Evaluate a candidate by pinning it in an eval run, then change the code.
 - Client feature `api/` modules validate wire responses with Zod and transform when UI shapes differ. Fetch calls stay out of components. UI-only types belong to the feature.
 
 ## Current scope and behavior

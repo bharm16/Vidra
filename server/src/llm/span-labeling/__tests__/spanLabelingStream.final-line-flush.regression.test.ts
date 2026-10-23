@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { labelSpansStream } from "../SpanLabelingService";
 import type { SpanStreamFinalization } from "../SpanLabelingService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
@@ -97,15 +97,6 @@ async function drainStream(
 }
 
 describe("streaming span labeling flushes the final unterminated line", () => {
-  beforeEach(() => {
-    vi.stubEnv("SPAN_PROVIDER", "gemini");
-    vi.stubEnv("SPAN_MODEL", "gemini-2.5-flash");
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   it("a single-span response with no trailing newline still yields its span (the I2V presentation)", async () => {
     const { streamed, finalization } = await drainStream(
       { text: TEXT, templateVersion: "i2v-v2" },

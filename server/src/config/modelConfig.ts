@@ -2,12 +2,14 @@
  * AI Model Configuration
  *
  * Centralized configuration for routing LLM operations to specific providers.
- * This enables zero-code provider switching via configuration or environment variables.
+ * The model each operation runs is chosen here and only here: a swap is a
+ * reviewed change that runs CI (and, for span labeling, the golden-set eval).
+ * Environment variables carry keys and timeouts, not model choices.
  *
  * Architecture: Dead Simple Router Pattern
  * - Each operation maps to a specific client + model configuration
  * - Supports automatic fallback to alternative providers
- * - Environment variables override defaults for production flexibility
+ * - Without the chosen provider's key, the router remaps to one that has one
  *
  * Provider-Specific Optimizations:
  * - OpenAI: Temperature 0.0 for structured outputs (grammar-constrained)
@@ -84,8 +86,8 @@ const MODEL_CONFIG_ENTRIES = {
    * Note: Temperature kept at 0.7 for creative text generation (not structured output)
    */
   optimize_standard: {
-    client: process.env.OPTIMIZE_PROVIDER || "openai",
-    model: process.env.OPTIMIZE_MODEL || "gpt-4o-2024-08-06",
+    client: "openai",
+    model: "gpt-4o-2024-08-06",
     temperature: 0.7,
     maxTokens: 4096,
     timeout: 60000,
@@ -96,15 +98,15 @@ const MODEL_CONFIG_ENTRIES = {
 
   /**
    * Improve wording for a model whose profile carries wording guidance: one
-   * plain-text rewrite. Swap the model with IMPROVE_WORDING_PROVIDER and
-   * IMPROVE_WORDING_MODEL; without that provider's key the router falls back.
+   * plain-text rewrite. Swap the model here, in review, like any other change;
+   * without that provider's key the router falls back.
    * Temperature is ignored by the Anthropic adapter, which rejects sampling.
    * High effort measured 12/12 against 10/12 at medium and 5/12 at low on
    * Haiku 5.5 (quoted words, rule leaks, repeated dialogue), for about 2 s.
    */
   improve_wording: {
-    client: process.env.IMPROVE_WORDING_PROVIDER || "anthropic",
-    model: process.env.IMPROVE_WORDING_MODEL || "claude-haiku-5-5",
+    client: "anthropic",
+    model: "claude-haiku-5-5",
     effort: "high",
     temperature: 0.7,
     maxTokens: 4000,
@@ -161,8 +163,8 @@ const MODEL_CONFIG_ENTRIES = {
    * - V2 slot-policy scoring + diversity enforcement post-processing
    */
   enhance_suggestions: {
-    client: process.env.ENHANCE_PROVIDER || "qwen",
-    model: process.env.ENHANCE_MODEL || DEFAULT_QWEN_MODEL,
+    client: "qwen",
+    model: DEFAULT_QWEN_MODEL,
     temperature: 0.1, // Keep low temp for reliable JSON; diversity enforced by prompting/post-processing
     maxTokens: 1024,
     timeout: 8000,
@@ -176,8 +178,8 @@ const MODEL_CONFIG_ENTRIES = {
    * Custom suggestion requests (user-directed replacements)
    */
   custom_suggestions: {
-    client: process.env.ENHANCE_PROVIDER || "qwen",
-    model: process.env.ENHANCE_MODEL || DEFAULT_QWEN_MODEL,
+    client: "qwen",
+    model: DEFAULT_QWEN_MODEL,
     temperature: 0.1,
     maxTokens: 1024,
     timeout: 8000,
@@ -229,8 +231,8 @@ const MODEL_CONFIG_ENTRIES = {
    * - XML tagging for data segmentation
    */
   span_labeling: {
-    client: process.env.SPAN_PROVIDER || "gemini",
-    model: process.env.SPAN_MODEL || "gemini-2.5-flash",
+    client: "gemini",
+    model: "gemini-2.5-flash",
     temperature: 0.1, // Low temperature for reliable JSON
     maxTokens: 4096,
     timeout: 30000,
@@ -252,7 +254,7 @@ const MODEL_CONFIG_ENTRIES = {
    */
   video_prompt_ir_extraction: {
     client: "gemini",
-    model: process.env.VIDEO_PROMPT_IR_MODEL || "gemini-2.5-flash",
+    model: "gemini-2.5-flash",
     temperature: 0.1,
     maxTokens: 4096,
     timeout: 30000,
@@ -269,7 +271,7 @@ const MODEL_CONFIG_ENTRIES = {
    */
   video_prompt_rewrite: {
     client: "gemini",
-    model: process.env.VIDEO_PROMPT_REWRITE_MODEL || "gemini-2.5-flash",
+    model: "gemini-2.5-flash",
     temperature: 0.4,
     maxTokens: 8192,
     timeout: 45000,
@@ -291,12 +293,12 @@ const MODEL_CONFIG_ENTRIES = {
    * Expand description to. It kept Studio's name when Studio's conversation
    * policy retired (ADR-0027): the name is part of the text spend mapping hash.
    * gpt-5.6-luna (owner-directed 2026-07-25, verified against the live
-   * models API); still env-swappable per operation. The workflow executor
+   * models API). The workflow executor
    * asks for plain text, overriding the JSON default below.
    */
   studio_turn: {
-    client: process.env.STUDIO_TURN_PROVIDER || "openai",
-    model: process.env.STUDIO_TURN_MODEL || "gpt-5.6-luna",
+    client: "openai",
+    model: "gpt-5.6-luna",
     // luna (gpt-5 reasoning family) accepts only the default temperature,
     // and its internal reasoning tokens count against the completion
     // budget — 8000 leaves the ~1k-token JSON decision plenty of headroom.
@@ -314,8 +316,8 @@ const MODEL_CONFIG_ENTRIES = {
    * LLM-as-a-Judge for video prompt evaluation
    */
   llm_judge_video: {
-    client: process.env.JUDGE_PROVIDER || "openai",
-    model: process.env.JUDGE_MODEL || "gpt-4o-2024-08-06",
+    client: "openai",
+    model: "gpt-4o-2024-08-06",
     temperature: 0.2,
     maxTokens: 2048,
     timeout: 45000,
@@ -335,8 +337,8 @@ const MODEL_CONFIG_ENTRIES = {
    * also makes the judge model deliberate rather than inherited.
    */
   llm_judge_general: {
-    client: process.env.JUDGE_GENERAL_PROVIDER || "openai",
-    model: process.env.JUDGE_GENERAL_MODEL || "gpt-4o-2024-08-06",
+    client: "openai",
+    model: "gpt-4o-2024-08-06",
     temperature: 0.3,
     maxTokens: 2048,
     timeout: 45000,

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { labelSpans, labelSpansStream } from "../SpanLabelingService";
 import type { SpanStreamFinalization } from "../SpanLabelingService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
@@ -108,17 +108,6 @@ const identity = (span: { text: string; role?: string }): string =>
   `${span.text}::${span.role ?? ""}`;
 
 describe("span labeling stream applies the blocking pipeline", () => {
-  beforeEach(() => {
-    // Provider selection reads the environment before it reads the model, so
-    // pin it: the streaming client is the Gemini one.
-    vi.stubEnv("SPAN_PROVIDER", "gemini");
-    vi.stubEnv("SPAN_MODEL", "gemini-2.5-flash");
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   it("drops the spans the blocking pipeline rejects instead of streaming them raw", async () => {
     const rawSpans: RawSpan[] = [
       {
@@ -215,15 +204,6 @@ describe("span labeling stream applies the blocking pipeline", () => {
 });
 
 describe("span labeling stream honours maxSpans and minConfidence", () => {
-  beforeEach(() => {
-    vi.stubEnv("SPAN_PROVIDER", "gemini");
-    vi.stubEnv("SPAN_MODEL", "gemini-2.5-flash");
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   it("never streams more than maxSpans spans", async () => {
     const rawSpans: RawSpan[] = [
       {
