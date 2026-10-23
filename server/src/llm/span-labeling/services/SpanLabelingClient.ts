@@ -122,7 +122,10 @@ export class SpanLabelingClient implements ILlmClient {
       : options;
     const modelConfig = this._getModelConfig(aiService, "span_labeling");
     const configuredModelName = modelConfig?.model;
-    const modelName = configuredModelName || "";
+    // The model the router will actually run (after any remap), so a model
+    // chosen in modelConfig.ts decides the extraction path below.
+    const modelName =
+      configuredModelName || aiService.resolveExecution("span_labeling").model;
     // The profile states the schema outright. This used to be a capability
     // lookup (`strictJsonSchema || provider === "groq" || provider === "qwen"`)
     // feeding a schema-factory if-chain, re-deriving the provider from env and
