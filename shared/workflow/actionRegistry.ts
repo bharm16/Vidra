@@ -31,7 +31,7 @@ export interface ResultVerb {
 export interface ActionEntry {
   /** The primary button. */
   label: string;
-  /** What one result is called: "2 takes", "4 pictures". */
+  /** What one result is called on its count chip and feed line: "2 takes", "4 images". */
   resultNoun: string;
   /** The in-progress words in the feed. */
   running: string;
@@ -42,6 +42,8 @@ export interface ActionEntry {
   placeholder?: string;
   coreChips: readonly CoreChip[];
   verb?: ResultVerb;
+  /** The verb's input is the request's subject: it stays alone in the input row, with no add-cells beside it. */
+  changesSource?: boolean;
 }
 
 const PICTURE_CHIPS = ["model", "shape", "resolution", "count"] as const;
@@ -53,23 +55,23 @@ const none = { kind: "none" } as const;
 
 /** Every catalog action. Adding an action is one entry here plus its profiles. */
 export const ACTION_REGISTRY: Readonly<Record<CreationAction, ActionEntry>> = {
-  "make-image": { label: "Make image", resultNoun: "picture", running: "Making your image", group: "picture", place: image, words: "required", placeholder: "What would you like to make?", coreChips: PICTURE_CHIPS },
-  "edit-image": { label: "Edit image", resultNoun: "picture", running: "Editing your image", group: "picture", place: image, words: "required", placeholder: "Describe a change…", coreChips: PICTURE_CHIPS, verb: { label: "Edit", role: "primary" } },
-  "upscale-image": { label: "Upscale image", resultNoun: "picture", running: "Upscaling your image", group: "picture", place: { kind: "tool", tool: "upscale" }, words: "none", coreChips: ["model", "scale"], verb: { label: "Upscale", role: "primary" } },
+  "make-image": { label: "Make image", resultNoun: "image", running: "Making your image", group: "picture", place: image, words: "required", placeholder: "What would you like to make?", coreChips: PICTURE_CHIPS },
+  "edit-image": { label: "Edit image", resultNoun: "image", running: "Editing your image", group: "picture", place: image, words: "required", placeholder: "Describe a change…", coreChips: PICTURE_CHIPS, verb: { label: "Edit", role: "primary" }, changesSource: true },
+  "upscale-image": { label: "Upscale image", resultNoun: "image", running: "Upscaling your image", group: "picture", place: { kind: "tool", tool: "upscale" }, words: "none", coreChips: ["model", "scale"], verb: { label: "Upscale", role: "primary" }, changesSource: true },
   "make-video": { label: "Make video", resultNoun: "clip", running: "Making your video", group: "clip", place: video, words: "required", placeholder: "Describe your video…", coreChips: CLIP_CHIPS },
   "animate-image": { label: "Make video", resultNoun: "clip", running: "Making your video", group: "clip", place: video, words: "required", placeholder: "Describe your video…", coreChips: CLIP_CHIPS, verb: { label: "Animate", role: "start-frame" } },
-  "edit-video": { label: "Edit clip", resultNoun: "clip", running: "Editing your clip", group: "clip", place: video, words: "required", placeholder: "Describe a change…", coreChips: CLIP_CHIPS, verb: { label: "Edit", role: "clip" } },
+  "edit-video": { label: "Edit clip", resultNoun: "clip", running: "Editing your clip", group: "clip", place: video, words: "required", placeholder: "Describe a change…", coreChips: CLIP_CHIPS, verb: { label: "Edit", role: "clip" }, changesSource: true },
   "extend-video": { label: "Extend clip", resultNoun: "clip", running: "Extending your clip", group: "clip", place: video, words: "required", placeholder: "Describe what happens next…", coreChips: CLIP_CHIPS, verb: { label: "Extend", role: "clip" } },
-  "upscale-video": { label: "Upscale clip", resultNoun: "clip", running: "Upscaling your clip", group: "clip", place: { kind: "tool", tool: "upscale" }, words: "none", coreChips: ["model", "scale"], verb: { label: "Upscale", role: "clip" } },
-  "reframe-video": { label: "Reframe clip", resultNoun: "clip", running: "Reframing your clip", group: "clip", place: { kind: "tool", tool: "reframe" }, words: "optional", placeholder: "Describe what fills the new space", coreChips: ["model", "shape"], verb: { label: "Reframe", role: "clip" } },
+  "upscale-video": { label: "Upscale clip", resultNoun: "clip", running: "Upscaling your clip", group: "clip", place: { kind: "tool", tool: "upscale" }, words: "none", coreChips: ["model", "scale"], verb: { label: "Upscale", role: "clip" }, changesSource: true },
+  "reframe-video": { label: "Reframe clip", resultNoun: "clip", running: "Reframing your clip", group: "clip", place: { kind: "tool", tool: "reframe" }, words: "optional", placeholder: "Describe what fills the new space", coreChips: ["model", "shape"], verb: { label: "Reframe", role: "clip" }, changesSource: true },
   "make-voiceover": { label: "Make voiceover", resultNoun: "take", running: "Making your voiceover", group: "audio", place: { kind: "output", output: "voiceover" }, words: "script", placeholder: "Write the script…", coreChips: ["model", "voice", "count"] },
   "make-music": { label: "Make music", resultNoun: "take", running: "Making your music", group: "audio", place: { kind: "output", output: "music" }, words: "required", placeholder: "Describe the music…", coreChips: ["model", "duration", "count"] },
-  transcribe: { label: "Make captions", resultNoun: "captions", running: "Making captions", group: "text", place: { kind: "tool", tool: "captions" }, words: "none", coreChips: ["model", "language"], verb: { label: "Make captions", role: "primary" } },
+  transcribe: { label: "Make captions", resultNoun: "captions", running: "Making captions", group: "text", place: { kind: "tool", tool: "captions" }, words: "none", coreChips: ["model", "language"], verb: { label: "Make captions", role: "primary" }, changesSource: true },
   ask: { label: "Ask", resultNoun: "answer", running: "Thinking", group: "text", place: words, words: "required", placeholder: "Ask about your words…", coreChips: [] },
   "expand-description": { label: "Expand description", resultNoun: "description", running: "Expanding your description", group: "text", place: words, words: "required", coreChips: [] },
   "improve-words": { label: "Improve wording", resultNoun: "wording", running: "Improving your words", group: "text", place: words, words: "required", coreChips: [] },
   import: { label: "Import", resultNoun: "file", running: "Importing", group: "picture", place: none, words: "none", coreChips: [] },
-  "accept-sketch": { label: "Use sketch", resultNoun: "picture", running: "Saving your sketch", group: "picture", place: none, words: "none", coreChips: [] },
+  "accept-sketch": { label: "Use sketch", resultNoun: "image", running: "Saving your sketch", group: "picture", place: none, words: "none", coreChips: [] },
   "export-video": { label: "Export", resultNoun: "video", running: "Exporting", group: "clip", place: none, words: "none", coreChips: [] },
 };
 

@@ -12,6 +12,7 @@ import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { settingsForProfile } from "@shared/workflow/capabilityEvaluation";
+import { COMPOSER_OUTPUTS, actionEntry, composerOutput, composerTool, placeActions } from "@shared/workflow/actionRegistry";
 
 /** Deterministic across tabs/reloads, so a lost create response reuses the same empty draft. */
 export async function initialDraftId(
@@ -103,20 +104,13 @@ export function applyDraftInputSource(
 ): DraftContent {
   const profile = profiles.find(candidate => candidate.id === content.settings.profileId);
   const candidates = candidateModels(content, profiles);
+  const accepting = (rules: CapabilityProfile["inputs"]): CapabilityProfile["inputs"][number] | undefined => rules.find(rule => rule.minCount > 0 && rule.kinds.includes(source.kind)) ?? rules.find(rule => rule.kinds.includes(source.kind));
+  // A model that takes no such input defers to the place's models that do: a picture becomes a words clip's start frame.
   const role =
     requestedRole ??
-    profile?.inputs.find(rule => rule.minCount > 0 && rule.kinds.includes(source.kind))?.role ??
-    // A model that takes no such input defers to the output's models that do: a picture becomes a words clip's start frame.
-    (profile?.inputs.some(rule => rule.kinds.includes(source.kind))
-      ? undefined
-      : candidates.flatMap(candidate => candidate.inputs).find(rule => rule.minCount > 0 && rule.kinds.includes(source.kind))?.role) ??
-    (content.action === "edit-image"
-      ? "primary"
-      : content.action === "animate-image"
-        ? "start-frame"
-        : source.kind === "video"
-          ? "clip"
-          : "reference");
+    accepting(profile?.inputs ?? [])?.role ??
+    accepting(candidates.flatMap(candidate => candidate.inputs))?.role ??
+    (source.kind === "video" ? "clip" : source.kind === "audio" ? "audio" : "reference");
   const rule = candidates
     .flatMap(candidate => candidate.inputs)
     .find(candidate => candidate.role === role && candidate.kinds.includes(source.kind));
@@ -134,25 +128,15 @@ export function applyDraftInputSource(
   return inputs === content.inputs ? content : settleModel({ ...content, inputs }, profiles);
 }
 
-/** Video makes a clip from words or from a start frame; either action serves the same composer output. */
-const INTERCHANGEABLE_ACTIONS: Partial<Record<CreationAction, readonly CreationAction[]>> = {
-  "make-video": ["make-video", "animate-image"],
-  "animate-image": ["make-video", "animate-image"],
-};
-const OFFERED_ROLES = ["primary", "start-frame", "end-frame", "reference"] as const satisfies readonly DraftInput["role"][];
+const OFFERED_ROLES = ["primary", "start-frame", "end-frame", "reference", "clip", "audio"] as const satisfies readonly DraftInput["role"][];
 export type OfferedInputRole = (typeof OFFERED_ROLES)[number];
-
-/** Actions whose models one composer output switches between as its inputs change. */
-export function interchangeableActions(action: CreationAction): readonly CreationAction[] {
-  return INTERCHANGEABLE_ACTIONS[action] ?? [action];
-}
 
 const sameModel = (a: CapabilityProfile, b: CapabilityProfile): boolean => a.provider === b.provider && a.label === b.label;
 
 /** Models that could serve the request, preferred first: the selected one, its other versions, then the output's other qualified models. */
 function candidateModels(content: DraftContent, profiles: readonly CapabilityProfile[]): CapabilityProfile[] {
   const profile = profiles.find(candidate => candidate.id === content.settings.profileId);
-  const actions = interchangeableActions(content.action);
+  const actions = placeActions(content.action);
   const pool = profiles.filter(
     candidate => candidate !== profile && candidate.availability === "qualified" && actions.includes(candidate.action),
   );
@@ -171,25 +155,73 @@ function takesRoles(profile: CapabilityProfile, roles: readonly DraftInput["role
 }
 
 /** Inputs decide the model: when the selected one cannot take them, the first candidate that can takes over. */
-function settleModel(content: DraftContent, profiles: readonly CapabilityProfile[]): DraftContent {
+export function settleModel(content: DraftContent, profiles: readonly CapabilityProfile[]): DraftContent {
   const roles = content.inputs.map(input => input.role);
   const profile = profiles.find(candidate => candidate.id === content.settings.profileId);
   if (profile && takesRoles(profile, roles)) return content;
   const next = candidateModels(content, profiles).find(candidate => candidate !== profile && takesRoles(candidate, roles));
-  return next ? { ...content, action: next.action, settings: settingsForProfile(next, content, profile) } : content;
+  if (!next) return content;
+  // Auto stays Auto: the inputs only choose which of the place's actions it serves.
+  if (!profile && content.settings.profileId === "unselected") return next.action === content.action ? content : { ...content, action: next.action };
+  return { ...content, action: next.action, settings: settingsForProfile(next, content, profile) };
 }
 
-/** Picture inputs the request can still take: some model for the output accepts each beside the current inputs. */
+/** Inputs the request can still take: some model for the place accepts each beside the current inputs (Rule 4). */
 export function offeredInputRoles(content: DraftContent, profiles: readonly CapabilityProfile[]): OfferedInputRole[] {
   const candidates = candidateModels(content, profiles);
   const roles = content.inputs.map(input => input.role);
   return OFFERED_ROLES.filter(role =>
     candidates.some(
       candidate =>
-        candidate.inputs.some(rule => rule.role === role && rule.kinds.includes("image")) &&
+        candidate.inputs.some(rule => rule.role === role) &&
         takesRoles(candidate, [...roles, role]),
     ),
   );
+}
+
+/** The kinds the picker offers for one role: what the place's models accept there. */
+export function roleKinds(content: DraftContent, profiles: readonly CapabilityProfile[], role: DraftInput["role"]): Array<"image" | "video" | "audio"> {
+  const kinds = new Set(candidateModels(content, profiles).flatMap(candidate => candidate.inputs.filter(rule => rule.role === role).flatMap(rule => rule.kinds)));
+  return (["image", "video", "audio"] as const).filter(kind => kinds.has(kind));
+}
+
+function inputKind(input: DraftInput, media: readonly MediaVersion[], requests: readonly AcceptedRequest[]): "image" | "video" | "audio" | undefined {
+  if (input.state === "resolved") {
+    const version = media.find(candidate => candidate.id === input.versionId);
+    return version?.kind === "export" ? "video" : version?.kind;
+  }
+  if (input.state === "importing") {
+    const version = media.find(candidate => candidate.id === importedVersionId(input.importId));
+    return version?.kind === "export" ? "video" : version?.kind;
+  }
+  const request = requests.find(candidate => candidate.id === input.requestId);
+  const group = request ? actionEntry(request.snapshot.action).group : undefined;
+  return group === "picture" ? "image" : group === "clip" ? "video" : group === "audio" ? "audio" : undefined;
+}
+
+export interface MovedInputs {
+  inputs: DraftInput[];
+  /** Inputs the new place cannot use; they stay in the row, greyed, and out of the request. */
+  parked: DraftInput[];
+}
+
+/**
+ * Rule 4 on a switch: each input moves to the role the new action's models use for its kind,
+ * and an input none of them can take is parked rather than dropped.
+ */
+export function inputsForAction(inputs: readonly DraftInput[], action: CreationAction, profiles: readonly CapabilityProfile[], media: readonly MediaVersion[], requests: readonly AcceptedRequest[] = []): MovedInputs {
+  const actions = placeActions(action);
+  const rules = profiles.filter(profile => actions.includes(profile.action) && profile.availability === "qualified").flatMap(profile => profile.inputs);
+  const moved: DraftInput[] = [];
+  const parked: DraftInput[] = [];
+  for (const input of inputs) {
+    const kind = inputKind(input, media, requests);
+    const fits = (role: DraftInput["role"]): boolean => rules.some(rule => rule.role === role && (kind === undefined || rule.kinds.includes(kind)) && moved.filter(other => other.role === role).length < rule.maxCount);
+    const role = fits(input.role) ? input.role : rules.find(rule => kind !== undefined && rule.kinds.includes(kind) && fits(rule.role))?.role;
+    if (role) moved.push({ ...input, role });
+    else parked.push(input);
+  }
+  return { inputs: moved, parked };
 }
 
 export interface ModelChoice {
@@ -201,7 +233,7 @@ export interface ModelChoice {
 
 /** One model menu entry per model name across the output; a model that cannot take the current inputs is greyed out. */
 export function modelChoices(content: DraftContent, profiles: readonly CapabilityProfile[]): ModelChoice[] {
-  const actions = interchangeableActions(content.action);
+  const actions = placeActions(content.action);
   const roles = content.inputs.map(input => input.role);
   const models: CapabilityProfile[][] = [];
   for (const candidate of profiles) {
@@ -277,15 +309,15 @@ export function wordsDraftContent(
   };
 }
 
+/** A result's verb starts the same composer with the result bound in the verb's role (Rule 8). */
 export function mediaActionDraftContent(
-  action: "edit-image" | "edit-video" | "animate-image" | "extend-video",
+  action: CreationAction,
   versionId: VersionId,
   projectId: ProjectId,
   conversationId: ConversationId,
   projectInstructionsRevision: number,
+  role: DraftInput["role"] = actionEntry(action).verb?.role ?? "primary",
 ): DraftContent {
-  const role: DraftInput["role"] =
-    action === "edit-image" ? "primary" : action === "animate-image" ? "start-frame" : "clip";
   return {
     ...emptyDraftContent(action, projectId, conversationId, projectInstructionsRevision),
     inputs: [{ state: "resolved", role, versionId }],
@@ -331,10 +363,10 @@ export function followupDraftForRequest(
   conversationId: ConversationId,
   projectInstructionsRevision: number,
 ): { content: DraftContent; noticeKind?: "choose-result" | "edit-unavailable" } | undefined {
-  const imageAction = ["make-image", "edit-image", "upscale-image"].includes(request.snapshot.action);
-  if (!imageAction && !["make-video", "animate-image", "edit-video", "extend-video"].includes(request.snapshot.action)) {
-    return undefined;
-  }
+  const entry = actionEntry(request.snapshot.action);
+  const imageAction = entry.group === "picture" && entry.place.kind !== "none";
+  const followed = composerOutput(request.snapshot.action) ?? composerTool(request.snapshot.action);
+  if (!followed) return undefined;
   const editProfile =
     imageAction && request.slots.length === 1
       ? profiles.find(
@@ -355,7 +387,7 @@ export function followupDraftForRequest(
   }
   const slot = request.slots[0];
   const content: DraftContent = {
-    action: editProfile ? "edit-image" : imageAction ? "make-image" : "make-video",
+    action: editProfile ? "edit-image" : imageAction ? "make-image" : COMPOSER_OUTPUTS.find(output => output.output === composerOutput(request.snapshot.action))?.action ?? "make-video",
     instructions: "",
     inputs: editProfile && slot ? [{ role: "primary", state: "pending", requestId: request.id, slotId: slot.id }] : [],
     settings: {

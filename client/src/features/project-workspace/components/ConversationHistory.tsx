@@ -56,7 +56,7 @@ function isMobileClip(node: HTMLElement): boolean {
   return getComputedStyle(node).getPropertyValue("--vf-history-end-spacing").trim() !== "";
 }
 
-function RequestActions({ request, props }: { request: AcceptedRequest; props: ConversationHistoryProps }): ReactElement | null {
+export function RequestActions({ request, props }: { request: AcceptedRequest; props: Pick<ConversationHistoryProps, "media" | "readOnly" | "readOnlyReason" | "onReuseSetup" | "onNewVariation" | "onUseWords" | "onViewSources" | "onViewVersions" | "onHideFromMedia"> }): ReactElement | null {
   const hasResults = request.slots.some(slot => slot.versionId && props.media.some(version => version.id === slot.versionId));
   const hasSources = request.snapshot.inputs.some(input => input.state === "resolved");
   const readOnlyReason = props.readOnly ? props.readOnlyReason ?? "Current work is read-only." : undefined;

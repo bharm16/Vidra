@@ -28,16 +28,18 @@ it("lists options other models offer, greyed, and never picks one", () => {
   fireEvent.click(screen.getByRole("button", { name: "10s" }));
   expect(change).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Shape: 16:9" }));
-  expect(screen.getByRole("button", { name: "1:1" })).toBeDisabled();
-  expect(screen.getByRole("button", { name: "9:16" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "1:1 Square" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "9:16 Portrait" })).toBeEnabled();
 });
 
-it("keeps a greyed chip for a video setting the model cannot use, and none on pictures", () => {
+it("keeps a greyed chip for a core setting the model cannot use, and only the action's core chips", () => {
   const view = render(<CapabilitySettings profiles={[wan22]} content={content(wan22.id, { aspectRatio: "16:9", resolution: "480p" })} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()} />);
   expect(screen.getByRole("button", { name: "Sound" })).toBeDisabled();
   expect(screen.queryByText(/not available|does not|can't/i)).not.toBeInTheDocument();
   view.rerender(<CapabilitySettings profiles={[image]} content={content(image.id, { aspectRatio: "1:1" }, "make-image")} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()} />);
-  expect(screen.queryByRole("button", { name: /^(Sound|Duration|Resolution)$/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^(Sound|Duration)$/ })).not.toBeInTheDocument();
+  // Rule 6: a picture's core row is model, shape, resolution and count; a model without resolution greys it.
+  expect(screen.getByRole("button", { name: "Resolution" })).toBeDisabled();
 });
 
 it("moves values the chosen model cannot use to its nearest offer", () => {

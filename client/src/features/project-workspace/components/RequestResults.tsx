@@ -3,6 +3,7 @@ import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/requ
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { FreshButton } from "@/components/fresh/FreshButton";
 import { MediaThumbnail } from "./MediaThumbnail";
+import { actionEntry } from "@shared/workflow/actionRegistry";
 import "./request-results.css";
 
 interface RequestSlotStatusProps {
@@ -27,12 +28,12 @@ export function RequestSlotStatus({ request, slot, presentation = "card", onRetr
   const failed = progress === "failed";
   const pending = progress === "pending";
   const unknown = progress === "unknown";
-  const kind = request.snapshot.action === "animate-image" ? "video" : request.snapshot.action.includes("image") ? "image" : "video";
+  const entry = actionEntry(request.snapshot.action);
   if (slot.outcome === "cancelled") return <p className="vf-slot-status">{request.slots.length > 1 ? `Result ${slot.ordinal} cancelled` : "Request cancelled"}</p>;
   if (!failed && !pending && !unknown) return null;
   // A made result whose save failed is repaired by reconcile, not remade.
   const unsaved = slot.delivery === "storage-failed" || slot.delivery === "attachment-failed";
-  const message = failed ? `Could not ${unsaved ? "save" : "make"} this ${kind}` : unknown ? "Checking this request…" : slot.outcome === "queued" ? "In the queue" : `Making your ${kind}`;
+  const message = failed ? `Could not ${unsaved ? "save" : "make"} this ${entry.group === "clip" ? "video" : entry.resultNoun}` : unknown ? "Checking this request…" : slot.outcome === "queued" ? "In the queue" : entry.running;
   if (presentation === "tile") {
     const label = `Result ${slot.ordinal}: ${message}`;
     const icon = <img src={`/design-assets/prompt-history/batch-${failed ? "failure" : "loader"}.svg`} width="20" height="20" alt="" />;

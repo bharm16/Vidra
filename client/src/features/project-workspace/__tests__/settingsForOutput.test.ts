@@ -14,9 +14,9 @@ const closed = profile("closed-video", "make-video", 1, "unqualified");
 const first = profile("first-video", "make-video", 1);
 const second = profile("second-video", "make-video", 1);
 
-it("gives a switched output its first qualified model instead of Choose model", () => {
+it("gives a switched output Auto until a model has been chosen for it", () => {
   const content = emptyDraftContent("make-image", project, conversation, 1);
-  expect(settingsForOutput(content, "make-video", [picture, closed, first, second])).toMatchObject({ profileId: "first-video", profileRevision: "1" });
+  expect(settingsForOutput(content, "make-video", [picture, closed, first, second])).toMatchObject({ profileId: "unselected", profileRevision: "unresolved" });
 });
 
 it("restores the model last used for that output", () => {
@@ -25,7 +25,7 @@ it("restores the model last used for that output", () => {
   expect(settingsForOutput(content, "make-video", [picture, first, second], remembered)).toMatchObject({ profileId: "second-video" });
 });
 
-it("keeps Choose model when the output has no qualified model", () => {
+it("stays on Auto when the output has no qualified model", () => {
   const content = emptyDraftContent("make-image", project, conversation, 1);
   expect(settingsForOutput(content, "make-video", [picture, closed])).toMatchObject({ profileId: "unselected", profileRevision: "unresolved" });
 });

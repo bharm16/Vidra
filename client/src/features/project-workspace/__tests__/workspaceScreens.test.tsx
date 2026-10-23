@@ -15,7 +15,10 @@ const timestamp = "2026-10-17T06:00:00.000Z";
 function media(id: string, parent?: string, role = "primary"): MediaVersion {
   return MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: `version_${id}`, ownerId: "owner", projectId: "project_current", kind: "image", label: id, origin: { kind: "upload" }, sourceInputs: parent ? [{ state: "resolved", role, versionId: `version_${parent}` }] : [], object: { identity: "unknown", assetId: id, storagePath: `uploads/owner/${id}` }, metadata: { state: "verified", width: 1920, height: 1080, durationSeconds: 0, audio: "absent", probeVersion: "test" }, association: "linked", createdAt: timestamp });
 }
-const profile = CapabilityProfileSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "model", revision: "1", label: "Qualified model", action: "make-video", provider: "controlled", endpoint: "controlled/video", mode: "text-to-video", availability: "qualified", inputs: [], output: { kind: "video", maxCount: 1 }, maxContextCharacters: 32000, parameters: { duration: { policy: "editable", domain: { kind: "enum", values: [5, 10] }, defaultValue: 5 }, aspectRatio: { policy: "fixed", value: "16:9" }, resolution: { policy: "editable", domain: { kind: "enum", values: ["720p", "1080p"] }, defaultValue: "720p" } }, constraints: [{ parameter: "resolution", equals: "1080p", requires: { duration: [10] }, reason: "1080p requires a ten second clip." }], recovery: { start: "supported", status: "supported", cancel: "supported", result: "supported", deadlineSeconds: 600 }, generatedAudio: "always", pricing: { mode: "free", maximumCreditsPerSlot: 0 } });
+const bareProfile = CapabilityProfileSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "model", revision: "1", label: "Qualified model", action: "make-video", provider: "controlled", endpoint: "controlled/video", mode: "text-to-video", availability: "qualified", inputs: [], output: { kind: "video", maxCount: 1 }, maxContextCharacters: 32000, parameters: { duration: { policy: "editable", domain: { kind: "enum", values: [5, 10] }, defaultValue: 5 }, aspectRatio: { policy: "fixed", value: "16:9" }, resolution: { policy: "editable", domain: { kind: "enum", values: ["720p", "1080p"] }, defaultValue: "720p" } }, constraints: [{ parameter: "resolution", equals: "1080p", requires: { duration: [10] }, reason: "1080p requires a ten second clip." }], recovery: { start: "supported", status: "supported", cancel: "supported", result: "supported", deadlineSeconds: 600 }, generatedAudio: "always", pricing: { mode: "free", maximumCreditsPerSlot: 0 } });
+const SHOWN = { duration: { label: "Duration", role: "duration", format: "seconds" }, durationSeconds: { label: "Duration", role: "duration", format: "seconds" }, aspectRatio: { label: "Shape", role: "shape" }, resolution: { label: "Resolution", role: "resolution" }, numFrames: { label: "Frames" } } as const;
+function shown(parameters: Record<string, unknown>): { words: "required"; parameters: Record<string, (typeof SHOWN)[keyof typeof SHOWN]> } { return { words: "required", parameters: Object.fromEntries(Object.keys(parameters).flatMap(name => name in SHOWN ? [[name, SHOWN[name as keyof typeof SHOWN]]] : [])) }; }
+const profile = CapabilityProfileSchema.parse({ ...bareProfile, presentation: shown(bareProfile.parameters) });
 const content = DraftContentSchema.parse({ action: "make-video", instructions: "Keep the camera low", inputs: [], settings: { profileId: "model", profileRevision: "1", parameters: { duration: 5, aspectRatio: "16:9", resolution: "720p" }, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination: { projectId: "project_current", conversationId: "conversation_current" } });
 const access = vi.fn(async (id: string) => ({ url: `/media/${id}.png` }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
@@ -58,8 +61,8 @@ it("keeps variation unavailable without a saved setup and makes version mutation
 it("renders only editable capability values as dropdowns and retains words when a setting changes", async () => {
   const onChange = vi.fn();
   render(<CapabilitySettings profiles={[profile]} content={content} media={[]} disabled={false} onProfile={vi.fn()} onChange={onChange} />);
-  expect(screen.getByLabelText("Shape: 16:9; fixed by model").tagName).toBe("SPAN");
-  expect(screen.queryByLabelText("Sound included by model")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Shape: 16:9").tagName).toBe("SPAN");
+  expect(screen.getByLabelText("Sound: Sound included").tagName).toBe("SPAN");
   expect(screen.queryByRole("button", { name: /sound/i })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Duration: 5s" }));
   fireEvent.click(await screen.findByRole("button", { name: "10s" }));
@@ -74,12 +77,12 @@ it("reports stale and coupled settings without silently replacing them", () => {
 });
 
 it("keeps saved choices readable without guessing editable domains for an unresolved model", () => {
-  const unresolved = { ...content, settings: { ...content.settings, profileId: "missing", parameters: { aspectRatio: "16:9", durationSeconds: 5, negativePrompt: "Adapter-only value" } } };
+  const unresolved = { ...content, settings: { ...content.settings, profileId: "missing", parameters: { aspectRatio: "16:9", duration: 5, negativePrompt: "Adapter-only value" } } };
   const original = structuredClone(unresolved);
   const onChange = vi.fn(); const onProfile = vi.fn();
   render(<CapabilitySettings profiles={[profile]} content={unresolved} media={[]} disabled={false} onProfile={onProfile} onChange={onChange} />);
-  const shape = screen.getByLabelText("Shape: 16:9; saved, choose a model to change");
-  const duration = screen.getByLabelText("Duration: 5s; saved, choose a model to change");
+  const shape = screen.getByLabelText("Shape: 16:9");
+  const duration = screen.getByLabelText("Duration: 5s");
   expect(shape.tagName).toBe("SPAN"); expect(duration.tagName).toBe("SPAN");
   expect(screen.queryByRole("button", { name: /^Shape:|^Duration:/ })).not.toBeInTheDocument();
   expect(screen.queryByText("Adapter-only value")).not.toBeInTheDocument();
@@ -88,29 +91,26 @@ it("keeps saved choices readable without guessing editable domains for an unreso
   expect(unresolved).toEqual(original);
 });
 
-it("does not invent saved settings before the first model selection", () => {
+it("does not invent saved settings for a restored model that is no longer offered", () => {
   const initial = { ...content, settings: { ...content.settings, profileId: "missing", parameters: {} } };
   render(<CapabilitySettings profiles={[profile]} content={initial} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()} />);
-  expect(screen.getByRole("button", { name: "Model: Choose a model" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Model: Choose model" })).toBeInTheDocument();
   expect(screen.queryByText("5s")).not.toBeInTheDocument();
   expect(screen.queryByText("16:9")).not.toBeInTheDocument();
 });
 
-it("keeps adapter serialization fields out of creation controls and applies exact frame settings", async () => {
-  const framed = CapabilityProfileSchema.parse({ ...profile, parameters: { aspectRatio: profile.parameters.aspectRatio, durationSeconds: { policy: "derived", from: "frame-duration" }, numFrames: { policy: "editable", domain: { kind: "enum", values: [81, 121] }, defaultValue: 81 }, framesPerSecond: { policy: "fixed", value: 16 }, negativePrompt: { policy: "fixed", value: "Provider-only default" }, outputFormat: { policy: "fixed", value: "webp" }, outputQuality: { policy: "fixed", value: 80 } }, constraints: [], generatedAudio: "unsupported" });
+it("keeps adapter serialization fields out of creation controls and puts the frame count under Advanced", async () => {
+  const bare = CapabilityProfileSchema.parse({ ...bareProfile, parameters: { aspectRatio: profile.parameters.aspectRatio, durationSeconds: { policy: "derived", from: "frame-duration" }, numFrames: { policy: "editable", domain: { kind: "enum", values: [81, 121] }, defaultValue: 81 }, framesPerSecond: { policy: "fixed", value: 16 }, negativePrompt: { policy: "fixed", value: "Provider-only default" }, outputFormat: { policy: "fixed", value: "webp" }, outputQuality: { policy: "fixed", value: 80 } }, constraints: [], generatedAudio: "unsupported" });
+  const framed = CapabilityProfileSchema.parse({ ...bare, presentation: shown(bare.parameters) });
   const framedContent = { ...content, settings: { ...content.settings, parameters: { aspectRatio: "16:9", numFrames: 81, framesPerSecond: 16, negativePrompt: "Provider-only default", outputFormat: "webp", outputQuality: 80 } } };
   const onChange = vi.fn();
   render(<CapabilitySettings profiles={[framed]} content={framedContent} media={[]} disabled={false} onProfile={vi.fn()} onChange={onChange} />);
   expect(screen.queryByText("Provider-only default")).not.toBeInTheDocument();
   expect(screen.queryByText("WebP")).not.toBeInTheDocument();
-  expect(screen.getByLabelText("Duration: ~5.1s; from input")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Advanced length and motion" }));
-  expect(await screen.findByRole("spinbutton", { name: "Generation frame rate" })).toHaveAttribute("readonly");
-  fireEvent.change(screen.getByRole("spinbutton", { name: "Frames" }), { target: { value: "100" } });
-  fireEvent.click(screen.getByRole("button", { name: "Apply" }));
-  expect(onChange).not.toHaveBeenCalled();
-  fireEvent.change(screen.getByRole("spinbutton", { name: "Frames" }), { target: { value: "121" } });
-  fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+  expect(screen.getByLabelText("Duration: ~5.1s")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Frames/ }));
+  fireEvent.click(screen.getByRole("button", { name: "121" }));
   expect(onChange).toHaveBeenCalledWith({ ...framedContent, settings: { ...framedContent.settings, parameters: { ...framedContent.settings.parameters, numFrames: 121 } } });
 });
 

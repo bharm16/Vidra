@@ -1,72 +1,28 @@
 import { createContext, useContext, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { SettingsMenu } from "./SettingsMenu";
 import { FreshButton, FreshIcon } from "@/components/fresh/FreshButton";
-import { isParameterValueInRange, type CapabilityProfile, type ParameterPolicy, type ParameterValue } from "@shared/schemas/workflow/capability.schemas";
+import { isParameterValueInRange, type CapabilityProfile, type ParameterRole, type ParameterValue } from "@shared/schemas/workflow/capability.schemas";
 import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { allowedParameterValues, derivedParameter, evaluateCapabilityDraft, modelCapabilityDescription, parameterDescription, preModelParameterChoices, visibleSavedParameters, parameterLabel, parameterName, settingEntries, settingOptions, settingRole, withConstraints, type PreModelParameterChoices, type SettingOption } from "../state/capabilitySettings";
+import { actionEntry, advancedParameters, composerOutput, composerTool, roleParameter } from "@shared/workflow/actionRegistry";
+import { autoCandidates, coreChipEntries, countLabel, derivedParameter, evaluateCapabilityDraft, parameterDescription, preModelParameterChoices, roleLabel, settingLabel, settingOptions, valueLabel, withConstraints, type CoreChipEntry, type PreModelParameterChoices, type SettingOption } from "../state/capabilitySettings";
 import { modelChoices } from "../state/inputBinding";
-import { FrameSettings } from "./FrameSettings";
+import { LANGUAGES } from "../state/languages";
+import { AdvancedSettings } from "./AdvancedSettings";
+import { modelLogo } from "./modelLogo";
 import { FlipScope } from "@/components/motion/FlipScope";
 import { CHIP_VALUE, CHIP_VALUE_SHEET, Swap } from "@/components/motion/Swap";
 import { useCompactViewport } from "@/hooks/useCompactViewport";
 import { useOutputReshape } from "../hooks/useOutputReshape";
-import { outputGroup } from "./OutputSwitch";
-import type { CapabilityLookupStatus } from "./ModelCreationArea";
 import "./model-creation-fidelity.css";
 
-type Presentation = "default" | "model";
-interface SettingProps {
-  name: string;
-  value: ParameterValue | undefined;
-  policy: Extract<ParameterPolicy, { policy: "editable" }>;
-  profile?: CapabilityProfile;
-  options?: SettingOption[];
-  presentation: Presentation;
-  disabled: boolean;
-  onChange(value: ParameterValue): void;
-}
+export type CapabilityLookupStatus = "ready" | "loading" | "error";
 
-function Setting({ name, value, policy, profile, options, presentation, disabled, onChange }: SettingProps): ReactElement {
-  const [open, setOpen] = useState(false);
-  const label = parameterName(name, profile?.output.kind);
-  const displayValue = (option: ParameterValue): string => parameterLabel(name, option, profile?.output.kind);
-  if (presentation === "model" && /audio|sound/i.test(name) && policy.domain.kind === "enum" && policy.domain.values.every(option => typeof option === "boolean") && typeof value === "boolean") {
-    return <FreshButton className="vf-setting-chip" aria-label={`Sound: ${value ? "on" : "off"}`} aria-pressed={value} disabled={disabled} onClick={() => onChange(!value)}><SettingIcon name={name} />{value ? "Sound" : "Sound off"}</FreshButton>;
-  }
-  const values = options ?? (policy.domain.kind === "enum" ? policy.domain.values.map(value => ({ value, enabled: true })) : []);
-  return <SettingsMenu title={label} open={open} onOpenChange={setOpen} className={presentation === "model" ? "vf-model-setting-menu" : name === "outputCount" ? "vf-count-setting-menu" : ""} trigger={<FreshButton className={`vf-setting-chip${name === "outputCount" ? " vf-output-count" : ""}`} disabled={disabled} aria-label={`${label}: ${value === undefined ? "Choose" : displayValue(value)}`}><SettingIcon name={name} {...(profile ? { outputKind: profile.output.kind } : {})} /><ChipValue value={value === undefined ? label : displayValue(value)} /><FreshIcon name="down" /></FreshButton>}>
-    {policy.domain.kind === "enum" ? <div className="vf-setting-options" role="group" aria-label={label}>{values.map(({ value: option, enabled }, index) => {
-      const description = presentation === "model" && profile && (enabled || settingRole(name) === "shape") ? parameterDescription(profile, name, option) : undefined;
-      return <FreshButton tone="quiet" className="vf-setting-option" key={`${index}:${String(option)}`} {...(description ? { "aria-label": `${displayValue(option)} ${description}` } : {})} aria-pressed={value === option} disabled={!enabled} onClick={() => { if (!enabled) return; onChange(option); setOpen(false); }}><span className="vf-model-setting-copy"><span>{displayValue(option)}</span>{description ? <small>{description}</small> : null}</span>{value === option ? <FreshIcon name="check" /> : null}</FreshButton>;
-    })}</div> : policy.domain.kind === "range" ? <label className="vf-range-setting"><span>{value === undefined ? "Choose a value" : displayValue(value)}</span><input aria-label={label} type="range" min={policy.domain.min} max={policy.domain.max} step={policy.domain.step} value={typeof value === "number" ? value : policy.domain.min} onChange={event => onChange(Number(event.target.value))} /><span>{policy.domain.min}–{policy.domain.max}</span></label> : null}
-  </SettingsMenu>;
-}
+const ROLE_ICONS: Partial<Record<ParameterRole | "count", string>> = { shape: "/design-assets/workspace-setting-shape.svg", duration: "/design-assets/workspace-setting-duration.svg", sound: "/design-assets/fidelity-model-sound.svg", voice: "/design-assets/fresh-icon-mic.svg", language: "/design-assets/fresh-icon-languages.svg", scale: "/design-assets/fresh-icon-scaling.svg" };
 
-/** A creation choice this model cannot use keeps its place, greyed, and does not open. */
-function UnavailableSetting({ name }: { name: string }): ReactElement {
-  const label = parameterName(name);
-  return <FreshButton className="vf-setting-chip" disabled aria-label={label}><SettingIcon name={name} />{label}</FreshButton>;
-}
-
-function PreModelRange({ name, range, disabled, onChoose }: { name: string; range: PreModelParameterChoices["ranges"][number]; disabled: boolean; onChoose(value: number): void }): ReactElement {
-  const [text, setText] = useState("");
-  const value = Number(text);
-  const valid = text.trim().length > 0 && isParameterValueInRange(range, value);
-  const label = parameterName(name);
-  return <div className="vf-range-setting" role="group" aria-label={`${label} ${range.min}–${range.max}`}><p className="vf-setting-name">{range.min}–{range.max} · step {range.step}</p><input className="vf-field" type="number" aria-label={`Desired ${label.toLowerCase()}`} min={range.min} max={range.max} step={range.step} value={text} onChange={event => setText(event.target.value)} disabled={disabled} /><FreshButton tone="quiet" className="vf-setting-option" disabled={disabled || !valid} onClick={() => { if (valid) onChoose(value); }}>Use {label.toLowerCase()}</FreshButton></div>;
-}
-
-function PreModelSetting({ name, value, choices, disabled, onChange, onChooseModel }: { name: string; value: ParameterValue; choices: PreModelParameterChoices; disabled: boolean; onChange(value: ParameterValue): void; onChooseModel(): void }): ReactElement {
-  const [open, setOpen] = useState(false);
-  const label = parameterName(name);
-  const choose = (next: ParameterValue): void => { if (disabled) return; onChange(next); setOpen(false); };
-  return <SettingsMenu title={label} open={open} onOpenChange={setOpen} className="vf-model-setting-menu" trigger={<FreshButton className="vf-setting-chip" disabled={disabled} aria-label={`${label}: ${parameterLabel(name, value)}`}><SettingIcon name={name} /><ChipValue value={parameterLabel(name, value)} /><FreshIcon name="down" /></FreshButton>}>
-    <div className="vf-setting-options" role="group" aria-label={`Desired ${label.toLowerCase()}`}>{choices.values.map(option => {
-      const description = parameterDescription(undefined, name, option);
-      return <FreshButton tone="quiet" className="vf-setting-option" key={`${typeof option}:${String(option)}`} disabled={disabled} aria-label={description ? `${parameterLabel(name, option)} ${description}` : parameterLabel(name, option)} aria-pressed={value === option} onClick={() => choose(option)}><span className="vf-model-setting-copy"><span>{parameterLabel(name, option)}</span>{description ? <small>{description}</small> : null}</span>{value === option ? <FreshIcon name="check" /> : null}</FreshButton>;
-    })}{choices.ranges.map(range => <PreModelRange key={`${range.min}:${range.max}:${range.step}`} name={name} range={range} disabled={disabled} onChoose={choose} />)}{!choices.values.length && !choices.ranges.length ? <><p className="vf-setting-warning" role="status">Choose a model to change this setting.</p><FreshButton tone="quiet" className="vf-setting-option" disabled={disabled} onClick={() => { setOpen(false); onChooseModel(); }}>Choose model</FreshButton></> : null}</div>
-  </SettingsMenu>;
+function ChipIcon({ role, kind }: { role: ParameterRole | "count" | "model"; kind?: CapabilityProfile["output"]["kind"] }): ReactElement {
+  const source = role === "model" ? "/design-assets/workspace-setting-model.svg" : role === "count" ? kind === "image" ? "/design-assets/fresh-icon-image.svg" : kind === "audio" ? "/design-assets/fresh-icon-audio-lines.svg" : "/design-assets/fresh-icon-film.svg" : ROLE_ICONS[role] ?? "/design-assets/workspace-setting-settings.svg";
+  return <span className="vf-setting-icon" aria-hidden="true"><img src={source} alt="" /></span>;
 }
 
 /** True while the chips reshape for another output, which cross-fades whole chips instead. */
@@ -79,11 +35,49 @@ function ChipValue({ value }: { value: string }): ReactElement {
   return <Swap swapKey={value} still={switching} motion={compact ? CHIP_VALUE_SHEET : CHIP_VALUE}>{value}</Swap>;
 }
 
-function SettingIcon({ name, outputKind }: { name: string; outputKind?: CapabilityProfile["output"]["kind"] }): ReactElement {
-  if (name === "outputCount" && outputKind) return <span className="vf-setting-icon" aria-hidden="true"><img src={outputKind === "image" ? "/design-assets/fidelity-model-image.svg" : outputKind === "video" ? "/design-assets/fidelity-model-video.svg" : "/design-assets/workspace-action-question.svg"} width="18" height="18" alt="" /></span>;
-  if (/audio|sound/i.test(name)) return <span className="vf-setting-icon" aria-hidden="true"><img src="/design-assets/fidelity-model-sound.svg" alt="" /></span>;
-  const icon = name === "model" ? "model" : /shape|aspect/i.test(name) ? "shape" : /duration/i.test(name) ? "duration" : "settings";
-  return <span className="vf-setting-icon" aria-hidden="true"><img alt="" src={`/design-assets/workspace-setting-${icon}.svg`} /></span>;
+interface MenuChipProps {
+  label: string;
+  icon: ReactElement;
+  value: string;
+  options: SettingOption[];
+  selected: ParameterValue | undefined;
+  display(value: ParameterValue): string;
+  describe?(value: ParameterValue): string | undefined;
+  searchable?: boolean;
+  disabled: boolean;
+  onChange(value: ParameterValue): void;
+  ranges?: PreModelParameterChoices["ranges"];
+  className?: string;
+}
+
+/** One core chip and its menu. Every value other models offer stays listed; unusable ones are greyed with no reason. */
+function MenuChip({ label, icon, value, options, selected, display, describe, searchable = false, disabled, onChange, ranges = [], className = "" }: MenuChipProps): ReactElement {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const shown = searchable && query ? options.filter(option => display(option.value).toLocaleLowerCase().includes(query.toLocaleLowerCase())) : options;
+  const choose = (next: ParameterValue): void => { onChange(next); setOpen(false); setQuery(""); };
+  return <SettingsMenu title={label} open={open} onOpenChange={next => { setOpen(next); if (!next) setQuery(""); }} className={className} trigger={<FreshButton className="vf-setting-chip" disabled={disabled} aria-label={`${label}: ${value}`}>{icon}<ChipValue value={value} /><FreshIcon name="down" /></FreshButton>}>
+    {searchable ? <label className="vf-model-search"><img src="/design-assets/fidelity-model-search.svg" alt="" /><input type="search" aria-label={`Search ${label.toLowerCase()}`} placeholder={`Search ${label.toLowerCase()}`} value={query} onChange={event => setQuery(event.target.value)} /></label> : null}
+    <div className="vf-setting-options" role="group" aria-label={label}>{shown.map(({ value: option, enabled }, index) => {
+      const description = describe?.(option);
+      return <FreshButton tone="quiet" className="vf-setting-option" key={`${index}:${String(option)}`} {...(description ? { "aria-label": `${display(option)} ${description}` } : {})} aria-pressed={selected === option} disabled={disabled || !enabled} onClick={() => { if (enabled && !disabled) choose(option); }}><span className="vf-model-setting-copy"><span>{display(option)}</span>{description ? <small>{description}</small> : null}</span>{selected === option ? <FreshIcon name="check" /> : null}</FreshButton>;
+    })}</div>
+    {ranges.map(range => <RangeField key={`${range.min}:${range.max}:${range.step}`} label={label} range={range} value={typeof selected === "number" && isParameterValueInRange(range, selected) ? selected : undefined} display={display} onChoose={choose} />)}
+  </SettingsMenu>;
+}
+
+function RangeField({ label, range, value, display, onChoose }: { label: string; range: PreModelParameterChoices["ranges"][number]; value: number | undefined; display(value: ParameterValue): string; onChoose(value: number): void }): ReactElement {
+  const [draft, setDraft] = useState(value ?? range.min);
+  return <label className="vf-range-setting"><span>{display(draft)}</span><input aria-label={label} type="range" min={range.min} max={range.max} step={range.step} value={draft} onChange={event => setDraft(Number(event.target.value))} onPointerUp={() => onChoose(draft)} onKeyUp={() => onChoose(draft)} /><span>{display(range.min)}–{display(range.max)}</span></label>;
+}
+
+/** A core setting this model cannot use keeps its place, greyed, and does not open. */
+function UnavailableChip({ label, icon }: { label: string; icon: ReactElement }): ReactElement {
+  return <FreshButton className="vf-setting-chip" disabled aria-label={label}>{icon}{label}</FreshButton>;
+}
+
+function ReadonlyChip({ label, value, icon }: { label: string; value: string; icon: ReactElement }): ReactElement {
+  return <span className="vf-setting-chip vf-setting-readonly" aria-label={`${label}: ${value}`}>{icon}{value}</span>;
 }
 
 export interface CapabilitySettingsProps {
@@ -92,53 +86,90 @@ export interface CapabilitySettingsProps {
   media: MediaVersion[];
   disabled: boolean;
   onProfile(profile: CapabilityProfile): void;
+  onAuto?(): void;
   onChange(content: DraftContent): void;
-  presentation?: Presentation;
   lookupStatus?: CapabilityLookupStatus;
   children?: ReactNode;
 }
 
-export function CapabilitySettings({ profiles, content, media, disabled, onProfile, onChange, presentation = "default", lookupStatus = "ready", children }: CapabilitySettingsProps): ReactElement {
+/** Rule 5 and Rule 6: the model chip, then the action's fixed core chips, then Advanced last when the model has extras. */
+export function CapabilitySettings({ profiles, content, media, disabled, onProfile, onAuto, onChange, lookupStatus = "ready", children }: CapabilitySettingsProps): ReactElement {
   const [modelOpen, setModelOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const { candidates, profile, problems, modelNotice: rawModelNotice, unsupportedSaved, fixedConflicts } = evaluateCapabilityDraft(profiles, content, media);
-  const modelNotice = presentation === "model" ? rawModelNotice : undefined;
+  const { candidates, profile, problems, modelNotice, unsupportedSaved, fixedConflicts } = evaluateCapabilityDraft(profiles, content, media);
+  const auto = content.settings.profileId === "unselected";
+  const entry = actionEntry(content.action);
   const shownModels = modelChoices(content, profiles).filter(choice => choice.profile.label.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
-  const ready = lookupStatus === "ready" && modelNotice?.kind !== "extension-ineligible";
-  const parameterValue = (name: string, value: ParameterValue): string => presentation === "model" && profile?.action === "extend-video" && /duration/i.test(name) && typeof value === "number" ? `+${value}s` : parameterLabel(name, value);
   const row = useRef<HTMLDivElement>(null);
-  const reshape = useOutputReshape(outputGroup(content.action));
+  const reshape = useOutputReshape(composerOutput(content.action) ?? composerTool(content.action));
+  const setParameter = (name: string, value: ParameterValue): void => onChange({ ...content, settings: { ...content.settings, parameters: profile ? withConstraints(profile, { ...content.settings.parameters, [name]: value }) : { ...content.settings.parameters, [name]: value } } });
+  const kind = profile?.output.kind ?? candidates[0]?.output.kind;
+  const maxCount = profile ? profile.output.maxCount : Math.max(1, ...autoCandidates(profiles, content, media).map(candidate => candidate.output.maxCount));
+  const modelLabel = auto ? "Auto" : profile?.label ?? "Choose model";
+  const logo = profile ? modelLogo(profile) : undefined;
+  const chip = (item: CoreChipEntry): ReactElement => {
+    const icon = <ChipIcon role={item.chip} />;
+    const label = item.name ? settingLabel(profile, item.name) : roleLabel(item.chip);
+    if (item.chip === "sound") {
+      const generated = profile?.generatedAudio ?? (candidates.every(candidate => candidate.generatedAudio === "always") ? "always" : undefined);
+      if (generated === "always") return <ReadonlyChip key="sound" label="Sound" value="Sound included" icon={icon} />;
+      if (!item.name || item.policy?.policy !== "editable" || profile?.generatedAudio === "unsupported") return <UnavailableChip key="sound" label="Sound" icon={icon} />;
+      const on = content.settings.parameters[item.name] === true;
+      return <FreshButton key="sound" className="vf-setting-chip" aria-label={`Sound: ${on ? "on" : "off"}`} aria-pressed={on} disabled={disabled} onClick={() => setParameter(item.name ?? "", !on)}>{icon}{on ? "Sound" : "Sound off"}</FreshButton>;
+    }
+    if (auto) {
+      const choices = preModelParameterChoices(profiles, content, media, item.chip);
+      const name = choices.name;
+      if (!name || (!choices.values.length && !choices.ranges.length)) return <UnavailableChip key={item.chip} label={roleLabel(item.chip)} icon={icon} />;
+      const named = autoCandidates(profiles, content, media).find(candidate => candidate.parameters[name]?.policy === "editable");
+      // Until a value is chosen, Auto reads its first candidate's default, which is what Make would use.
+      const starting = named?.parameters[name];
+      const value = content.settings.parameters[name] ?? (starting?.policy === "editable" ? starting.defaultValue : undefined);
+      const display = (option: ParameterValue): string => valueLabel(named, name, option);
+      return <MenuChip key={item.chip} label={roleLabel(item.chip)} icon={icon} value={value === undefined ? roleLabel(item.chip) : display(value)} options={choices.values.map(option => ({ value: option, enabled: true }))} ranges={choices.ranges} selected={value} display={display} describe={option => parameterDescription(undefined, name, option, item.chip)} searchable={choices.values.length > 8} disabled={disabled} onChange={next => setParameter(name, next)} />;
+    }
+    if (!profile) {
+      // A restored model that is no longer offered keeps its saved values readable, never rewritten.
+      const named = candidates.map(candidate => roleParameter(candidate, item.chip)?.[0]).find(name => name !== undefined && content.settings.parameters[name] !== undefined);
+      const saved = named ? content.settings.parameters[named] : undefined;
+      return named && saved !== undefined ? <ReadonlyChip key={item.chip} label={roleLabel(item.chip)} value={valueLabel(candidates.find(candidate => candidate.parameters[named]), named, saved)} icon={icon} /> : <UnavailableChip key={item.chip} label={roleLabel(item.chip)} icon={icon} />;
+    }
+    const policy = item.policy;
+    if (!item.name || !policy || policy.policy === "unsupported" || policy.policy === "unknown") return <UnavailableChip key={item.chip} label={label} icon={icon} />;
+    const name = item.name;
+    const display = (option: ParameterValue): string => valueLabel(profile, name, option);
+    if (policy.policy === "editable") {
+      const value = content.settings.parameters[name];
+      if (policy.domain.kind === "text") {
+        const languages = item.chip === "language" ? [...Object.keys(profile.presentation?.parameters[name]?.values ?? {}), ...LANGUAGES.map(language => language.code)] : [];
+        if (!languages.length) return <ReadonlyChip key={name} label={label} value={typeof value === "string" && value ? value : label} icon={icon} />;
+        return <MenuChip key={name} label={label} icon={icon} value={value === undefined ? label : display(value)} options={[...new Set(languages)].map(option => ({ value: option, enabled: option.length <= (policy.domain.kind === "text" ? policy.domain.maxLength : 0) }))} selected={value} display={display} searchable disabled={disabled} onChange={next => setParameter(name, next)} />;
+      }
+      const options = policy.domain.kind === "enum" ? settingOptions(profile, candidates, content, name) ?? [] : [];
+      return <MenuChip key={name} label={label} icon={icon} value={value === undefined ? label : display(value)} options={options} ranges={policy.domain.kind === "range" ? [policy.domain] : []} selected={value} display={display} describe={option => parameterDescription(profile, name, option)} searchable={options.length > 8} disabled={disabled} onChange={next => setParameter(name, next)} />;
+    }
+    const shown = policy.policy === "fixed" ? policy.value === "match_input_image" ? derivedParameter({ policy: "derived", from: "input-aspect" }, content, media) : display(policy.value) : derivedParameter(policy, content, media);
+    return <ReadonlyChip key={name} label={label} value={shown} icon={icon} />;
+  };
   return <OutputSwitching.Provider value={reshape.switching}><div ref={row} className="vf-settings" aria-label="Request settings">
-    <SettingsMenu title="Model" open={modelOpen} onOpenChange={open => { setModelOpen(open); if (!open) setQuery(""); }} className={`vf-model-menu${presentation === "model" ? " vf-model-setting-menu" : ""}`} trigger={<FreshButton className="vf-setting-chip" data-unavailable={profile && profile.availability !== "qualified" || undefined} disabled={disabled} aria-label={`Model: ${profile?.label ?? "Choose a model"}`}><SettingIcon name="model" /><ChipValue value={profile?.label ?? "Choose model"} /><FreshIcon name="down" /></FreshButton>}>
+    {entry.coreChips.includes("model") ? <SettingsMenu title="Model" open={modelOpen} onOpenChange={open => { setModelOpen(open); if (!open) setQuery(""); }} className="vf-model-menu" trigger={<FreshButton className="vf-setting-chip" data-unavailable={profile && profile.availability !== "qualified" || undefined} disabled={disabled} aria-label={`Model: ${modelLabel}`}>{logo ? <span className="vf-setting-icon vf-model-logo" aria-hidden="true" style={{ maskImage: `url("${logo}")` }} /> : <ChipIcon role="model" />}<ChipValue value={modelLabel} /><FreshIcon name="down" /></FreshButton>}>
       <label className="vf-model-search"><img src="/design-assets/fidelity-model-search.svg" alt="" /><input type="search" aria-label="Search models" placeholder="Search models" value={query} onChange={event => setQuery(event.target.value)} /></label>
-      {shownModels.map(({ profile: candidate, selected, takesInputs }) => <FreshButton tone="quiet" className="vf-setting-option vf-model-option" key={candidate.id} aria-pressed={selected} disabled={!takesInputs} onClick={() => { onProfile(candidate); setModelOpen(false); setQuery(""); }}><img className="vf-model-kind" src={presentation === "model" && candidate.output.kind === "video" ? `/design-assets/fidelity-model-kind${selected ? "-selected" : ""}.svg` : candidate.output.kind === "image" ? "/design-assets/fidelity-model-image.svg" : candidate.output.kind === "video" ? "/design-assets/fidelity-model-video.svg" : "/design-assets/workspace-action-question.svg"} alt="" /><span className="vf-model-copy">{candidate.label}{presentation === "model" ? <small>{modelCapabilityDescription(candidate, profiles)}</small> : candidate.availability !== "qualified" ? <small>{candidate.unavailableReason ?? "Currently unavailable"}</small> : null}</span>{selected ? <FreshIcon name="check" /> : null}</FreshButton>)}
+      {onAuto && !query ? <FreshButton tone="quiet" className="vf-setting-option vf-model-option" aria-pressed={auto} onClick={() => { onAuto(); setModelOpen(false); }}><span className="vf-model-kind vf-model-logo" aria-hidden="true" style={{ maskImage: 'url("/design-assets/workspace-setting-model.svg")' }} /><span className="vf-model-copy">Auto</span>{auto ? <FreshIcon name="check" /> : null}</FreshButton> : null}
+      {shownModels.map(({ profile: candidate, selected, takesInputs }) => <FreshButton tone="quiet" className="vf-setting-option vf-model-option" key={candidate.id} aria-pressed={selected} disabled={!takesInputs || candidate.availability !== "qualified"} onClick={() => { onProfile(candidate); setModelOpen(false); setQuery(""); }}><span className="vf-model-kind vf-model-logo" aria-hidden="true" style={{ maskImage: `url("${modelLogo(candidate) ?? "/design-assets/workspace-setting-model.svg"}")` }} /><span className="vf-model-copy">{candidate.label}</span>{selected ? <FreshIcon name="check" /> : null}</FreshButton>)}
       {!shownModels.length ? <p className="vf-setting-warning">{query ? "No matching models" : "No model is available for this action."}</p> : null}
-    </SettingsMenu>
-    {!ready ? lookupStatus === "loading" ? <span className="vf-setting-chip vf-setting-readonly vf-model-loading" role="status"><img src="/design-assets/fidelity-model-loading.svg" alt="" />Checking settings…</span> : null : profile ? <>
-      {settingEntries(profile).map(([name, policy]) => {
-        if (!policy || policy.policy === "unsupported" || policy.policy === "unknown" || (settingRole(name) === "sound" && profile.generatedAudio === "unsupported")) return <UnavailableSetting key={name} name={name} />;
-        const value = content.settings.parameters[name];
-        const allowed = allowedParameterValues(profile, content, name);
-        const constrained = presentation === "model" && policy.policy === "editable" && policy.domain.kind === "enum" && policy.domain.values.length > 1 && allowed?.length === 1 && value === allowed[0];
-        if (policy.policy === "editable" && !constrained) return <Setting key={name} name={name} value={value} policy={policy} profile={profile} {...(policy.policy === "editable" && policy.domain.kind === "enum" ? { options: settingOptions(profile, candidates, content, name) ?? [] } : {})} presentation={presentation} disabled={disabled} onChange={next => onChange({ ...content, settings: { ...content.settings, parameters: withConstraints(profile, { ...content.settings.parameters, [name]: next }) } })} />;
-        const followsInput = policy.policy === "derived" || (policy.policy === "fixed" && policy.value === "match_input_image");
-        let display = constrained && value !== undefined ? parameterValue(name, value) : policy.policy === "fixed" ? parameterValue(name, policy.value) : policy.policy === "derived" ? derivedParameter(policy, content, media) : "";
-        if (policy.policy === "fixed" && policy.value === "match_input_image") display = derivedParameter({ policy: "derived", from: "input-aspect" }, content, media);
-        if (presentation === "model") display = display.replace(/^~/, "≈");
-        if (/audio|sound/i.test(name) && profile.generatedAudio === "always") display = "Sound included";
-        return <span className="vf-setting-chip vf-setting-readonly" key={name} aria-label={`${parameterName(name)}: ${display}; ${followsInput ? "from input" : "fixed by model"}`} title={followsInput ? "Follows the selected input" : "Fixed by this model or selected settings"}><SettingIcon name={name} />{display}</span>;
-      })}
-      {profile.output.maxCount > 1 ? <Setting name="outputCount" value={content.settings.outputCount} policy={{ policy: "editable", defaultValue: 1, domain: { kind: "enum", values: Array.from({ length: profile.output.maxCount }, (_, index) => index + 1) } }} profile={profile} presentation={presentation} disabled={disabled} onChange={value => { if (typeof value === "number") onChange({ ...content, settings: { ...content.settings, outputCount: value } }); }} /> : null}
-      {presentation === "model" && !Object.keys(profile.parameters).some(name => /audio|sound/i.test(name)) && profile.generatedAudio === "always" && profile.output.kind === "video" ? <span className="vf-setting-chip vf-setting-readonly" aria-label="Sound included by model"><SettingIcon name="sound" />Sound included</span> : null}
-      <FrameSettings profile={profile} content={content} disabled={disabled} onChange={onChange} presentation={presentation} />
-    </> : null}
-    {!profile ? visibleSavedParameters(content.settings.parameters).map(([name, value]) => content.settings.profileId === "unselected" ? <PreModelSetting key={name} name={name} value={value} choices={lookupStatus === "ready" ? preModelParameterChoices(candidates, content, media, name) : { values: [], ranges: [] }} disabled={disabled} onChange={next => onChange({ ...content, settings: { ...content.settings, parameters: { ...content.settings.parameters, [name]: next } } })} onChooseModel={() => setModelOpen(true)} /> : <span className="vf-setting-chip vf-setting-readonly" key={name} aria-label={`${parameterName(name)}: ${parameterLabel(name, value)}; saved, choose a model to change`} title="Choose a model to change this setting"><SettingIcon name={name} />{parameterLabel(name, value)}</span>) : null}
+    </SettingsMenu> : null}
+    {lookupStatus === "loading" ? <span className="vf-setting-chip vf-setting-readonly vf-model-loading" role="status"><img src="/design-assets/fidelity-model-loading.svg" alt="" />Checking settings…</span> : <>
+      {coreChipEntries(content.action, profile ?? (auto ? autoCandidates(profiles, content, media)[0] : undefined)).map(chip)}
+      {entry.coreChips.includes("count") ? maxCount > 1 ? <MenuChip label={settingLabel(undefined, "outputCount")} icon={<ChipIcon role="count" {...(kind ? { kind } : {})} />} value={countLabel(content.action, content.settings.outputCount)} options={Array.from({ length: maxCount }, (_, index) => ({ value: index + 1, enabled: true }))} selected={content.settings.outputCount} display={value => countLabel(content.action, Number(value))} disabled={disabled} className="vf-count-setting-menu" onChange={value => { if (typeof value === "number") onChange({ ...content, settings: { ...content.settings, outputCount: value } }); }} /> : <UnavailableChip label={countLabel(content.action, 1)} icon={<ChipIcon role="count" {...(kind ? { kind } : {})} />} /> : null}
+      {profile && advancedParameters(profile).length ? <AdvancedSettings profile={profile} content={content} disabled={disabled} onChange={onChange} /> : null}
+    </>}
     <FlipScope watch={reshape.output} root={row} items=":scope > .vf-setting-chip" capture={reshape.capture} onFlip={reshape.chips} />
-    {profile && profile.availability !== "qualified" && presentation !== "model" ? <p className="vf-inline-unavailable" role="status" title={profile.unavailableReason} aria-label={`${profile.label} is unavailable${profile.unavailableReason ? `. ${profile.unavailableReason}` : ""}`}><img src="/design-assets/fidelity-model-unavailable.svg" width="14" height="14" alt="" /><span>{profile.label} is unavailable</span></p> : null}
     {children}
   </div>
-    {unsupportedSaved.map(name => <div className="vf-setting-warning" key={name}><p>{parameterName(name)} from your previous setup does not apply to this model.</p><FreshButton tone="quiet" disabled={disabled} onClick={() => { const parameters = { ...content.settings.parameters }; delete parameters[name]; onChange({ ...content, settings: { ...content.settings, parameters } }); }}>Remove {parameterName(name).toLowerCase()}</FreshButton></div>)}
+    {modelNotice && modelNotice.tone !== "hint" ? <p className="vf-setting-warning" role="status">{modelNotice.message}</p> : null}
+    {unsupportedSaved.map(name => <div className="vf-setting-warning" key={name}><p>{settingLabel(profile, name)} from your previous setup does not apply to this model.</p><FreshButton tone="quiet" disabled={disabled} onClick={() => { const parameters = { ...content.settings.parameters }; delete parameters[name]; onChange({ ...content, settings: { ...content.settings, parameters } }); }}>Remove {settingLabel(profile, name).toLowerCase()}</FreshButton></div>)}
     {problems.length && !modelNotice ? <ul className="vf-blocking-reasons">{problems.map(problem => <li key={problem}>{problem}</li>)}</ul> : null}
-    {fixedConflicts.map(([name, policy]) => <FreshButton key={name} tone="quiet" disabled={disabled} onClick={() => onChange({ ...content, settings: { ...content.settings, parameters: { ...content.settings.parameters, [name]: policy.value } } })}>Use {parameterName(name).toLowerCase()} {parameterLabel(name, policy.value)}</FreshButton>)}
+    {fixedConflicts.map(([name, policy]) => <FreshButton key={name} tone="quiet" disabled={disabled} onClick={() => onChange({ ...content, settings: { ...content.settings, parameters: { ...content.settings.parameters, [name]: policy.value } } })}>Use {settingLabel(profile, name).toLowerCase()} {valueLabel(profile, name, policy.value)}</FreshButton>)}
   </OutputSwitching.Provider>;
 }
+

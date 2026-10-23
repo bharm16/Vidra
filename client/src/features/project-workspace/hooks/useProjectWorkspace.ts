@@ -16,12 +16,14 @@ import {
   emptyDraftContent,
   followupDraftForRequest,
   initialDraftId,
-  interchangeableActions,
+  inputsForAction,
   mediaActionDraftContent,
   resolvePendingDraftInputs,
   retrySlotDraftContent,
+  settleModel,
 } from "../state/inputBinding";
-import { settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
+import { autoSettings, resolveAuto, settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
+import { placeActions } from "@shared/workflow/actionRegistry";
 import { DEFAULT_CONVERSATION_NAME } from "@shared/workflow/conversationName";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
@@ -59,6 +61,11 @@ export interface ProjectWorkspaceController {
   openDraft(record: CreationDraft): void;
   newDraft(action: CreationAction): Promise<void>;
   chooseProfile(profile: CapabilityProfile): void;
+  /** The model chip's Auto: Make resolves it to one exact model. */
+  chooseAuto(): void;
+  /** Inputs the active draft's place cannot use: shown greyed and kept out of the request (Rule 4). */
+  parkedInputs: DraftInput[];
+  discardParkedInput(input: DraftInput): void;
   flush(): Promise<boolean>;
   canLeave(): boolean;
   prepare(): Promise<void>;
@@ -106,8 +113,12 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   viewRef.current = view;
   // The model last used for each action, so switching outputs never drops back to "Choose model".
   const rememberedSettings = useRef<Partial<Record<CreationAction, DraftContent["settings"]>>>({});
-  // Drafts this tab created; only these take a model automatically, so a draft open in two tabs never races.
+  // Drafts this tab created; only these take Auto's starting values automatically, so a draft open in two tabs never races.
   const freshDraftIds = useRef(new Set<string>());
+  // Inputs a switch set aside per draft; switching back restores them.
+  const [parked, setParked] = useState<Record<string, DraftInput[]>>({});
+  const parkedRef = useRef(parked);
+  parkedRef.current = parked;
   const mounted = useRef(true);
   const scopeKey = `${ownerId}:${projectId}`;
   const scopeRef = useRef(scopeKey);
@@ -346,8 +357,15 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   const chooseProfile = useCallback((profile: CapabilityProfile): void => {
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
-    if (!buffer || !interchangeableActions(buffer.content.action).includes(profile.action)) return;
+    if (!buffer || !placeActions(buffer.content.action).includes(profile.action)) return;
     edit({ ...buffer.content, action: profile.action, settings: settingsForProfile(profile, buffer.content, profiles.find(candidate => candidate.id === buffer.content.settings.profileId)) });
+  }, [edit, profiles]);
+
+  const chooseAuto = useCallback((): void => {
+    const draftId = viewRef.current.activeDraftId;
+    const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
+    if (!buffer || buffer.content.settings.profileId === "unselected") return;
+    edit({ ...buffer.content, settings: autoSettings(buffer.content, buffer.content.action, profiles, mediaRef.current) });
   }, [edit, profiles]);
 
   const prepare = useCallback(async (): Promise<void> => {
@@ -426,9 +444,14 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   const make = useCallback(async (): Promise<void> => {
     const draftId = viewRef.current.activeDraftId;
     const initial = draftId ? viewRef.current.drafts[draftId] : undefined;
-    if (!draftId || !initial || initial.record.ownerId !== ownerId || initial.record.projectId !== projectId || !initial.content.instructions.trim() || !["open", "parked"].includes(initial.record.status) || making.current.has(draftId) || submitting.current.has(draftId)) return;
+    if (!draftId || !initial || initial.record.ownerId !== ownerId || initial.record.projectId !== projectId || !["open", "parked"].includes(initial.record.status) || making.current.has(draftId) || submitting.current.has(draftId)) return;
     making.current.add(draftId); setPreparing(true); setError(undefined); setServiceUnavailable(false);
-    const sequence = initial.sequence;
+    if (initial.content.settings.profileId === "unselected") {
+      // Auto becomes one exact model before preparation, so the request records the model that made it.
+      const chosen = resolveAuto(initial.content, profiles, mediaRef.current);
+      if (chosen) edit({ ...initial.content, action: chosen.action, settings: settingsForProfile(chosen, initial.content) });
+    }
+    const sequence = viewRef.current.drafts[draftId]?.sequence ?? initial.sequence;
     try {
       if (!await flushId(draftId) || !inScope()) return;
       const current = viewRef.current.drafts[draftId];
@@ -439,7 +462,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
       if (result.state === "ready") await submitPrepared(result);
     } catch (failure) { if (inScope()) { setError(message(failure)); if (failure instanceof WorkflowApiError && failure.status === 503) setServiceUnavailable(true); } }
     finally { making.current.delete(draftId); if (inScope()) setPreparing(false); }
-  }, [api, flushId, inScope, ownerId, projectId, submitPrepared]);
+  }, [api, edit, flushId, inScope, ownerId, profiles, projectId, submitPrepared]);
 
   const recover = useCallback(async (pending: SubmissionCheckpoint): Promise<void> => {
     if (!inScope() || pending.ownerId !== ownerId || pending.projectId !== projectId) return;
@@ -481,18 +504,24 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!buffer || action === buffer.content.action) return;
     if (buffer.content.settings.profileId !== "unselected") rememberedSettings.current[buffer.content.action] = buffer.content.settings;
-    edit({ ...buffer.content, action, settings: settingsForOutput(buffer.content, action, profiles, rememberedSettings.current[action]) });
+    const draftKey = buffer.record.id;
+    const held = parkedRef.current[draftKey] ?? [];
+    const moved = inputsForAction([...buffer.content.inputs, ...held], action, profiles, mediaRef.current, viewRef.current.requests);
+    setParked(current => ({ ...current, [draftKey]: moved.parked }));
+    const next = { ...buffer.content, action, inputs: moved.inputs };
+    edit(settleModel({ ...next, settings: settingsForOutput(next, action, profiles, rememberedSettings.current[action], mediaRef.current) }, profiles));
   }, [edit, profiles]);
 
   const activeDraftId = view.activeDraftId;
   const activeNeedsModel = activeDraftId ? view.drafts[activeDraftId]?.content.settings.profileId === "unselected" : false;
-  // A composer never waits on "Choose model": a draft this tab created takes its output's model once models load.
+  // A composer never waits on "Choose model": a draft this tab created starts on Auto's values (or the action's last model) once models load.
   useEffect(() => {
     if (!activeDraftId || !activeNeedsModel || !profiles.length || !freshDraftIds.current.has(activeDraftId)) return;
     const buffer = viewRef.current.drafts[activeDraftId];
-    if (!buffer) return;
-    const settings = settingsForOutput(buffer.content, buffer.content.action, profiles, rememberedSettings.current[buffer.content.action]);
-    if (settings.profileId !== "unselected") edit({ ...buffer.content, settings });
+    if (!buffer || Object.keys(buffer.content.settings.parameters).length) return;
+    freshDraftIds.current.delete(activeDraftId);
+    const settings = settingsForOutput(buffer.content, buffer.content.action, profiles, rememberedSettings.current[buffer.content.action], mediaRef.current);
+    if (canonicalJson(settings) !== canonicalJson(buffer.content.settings)) edit({ ...buffer.content, settings });
   }, [activeDraftId, activeNeedsModel, edit, profiles]);
 
   const openConversation = useCallback(async (value: string): Promise<void> => {
@@ -692,7 +721,9 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     view, project, conversation, conversations, media, profiles, active, loading, error, loadFailureStatus, resourceErrors, deviceCopies, localErrors, saveErrors, conflicts, prepared, preparing, serviceUnavailable, submissions, resendableSubmissions,
     followupNotice: followupNotice?.draftId === active?.record.id && !active?.content.inputs.length ? followupNotice : undefined,
     recoverDeviceCopy: async copy => { if (copy.ownerId !== ownerId || copy.projectId !== projectId || !conversation) return; const record = await api.createDraft(projectId, conversation.id, id("draft"), { ...copy.content, destination: { projectId: ProjectIdSchema.parse(projectId), conversationId: conversation.id } }); emit({ type: "open-draft", buffer: openDraftBuffer(record) }); },
-    reload: () => { setServiceUnavailable(false); setLoadVersion(version => version + 1); }, edit, openDraft: record => { if (record.ownerId !== ownerId || record.projectId !== projectId || record.conversationId !== conversationRef.current?.id) return; beginSelectionIntent(); emit({ type: "open-draft", buffer: viewRef.current.drafts[record.id] ?? openDraftBuffer(record) }); setPrepared(undefined); }, newDraft, chooseProfile,
+    reload: () => { setServiceUnavailable(false); setLoadVersion(version => version + 1); }, edit, openDraft: record => { if (record.ownerId !== ownerId || record.projectId !== projectId || record.conversationId !== conversationRef.current?.id) return; beginSelectionIntent(); emit({ type: "open-draft", buffer: viewRef.current.drafts[record.id] ?? openDraftBuffer(record) }); setPrepared(undefined); }, newDraft, chooseProfile, chooseAuto,
+    parkedInputs: active ? parked[active.record.id] ?? [] : [],
+    discardParkedInput: input => { const draftId = viewRef.current.activeDraftId; if (draftId) setParked(current => ({ ...current, [draftId]: (current[draftId] ?? []).filter(candidate => candidate !== input) })); },
     flush: async () => (await Promise.all(Object.values(viewRef.current.drafts).filter(buffer => buffer.acknowledgedSequence !== buffer.sequence).map(buffer => flushId(buffer.record.id)))).every(Boolean), prepare, submit, make, refreshMedia, changeAction, newConversation, openConversation, openConversationDraft, requestCancel, retryRequest, applyText, applyMediaInput, recover, resend,
     observeProject: record => { if (!inScope() || record.ownerId !== ownerId || record.id !== projectId) return; setProject(current => !current || record.revision >= current.revision ? record : current); },
     observeConversation: record => { if (!inScope() || record.ownerId !== ownerId || record.projectId !== projectId) return; setConversations(rows => { const current = rows.find(row => row.id === record.id); return current && current.revision > record.revision ? rows : [...rows.filter(row => row.id !== record.id), current?.media ? { ...record, media: current.media } : record]; }); setConversation(current => current?.id === record.id && record.revision >= current.revision ? record : current); },
