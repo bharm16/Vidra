@@ -164,7 +164,7 @@
           },
           {
             "text": "shapes a vase",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 67,
             "end": 80
           },
@@ -296,7 +296,7 @@
           },
           {
             "text": "mends nets",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 60,
             "end": 70
           },
@@ -340,7 +340,7 @@
           },
           {
             "text": "arranges books",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 62,
             "end": 76
           },
@@ -428,7 +428,7 @@
           },
           {
             "text": "flips vegetables",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 54,
             "end": 70
           },
@@ -472,7 +472,7 @@
           },
           {
             "text": "tightens bolts",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 71,
             "end": 85
           },
@@ -604,7 +604,7 @@
           },
           {
             "text": "pounds a rhythm",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 51,
             "end": 66
           },
@@ -642,7 +642,7 @@
           },
           {
             "text": "tosses feed",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 51,
             "end": 62
           },
@@ -686,7 +686,7 @@
           },
           {
             "text": "shades a sleeve",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 62,
             "end": 77
           },
@@ -730,7 +730,7 @@
           },
           {
             "text": "plays softly",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 64,
             "end": 76
           },
@@ -774,7 +774,7 @@
           },
           {
             "text": "carves wood",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 57,
             "end": 68
           },

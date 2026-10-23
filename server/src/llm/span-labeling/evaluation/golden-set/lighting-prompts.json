@@ -202,7 +202,7 @@
           },
           {
             "text": "plating food",
-            "role": "action.gesture",
+            "role": "action.movement",
             "start": 22,
             "end": 34
           },
