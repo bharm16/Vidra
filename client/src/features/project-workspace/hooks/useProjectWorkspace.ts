@@ -86,7 +86,7 @@ export interface ProjectWorkspaceController {
   resend(submission: SubmissionCheckpoint): Promise<void>;
   viewMedia(versionId: string): void;
   updateMedia(version: MediaVersion): void;
-  bindImport(draftId: string, importId: string, kind?: "image" | "video", role?: DraftInput["role"], replacing?: DraftInput): void;
+  bindImport(draftId: string, importId: string, kind?: "image" | "video" | "audio", role?: DraftInput["role"], replacing?: DraftInput): void;
   useMedia(version: MediaVersion): void;
   editMedia(version: MediaVersion): Promise<void>;
   undo(): void;

@@ -11,6 +11,8 @@ import { RequestSlotStatus, slotProgress } from "./RequestResults";
 import { RequestActions, type ConversationHistoryProps } from "./ConversationHistory";
 import { requestHistoryDescription } from "../state/requestDescription";
 import { verbsForResult, type ResultVerb } from "../state/resultVerbs";
+import { parseWebVtt, cueTime } from "../state/webVtt";
+import { Waveform, useAudioPeaks } from "@/components/fresh/Waveform";
 import "./generation-feed.css";
 
 function time(value: number): string {
@@ -32,6 +34,8 @@ export interface GenerationFeedProps extends Pick<ConversationHistoryProps, "onR
   onRetry(request: AcceptedRequest, slotId: string): void;
   onRecover(submission: SubmissionCheckpoint): void;
   onApplyText(request: AcceptedRequest, text: string): void;
+  /** Places a transcript's cues on the video's Captions lane. */
+  onCaptionsToVideo?(request: AcceptedRequest, text: string): void;
 }
 
 /** A clip at feed size with its own transport: play stays inline, anything else opens Focus. */
@@ -61,6 +65,55 @@ function FeedClip({ version, access, onOpen }: { version: MediaVersion; access(v
   </div>;
 }
 
+/** One take as a feed row (S9, W80): play, its waveform with what has played, and its length; the row opens Focus. */
+function FeedAudio({ version, access, onOpen }: { version: MediaVersion; access(versionId: string): Promise<{ url: string }>; onOpen(): void }): ReactElement {
+  const [url, setUrl] = useState<string>();
+  const [failed, setFailed] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const player = useRef<HTMLAudioElement>(null);
+  const accessRef = useRef(access);
+  accessRef.current = access;
+  useEffect(() => {
+    let current = true;
+    void accessRef.current(version.id).then(result => { if (current) setUrl(result.url); }).catch(() => { if (current) setFailed(true); });
+    return () => { current = false; };
+  }, [version.id]);
+  const peaks = useAudioPeaks(url, 96);
+  const duration = version.metadata.state === "verified" ? version.metadata.durationSeconds : 0;
+  const toggle = (): void => {
+    const audio = player.current;
+    if (!audio) return;
+    if (audio.paused) void audio.play().catch(() => setFailed(true)); else audio.pause();
+  };
+  return <div className="vf-feed-audio">
+    {url ? <audio ref={player} src={url} preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => { setPlaying(false); setProgress(0); }} onTimeUpdate={event => { const audio = event.currentTarget; setProgress(audio.duration ? audio.currentTime / audio.duration : 0); }} onError={() => setFailed(true)} /> : null}
+    <FreshIconButton className="vf-feed-audio-play" icon={playing ? "pause" : "play"} label={playing ? `Pause ${version.label}` : `Play ${version.label}`} disabled={!url || failed} onClick={toggle} />
+    <Button type="button" variant="ghost" className="vf-feed-audio-open" aria-label={`Open ${version.label}`} onClick={onOpen}><Waveform peaks={peaks} bars={96} progress={progress} /></Button>
+    <span className="vf-feed-audio-time">{time(duration)}</span>
+  </div>;
+}
+
+function download(name: string, text: string, type: string): void {
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  link.href = url; link.download = name; link.rel = "noreferrer"; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/** Captions stay a text result (S10, W80): cues with their time and speaker; a transcript without timing reads as words. */
+function FeedCaptions({ request, text, readOnly, onApplyText, onCaptionsToVideo }: { request: AcceptedRequest; text: string; readOnly: boolean | undefined; onApplyText(request: AcceptedRequest, text: string): void; onCaptionsToVideo?: ((request: AcceptedRequest, text: string) => void) | undefined }): ReactElement {
+  const [all, setAll] = useState(false);
+  const cues = parseWebVtt(text);
+  if (!cues) return <div className="vf-feed-text vf-feed-transcript"><p>{text}</p><div className="vf-feed-text-actions">{!readOnly ? <FreshButton tone="quiet" onClick={() => onApplyText(request, text)}>Use these words</FreshButton> : null}<FreshButton tone="quiet" onClick={() => download("transcript.txt", text, "text/plain")}>Download .txt</FreshButton></div></div>;
+  const shown = all ? cues : cues.slice(0, 4);
+  return <div className="vf-feed-captions">
+    <ol aria-label="Captions">{shown.map((cue, index) => <li key={index}><p className="vf-feed-cue-time">{cueTime(cue.start)}{cue.speaker ? ` · ${cue.speaker}` : ""}</p><p>{cue.text}</p></li>)}</ol>
+    {cues.length > 4 ? <FreshButton tone="quiet" className="vf-feed-captions-more" aria-expanded={all} onClick={() => setAll(value => !value)}>{all ? "Show fewer lines" : `Show all ${cues.length} lines`}</FreshButton> : null}
+    <div className="vf-feed-text-actions">{onCaptionsToVideo && !readOnly ? <FreshButton onClick={() => onCaptionsToVideo(request, text)}>Add to video</FreshButton> : null}<FreshButton tone="quiet" onClick={() => download("captions.vtt", text, "text/vtt")}>Download .vtt</FreshButton></div>
+  </div>;
+}
+
 /** A running or failed slot holds its final size in the feed (P5). */
 function SlotPlaceholder({ request, slot, onRetry }: { request: AcceptedRequest; slot: RequestSlot; onRetry(request: AcceptedRequest, slotId: string): void }): ReactElement | null {
   return <div className="vf-feed-slot-status" data-progress={slotProgress(slot)}><RequestSlotStatus request={request} slot={slot} presentation="inline" onRetry={onRetry} /></div>;
@@ -84,8 +137,10 @@ function Generation({ request, props }: { request: AcceptedRequest; props: Gener
     <header className="vf-generation-line"><p className="vf-generation-words">{words}</p><p className="vf-generation-setup">{requestHistoryDescription(request, profiles)}</p></header>
     <div className="vf-generation-results" data-kind={entry.group} data-count={request.slots.length}>{request.slots.map(slot => {
       const version = slot.versionId ? media.find(candidate => candidate.id === slot.versionId) : undefined;
+      if (slot.text !== undefined && slot.outcome === "completed" && request.snapshot.action === "transcribe") return <FeedCaptions key={slot.id} request={request} text={slot.text} readOnly={readOnly} onApplyText={onApplyText} onCaptionsToVideo={props.onCaptionsToVideo} />;
       if (slot.text !== undefined && slot.outcome === "completed") return <div className="vf-feed-text" key={slot.id}><p>{slot.text}</p>{!readOnly ? <FreshButton tone="quiet" onClick={() => onApplyText(request, slot.text ?? "")}>Use these words</FreshButton> : null}</div>;
       if (!version) return <SlotPlaceholder key={slot.id} request={request} slot={slot} onRetry={onRetry} />;
+      if (version.kind === "audio") return <FeedAudio key={slot.id} version={version} access={access} onOpen={() => onOpen(version.id)} />;
       if (version.kind === "video" || version.kind === "export") return <FeedClip key={slot.id} version={version} access={access} onOpen={() => onOpen(version.id)} />;
       return <FreshButton key={slot.id} tone="quiet" className="vf-feed-picture" data-selected={pictures && request.slots.length > 1 && version.id === target?.id || undefined} aria-label={`Open ${version.label}`} onClick={() => onOpen(version.id)}><MediaThumbnail version={version} access={access} className="vf-feed-media" /></FreshButton>;
     })}</div>

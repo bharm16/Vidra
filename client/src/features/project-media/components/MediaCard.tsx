@@ -1,7 +1,8 @@
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/components/ui/dropdown-menu";
-import { FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
+import { FreshIconButton } from "@/components/fresh/FreshButton";
+import { Waveform } from "@/components/fresh/Waveform";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 
 export function MediaCard({ version, access, onOpen, onEdit, onCopy, onHide, selected, readonly = false }: { version: MediaVersion; access(id: string): Promise<{ url: string }>; onOpen(): void; onEdit(): void; onCopy?: ((trigger: HTMLButtonElement | null) => void) | undefined; onHide(): void; selected: boolean; readonly?: boolean }): ReactElement {
@@ -16,7 +17,7 @@ export function MediaCard({ version, access, onOpen, onEdit, onCopy, onHide, sel
   const duration = `${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
   return <article className="vf-media-card" data-version-id={version.id} data-selected={selected || undefined} data-hidden={version.hidden || undefined}>
     <Button variant="ghost" className="vf-card-picture !h-auto" onClick={onOpen} aria-label={`Open ${version.label}`} disabled={unavailable}>
-      {unavailable ? <span>Unavailable</span> : url ? version.kind === "video" || version.kind === "export" ? <video src={url} muted playsInline preload="metadata" onError={failed} /> : version.kind === "audio" ? <span className="vf-audio-slate"><FreshIcon name="volume" />Audio</span> : <img src={url} alt="" onError={failed} /> : <span className="vf-card-loader" aria-label="Loading media" />}
+      {unavailable ? <span>Unavailable</span> : url ? version.kind === "video" || version.kind === "export" ? <video src={url} muted playsInline preload="metadata" onError={failed} /> : version.kind === "audio" ? <span className="vf-audio-slate"><Waveform peaks={undefined} bars={48} /></span> : <img src={url} alt="" onError={failed} /> : <span className="vf-card-loader" aria-label="Loading media" />}
       {version.hidden ? <span className="vf-hidden-chip">Hidden</span> : null}
       {(version.kind === "video" || version.kind === "export" || version.kind === "audio") && seconds > 0 ? <span className="vf-duration-chip">{duration}</span> : null}
     </Button>

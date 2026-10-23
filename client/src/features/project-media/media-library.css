@@ -665,6 +665,9 @@
   .vf-workspace[data-library] .vf-rail [aria-label="Open Sketch"] {
     order: 5;
   }
+  .vf-workspace[data-library] .vf-rail .vf-rail-tool {
+    order: 5;
+  }
   .vf-workspace[data-library] .vf-rail .vf-flex {
     order: 6;
   }
@@ -701,4 +704,15 @@
   box-shadow:
     inset 0 0 0 1px var(--vf-border),
     0 12px 36px #0006;
+}
+/* Audio cards show their waveform and length (M22). */
+.vf-card-picture .vf-audio-slate {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+.vf-card-picture .vf-audio-slate > .vf-waveform {
+  width: 72%;
+  height: 36%;
 }
