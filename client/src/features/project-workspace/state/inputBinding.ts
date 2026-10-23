@@ -224,6 +224,15 @@ export function inputsForAction(inputs: readonly DraftInput[], action: CreationA
   return { inputs: moved, parked };
 }
 
+/**
+ * A result's verb binds the result into the working request in the verb's role (Rule 8):
+ * the words stay, the result claims its role first, and the other inputs move or park as on a switch.
+ */
+export function inputsWithResult(inputs: readonly DraftInput[], action: CreationAction, versionId: VersionId, role: DraftInput["role"], profiles: readonly CapabilityProfile[], media: readonly MediaVersion[], requests: readonly AcceptedRequest[] = []): MovedInputs {
+  const others = inputs.filter(input => input.state !== "resolved" || input.versionId !== versionId);
+  return inputsForAction([{ state: "resolved", role, versionId }, ...others], action, profiles, media, requests);
+}
+
 export interface ModelChoice {
   /** The version chosen with this entry: one that takes the current inputs when the model has it. */
   profile: CapabilityProfile;

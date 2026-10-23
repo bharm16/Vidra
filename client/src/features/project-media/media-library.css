@@ -731,6 +731,12 @@
   background: var(--vf-panel);
   translate: -50% 0;
 }
+/* The bar floats over the grid's end, so the last row scrolls clear of it. */
+@media (width >= 768px) {
+  .vf-media-library[data-action-bar] {
+    padding-bottom: calc(24px + 58px + 24px);
+  }
+}
 .vf-media-action-bar .vf-action-bar-divider {
   width: 1px;
   height: 20px;

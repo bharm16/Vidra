@@ -364,9 +364,13 @@
 .vf-focus-stage > .vf-viewer {
   height: 100%;
 }
-.vf-focus-stage > .vf-inline-editor {
+.vf-focus-stage > .vf-inline-editor,
+.vf-focus-stage > .vf-area-viewer {
   height: 100%;
   min-height: 0;
+}
+.vf-focus-stage > .vf-area-viewer {
+  margin: 0;
 }
 .vf-focus-arrow.vf-focus-arrow {
   position: absolute;
@@ -636,6 +640,8 @@
 .vf-audio-waveform.vf-waveform {
   width: 72%;
   height: 40%;
+  /* Bars stop at their max width, so the row centers rather than starting at the left. */
+  justify-content: center;
   gap: 6px;
 }
 .vf-audio-waveform.vf-waveform > span {

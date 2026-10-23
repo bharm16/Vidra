@@ -157,6 +157,18 @@ it("binds an import to its captured draft without clearing words and never resto
   expect(result.current.active?.content.instructions).toBe("Original direction");
 });
 
+it("a result's verb binds the result into the working request and keeps its words, without a new draft", async () => {
+  const animate = CapabilityProfileSchema.parse({ ...profile, id: "controlled-animate", action: "animate-image", mode: "image-to-video", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
+  const picture = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_picture", ownerId: "creator", projectId: project.id, kind: "image", label: "Desk", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "file", storagePath: "users/creator/previews/images/file.png" }, metadata: { state: "pending" }, association: "linked", createdAt: timestamp });
+  ports.api.profiles.mockResolvedValue([profile, animate]); ports.api.media.mockResolvedValue([picture]);
+  const { result } = await loaded();
+  await waitFor(() => expect(result.current.media).toHaveLength(1));
+  await act(() => result.current.bindResult("animate-image", picture));
+  expect(ports.api.createDraft).not.toHaveBeenCalled();
+  expect(result.current.active?.record.id).toBe(original.id);
+  expect(result.current.active?.content).toMatchObject({ action: "animate-image", instructions: "Original direction", inputs: [{ state: "resolved", role: "start-frame", versionId: picture.id }] });
+});
+
 it("does not replace the only in-memory words with a new draft when both retention paths fail", async () => {
   ports.device.save.mockRejectedValue(new Error("Device storage unavailable"));
   ports.api.saveDraft.mockRejectedValue(new Error("Server save unavailable"));

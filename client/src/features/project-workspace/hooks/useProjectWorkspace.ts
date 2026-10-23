@@ -17,13 +17,14 @@ import {
   followupDraftForRequest,
   initialDraftId,
   inputsForAction,
+  inputsWithResult,
   mediaActionDraftContent,
   resolvePendingDraftInputs,
   retrySlotDraftContent,
   settleModel,
 } from "../state/inputBinding";
 import { autoSettings, resolveAuto, settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
-import { placeActions } from "@shared/workflow/actionRegistry";
+import { actionEntry, placeActions } from "@shared/workflow/actionRegistry";
 import { DEFAULT_CONVERSATION_NAME } from "@shared/workflow/conversationName";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
@@ -89,6 +90,8 @@ export interface ProjectWorkspaceController {
   bindImport(draftId: string, importId: string, kind?: "image" | "video" | "audio", role?: DraftInput["role"], replacing?: DraftInput): void;
   useMedia(version: MediaVersion): void;
   editMedia(version: MediaVersion): Promise<void>;
+  /** A result's verb: the result joins the working request in the verb's role, keeping its words. */
+  bindResult(action: CreationAction, version: MediaVersion, role?: DraftInput["role"]): Promise<void>;
   undo(): void;
   redo(): void;
   copyConflict(draftId: string): Promise<void>;
@@ -512,6 +515,28 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     edit(settleModel({ ...next, settings: settingsForOutput(next, action, profiles, rememberedSettings.current[action], mediaRef.current) }, profiles));
   }, [edit, profiles]);
 
+  /** Working words and settings stay (Rule 8): the result joins the open draft; only a missing draft starts a new one. */
+  const bindResult = useCallback(async (action: CreationAction, version: MediaVersion, role: DraftInput["role"] = actionEntry(action).verb?.role ?? "primary"): Promise<void> => {
+    if (!project || !conversation || version.ownerId !== ownerId || version.projectId !== projectId) return;
+    const draftId = viewRef.current.activeDraftId;
+    const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
+    if (buffer && ["open", "parked"].includes(buffer.record.status)) {
+      if (buffer.content.settings.profileId !== "unselected" && action !== buffer.content.action) rememberedSettings.current[buffer.content.action] = buffer.content.settings;
+      const draftKey = buffer.record.id;
+      const moved = inputsWithResult([...buffer.content.inputs, ...(parkedRef.current[draftKey] ?? [])], action, version.id, role, profiles, mediaRef.current, viewRef.current.requests);
+      setParked(current => ({ ...current, [draftKey]: moved.parked }));
+      const next = { ...buffer.content, action, inputs: moved.inputs };
+      const settings = action === buffer.content.action ? buffer.content.settings : settingsForOutput(next, action, profiles, rememberedSettings.current[action], mediaRef.current);
+      edit(settleModel({ ...next, settings }, profiles));
+      return;
+    }
+    try {
+      const bound = mediaActionDraftContent(action, version.id, project.id, conversation.id, project.instructions.revision, role);
+      const record = await api.createDraft(projectId, conversation.id, id("draft"), { ...bound, settings: settingsForOutput(bound, action, profiles, rememberedSettings.current[action], mediaRef.current) });
+      if (inScope() && record.ownerId === ownerId && record.projectId === projectId && conversationRef.current?.id === record.conversationId) { emit({ type: "open-draft", buffer: openDraftBuffer(record) }); setPrepared(undefined); }
+    } catch (failure) { if (inScope()) setError(message(failure)); }
+  }, [api, conversation, edit, emit, inScope, ownerId, profiles, project, projectId]);
+
   const activeDraftId = view.activeDraftId;
   const activeNeedsModel = activeDraftId ? view.drafts[activeDraftId]?.content.settings.profileId === "unselected" : false;
   // A composer never waits on "Choose model": a draft this tab created starts on Auto's values (or the action's last model) once models load.
@@ -739,17 +764,8 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
       const next = viewRef.current.drafts[draftId]; if (next) void checkpoint(next);
     },
     useMedia: applyMediaInput,
-    editMedia: async version => {
-      if (!project || !conversation || version.ownerId !== ownerId || version.projectId !== projectId) return;
-      try {
-        const priorId = viewRef.current.activeDraftId;
-        const priorSequence = priorId ? viewRef.current.drafts[priorId]?.sequence : undefined;
-        if (priorId) await flushId(priorId);
-        if (!inScope()) return;
-        const record = await api.createDraft(projectId, conversation.id, id("draft"), mediaActionDraftContent(version.kind === "image" ? "edit-image" : "edit-video", version.id, project.id, conversation.id, project.instructions.revision));
-        if (inScope() && record.ownerId === ownerId && record.projectId === projectId && conversationRef.current?.id === record.conversationId) { if (viewRef.current.activeDraftId !== priorId || (priorId && viewRef.current.drafts[priorId]?.sequence !== priorSequence)) emit({ type: "update-buffer", buffer: openDraftBuffer(record) }); else { emit({ type: "open-draft", buffer: openDraftBuffer(record) }); setPrepared(undefined); } }
-      } catch (failure) { if (inScope()) setError(message(failure)); }
-    },
+    editMedia: version => bindResult(version.kind === "image" ? "edit-image" : "edit-video", version),
+    bindResult,
     copyConflict: async draftId => { const buffer = viewRef.current.drafts[draftId]; if (!buffer || !conversation) return; const record = await api.createDraft(projectId, conversation.id, id("draft"), buffer.content); emit({ type: "open-draft", buffer: openDraftBuffer(record) }); },
     access: versionId => api.access(projectId, versionId),
   };

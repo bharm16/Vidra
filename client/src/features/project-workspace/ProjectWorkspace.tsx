@@ -13,9 +13,8 @@ import { useOpenFolder } from "./hooks/useOpenFolder";
 import { GuestWorkspace } from "./GuestWorkspace";
 import { PromptComposer, type PromptComposerProps } from "./components/PromptComposer";
 import type { CapabilityLookupStatus } from "./components/CapabilitySettings";
-import { mediaActionDraftContent, reuseDraftContent, roleKinds } from "./state/inputBinding";
+import { reuseDraftContent, roleKinds } from "./state/inputBinding";
 import { importedVersionId } from "@shared/schemas/workflow/import.schemas";
-import { settingsForOutput } from "./state/capabilitySettings";
 import { GenerationFeed } from "./components/GenerationFeed";
 import { HistoryRail } from "./components/HistoryRail";
 import { FocusView } from "./components/FocusView";
@@ -301,7 +300,9 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     if (stillCurrent()) {
       controllerRef.current.openDraft(record);
       const resultId = request.slots.find(slot => slot.versionId === current.view.viewedVersionId)?.versionId ?? request.slots.find(slot => slot.versionId && current.media.some(version => version.id === slot.versionId && version.ownerId === ownerId && version.projectId === projectId))?.versionId;
-      if (!variation && resultId) setResultFeedback({ conversationId, draftId: record.id, versionId: resultId, kind: "setup" });
+      // The docked composer shows the restored setup itself, so Focus closes onto it; the phone layout keeps its notice.
+      if (!isMobile) setFocusOpen(false);
+      else if (!variation && resultId) setResultFeedback({ conversationId, draftId: record.id, versionId: resultId, kind: "setup" });
     }
   };
   const reuse = (version: MediaVersion): void => { if (version.origin.kind !== "generated") return; const requestId = version.origin.requestId; const request = controller.view.requests.find(candidate => candidate.id === requestId); if (request) void perform(() => reuseRequest(request)); };
@@ -325,17 +326,11 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const download = (version: MediaVersion): void => { void perform(async () => { const grant = await mediaActions.download(version.id); if (!scopeAlive.current) return; const link = document.createElement("a"); link.href = grant.url; link.download = mediaDownloadName(version); link.rel = "noreferrer"; link.click(); }); };
   const newDraft = async (action: CreationAction): Promise<void> => { consumeCreationTicket(entryTicket?.entryId ?? entryBinding?.entryId ?? navigationEntry?.entryId); setEntryTicket(undefined); setEntryBinding(binding => binding?.kind === "created" ? undefined : binding); await controller.newDraft(action); if (scopeAlive.current) { showView(); setPanel("none"); setPane("conversation"); setViewerOrigin("conversation"); } };
   const edit = (version: MediaVersion): void => { void perform(async () => { await controller.editMedia(version); if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); } }); };
-  /** A change to existing media starts from the media itself, bound in the role its action uses (Rule 8). */
+  /** A change to existing media binds the media into the working request in the role its action uses (Rule 8); the words stay. */
   const startFromMedia = (action: CreationAction, version: MediaVersion, role?: DraftInput["role"]): void => {
-    const target = controller.active; const conversation = controller.conversation; const project = controller.project;
-    if (!conversation || !project) return;
     void perform(async () => {
-      await controller.flush();
-      const bound = mediaActionDraftContent(action, version.id, project.id, conversation.id, project.instructions.revision, role);
-      const content = { ...bound, settings: settingsForOutput(bound, action, controllerRef.current.profiles, undefined, controllerRef.current.media) };
-      const record = await api.createDraft(projectId, conversation.id, `draft_${crypto.randomUUID()}`, content);
-      const current = controllerRef.current.active;
-      if (scopeAlive.current && controllerRef.current.conversation?.id === conversation.id && current?.record.id === target?.record.id && current?.sequence === target?.sequence) { controllerRef.current.openDraft(record); showView(); setPane("conversation"); setViewerOrigin("conversation"); setFocusOpen(false); }
+      await controller.bindResult(action, version, role);
+      if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); setFocusOpen(false); }
     });
   };
   const animate = (version: MediaVersion): void => startFromMedia("animate-image", version);
@@ -394,6 +389,15 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     // Only process the arriving deep-link intent once; normal draft changes remain deliberate.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialIntent, controller.loading, controller.conversation?.id]);
+  // A rail tool chosen on another page opens here in the same composer, once models and the draft are in.
+  const toolIntent = COMPOSER_TOOLS.find(item => item.tool === search.get("intent"));
+  const toolReady = Boolean(controller.active) && controller.profiles.length > 0;
+  useEffect(() => {
+    if (!toolIntent || !toolReady) return;
+    controller.changeAction(toolIntent.action);
+    const next = new URLSearchParams(search); next.delete("intent"); setSearch(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolIntent?.action, toolReady]);
 
   // Once something is made from the library home, that conversation is where its results live.
   const homeConversationId = controller.conversation?.id;

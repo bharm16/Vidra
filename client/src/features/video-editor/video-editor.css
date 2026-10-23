@@ -502,6 +502,8 @@
   position: absolute;
   font-size: 12px;
   top: 0;
+  /* Each second label reads beside its tick, so the playhead at 0 never strikes through "0s". */
+  padding-left: 6px;
 }
 :root .ve-ruler input {
   position: absolute;
@@ -1368,8 +1370,10 @@
   flex: 1;
 }
 :root .ve-caption-attachment {
-  flex: 0 0 84px;
-  width: 84px;
+  /* Sized to its label ("Video time", "Clip 12"), never cut to "Clip..". */
+  flex: none;
+  width: auto;
+  min-width: 84px;
 }
 :root .ve-caption-controls textarea {
   height: 36px;

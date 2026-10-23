@@ -135,6 +135,10 @@
   flex: none;
   flex-wrap: nowrap;
 }
+/* An output that takes no inputs and no words help (Voiceover) has no shelf, not an empty band. */
+.vf-composer-region .vf-composer-media:empty {
+  display: none;
+}
 .vf-composer-region .vf-composer-media > .vf-media-action {
   display: flex;
   flex: none;

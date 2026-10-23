@@ -107,7 +107,7 @@ it("keeps adapter serialization fields out of creation controls and puts the fra
   render(<CapabilitySettings profiles={[framed]} content={framedContent} media={[]} disabled={false} onProfile={vi.fn()} onChange={onChange} />);
   expect(screen.queryByText("Provider-only default")).not.toBeInTheDocument();
   expect(screen.queryByText("WebP")).not.toBeInTheDocument();
-  expect(screen.getByLabelText("Duration: ~5.1s")).toBeInTheDocument();
+  expect(screen.getByLabelText("Duration: 5s")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
   fireEvent.click(await screen.findByRole("button", { name: /^Frames/ }));
   fireEvent.click(screen.getByRole("button", { name: "121" }));

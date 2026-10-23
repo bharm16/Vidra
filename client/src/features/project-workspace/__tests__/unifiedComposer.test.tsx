@@ -7,7 +7,7 @@ import { AcceptedRequestSchema } from "@shared/schemas/workflow/request.schemas"
 import { AdvancedSettings } from "../components/AdvancedSettings";
 import { CapabilitySettings } from "../components/CapabilitySettings";
 import { GenerationFeed } from "../components/GenerationFeed";
-import { inputsForAction, offeredInputRoles } from "../state/inputBinding";
+import { inputsForAction, inputsWithResult, offeredInputRoles } from "../state/inputBinding";
 import { verbsForResult } from "../state/resultVerbs";
 
 afterEach(cleanup);
@@ -33,6 +33,18 @@ it("moves each input to the role the new place uses for its kind and parks the r
   expect(inputsForAction([reference, source], "make-image", [picture, upscale], [still, clip])).toEqual({ inputs: [reference], parked: [source] });
   expect(inputsForAction([reference, source], "upscale-video", [picture, upscale], [still, clip])).toEqual({ inputs: [source], parked: [reference] });
   expect(inputsForAction([{ ...source, role: "primary" }], "transcribe", [captions], [clip]).inputs).toEqual([{ ...source, role: "primary" }]);
+});
+
+it("binds a result in its verb's role first and moves or parks the inputs already there (Rule 8)", () => {
+  const reference = DraftInputSchema.parse({ state: "resolved", role: "reference", versionId: still.id });
+  expect(inputsWithResult([reference], "upscale-video", clip.id, "clip", [picture, upscale], [still, clip])).toEqual({ inputs: [{ state: "resolved", role: "clip", versionId: clip.id }], parked: [reference] });
+  expect(inputsWithResult([reference], "make-image", still.id, "reference", [picture], [still]).inputs).toEqual([reference]);
+});
+
+it("lets Auto choose a text setting such as Captions' Language", () => {
+  const scribe = profile({ ...captions, id: "scribe", parameters: { languageCode: { policy: "editable", domain: { kind: "text", maxLength: 8 }, defaultValue: "" } }, presentation: { words: "none", parameters: { languageCode: { label: "Language", role: "language", format: "language" } } } });
+  render(<CapabilitySettings profiles={[scribe]} content={{ ...content("upscale-video"), action: "transcribe" }} media={[]} disabled={false} onProfile={vi.fn()} onAuto={vi.fn()} onChange={vi.fn()} />);
+  expect(screen.getByRole("button", { name: /^Language/ })).toBeEnabled();
 });
 
 it("offers every role a place's models take, not only pictures", () => {

@@ -427,3 +427,10 @@
 .vf-waveform > span[data-played] {
   background: var(--vf-white);
 }
+
+/* Phones keep their own navigation; the rail tools are a desktop rail's (mobile mirrors are not designed yet). */
+@media (width < 768px) {
+  .vf-rail .vf-rail-tool {
+    display: none;
+  }
+}

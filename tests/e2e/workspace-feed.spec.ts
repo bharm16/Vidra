@@ -13,6 +13,8 @@ const profiles = [
   { ...common, id: "e2e-video", label: "Clip model", action: "make-video", endpoint: "controlled/video", mode: "text-to-video", inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 3 }], output: { kind: "video", maxCount: 1 }, generatedAudio: "always", parameters: { aspectRatio: { policy: "editable", domain: { kind: "enum", values: ["16:9", "9:16"] }, defaultValue: "16:9" }, durationSeconds: { policy: "editable", domain: { kind: "enum", values: [4, 8] }, defaultValue: 4 } }, presentation: { words: "required", parameters: { aspectRatio: shape, durationSeconds: { label: "Duration", role: "duration", format: "seconds" } } } },
   { ...common, id: "e2e-picture", label: "Picture model", action: "make-image", endpoint: "controlled/picture", mode: "text-to-image", inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 4 }], output: { kind: "image", maxCount: 4 }, generatedAudio: "unsupported", parameters: { aspectRatio: { policy: "editable", domain: { kind: "enum", values: ["1:1", "16:9"] }, defaultValue: "1:1" } }, presentation: { words: "required", parameters: { aspectRatio: shape } } },
   { ...common, id: "e2e-voice", label: "Voice model", action: "make-voiceover", endpoint: "controlled/voice", mode: "text-to-speech", inputs: [], output: { kind: "audio", maxCount: 2 }, generatedAudio: "always", parameters: { voice: { policy: "editable", domain: { kind: "enum", values: ["Rachel", "Drew"] }, defaultValue: "Rachel" } }, presentation: { words: "script", parameters: { voice: { label: "Voice", role: "voice" } } } },
+  { ...common, id: "e2e-edit", label: "Picture editor", action: "edit-image", endpoint: "controlled/edit", mode: "image-edit", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }, { role: "mask", kinds: ["image"], minCount: 0, maxCount: 1 }], output: { kind: "image", maxCount: 1 }, generatedAudio: "unsupported", parameters: {}, presentation: { words: "required", parameters: {} } },
+  { ...common, id: "e2e-clip-upscale", label: "Clip upscaler", action: "upscale-video", endpoint: "controlled/clip-upscale", mode: "video-upscale", inputs: [{ role: "clip", kinds: ["video"], minCount: 1, maxCount: 1 }], output: { kind: "video", maxCount: 1 }, generatedAudio: "unsupported", parameters: {}, presentation: { words: "none", parameters: {} } },
   { ...common, id: "e2e-upscale", label: "Upscaler", action: "upscale-image", endpoint: "controlled/upscale", mode: "image-upscale", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }], output: { kind: "image", maxCount: 1 }, generatedAudio: "unsupported", parameters: { upscaleFactor: { policy: "editable", domain: { kind: "enum", values: ["2x", "4x"] }, defaultValue: "2x" } }, presentation: { words: "none", parameters: { upscaleFactor: { label: "Scale", role: "scale" } } } },
 ];
 
@@ -57,6 +59,10 @@ test("switching outputs and rail tools keeps the route, the history rail, the fe
   await expect(page.getByRole("radiogroup", { name: "Output" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Upscale image" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Current request words" })).toHaveCount(0);
+  // An empty Upscale takes either subject; the input then decides which action runs.
+  const shelf = page.locator(".vf-feed-composer .vf-composer-media");
+  await expect(shelf.getByRole("button", { name: "Picture" })).toBeVisible();
+  await expect(shelf.getByRole("button", { name: "Clip" })).toBeVisible();
   expect(page.url()).toBe(url);
   expect(before).toBe(876);
   expect(await composerBottom()).toBe(876);
@@ -71,4 +77,24 @@ test("a result's verbs are buttons under it, and Focus opens and closes over the
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Focus" })).toHaveCount(0);
   await expect(block).toBeVisible();
+});
+
+test("a result's verb binds it into the request being written, keeping the words", async ({ page }) => {
+  await open(page);
+  const words = page.getByRole("textbox", { name: "Current request words" });
+  await words.fill("A brass lamp turns on.");
+  await page.getByRole("article", { name: "The same desk at dawn." }).getByRole("group", { name: "Result actions" }).getByRole("button", { name: "Edit", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Edit image" })).toBeVisible();
+  await expect(page.locator(".vf-feed-composer .vf-input-tile")).toHaveCount(1);
+  await expect(words).toHaveValue("A brass lamp turns on.");
+});
+
+test("Edit a region opens the picture at Focus size with a canvas to paint on", async ({ page }) => {
+  await open(page);
+  await page.getByRole("article", { name: "The same desk at dawn." }).getByRole("button", { name: "Edit a region" }).click();
+  const canvas = page.getByRole("dialog", { name: "Focus" }).locator("canvas.ps-drawing-canvas");
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  expect(box?.width ?? 0).toBeGreaterThan(600);
+  expect(box?.height ?? 0).toBeGreaterThan(300);
 });

@@ -77,10 +77,10 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
   const { requests, media, selected, pending, onView, onRecover, access, onRetry, onApplyText, describeRequest, newlyReadyVersionId, onInspectRequest } = props;
   const viewport = useRef<HTMLDivElement>(null);
   const following = useRef(true);
-  const scrollGeometry = useRef<{ height: number; viewport: number; clip: boolean }>();
+  const scrollGeometry = useRef<{ height: number; viewport: number; clip: boolean; atEnd: boolean }>();
   const followEnd = useCallback((node: HTMLElement): void => {
     node.scrollTop = node.scrollHeight;
-    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip: isMobileClip(node) };
+    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip: isMobileClip(node), atEnd: true };
   }, []);
   const last = requests.at(-1);
   const progressKey = `${last?.id ?? ""}:${last?.slots.map(slot => `${slot.outcome}:${slot.delivery}:${slot.versionId ?? ""}`).join(",") ?? ""}:${pending.length}`;
@@ -88,7 +88,8 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
   useLayoutEffect(() => {
     const node = viewport.current;
     if (!node || typeof ResizeObserver === "undefined") return;
-    const settle = (): void => { if (following.current && isMobileClip(node)) followEnd(node); };
+    // Pictures load after the first layout; a history resting at its end keeps the newest request in view as they grow.
+    const settle = (): void => { if (following.current && (isMobileClip(node) || scrollGeometry.current?.atEnd)) followEnd(node); };
     const observer = new ResizeObserver(settle);
     observer.observe(node);
     for (const child of node.children) observer.observe(child);
@@ -105,7 +106,7 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
     // Native resize clamping is not a deliberate return to the latest request.
     const remaining = node.scrollHeight - node.scrollTop - node.clientHeight;
     if (!(resized && (clip || previous?.clip))) following.current = clip ? remaining <= 1 : remaining < 80;
-    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip };
+    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip, atEnd: remaining <= 1 && (!resized || previous.atEnd) };
   }} onKeyDown={event => {
     if (event.key === "End" && !event.altKey && !event.ctrlKey && !event.metaKey && isMobileClip(event.currentTarget)) { following.current = true; followEnd(event.currentTarget); }
   }}>

@@ -172,7 +172,10 @@ export function derivedParameter(policy: Extract<ParameterPolicy, { policy: "der
   if (policy.from === "frame-duration") {
     const frames = content.settings.parameters.numFrames ?? content.settings.parameters.num_frames;
     const rate = content.settings.parameters.framesPerSecond ?? content.settings.parameters.frames_per_second;
-    return typeof frames === "number" && typeof rate === "number" && rate > 0 ? `~${(frames / rate).toFixed(1)}s` : "From frames";
+    if (typeof frames !== "number" || typeof rate !== "number" || rate <= 0) return "From frames";
+    // 81 frames at 16 fps reads as the 5s a creator asked for, not 5.06.
+    const seconds = frames / rate;
+    return `${Math.abs(seconds - Math.round(seconds)) < 0.1 ? Math.round(seconds) : Number(seconds.toFixed(1))}s`;
   }
   const input = content.inputs.find(candidate => candidate.state === "resolved" && (!policy.role || candidate.role === policy.role));
   const version = input?.state === "resolved" ? media.find(candidate => candidate.id === input.versionId) : undefined;

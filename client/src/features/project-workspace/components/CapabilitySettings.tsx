@@ -107,6 +107,16 @@ export function CapabilitySettings({ profiles, content, media, disabled, onProfi
   const maxCount = profile ? profile.output.maxCount : Math.max(1, ...autoCandidates(profiles, content, media).map(candidate => candidate.output.maxCount));
   const modelLabel = auto ? "Auto" : profile?.label ?? "Choose model";
   const logo = profile ? modelLogo(profile) : undefined;
+  /** A text setting reads as typed, except Language, which picks from the model's languages. */
+  const textChip = (item: CoreChipEntry, owner: CapabilityProfile, name: string, maxLength: number): ReactElement => {
+    const icon = <ChipIcon role={item.chip} />;
+    const label = settingLabel(owner, name);
+    const value = content.settings.parameters[name];
+    const display = (option: ParameterValue): string => valueLabel(owner, name, option);
+    const languages = item.chip === "language" ? [...Object.keys(owner.presentation?.parameters[name]?.values ?? {}), ...LANGUAGES.map(language => language.code)] : [];
+    if (!languages.length) return <ReadonlyChip key={name} label={label} value={typeof value === "string" && value ? value : label} icon={icon} />;
+    return <MenuChip key={name} label={label} icon={icon} value={value === undefined ? label : display(value)} options={[...new Set(languages)].map(option => ({ value: option, enabled: option.length <= maxLength }))} selected={value} display={display} searchable disabled={disabled} onChange={next => setParameter(name, next)} />;
+  };
   const chip = (item: CoreChipEntry): ReactElement => {
     const icon = <ChipIcon role={item.chip} />;
     const label = item.name ? settingLabel(profile, item.name) : roleLabel(item.chip);
@@ -121,6 +131,9 @@ export function CapabilitySettings({ profiles, content, media, disabled, onProfi
       const choices = preModelParameterChoices(profiles, content, media, item.chip);
       const name = choices.name;
       if (!name || (!choices.values.length && !choices.ranges.length)) {
+        // A text setting (Captions' Language) is chosen the way its first candidate takes it.
+        const typed = autoCandidates(profiles, content, media).map(candidate => ({ candidate, found: roleParameter(candidate, item.chip) })).find(({ found }) => found?.[1].policy === "editable" && found[1].domain.kind === "text");
+        if (typed?.found && typed.found[1].policy === "editable" && typed.found[1].domain.kind === "text") return textChip(item, typed.candidate, typed.found[0], typed.found[1].domain.maxLength);
         // A value every candidate fixes (Lyria's 30s) reads as a fact, not an unusable chip.
         const fixed = autoCandidates(profiles, content, media).map(candidate => ({ candidate, found: roleParameter(candidate, item.chip) }));
         const values = fixed.flatMap(({ found }) => found?.[1].policy === "fixed" ? [found[1].value] : []);
@@ -147,11 +160,7 @@ export function CapabilitySettings({ profiles, content, media, disabled, onProfi
     const display = (option: ParameterValue): string => valueLabel(profile, name, option);
     if (policy.policy === "editable") {
       const value = content.settings.parameters[name];
-      if (policy.domain.kind === "text") {
-        const languages = item.chip === "language" ? [...Object.keys(profile.presentation?.parameters[name]?.values ?? {}), ...LANGUAGES.map(language => language.code)] : [];
-        if (!languages.length) return <ReadonlyChip key={name} label={label} value={typeof value === "string" && value ? value : label} icon={icon} />;
-        return <MenuChip key={name} label={label} icon={icon} value={value === undefined ? label : display(value)} options={[...new Set(languages)].map(option => ({ value: option, enabled: option.length <= (policy.domain.kind === "text" ? policy.domain.maxLength : 0) }))} selected={value} display={display} searchable disabled={disabled} onChange={next => setParameter(name, next)} />;
-      }
+      if (policy.domain.kind === "text") return textChip(item, profile, name, policy.domain.maxLength);
       const options = policy.domain.kind === "enum" ? settingOptions(profile, candidates, content, name) ?? [] : [];
       return <MenuChip key={name} label={label} icon={icon} value={value === undefined ? label : display(value)} options={options} ranges={policy.domain.kind === "range" ? [policy.domain] : []} selected={value} display={display} describe={option => parameterDescription(profile, name, option)} searchable={options.length > 8} disabled={disabled} onChange={next => setParameter(name, next)} />;
     }
@@ -160,7 +169,7 @@ export function CapabilitySettings({ profiles, content, media, disabled, onProfi
   };
   return <OutputSwitching.Provider value={reshape.switching}><div ref={row} className="vf-settings" aria-label="Request settings">
     {entry.coreChips.includes("model") ? <SettingsMenu title="Model" open={modelOpen} onOpenChange={open => { setModelOpen(open); if (!open) setQuery(""); }} className="vf-model-menu" trigger={<FreshButton className="vf-setting-chip" data-unavailable={profile && profile.availability !== "qualified" || undefined} disabled={disabled} aria-label={`Model: ${modelLabel}`}>{logo ? <span className="vf-setting-icon vf-model-logo" aria-hidden="true" style={{ maskImage: `url("${logo}")` }} /> : <ChipIcon role="model" />}<ChipValue value={modelLabel} /><FreshIcon name="down" /></FreshButton>}>
-      <label className="vf-model-search"><img src="/design-assets/fidelity-model-search.svg" alt="" /><input type="search" aria-label="Search models" placeholder="Search models" value={query} onChange={event => setQuery(event.target.value)} /></label>
+      <label className="vf-model-search"><img src="/design-assets/fidelity-model-search.svg" alt="" /><input type="search" aria-label="Search models" placeholder="Search models" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key !== "ArrowDown") return; const first = event.currentTarget.closest(".vf-model-menu")?.querySelector<HTMLButtonElement>(".vf-model-option:not(:disabled)"); if (!first) return; event.preventDefault(); first.focus(); }} /></label>
       {onAuto && !query ? <FreshButton tone="quiet" className="vf-setting-option vf-model-option" aria-pressed={auto} onClick={() => { onAuto(); setModelOpen(false); }}><span className="vf-model-kind vf-model-logo" aria-hidden="true" style={{ maskImage: 'url("/design-assets/workspace-setting-model.svg")' }} /><span className="vf-model-copy">Auto</span>{auto ? <FreshIcon name="check" /> : null}</FreshButton> : null}
       {shownModels.map(({ profile: candidate, selected, takesInputs }) => <FreshButton tone="quiet" className="vf-setting-option vf-model-option" key={candidate.id} aria-pressed={selected} disabled={!takesInputs || candidate.availability !== "qualified"} onClick={() => { onProfile(candidate); setModelOpen(false); setQuery(""); }}><span className="vf-model-kind vf-model-logo" aria-hidden="true" style={{ maskImage: `url("${modelLogo(candidate) ?? "/design-assets/workspace-setting-model.svg"}")` }} /><span className="vf-model-copy">{candidate.label}</span>{selected ? <FreshIcon name="check" /> : null}</FreshButton>)}
       {!shownModels.length ? <p className="vf-setting-warning">{query ? "No matching models" : "No model is available for this action."}</p> : null}
