@@ -28,7 +28,6 @@ test("a guest cannot read a private project before authentication", async ({ pag
   let projectReads = 0;
   await page.route("**/api/projects/**", async route => { projectReads += 1; await route.fulfill({ status: 403, json: { error: "Denied" } }); });
   await page.goto("/app/project/project_private?view=media");
-  await expect(page.getByRole("heading", { name: "You do not have access" })).toBeVisible();
-  await expect(page.getByRole("main").getByRole("link", { name: "Switch account", exact: true })).toHaveAttribute("href", `/signin?redirect=${encodeURIComponent("/app/project/project_private?view=media")}`);
+  await expect(page).toHaveURL(`/signin?redirect=${encodeURIComponent("/app/project/project_private?view=media")}`);
   expect(projectReads).toBe(0);
 });

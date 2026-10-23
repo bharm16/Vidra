@@ -18,15 +18,14 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 it("opens the request menu without revising or reusing, then deliberately applies its exact request", async () => {
   const user = userEvent.setup(); const current = request();
-  const onEditRequest = vi.fn(); const onReuseSetup = vi.fn(); const onNewVariation = vi.fn(); const onUseWords = vi.fn(); const onViewSources = vi.fn(); const onViewVersions = vi.fn(); const onHideFromMedia = vi.fn();
-  render(<ConversationHistory requests={[current]} media={[version]} selected={version.id} pending={[]} access={access} onView={vi.fn()} onRecover={vi.fn()} onEditRequest={onEditRequest} onReuseSetup={onReuseSetup} onNewVariation={onNewVariation} onUseWords={onUseWords} onViewSources={onViewSources} onViewVersions={onViewVersions} onHideFromMedia={onHideFromMedia} />);
+  const onReuseSetup = vi.fn(); const onNewVariation = vi.fn(); const onUseWords = vi.fn(); const onViewSources = vi.fn(); const onViewVersions = vi.fn(); const onHideFromMedia = vi.fn();
+  render(<ConversationHistory requests={[current]} media={[version]} selected={version.id} pending={[]} access={access} onView={vi.fn()} onRecover={vi.fn()} onReuseSetup={onReuseSetup} onNewVariation={onNewVariation} onUseWords={onUseWords} onViewSources={onViewSources} onViewVersions={onViewVersions} onHideFromMedia={onHideFromMedia} />);
   expect(screen.queryByRole("button", { name: "Reuse setup" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Request actions" }));
-  expect(screen.getAllByRole("menuitem").map(item => item.textContent)).toEqual(["Reuse setup", "Revise request", "New variation", "Use words", "View sources", "View versions", "Hide from media"]);
-  expect(onEditRequest).not.toHaveBeenCalled(); expect(onReuseSetup).not.toHaveBeenCalled();
-  await user.click(screen.getByRole("menuitem", { name: "Revise request" }));
-  expect(onEditRequest).toHaveBeenCalledWith(current);
+  expect(screen.getAllByRole("menuitem").map(item => item.textContent)).toEqual(["Reuse setup", "New variation", "Use words", "View sources", "View versions", "Hide from media"]);
   expect(onReuseSetup).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("menuitem", { name: "Reuse setup" }));
+  expect(onReuseSetup).toHaveBeenCalledWith(current);
   await waitFor(() => expect(access).toHaveBeenCalledWith(version.id));
 });
 
@@ -57,10 +56,10 @@ it("announces an observed completion without selecting it or relabelling histori
 
 it("allows deliberate batch inspection in read-only history while disabled mutation actions cannot fire", async () => {
   const user = userEvent.setup(); const current = request(); const onInspectRequest = vi.fn(); const onView = vi.fn(); const mutate = vi.fn();
-  render(<ConversationHistory requests={[current]} media={[version]} selected={version.id} pending={[]} access={access} onView={onView} onRecover={vi.fn()} readOnly onInspectRequest={onInspectRequest} onReuseSetup={mutate} onEditRequest={mutate} onNewVariation={mutate} onUseWords={mutate} onHideFromMedia={mutate} onViewVersions={vi.fn()} onViewSources={vi.fn()} />);
+  render(<ConversationHistory requests={[current]} media={[version]} selected={version.id} pending={[]} access={access} onView={onView} onRecover={vi.fn()} readOnly onInspectRequest={onInspectRequest} onReuseSetup={mutate} onNewVariation={mutate} onUseWords={mutate} onHideFromMedia={mutate} onViewVersions={vi.fn()} onViewSources={vi.fn()} />);
   await user.click(screen.getByRole("button", { name: "View request results" })); expect(onInspectRequest).toHaveBeenCalledWith(current); expect(onView).not.toHaveBeenCalled();
   await user.click(screen.getByRole("button", { name: "Request actions" }));
-  for (const name of ["Reuse setup", "Revise request", "New variation", "Use words", "Hide from media", "View sources"]) expect(screen.getByRole("menuitem", { name })).toHaveAttribute("aria-disabled", "true");
+  for (const name of ["Reuse setup", "New variation", "Use words", "Hide from media", "View sources"]) expect(screen.getByRole("menuitem", { name })).toHaveAttribute("aria-disabled", "true");
   fireEvent.click(screen.getByRole("menuitem", { name: "Reuse setup" })); expect(mutate).not.toHaveBeenCalled();
   expect(screen.getByRole("menuitem", { name: "View versions" })).not.toHaveAttribute("aria-disabled");
   await waitFor(() => expect(access).toHaveBeenCalledWith(version.id));

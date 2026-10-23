@@ -22,6 +22,7 @@ import {
   retrySlotDraftContent,
 } from "../state/inputBinding";
 import { settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
+import { DEFAULT_CONVERSATION_NAME } from "@shared/workflow/conversationName";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
 function id(prefix: string): string { return `${prefix}_${crypto.randomUUID()}`; }
@@ -163,7 +164,17 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   const mediaEpoch = useRef(0);
 
   const emit = useCallback((event: WorkspaceViewEvent): void => { viewRef.current = workspaceViewReducer(viewRef.current, event); dispatch(event); }, []);
-  useEffect(() => { if (initialConversationId === requestedConversationRef.current || initialConversationId === conversationRef.current?.id) return; beginSelectionIntent(); emit({ type: "conversation" }); setPrepared(undefined); setRequestedConversationId(initialConversationId); }, [beginSelectionIntent, emit, initialConversationId]);
+  const urlConversationRef = useRef(initialConversationId);
+  useEffect(() => {
+    const previous = urlConversationRef.current; urlConversationRef.current = initialConversationId;
+    // Leaving a conversation for the home view starts a fresh home selection, even when the
+    // conversation was begun at home (so the requested id never changed) and is still open.
+    const open = conversationRef.current;
+    const leftForHome = initialConversationId === undefined && previous !== undefined && open !== undefined && (open.acceptanceSequence > 0 || viewRef.current.requests.some(request => request.conversationId === open.id));
+    if (!leftForHome && (initialConversationId === requestedConversationRef.current || initialConversationId === conversationRef.current?.id)) return;
+    beginSelectionIntent(); emit({ type: "conversation" }); setPrepared(undefined); setRequestedConversationId(initialConversationId);
+    if (leftForHome) setLoadVersion(version => version + 1);
+  }, [beginSelectionIntent, emit, initialConversationId]);
   useEffect(() => {
     if (hydrationTarget.current.scopeKey !== scopeKey) { selectionIntent.current += 1; hydrationTarget.current = { scopeKey, conversationId: initialConversationRef.current, draftId: initialDraftTargetRef.current }; }
     emit({ type: "reset" }); setProject(undefined); setConversation(undefined); setMedia([]); setPrepared(undefined); setRequestedConversationId(initialConversationRef.current); setSubmissions([]); setResourceErrors([]); setLocalErrors({}); setSaveErrors({}); setConflicts({});
@@ -197,7 +208,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
         if (requestedConversationId && !chosen) throw new Error("This conversation is unavailable in the current project.");
         if (!chosen && library && owned.status === "active") {
           // Reusing an unused conversation keeps repeat visits from piling up empty rows.
-          const created = await api.createConversation(projectId, id("conversation"), "New conversation", folderId);
+          const created = await api.createConversation(projectId, id("conversation"), DEFAULT_CONVERSATION_NAME, folderId);
           if (created.ownerId !== ownerId || created.projectId !== projectId || created.folderId !== folderId) throw new Error("The conversation does not belong to this library and account.");
           rows.push(created); chosen = created;
         }
@@ -553,7 +564,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
       const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
       if (!inScope() || selectionIntent.current !== intent) return;
       if (buffer && !draftHasSafeRetention(buffer)) { setError("Keep a copy of your unfinished words before starting a conversation."); return; }
-      const record = await api.createConversation(projectId, id("conversation"), "New conversation");
+      const record = await api.createConversation(projectId, id("conversation"), DEFAULT_CONVERSATION_NAME);
       if (!inScope() || selectionIntent.current !== intent || record.ownerId !== ownerId || record.projectId !== projectId) return;
       emit({ type: "conversation" }); setConversations(rows => [...rows, record]); setPrepared(undefined); setRequestedConversationId(record.id);
     } catch (failure) { if (inScope() && selectionIntent.current === intent) setError(message(failure)); }

@@ -3,6 +3,7 @@ import type { Project } from "@shared/schemas/workflow/project.schemas";
 import { GuestDraftStore } from "@/repositories/workflow/GuestDraftStore";
 import { WorkflowApi } from "../api/workflowApi";
 import { wordsDraftContent } from "../state/inputBinding";
+import { DEFAULT_CONVERSATION_NAME } from "@shared/workflow/conversationName";
 
 export type LibraryClaim =
   | { state: "claimed"; conversationId: string; draftId: string }
@@ -64,7 +65,7 @@ export function useLibraryEntry(
         const conversation = await client.createConversation(
           library.id,
           kept.conversationId,
-          "New conversation",
+          DEFAULT_CONVERSATION_NAME,
         );
         const content = wordsDraftContent(
           kept.action,

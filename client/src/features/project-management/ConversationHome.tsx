@@ -38,7 +38,7 @@ export function ConversationHome({ title, actions, composer, conversations, onOp
       {title !== undefined ? <header className="vf-conversation-home-heading"><h1 className="vf-conversation-home-title">{title}</h1>{actions}</header> : null}
       {composer}
       <div className="vf-conversation-home-list" aria-label="Conversations">
-        {conversations.filter(conversation => conversation.status === "active").map(conversation => <Button key={conversation.id} variant="ghost" className="vf-conversation-home-row !h-auto" onClick={() => onOpenConversation(conversation.id)}>
+        {conversations.filter(conversation => conversation.status === "active").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).map(conversation => <Button key={conversation.id} variant="ghost" className="vf-conversation-home-row !h-auto" onClick={() => onOpenConversation(conversation.id)}>
           <img src="/design-assets/fidelity-project-conversation.svg" alt="" />
           <span className="vf-conversation-home-label"><span>{conversation.name}</span><span className="vf-conversation-home-meta"><time dateTime={conversation.updatedAt}>{editedAt(conversation.updatedAt)}</time>{mediaCount(conversation.media)}</span></span>
         </Button>)}

@@ -11,6 +11,7 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 function library(versions: MediaVersion[], jobs: ImportJob[], desktop: boolean): ProjectImportsController {
   vi.stubGlobal("matchMedia", () => ({ matches: desktop, media: "(width >= 768px)", onchange: null, addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn() }));
   vi.spyOn(WorkflowApi.prototype, "access").mockResolvedValue({ url: "/controlled-picture.png" });
+  vi.spyOn(WorkflowApi.prototype, "listProjects").mockResolvedValue([]);
   const imports: ProjectImportsController = { jobs, warning: undefined, choose: vi.fn(), retry: vi.fn(), cancel: vi.fn(), forgetRejected: vi.fn() };
   render(<ProjectMediaLibrary ownerId="creator" projectId="project_one" versions={versions} imports={imports} onChange={vi.fn()} onOpen={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onReload={vi.fn()} onProjects={vi.fn()} onOptions={vi.fn()} />);
   return imports;
@@ -62,7 +63,7 @@ it("retains no-matching feedback when only the inspected desktop job matches the
 it("keeps keyboard focus inside Copy while its destination list is pending and after it resolves", async () => {
   let resolveProjects: (projects: Project[]) => void = () => undefined;
   const projects = new Promise<Project[]>(resolve => { resolveProjects = resolve; });
-  vi.spyOn(WorkflowApi.prototype, "listProjects").mockReturnValue(projects);
+  vi.spyOn(WorkflowApi.prototype, "listProjects").mockResolvedValueOnce([{ id: "project_two", status: "active" } as Project]).mockReturnValue(projects);
   vi.spyOn(WorkflowApi.prototype, "access").mockResolvedValue({ url: "data:image/png;base64,eA==" });
   const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_saved", ownerId: "creator", projectId: "project_one", kind: "image", label: "Desk", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "verified", assetId: "desk", storagePath: "users/creator/desk.png", generation: "1", sha256: "a".repeat(64), bytes: 100 }, metadata: { state: "verified", width: 1920, height: 1080, durationSeconds: 0, audio: "absent", probeVersion: "controlled" }, association: "linked", createdAt: "2026-10-18T05:00:00.000Z" });
   render(<ProjectMediaLibrary ownerId="creator" projectId="project_one" versions={[version]} imports={{ jobs: [], warning: undefined, choose: vi.fn(), retry: vi.fn(), cancel: vi.fn(), forgetRejected: vi.fn() }} onChange={vi.fn()} onOpen={vi.fn()} onEdit={vi.fn()} onCreate={vi.fn()} onReload={vi.fn()} onProjects={vi.fn()} onOptions={vi.fn()} />);
@@ -84,4 +85,14 @@ it("keeps keyboard focus inside Copy while its destination list is pending and a
   fireEvent.keyDown(destination, { key: "Escape", code: "Escape" });
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Copy to project" })).not.toBeInTheDocument());
   await waitFor(() => expect(more).toHaveFocus());
+});
+
+it("offers Copy to project only when another active project can receive the media", async () => {
+  const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_saved", ownerId: "creator", projectId: "project_one", kind: "image", label: "Desk", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "verified", assetId: "desk", storagePath: "users/creator/desk.png", generation: "1", sha256: "a".repeat(64), bytes: 100 }, metadata: { state: "verified", width: 1920, height: 1080, durationSeconds: 0, audio: "absent", probeVersion: "controlled" }, association: "linked", createdAt: "2026-10-18T05:00:00.000Z" });
+  library([version], [], true);
+  const more = screen.getByRole("button", { name: "More for Desk" });
+  await waitFor(() => expect(WorkflowApi.prototype.listProjects).toHaveBeenCalled());
+  act(() => { more.focus(); }); fireEvent.keyDown(more, { key: "Enter", code: "Enter" });
+  await screen.findByRole("menuitem", { name: "Hide" });
+  expect(screen.queryByRole("menuitem", { name: "Copy to project" })).not.toBeInTheDocument();
 });

@@ -10,6 +10,7 @@ import { PreparedActionSchema, type PreparedAction } from "@shared/schemas/workf
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { sha256Hex } from "@utils/hash";
 import { WorkflowError } from "@services/projects/WorkflowError";
+import { conversationNameAfterFirstRequest } from "@shared/workflow/conversationName";
 
 const WorkflowReceiptSchema = z.strictObject({
   kind: z.literal("workflow/v2"), userId: OwnerIdSchema, route: z.literal("workflow/v2"),
@@ -178,7 +179,7 @@ export async function acceptWorkflowRequest(database: Firestore, input: Workflow
     // No TTL on v2 receipts or consumption tombstones: uncertainty cannot expire into permission.
     transaction.create(consumedRef, ConsumedDraftSchema.parse({ ownerId, projectId, requestId: request.id, reviewedHash: prepared.reviewedHash }));
     transaction.set(draftRef, CreationDraftSchema.parse({ ...draft, status: "submitted", updatedAt: timestamp }));
-    transaction.set(conversationRef, ConversationSchema.parse({ ...conversation, acceptanceSequence: request.acceptanceSequence, updatedAt: timestamp }));
+    transaction.set(conversationRef, ConversationSchema.parse({ ...conversation, name: conversationNameAfterFirstRequest(conversation.name, conversation.acceptanceSequence, prepared.snapshot.instructions), acceptanceSequence: request.acceptanceSequence, updatedAt: timestamp }));
     transaction.create(database.collection("creation_outbox").doc(request.id), WorkflowOutboxSchema.parse({
       schemaVersion: "vidra-execution/v2", requestId: request.id, ownerId, projectId,
       state: "queued", profile: prepared.profile, createdAt: timestamp,

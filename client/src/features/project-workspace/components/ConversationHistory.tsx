@@ -19,7 +19,6 @@ export interface ConversationHistoryProps {
   access(versionId: string): Promise<{ url: string }>;
   onRetry?(request: AcceptedRequest, slotId: string): void;
   onCancel?(request: AcceptedRequest): void;
-  onEditRequest?(request: AcceptedRequest): void;
   onReuseSetup?(request: AcceptedRequest): void;
   onNewVariation?(request: AcceptedRequest): void;
   onUseWords?(request: AcceptedRequest): void;
@@ -63,7 +62,6 @@ function RequestActions({ request, props }: { request: AcceptedRequest; props: C
   const readOnlyReason = props.readOnly ? props.readOnlyReason ?? "Current work is read-only." : undefined;
   const actions: RequestAction[] = [
     { label: "Reuse setup", icon: "reuse", action: props.onReuseSetup, disabledReason: readOnlyReason },
-    { label: "Revise request", icon: "revise", action: props.onEditRequest, disabledReason: readOnlyReason },
     { label: "New variation", icon: "variation", action: props.onNewVariation, disabledReason: readOnlyReason },
     { label: "Use words", icon: "words", action: props.onUseWords, disabledReason: readOnlyReason },
     { label: "View sources", icon: "sources", action: props.onViewSources, disabledReason: hasSources ? undefined : "No source inputs were used for this request." },

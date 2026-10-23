@@ -381,6 +381,11 @@
   line-height: 22px;
   overflow-wrap: anywhere;
 }
+.vf-conversation-home-label > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .vf-conversation-home-label > .vf-conversation-home-meta {
   color: var(--vf-secondary);
   font-size: 12px;

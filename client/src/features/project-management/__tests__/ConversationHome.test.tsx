@@ -19,3 +19,14 @@ it("P02 shows each conversation's picture and clip count after its edit time", (
   expect(meta("Nothing yet")).toBe("Edited today");
   expect(meta("Older server")).toBe("Edited today");
 });
+
+it("lists the most recently edited conversation first", () => {
+  const rows = [
+    ConversationListingSchema.parse({ ...conversation, id: "conversation_old", name: "Older work", updatedAt: "2026-10-20T10:00:00.000Z" }),
+    ConversationListingSchema.parse({ ...conversation, id: "conversation_new", name: "Newest work", updatedAt: "2026-10-22T10:00:00.000Z" }),
+  ];
+  render(<ConversationHome composer={null} conversations={rows} onOpenConversation={vi.fn()} />);
+  const names = [...document.querySelectorAll(".vf-conversation-home-row")].map(row => row.textContent ?? "");
+  expect(names[0]).toContain("Newest work");
+  expect(names[1]).toContain("Older work");
+});
