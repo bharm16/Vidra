@@ -297,10 +297,20 @@ export function averageReports(reports: EvaluationReport[]): EvaluationReport {
 }
 
 /**
- * Why this baseline can't judge a run on `model`, or undefined when it can.
- * A baseline that records no model is accepted with a warning by the caller.
+ * Why this baseline can't judge a run on `model` averaged over `runs`, or
+ * undefined when it can. Scores from another model don't compare, and the
+ * tolerances assume both sides average the same number of runs. A baseline
+ * that records neither is accepted with a warning by the caller.
  */
-export function baselineModelMismatch(baseline: Baseline, model: string): string | undefined {
-  if (baseline.model === undefined || baseline.model === model) return undefined;
-  return `Baseline was blessed on ${baseline.model}, but this run uses ${model}. Scores from different models don't compare: re-bless with --bless after reviewing the change.`;
+export function baselineMismatch(
+  baseline: Baseline,
+  run: { model: string; runs: number },
+): string | undefined {
+  if (baseline.model !== undefined && baseline.model !== run.model) {
+    return `Baseline was blessed on ${baseline.model}, but this run uses ${run.model}. Scores from different models don't compare: re-bless with --bless after reviewing the change.`;
+  }
+  if (baseline.runs !== undefined && baseline.runs !== run.runs) {
+    return `Baseline averages ${baseline.runs} runs, but this run averages ${run.runs}. The tolerances assume equal averaging: run with --runs ${baseline.runs}.`;
+  }
+  return undefined;
 }

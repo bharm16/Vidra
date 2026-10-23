@@ -40,7 +40,7 @@ import { warmupNlpServices } from "../../server/src/llm/span-labeling/nlp/NlpSpa
 import { RelaxedF1Evaluator } from "../../server/src/llm/span-labeling/evaluation/RelaxedF1Evaluator.js";
 import {
   averageReports,
-  baselineModelMismatch,
+  baselineMismatch,
   buildBaseline,
   compareToBaseline,
   formatGateResult,
@@ -286,7 +286,7 @@ async function main(): Promise<number> {
       );
       return 2;
     }
-    const mismatch = baselineModelMismatch(baseline, model);
+    const mismatch = baselineMismatch(baseline, { model, runs: opts.runs });
     if (mismatch) {
       console.error(`\n❌ ${mismatch}`);
       return 2;
@@ -301,10 +301,11 @@ async function main(): Promise<number> {
 
   const evaluator = new RelaxedF1Evaluator();
   const reports: EvaluationReport[] = [];
-  let results: PromptResult[] = [];
+  const runResults: PromptResult[][] = [];
   for (let run = 1; run <= opts.runs; run++) {
     console.log(`Running span labeling (run ${run}/${opts.runs})...`);
-    results = await runLabeling(allPrompts, service, opts.concurrency);
+    const results = await runLabeling(allPrompts, service, opts.concurrency);
+    runResults.push(results);
     const failed = results.filter((r) => r.error !== null);
     if (failed.length > 0) {
       console.error(
@@ -346,14 +347,18 @@ async function main(): Promise<number> {
         // in git (~110KB for 67 prompts) so cross-PR baseline drift shows
         // up in `git diff` — accept the per-run timestamp churn as the
         // cost of that observability.
-        perPrompt: results.map((r) => ({
-          promptId: r.promptId,
-          predictedCount: r.predicted.length,
-          groundTruthCount: r.groundTruth.length,
-          predicted: r.predicted,
-          groundTruth: r.groundTruth,
-          error: r.error,
-        })),
+        // Every run, tagged, so a regression from any averaged run can be traced.
+        perPrompt: runResults.flatMap((results, index) =>
+          results.map((r) => ({
+            run: index + 1,
+            promptId: r.promptId,
+            predictedCount: r.predicted.length,
+            groundTruthCount: r.groundTruth.length,
+            predicted: r.predicted,
+            groundTruth: r.groundTruth,
+            error: r.error,
+          })),
+        ),
       },
       null,
       2,

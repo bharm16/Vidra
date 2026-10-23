@@ -48,4 +48,10 @@ describe("retryAfterMs", () => {
     expect(retryAfterMs("Please try again in 479.52ms.")).toBe(479.52);
     expect(retryAfterMs("Rate limit reached")).toBeUndefined();
   });
+
+  it("reads compound minute durations", () => {
+    expect(retryAfterMs("Please try again in 1m20s.")).toBe(80_000);
+    expect(retryAfterMs("Please try again in 7m12.5s")).toBe(432_500);
+    expect(retryAfterMs("Please try again in 2m")).toBe(120_000);
+  });
 });

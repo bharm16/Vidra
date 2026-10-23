@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   averageReports,
-  baselineModelMismatch,
+  baselineMismatch,
   buildBaseline,
   compareToBaseline,
   formatGateResult,
@@ -298,21 +298,28 @@ describe("averageReports", () => {
   });
 });
 
-describe("baselineModelMismatch", () => {
-  const baseline = buildBaseline(report(0.7, 0.6), { provider: "groq", model: "openai/gpt-oss-20b", runs: 3 });
+describe("baselineMismatch", () => {
+  const baseline = buildBaseline(report(0.7, 0.6), { provider: "groq", model: "openai/gpt-oss-20b", runs: 5 });
 
   it("records the model and run count it was blessed with", () => {
-    expect(baseline).toMatchObject({ provider: "groq", model: "openai/gpt-oss-20b", runs: 3 });
+    expect(baseline).toMatchObject({ provider: "groq", model: "openai/gpt-oss-20b", runs: 5 });
   });
 
-  it("accepts the same model and rejects another", () => {
-    expect(baselineModelMismatch(baseline, "openai/gpt-oss-20b")).toBeUndefined();
-    expect(baselineModelMismatch(baseline, "llama-3.1-8b-instant")).toMatch(/blessed on openai\/gpt-oss-20b/);
+  it("accepts the same model and run count", () => {
+    expect(baselineMismatch(baseline, { model: "openai/gpt-oss-20b", runs: 5 })).toBeUndefined();
   });
 
-  it("can't judge a baseline that never recorded a model", () => {
+  it("rejects another model", () => {
+    expect(baselineMismatch(baseline, { model: "llama-3.1-8b-instant", runs: 5 })).toMatch(/blessed on openai\/gpt-oss-20b/);
+  });
+
+  it("rejects a different number of averaged runs", () => {
+    expect(baselineMismatch(baseline, { model: "openai/gpt-oss-20b", runs: 1 })).toMatch(/--runs 5/);
+  });
+
+  it("can't judge a baseline that recorded neither", () => {
     const legacy = buildBaseline(report(0.7, 0.6), { provider: "groq" });
-    expect(baselineModelMismatch(legacy, "anything")).toBeUndefined();
+    expect(baselineMismatch(legacy, { model: "anything", runs: 1 })).toBeUndefined();
   });
 });
 

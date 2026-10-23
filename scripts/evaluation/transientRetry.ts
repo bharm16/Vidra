@@ -11,15 +11,20 @@
 
 const TRANSIENT =
   /\b429\b|rate limit|timeout|timed out|fetch failed|ECONNRESET|ETIMEDOUT|socket hang up|\b5\d\d\b|json_validate_failed/i;
-const RETRY_AFTER = /try again in ([\d.]+)\s*(ms|s)\b/i;
+// Groq writes the wait as "1.2s", "479.52ms", or compound like "1m20.5s".
+const RETRY_AFTER = /try again in ((?:\d+(?:\.\d+)?(?:ms|h|m|s))+)/i;
+const DURATION_PART = /(\d+(?:\.\d+)?)(ms|h|m|s)/gi;
+const UNIT_MS: Record<string, number> = { ms: 1, s: 1000, m: 60_000, h: 3_600_000 };
 
 /** How long the provider asked us to wait, in ms, or undefined when it didn't say. */
 export function retryAfterMs(message: string): number | undefined {
-  const match = RETRY_AFTER.exec(message);
-  if (!match) return undefined;
-  const value = Number.parseFloat(match[1] ?? "");
-  if (!Number.isFinite(value)) return undefined;
-  return match[2]?.toLowerCase() === "ms" ? value : value * 1000;
+  const duration = RETRY_AFTER.exec(message)?.[1];
+  if (!duration) return undefined;
+  let total = 0;
+  for (const [, value, unit] of duration.matchAll(DURATION_PART)) {
+    total += Number.parseFloat(value ?? "0") * (UNIT_MS[unit?.toLowerCase() ?? ""] ?? 0);
+  }
+  return Number.isFinite(total) ? total : undefined;
 }
 
 export async function withTransientRetry<T>(
