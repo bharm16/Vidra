@@ -118,12 +118,14 @@
   position: absolute;
   inset: 0 0 0 var(--vf-feed-left);
   overflow-y: auto;
+  overflow-anchor: none;
   scrollbar-gutter: stable;
 }
 .vf-feed-column {
   width: min(var(--vf-feed-width), calc(100% - 48px));
   margin: 0 auto;
-  padding: 64px 0 calc(var(--vf-composer-height, 240px) + 24px + 48px);
+  /* The newest block ends 18px above the docked composer. */
+  padding: 64px 0 calc(var(--vf-composer-height, 240px) + 24px + 18px);
 }
 .vf-feed-notices:empty {
   display: none;
@@ -257,9 +259,10 @@
   white-space: pre-wrap;
 }
 .vf-generation-actions {
+  position: relative;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--vf-space-2);
   margin-top: calc(var(--vf-space-4) * -1);
 }
@@ -638,4 +641,19 @@
 .vf-audio-waveform.vf-waveform > span {
   max-width: 4px;
   border-radius: 2px;
+}
+
+.vf-generation-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: var(--vf-space-2);
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.vf-generation-verb.vf-button {
+  flex: none;
+  white-space: nowrap;
 }

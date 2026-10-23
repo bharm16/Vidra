@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState, type ReactElement } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ReactElement, type RefObject } from "react";
 import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/request.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
@@ -114,6 +114,31 @@ function FeedCaptions({ request, text, readOnly, onApplyText, onCaptionsToVideo 
   </div>;
 }
 
+/** How many verbs fit beside the row's trailing icons; recomputed when the row resizes. */
+function useFittingVerbs(key: string): { row: RefObject<HTMLDivElement>; measure: RefObject<HTMLDivElement>; count: number } {
+  const row = useRef<HTMLDivElement>(null);
+  const measure = useRef<HTMLDivElement>(null);
+  const [count, setCount] = useState(Number.POSITIVE_INFINITY);
+  useLayoutEffect(() => {
+    const container = row.current; const copies = measure.current;
+    if (!container || !copies) return;
+    const update = (): void => {
+      const widths = [...copies.children].map(child => child.getBoundingClientRect().width);
+      const trailing = [...container.children].filter(child => child !== copies && !child.classList.contains("vf-generation-verb") && !child.classList.contains("vf-flex")).reduce((sum, child) => sum + child.getBoundingClientRect().width + 2, 0);
+      const available = container.clientWidth - trailing - 8;
+      let used = 0; let fits = 0;
+      for (const width of widths) { if (used + width + 2 > available) break; used += width + 2; fits += 1; }
+      setCount(available <= 0 || !widths.some(width => width > 0) ? widths.length : fits);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(update);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [key]);
+  return { row, measure, count };
+}
+
 /** A running or failed slot holds its final size in the feed (P5). */
 function SlotPlaceholder({ request, slot, onRetry }: { request: AcceptedRequest; slot: RequestSlot; onRetry(request: AcceptedRequest, slotId: string): void }): ReactElement | null {
   return <div className="vf-feed-slot-status" data-progress={slotProgress(slot)}><RequestSlotStatus request={request} slot={slot} presentation="inline" onRetry={onRetry} /></div>;
@@ -129,6 +154,7 @@ function Generation({ request, props }: { request: AcceptedRequest; props: Gener
   // A batch's buttons act on the result last opened in Focus, else its first.
   const target = ready.find(version => version.id === viewedVersionId) ?? ready[0];
   const verbs = target && !readOnly ? verbsForResult(target, profiles, { variation: Boolean(props.onNewVariation) }) : [];
+  const fitting = useFittingVerbs(verbs.map(verb => verb.label).join("|"));
   const source = request.snapshot.inputs.find(input => input.state === "resolved");
   const sourceLabel = source?.state === "resolved" ? media.find(version => version.id === source.versionId)?.label : undefined;
   const words = request.snapshot.instructions.trim() || sourceLabel || entry.label;
@@ -144,12 +170,14 @@ function Generation({ request, props }: { request: AcceptedRequest; props: Gener
       if (version.kind === "video" || version.kind === "export") return <FeedClip key={slot.id} version={version} access={access} onOpen={() => onOpen(version.id)} />;
       return <FreshButton key={slot.id} tone="quiet" className="vf-feed-picture" data-selected={pictures && request.slots.length > 1 && version.id === target?.id || undefined} aria-label={`Open ${version.label}`} onClick={() => onOpen(version.id)}><MediaThumbnail version={version} access={access} className="vf-feed-media" /></FreshButton>;
     })}</div>
-    {target ? <div className="vf-generation-actions" role="group" aria-label="Result actions">
-      {verbs.map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" onClick={() => onVerb(verb, target, request)}>{verb.label}</FreshButton>)}
+    {target ? <div ref={fitting.row} className="vf-generation-actions" role="group" aria-label="Result actions">
+      {/* A copy of every verb, measured off-screen, decides how many fit on the one row; the rest open from ··· (W61). */}
+      <div ref={fitting.measure} className="vf-generation-measure" aria-hidden="true">{verbs.map(verb => <span key={verb.label} className="vf-button vf-generation-verb" data-tone="quiet"><span>{verb.label}</span></span>)}</div>
+      {verbs.slice(0, fitting.count).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" onClick={() => onVerb(verb, target, request)}>{verb.label}</FreshButton>)}
       <span className="vf-flex" />
       {props.onReuseSetup && !readOnly ? <Button type="button" variant="ghost" className="vf-generation-icon" aria-label="Reuse setup" title="Reuse setup" onClick={() => props.onReuseSetup?.(request)}><span className="vf-icon" aria-hidden="true" style={{ maskImage: 'url("/design-assets/fresh-icon-copy.svg")' }} /></Button> : null}
       <Button type="button" variant="ghost" className="vf-generation-icon" aria-label="Download original" title="Download" onClick={() => onDownload(target)}><span className="vf-icon" aria-hidden="true" style={{ maskImage: 'url("/design-assets/fresh-icon-download.svg")' }} /></Button>
-      <RequestActions request={request} props={props} />
+      <RequestActions request={request} props={props} overflow={verbs.slice(fitting.count).map(verb => ({ label: verb.label, run: () => onVerb(verb, target, request) }))} />
     </div> : null}
   </article>;
 }

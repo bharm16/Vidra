@@ -47,13 +47,20 @@ it("offers only qualified candidates for the place that take the attached inputs
 });
 
 it("greys a core chip no candidate can set, with no reason text", () => {
-  for (const policy of [{ policy: "derived", from: "frame-duration" }, { policy: "fixed", value: 5 }, { policy: "unknown", reason: "Not checked" }, { policy: "unsupported", reason: "No duration" }] as const) {
+  for (const policy of [{ policy: "derived", from: "frame-duration" }, { policy: "unknown", reason: "Not checked" }, { policy: "unsupported", reason: "No duration" }] as const) {
     const profile = presented({ ...candidate, parameters: { ...candidate.parameters, durationSeconds: policy } });
     render(<CapabilitySettings profiles={[profile]} content={initial} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Duration" })).toBeDisabled();
     expect(screen.queryByText(/choose a model|not available|cannot/i)).not.toBeInTheDocument();
     cleanup();
   }
+});
+
+it("reads a value every candidate fixes as a fact on its chip (Lyria's 30s)", () => {
+  const fixed = presented({ ...candidate, parameters: { ...candidate.parameters, durationSeconds: { policy: "fixed", value: 30 } } });
+  render(<CapabilitySettings profiles={[fixed]} content={initial} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()} />);
+  expect(screen.getByLabelText("Duration: 30s").tagName).toBe("SPAN");
+  expect(screen.queryByRole("button", { name: "Duration" })).not.toBeInTheDocument();
 });
 
 it("applies each candidate's active constraints without changing the retained value", () => {

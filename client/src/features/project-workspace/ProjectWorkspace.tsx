@@ -52,6 +52,7 @@ import { registerWorkspaceRetention } from "@/repositories/workflow/WorkspaceRet
 import "./workspace.css";
 import { mediaDownloadName } from "@shared/workflow/mediaFilename";
 
+const WORKSPACE_VIEWS = ["media", "video-workspace", "conversations", "video", "video-focus", "sketch"];
 type Panel = "none" | "recovery" | "options" | "leave" | "rename" | "area";
 interface ResultFeedback { conversationId: string; draftId: string; versionId: string; kind: "setup" | "frame"; }
 interface ScopedActionError { conversationId: string | undefined; draftId: string | undefined; message: string; }
@@ -100,6 +101,8 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const composerDock = useRef<HTMLDivElement>(null);
   const feedStage = useRef<HTMLElement>(null);
   const followingFeed = useRef(true);
+  // The feed's size at the last scroll; a scroll that comes with a size change is layout, not the creator leaving the end.
+  const feedGeometry = useRef({ height: 0, client: 0 });
   // The output the composer returns to when a rail tool is closed.
   const lastOutput = useRef<CreationAction>("make-video");
   const inspectedRequests = useRef(new Set<string>());
@@ -114,7 +117,9 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   for (const version of controller.media) knownMediaLabels.current.set(version.id, version.label);
   const inspectedRequestId = inspectedRequest?.conversationId === controller.conversation?.id ? inspectedRequest?.requestId : undefined;
   const preferred = versionTree(controller.media, selected?.id).find(row => row.version.preferred)?.version.id;
-  const view = search.get("view");
+  // A retired or unknown view (such as the old ?view=model) opens the normal workspace.
+  const requestedView = search.get("view");
+  const view = requestedView && WORKSPACE_VIEWS.includes(requestedView) ? requestedView : null;
   const libraryOpen = view === "media";
   const savedImport = libraryOpen ? controller.media.find(version => version.id === search.get("savedImport") && isSavedImportVersion(version, ownerId, projectId)) : undefined;
   const inlineVideo = view === "video-workspace";
@@ -140,6 +145,15 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     const stage = feedStage.current;
     if (stage && followingFeed.current) stage.scrollTop = stage.scrollHeight;
   }, [feedLength, feedProgress, composerHeight, libraryOpen]);
+  // Pictures and clips load after the first layout; while following, the newest block stays at the end as they grow.
+  useLayoutEffect(() => {
+    const stage = feedStage.current;
+    const column = stage?.firstElementChild;
+    if (!stage || !column || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => { if (followingFeed.current) stage.scrollTop = stage.scrollHeight; });
+    observer.observe(column);
+    return () => observer.disconnect();
+  }, [libraryOpen, isMobile, focusOpen]);
   const hasMobilePreview = isMobile && pane === "conversation" && Boolean(selected) && !inlineVideo && !libraryOpen && panel !== "area" && !inspectedRequestId;
   const mobilePreviewKind = hasMobilePreview && selected ? selected.kind === "video" || selected.kind === "export" ? "clip" : !controller.view.requests.length && !controller.submissions.length ? "picture" : undefined : undefined;
   const controllerRef = useRef(controller); controllerRef.current = controller;
@@ -470,6 +484,13 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const useWords = (request: AcceptedRequest): void => { void perform(async () => { const current = controllerRef.current.active; const conversation = controllerRef.current.conversation; if (!conversation) return; await controller.flush(); if (!scopeAlive.current || controllerRef.current.active?.record.id !== current?.record.id || controllerRef.current.active?.sequence !== current?.sequence || !controllerRef.current.canLeave()) return; const record = await api.createDraft(projectId, conversation.id, `draft_${crypto.randomUUID()}`, { ...(current?.content ?? request.snapshot), instructions: request.snapshot.instructions, destination: { projectId: conversation.projectId, conversationId: conversation.id } }); if (scopeAlive.current && controllerRef.current.active?.record.id === current?.record.id && controllerRef.current.active?.sequence === current?.sequence) controller.openDraft(record); }); };
   const viewSources = (request: AcceptedRequest): void => { const ids = request.snapshot.inputs.flatMap(input => input.state === "resolved" ? [input.versionId] : []); if (ids.length === 1 && ids[0]) { setInspectedRequest(undefined); setViewerOrigin("conversation"); controller.viewMedia(ids[0]); setPane("viewer"); } else { setSourceVersionIds(ids); showView("media"); } };
   const hideFromMedia = (request: AcceptedRequest): void => { void perform(async () => { for (const slot of request.slots) if (slot.versionId) { const updated = await mediaActions.change(slot.versionId, { hidden: true }); if (scopeAlive.current) controller.updateMedia(updated); } }); };
+  /** A deliberate jump to one request leaves the end; reaching the end again resumes following. */
+  const revealRequest = (requestId: string, behavior: ScrollBehavior): void => {
+    const stage = feedStage.current;
+    followingFeed.current = false;
+    if (stage) feedGeometry.current = { height: stage.scrollHeight, client: stage.clientHeight };
+    document.getElementById(`vf-request-${requestId}`)?.scrollIntoView({ block: "start", behavior });
+  };
   const statusNotices = <>
     {controller.loading ? <p className="vf-notice" role="status">Opening saved work…</p> : null}
     {controller.error ? <div className="vf-notice" role="status"><p>{controller.error}</p><FreshButton onClick={controller.reload}>Retry loading</FreshButton></div> : null}
@@ -486,13 +507,19 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const historyRail = <HistoryRail requests={controller.view.requests} media={controller.media} profiles={controller.profiles} selectedRequestId={selectedRequestId} access={access} onSelect={request => {
     const versionId = request.slots.find(slot => slot.versionId && controller.media.some(version => version.id === slot.versionId))?.versionId;
     if (focusOpen && versionId) { controller.viewMedia(versionId); return; }
-    document.getElementById(`vf-request-${request.id}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+    revealRequest(request.id, "smooth");
   }} />;
   const feedLayout = <div className="vf vf-workspace vf-feed-workspace" data-workspace-entry={entryWorkingCopy ? entryBinding?.kind : undefined} data-library={libraryOpen || undefined} data-focus={focusOpen || inlineVideo || undefined} data-versions={versionsOpen || undefined} style={{ "--vf-composer-height": `${composerHeight}px` } as CSSProperties}>
     {renderRail(libraryOpen ? "media" : "create")}
     {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? controller.media.filter(version => sourceVersionIds.includes(version.id)) : controller.media} imports={imports} onChange={controller.updateMedia} selectedVersionId={selected?.id} {...(selected && !readOnly ? { actionBar: <>{resultActions(selected).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" onClick={() => verb.run(0)}>{verb.label}</FreshButton>)}<span className="vf-action-bar-divider" aria-hidden="true" /><FreshIconButton icon="download" label="Download original" onClick={() => download(selected)} /></> } : {})} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setFocusOpen(true); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resourceErrors.find(problem => problem.includes("Media"))} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : <>
       {historyRail}
-      <main ref={feedStage} className="vf-feed-stage" aria-label="Conversation" onScroll={event => { const node = event.currentTarget; followingFeed.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80; }}>
+      <main ref={feedStage} className="vf-feed-stage" aria-label="Conversation" onScroll={event => {
+        const node = event.currentTarget; const previous = feedGeometry.current;
+        const resized = previous.height !== node.scrollHeight || previous.client !== node.clientHeight;
+        feedGeometry.current = { height: node.scrollHeight, client: node.clientHeight };
+        if (resized && followingFeed.current) { node.scrollTop = node.scrollHeight; return; }
+        followingFeed.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+      }}>
         <div className="vf-feed-column">
           <div className="vf-feed-notices">{statusNotices}</div>
           <GenerationFeed requests={controller.view.requests} media={controller.media} profiles={controller.profiles} pending={controller.submissions} viewedVersionId={controller.view.viewedVersionId} access={access} readOnly={readOnly} onOpen={openFocus} onVerb={runVerb} onDownload={download} onRetry={(request, slot) => { void controller.retryRequest(request, slot); }} onRecover={submission => { void controller.recover(submission); }} onApplyText={(request, text) => { void perform(() => controller.applyText(request, text)); }} onCaptionsToVideo={captionsToVideo} onReuseSetup={request => { void perform(() => reuseRequest(request)); }} onNewVariation={request => { void perform(() => reuseRequest(request, true)); }} onUseWords={useWords} onViewSources={viewSources} onViewVersions={request => { const id = request.slots.find(slot => slot.versionId === selected?.id)?.versionId ?? request.slots.find(slot => slot.versionId)?.versionId; if (id) { setInspectedRequest(undefined); controller.viewMedia(id); setVersionsOpen(true); } }} onHideFromMedia={hideFromMedia} />
@@ -501,7 +528,13 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       <div ref={composerDock} className="vf-feed-composer">{active?.record.status === "submitted" ? <FreshButton className="vf-new-draft" onClick={() => { void perform(() => controller.newDraft(active.content.action)); }}>New draft</FreshButton> : null}{renderComposer()}</div>
     </>}
     {versionsOpen ? <VersionsPanel versions={controller.media} selectedVersionId={selected?.id} {...(preferred ? { preferredVersionId: preferred } : {})} requests={controller.view.requests} access={access} readOnly={readOnly} canVary={version => version.origin.kind === "generated" && controller.view.requests.some(request => request.id === (version.origin.kind === "generated" ? version.origin.requestId : ""))} onView={id => { setInspectedRequest(undefined); controller.viewMedia(id); }} onClose={() => setVersionsOpen(false)} onPreferred={makePreferred} onVariation={version => { if (version.origin.kind === "generated") { const requestId = version.origin.requestId; const request = controller.view.requests.find(row => row.id === requestId); if (request) void perform(() => reuseRequest(request, true)); } }} onEdit={edit} /> : null}
-    {(focusOpen && (selected || panel === "area")) || inlineVideo ? <FocusView rail={inlineVideo ? null : historyRail} onClose={() => { if (inlineVideo) showView(); if (panel === "area") setPanel("none"); setFocusOpen(false); if (viewerOrigin === "media") showView("media"); }} {...(!inlineVideo && focusIndex > 0 ? { onPrevious: () => controller.viewMedia(feedVersions[focusIndex - 1] ?? "") } : {})} {...(!inlineVideo && focusIndex >= 0 && focusIndex < feedVersions.length - 1 ? { onNext: () => controller.viewMedia(feedVersions[focusIndex + 1] ?? "") } : {})}>{inlineVideo ? <div className="vf-inline-editor">{renderEditor("embedded")}</div> : <>{renderViewer()}{focusRequest && panel !== "area" ? <div className="vf-focus-caption"><p>{focusRequest.snapshot.instructions || selected?.label}</p><p>{requestHistoryDescription(focusRequest, controller.profiles)}</p></div> : null}</>}</FocusView> : null}
+    {(focusOpen && (selected || panel === "area")) || inlineVideo ? <FocusView rail={inlineVideo || viewerOrigin === "media" ? null : historyRail} onClose={() => {
+      if (inlineVideo) showView(); if (panel === "area") setPanel("none"); setFocusOpen(false);
+      if (viewerOrigin === "media") { showView("media"); return; }
+      // The feed returns to the result Focus ended on, which the history rail already highlights.
+      const target = focusRequest?.id;
+      if (target) requestAnimationFrame(() => revealRequest(target, "auto"));
+    }} {...(!inlineVideo && focusIndex > 0 ? { onPrevious: () => controller.viewMedia(feedVersions[focusIndex - 1] ?? "") } : {})} {...(!inlineVideo && focusIndex >= 0 && focusIndex < feedVersions.length - 1 ? { onNext: () => controller.viewMedia(feedVersions[focusIndex + 1] ?? "") } : {})}>{inlineVideo ? <div className="vf-inline-editor">{renderEditor("embedded")}</div> : <>{renderViewer()}{focusRequest && panel !== "area" ? <div className="vf-focus-caption"><p>{focusRequest.snapshot.instructions || selected?.label}</p><p>{requestHistoryDescription(focusRequest, controller.profiles)}</p></div> : null}</>}</FocusView> : null}
     {options}{sharing}
     {savedImport ? <SavedImportSheet ownerId={ownerId} projectId={projectId} projectName={controller.project?.name ?? "this project"} version={savedImport} access={access} readOnly={readOnly || !active || !["open", "parked"].includes(active.record.status)} onClose={() => { const next = new URLSearchParams(search); next.delete("savedImport"); setSearch(next, { replace: true }); }} onUseInput={version => { controller.applyMediaInput(version); const next = new URLSearchParams(search); next.delete("savedImport"); next.delete("view"); setSearch(next, { replace: true }); }} /> : null}
     {workspaceDialog}

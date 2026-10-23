@@ -120,7 +120,14 @@ export function CapabilitySettings({ profiles, content, media, disabled, onProfi
     if (auto) {
       const choices = preModelParameterChoices(profiles, content, media, item.chip);
       const name = choices.name;
-      if (!name || (!choices.values.length && !choices.ranges.length)) return <UnavailableChip key={item.chip} label={roleLabel(item.chip)} icon={icon} />;
+      if (!name || (!choices.values.length && !choices.ranges.length)) {
+        // A value every candidate fixes (Lyria's 30s) reads as a fact, not an unusable chip.
+        const fixed = autoCandidates(profiles, content, media).map(candidate => ({ candidate, found: roleParameter(candidate, item.chip) }));
+        const values = fixed.flatMap(({ found }) => found?.[1].policy === "fixed" ? [found[1].value] : []);
+        const first = fixed.find(({ found }) => found?.[1].policy === "fixed");
+        if (first?.found && values.length === fixed.length && values.every(value => value === values[0])) return <ReadonlyChip key={item.chip} label={roleLabel(item.chip)} value={valueLabel(first.candidate, first.found[0], values[0] ?? "")} icon={icon} />;
+        return <UnavailableChip key={item.chip} label={roleLabel(item.chip)} icon={icon} />;
+      }
       const named = autoCandidates(profiles, content, media).find(candidate => candidate.parameters[name]?.policy === "editable");
       // Until a value is chosen, Auto reads its first candidate's default, which is what Make would use.
       const starting = named?.parameters[name];

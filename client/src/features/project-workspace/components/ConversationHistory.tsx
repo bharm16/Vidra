@@ -56,7 +56,7 @@ function isMobileClip(node: HTMLElement): boolean {
   return getComputedStyle(node).getPropertyValue("--vf-history-end-spacing").trim() !== "";
 }
 
-export function RequestActions({ request, props }: { request: AcceptedRequest; props: Pick<ConversationHistoryProps, "media" | "readOnly" | "readOnlyReason" | "onReuseSetup" | "onNewVariation" | "onUseWords" | "onViewSources" | "onViewVersions" | "onHideFromMedia"> }): ReactElement | null {
+export function RequestActions({ request, props, overflow = [] }: { request: AcceptedRequest; props: Pick<ConversationHistoryProps, "media" | "readOnly" | "readOnlyReason" | "onReuseSetup" | "onNewVariation" | "onUseWords" | "onViewSources" | "onViewVersions" | "onHideFromMedia">; overflow?: ReadonlyArray<{ label: string; run(): void }> }): ReactElement | null {
   const hasResults = request.slots.some(slot => slot.versionId && props.media.some(version => version.id === slot.versionId));
   const hasSources = request.snapshot.inputs.some(input => input.state === "resolved");
   const readOnlyReason = props.readOnly ? props.readOnlyReason ?? "Current work is read-only." : undefined;
@@ -68,8 +68,8 @@ export function RequestActions({ request, props }: { request: AcceptedRequest; p
     { label: "View versions", icon: "versions", action: props.onViewVersions, disabledReason: hasResults ? undefined : "No results are available for this request." },
     { label: "Hide from media", icon: "hide", action: props.onHideFromMedia, disabledReason: readOnlyReason ?? (hasResults ? undefined : "No results are available for this request.") },
   ];
-  if (!actions.some(item => item.action)) return null;
-  return <DropdownMenu><DropdownMenuTrigger asChild><FreshIconButton className="vf-history-request-actions" icon="more" label="Request actions" /></DropdownMenuTrigger><DropdownMenuContent className="vf vf-history-actions-menu" align="start" sideOffset={6} collisionPadding={8} aria-label="Request actions">{actions.filter(item => item.action).map(item => <DropdownMenuItem className="vf-history-action" key={item.label} disabled={Boolean(item.disabledReason)} title={item.disabledReason} onSelect={() => { if (!item.disabledReason) item.action?.(request); }}><img src={`/design-assets/prompt-history/${item.icon}.svg`} alt="" /><span>{item.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>;
+  if (!actions.some(item => item.action) && !overflow.length) return null;
+  return <DropdownMenu><DropdownMenuTrigger asChild><FreshIconButton className="vf-history-request-actions" icon="more" label="Request actions" /></DropdownMenuTrigger><DropdownMenuContent className="vf vf-history-actions-menu" align="start" sideOffset={6} collisionPadding={8} aria-label="Request actions">{overflow.map(item => <DropdownMenuItem className="vf-history-action" key={`verb:${item.label}`} onSelect={item.run}><span>{item.label}</span></DropdownMenuItem>)}{actions.filter(item => item.action).map(item => <DropdownMenuItem className="vf-history-action" key={item.label} disabled={Boolean(item.disabledReason)} title={item.disabledReason} onSelect={() => { if (!item.disabledReason) item.action?.(request); }}><img src={`/design-assets/prompt-history/${item.icon}.svg`} alt="" /><span>{item.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>;
 }
 
 /** Requests keep their acceptance order and exact slot identities during partial completion. */

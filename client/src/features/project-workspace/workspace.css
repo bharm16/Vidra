@@ -2516,3 +2516,23 @@ body:has(.vf-settings-sheet) > [data-state]:not([role="dialog"]) {
 :root .vf-setting-option.vf-button:disabled small {
   color: var(--vf-muted);
 }
+
+/* On a phone the four-way switch takes its own row above the primary, inside a 16px gutter. */
+@media (width < 768px) {
+  .vf-submit-row[data-switch] {
+    flex-wrap: wrap;
+  }
+  .vf-submit-row[data-switch] > .vf-output-switch {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .vf-submit-row[data-switch] > .vf-output-switch > .vf-output-option.vf-button {
+    flex: 1;
+    min-width: 0;
+    padding: 0 var(--vf-space-6);
+  }
+  .vf-submit-row[data-switch] > .vf-submit.vf-button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
