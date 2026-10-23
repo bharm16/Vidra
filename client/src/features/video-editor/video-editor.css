@@ -2175,6 +2175,10 @@
 :root .ve-media-panel[data-placement="popover"] .ve-media-grid {
   gap: var(--vf-space-8);
   overflow: auto;
+  /* Rows keep each tile's height and the grid scrolls, instead of rows shrinking under overlapping tiles. */
+  grid-auto-rows: max-content;
+  align-content: start;
+  min-height: 0;
 }
 :root .ve-edit-panel[data-panel="media"] {
   width: 336px;
@@ -3532,4 +3536,7 @@
   border-radius: var(--vf-radius-small);
   background: #75c5d333;
   box-shadow: inset 0 0 0 1px #75c5d366;
+}
+:root .ve-edit-panel:focus {
+  outline: none;
 }

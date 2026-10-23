@@ -2,7 +2,7 @@ import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { actionEntry, roleParameter } from "@shared/workflow/actionRegistry";
-import { countLabel, derivedParameter, valueLabel } from "./capabilitySettings";
+import { countLabel, derivedParameter, secondsLabel, valueLabel } from "./capabilitySettings";
 
 /** Only the exact captured revision supplies names and fixed facts. */
 function captured(request: AcceptedRequest, profile: CapabilityProfile | undefined): CapabilityProfile | undefined {
@@ -48,7 +48,7 @@ export function requestHistoryDescription(request: AcceptedRequest, profiles: Ca
   };
   const saved = savedValues(request);
   const shape = model?.presentation ? declared("shape") : typeof saved.shape === "string" && saved.shape !== "match_input_image" ? saved.shape : undefined;
-  const duration = model?.presentation ? declared("duration") : typeof saved.duration === "number" ? `${saved.duration}s` : undefined;
+  const duration = model?.presentation ? declared("duration") : typeof saved.duration === "number" ? secondsLabel(saved.duration) : undefined;
   const count = request.slots.length > 1 ? countLabel(request.snapshot.action, request.slots.length) : undefined;
   return [actionEntry(request.snapshot.action).label, model?.label, declared("voice"), shape, duration, declared("scale"), count].filter((part): part is string => part !== undefined).join(" · ");
 }

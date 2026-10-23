@@ -3,6 +3,7 @@ import { AcceptedRequestSchema, type AcceptedRequest } from "@shared/schemas/wor
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { requestHistoryDescription, requestSettingsDescription } from "../state/requestDescription";
+import { secondsLabel } from "../state/capabilitySettings";
 
 const profile=CapabilityProfileSchema.parse({schemaVersion:"vidra-workflow/v2",id:"captured-profile",revision:"captured-revision",label:"Captured model",action:"make-video",provider:"controlled-ui",endpoint:"not-dispatched",mode:"image-to-video",availability:"qualified",inputs:[],output:{kind:"video",maxCount:1},maxContextCharacters:32000,parameters:{duration:{policy:"editable",defaultValue:10,domain:{kind:"enum",values:[8,10]}},aspectRatio:{policy:"derived",from:"input-aspect",role:"start-frame"}},constraints:[],recovery:{start:"supported",status:"supported",cancel:"unsupported",result:"supported",deadlineSeconds:600},generatedAudio:"always",pricing:{mode:"free",maximumCreditsPerSlot:0}});
 function accepted():AcceptedRequest{return AcceptedRequestSchema.parse({schemaVersion:"vidra-workflow/v2",id:"request_captured",ownerId:"owner",projectId:"project_current",conversationId:"conversation_original",submissionId:"submission_captured",executionDraftId:"draft_captured",executionDraftRevision:1,acceptanceSequence:1,snapshotHash:"a".repeat(64),snapshot:{action:"make-video",instructions:"Captured words",inputs:[{state:"resolved",role:"start-frame",versionId:"version_start"}],settings:{profileId:profile.id,profileRevision:profile.revision,parameters:{duration:8,aspectRatio:"16:9",resolution:"720p"},outputCount:1},context:{origin:"empty",requestIds:[],projectInstructionsRevision:1},destination:{projectId:"project_current",conversationId:"conversation_original"}},materializedContext:{projectInstructions:"",entries:[]},slots:[{id:"slot_captured",ordinal:1,outcome:"queued",delivery:"none",usage:{mode:"free",reserved:0,settled:0}}],acceptedAt:"2026-10-18T05:00:00.000Z"});}
@@ -51,4 +52,8 @@ it("uses only the exact historical catalog revision when naming a request",()=>{
  const current={...profile,revision:"later-revision",label:"New current model"};
  expect(requestHistoryDescription(accepted(),[current,profile])).toBe("Make video · Captured model · 16:9 · 8s");
  expect(requestHistoryDescription(accepted(),[current])).toBe("Make video · 16:9 · 8s");
+});
+
+it("reads a saved frame-derived duration as the seconds asked for, not 5.0625s",()=>{
+ expect(secondsLabel(81/16)).toBe("5s");expect(secondsLabel(2.5)).toBe("2.5s");expect(secondsLabel(8)).toBe("8s");
 });

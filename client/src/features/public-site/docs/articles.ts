@@ -20,8 +20,8 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "keep-working",
       "title": "Keep working",
-      "body": "Once a request starts, it keeps its own setup. Start another draft or continue an eligible image follow-up while it runs. A finished result never sends that draft for you.",
-      "mobileBody": "Once accepted, the request keeps its own setup. Start another draft or continue an eligible image follow-up while it runs. A completed result does not submit that draft for you."
+      "body": "Once a request starts, it keeps its own setup. Write the next request while it runs; its result appears in the feed and never sends what you are writing.",
+      "mobileBody": "Once accepted, the request keeps its own setup. Write the next request while it runs; a completed result does not send what you are writing."
     },
     {
       "id": "keep-the-result",
@@ -109,8 +109,8 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "follow-the-request",
       "title": "Follow the request",
-      "body": "Once a video starts, it keeps the setup you sent. Sending a video opens a new empty draft. Closing the viewer or starting other work doesn’t add the finished clip to that draft.",
-      "mobileBody": "The accepted request keeps its captured setup. A video submission opens a separate empty draft. Closing the viewer or starting other work does not turn a completed clip into that draft’s input."
+      "body": "Once a video starts, it keeps the setup you sent, and the composer is free for the next request. The finished clip appears in the feed; it joins a request only when you choose one of its buttons.",
+      "mobileBody": "The accepted request keeps its captured setup, and the composer is free for the next request. A completed clip joins a request only when you choose one of its buttons."
     },
     {
       "id": "use-the-clip",

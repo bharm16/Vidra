@@ -21,7 +21,10 @@
 }
 .vf-feed-workspace > .vf-project-library,
 .vf-feed-workspace > .vf-media-library {
+  /* The workspace is a fixed, unscrolled block, so each library is its own scroll container. */
+  height: 100%;
   margin-left: 56px;
+  overflow-y: auto;
 }
 
 /* History rail: one square per request, newest last (P1). */
@@ -134,7 +137,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--vf-space-8);
-  margin-bottom: var(--vf-space-24);
+}
+/* Docked over the feed, a notice needs its own surface. */
+.vf-feed-notices > .vf-notice {
+  background: var(--vf-panel);
 }
 .vf-generation-feed {
   display: flex;
@@ -196,9 +202,14 @@
   width: 100%;
   height: 100%;
 }
-.vf-feed-picture[data-selected] {
-  outline: 2px solid var(--vf-white);
-  outline-offset: -2px;
+/* The ring sits above the picture, which would otherwise paint over an outline. */
+.vf-feed-picture[data-selected]::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  border: 2px solid var(--vf-white);
+  border-radius: inherit;
+  pointer-events: none;
 }
 .vf-feed-clip > .vf-thumbnail-fallback {
   display: grid;

@@ -9,6 +9,8 @@ export interface FocusViewProps {
   onClose(): void;
   onPrevious?: (() => void) | undefined;
   onNext?: (() => void) | undefined;
+  /** The result on screen; closing returns focus to its feed tile. */
+  viewedId?: string | undefined;
 }
 
 function Arrow({ side, onClick }: { side: "previous" | "next"; onClick: (() => void) | undefined }): ReactElement {
@@ -16,13 +18,20 @@ function Arrow({ side, onClick }: { side: "previous" | "next"; onClick: (() => v
 }
 
 /** The large player on demand, over the workspace; closing returns to the same feed scroll. */
-export function FocusView({ children, rail, onClose, onPrevious, onNext }: FocusViewProps): ReactElement {
+export function FocusView({ children, rail, onClose, onPrevious, onNext, viewedId }: FocusViewProps): ReactElement {
   const surface = useRef<HTMLDivElement>(null);
   const close = useRef(onClose); close.current = onClose;
+  const viewed = useRef(viewedId); viewed.current = viewedId;
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
     surface.current?.focus({ preventScroll: true });
-    return () => { if (previous?.isConnected) previous.focus({ preventScroll: true }); };
+    // Closing returns to the tile of the result last shown, which is the one a batch's buttons now act on.
+    return () => {
+      const id = viewed.current;
+      const tile = id ? document.querySelector<HTMLElement>(`[data-version-id="${CSS.escape(id)}"]`) : null;
+      const target = tile ?? previous;
+      if (target?.isConnected) target.focus({ preventScroll: true });
+    };
   }, []);
   return <div ref={surface} className="vf vf-focus" role="dialog" aria-modal="true" aria-label="Focus" tabIndex={-1} onKeyDown={event => {
     if (event.defaultPrevented) return;

@@ -43,7 +43,7 @@ export function valueLabel(profile: Pick<CapabilityProfile, "presentation"> | un
   if (typeof value === "number") {
     if (shown?.format === "fraction") return `${Math.round(value * 100)}%`;
     if (shown?.format === "percent") return `${value}%`;
-    if (shown?.format === "seconds") return `${value}s`;
+    if (shown?.format === "seconds") return secondsLabel(value);
     if (shown?.format === "fps") return `${value} fps`;
     if (shown?.format === "times") return `${value.toFixed(1)}x`;
   }
@@ -168,14 +168,17 @@ export function resolveAuto(content: DraftContent, profiles: readonly Capability
   return candidates.find(offers) ?? candidates[0];
 }
 
+/** 81 frames at 16 fps reads as the 5s a creator asked for, not 5.0625s. */
+export function secondsLabel(seconds: number): string {
+  return `${Math.abs(seconds - Math.round(seconds)) < 0.1 ? Math.round(seconds) : Number(seconds.toFixed(1))}s`;
+}
+
 export function derivedParameter(policy: Extract<ParameterPolicy, { policy: "derived" }>, content: DraftContent, media: MediaVersion[]): string {
   if (policy.from === "frame-duration") {
     const frames = content.settings.parameters.numFrames ?? content.settings.parameters.num_frames;
     const rate = content.settings.parameters.framesPerSecond ?? content.settings.parameters.frames_per_second;
     if (typeof frames !== "number" || typeof rate !== "number" || rate <= 0) return "From frames";
-    // 81 frames at 16 fps reads as the 5s a creator asked for, not 5.06.
-    const seconds = frames / rate;
-    return `${Math.abs(seconds - Math.round(seconds)) < 0.1 ? Math.round(seconds) : Number(seconds.toFixed(1))}s`;
+    return secondsLabel(frames / rate);
   }
   const input = content.inputs.find(candidate => candidate.state === "resolved" && (!policy.role || candidate.role === policy.role));
   const version = input?.state === "resolved" ? media.find(candidate => candidate.id === input.versionId) : undefined;

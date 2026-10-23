@@ -94,7 +94,7 @@ it("removing the edit source restores picture creation and keeps the unfinished 
   render(<PromptComposer controller={state} onChooseInput={vi.fn()} onSubmit={vi.fn(async () => undefined)} onSketch={vi.fn()} />);
   expect(screen.queryByText("Reference")).not.toBeInTheDocument();
   expect(screen.queryByText("Sketch")).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Remove primary input" }));
+  fireEvent.click(screen.getByRole("button", { name: "Remove picture" }));
   expect(state.edit).toHaveBeenCalledWith(expect.objectContaining({ action: "make-image", instructions: draft.instructions, inputs: [] }));
   await waitFor(() => expect(state.access).toHaveBeenCalledWith(version.id));
 });

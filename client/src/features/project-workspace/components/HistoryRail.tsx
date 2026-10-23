@@ -30,9 +30,11 @@ export function HistoryRail({ requests, media, profiles, selectedRequestId, acce
       const entry = actionEntry(request.snapshot.action);
       const version = request.slots.map(slot => slot.versionId ? media.find(candidate => candidate.id === slot.versionId) : undefined).find((candidate): candidate is MediaVersion => candidate !== undefined && candidate.kind !== "audio");
       const running = request.slots.some(slot => slotProgress(slot) === "pending") && !version;
+      // A request that made nothing reads as failed (C22's quiet error tile), not as one still to come.
+      const failed = !running && !version && request.slots.every(slot => slot.text === undefined) && request.slots.some(slot => slotProgress(slot) === "failed");
       const label = request.snapshot.instructions.trim() || entry.label;
       return <Button key={request.id} type="button" variant="ghost" className="vf-history-item" aria-label={label} aria-current={request.id === selectedRequestId || undefined} onClick={() => { setPreview(undefined); onSelect(request); }} onMouseEnter={event => { const rect = event.currentTarget.getBoundingClientRect(); setPreview({ request, top: rect.top, left: rect.right + 6 }); }} onMouseLeave={() => setPreview(undefined)}>
-        {running ? <img className="vf-thumbnail-loader" src="/design-assets/prompt-history/batch-loader.svg" alt="" /> : version ? <MediaThumbnail version={version} access={access} className="vf-history-thumbnail" /> : entry.group === "audio" ? <Glyph name="audio-lines" /> : request.snapshot.action === "transcribe" ? <Glyph name="captions" /> : <Glyph name="sparkles" />}
+        {running ? <img className="vf-thumbnail-loader" src="/design-assets/prompt-history/batch-loader.svg" alt="" /> : failed ? <img className="vf-history-glyph" src="/design-assets/prompt-history/batch-failure.svg" alt="" /> : version ? <MediaThumbnail version={version} access={access} className="vf-history-thumbnail" /> : entry.group === "audio" ? <Glyph name="audio-lines" /> : request.snapshot.action === "transcribe" ? <Glyph name="captions" /> : <Glyph name="sparkles" />}
         {entry.group === "picture" && request.slots.length > 1 ? <span className="vf-history-count">{request.slots.length}</span> : null}
       </Button>;
     })}</div>

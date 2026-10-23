@@ -1741,6 +1741,8 @@ body:has(.vf-settings-sheet) > [data-state]:not([role="dialog"]) {
   position: absolute;
   inset: 0;
   display: grid;
+  /* One cell the stage's size, so the picture's 100% height is the stage's and contain letterboxes any shape. */
+  grid-template: 100% / 100%;
   place-items: center;
 }
 .vf-picture-stage > .vf-media-display {

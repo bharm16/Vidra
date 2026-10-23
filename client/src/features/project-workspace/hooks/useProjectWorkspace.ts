@@ -537,6 +537,23 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     } catch (failure) { if (inScope()) setError(message(failure)); }
   }, [api, conversation, edit, emit, inScope, ownerId, profiles, project, projectId]);
 
+  /**
+   * One grant per version until shortly before it expires: switching outputs or verbs remounts the same
+   * tiles, which would otherwise fetch the same version's grant again each time.
+   */
+  const grants = useRef(new Map<string, Promise<{ url: string; expiresAt?: string | undefined }>>());
+  const access = useCallback((versionId: string): Promise<{ url: string; expiresAt?: string | undefined }> => {
+    const cached = grants.current.get(versionId);
+    if (cached) return cached;
+    const grant = api.access(projectId, versionId).then(result => {
+      const expires = result.expiresAt ? Date.parse(result.expiresAt) - Date.now() - 60_000 : 5 * 60_000;
+      if (expires > 0) setTimeout(() => { if (grants.current.get(versionId) === grant) grants.current.delete(versionId); }, expires); else grants.current.delete(versionId);
+      return result;
+    }, (failure: unknown) => { grants.current.delete(versionId); throw failure; });
+    grants.current.set(versionId, grant);
+    return grant;
+  }, [api, projectId]);
+
   const activeDraftId = view.activeDraftId;
   const activeNeedsModel = activeDraftId ? view.drafts[activeDraftId]?.content.settings.profileId === "unselected" : false;
   // A composer never waits on "Choose model": a draft this tab created starts on Auto's values (or the action's last model) once models load.
@@ -709,11 +726,14 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const abort = new AbortController();
     const conversationId = conversation.id;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // Each running request's status read drives it on the server; the whole history only needs an occasional read.
+    let ticks = 0;
     const tick = async (): Promise<void> => {
       const epoch = mediaEpoch.current;
+      const readHistory = ticks++ % 5 === 0;
       try {
         const [historyResults, mediaResults, statusResults] = await Promise.all([
-          Promise.allSettled([api.history(projectId, conversationId, abort.signal)]),
+          Promise.allSettled(readHistory ? [api.history(projectId, conversationId, abort.signal)] : []),
           Promise.allSettled([api.media(projectId, abort.signal)]),
           Promise.allSettled(pollingIds.split(",").map(requestId => api.requestStatus(projectId, requestId, abort.signal))),
         ]);
@@ -767,6 +787,6 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     editMedia: version => bindResult(version.kind === "image" ? "edit-image" : "edit-video", version),
     bindResult,
     copyConflict: async draftId => { const buffer = viewRef.current.drafts[draftId]; if (!buffer || !conversation) return; const record = await api.createDraft(projectId, conversation.id, id("draft"), buffer.content); emit({ type: "open-draft", buffer: openDraftBuffer(record) }); },
-    access: versionId => api.access(projectId, versionId),
+    access,
   };
 }

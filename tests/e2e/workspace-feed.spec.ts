@@ -20,14 +20,15 @@ const profiles = [
 
 async function open(page: Page): Promise<void> {
   await injectAuthUser(page);
-  await page.route("**/e2e-media/**", route => route.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='9'><rect width='16' height='9' fill='#d3a44e'/></svg>" }));
+  // Desk · v2 is square, so Focus must letterbox it.
+  await page.route("**/e2e-media/**", route => route.fulfill({ status: 200, contentType: "image/svg+xml", body: route.request().url().includes("version_second") ? "<svg xmlns='http://www.w3.org/2000/svg' width='9' height='9'><rect width='9' height='9' fill='#d3a44e'/></svg>" : "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='9'><rect width='16' height='9' fill='#d3a44e'/></svg>" }));
   await mockWorkspace(page, {
     profiles,
     requests: [
       { id: "request_first", action: "make-image", instructions: "A quiet desk under one warm lamp, late evening.", profileId: "e2e-picture", parameters: { aspectRatio: "16:9" }, results: [{ versionId: "version_first" }, { versionId: "version_second" }] },
       { id: "request_second", action: "make-image", instructions: "The same desk at dawn.", profileId: "e2e-picture", parameters: { aspectRatio: "16:9" }, results: [{ versionId: "version_third" }] },
     ],
-    media: ["version_first", "version_second", "version_third"].map((id, index) => ({ id, kind: "image" as const, label: `Desk · v${index + 1}`, requestId: index < 2 ? "request_first" : "request_second", slotId: index < 2 ? `slot_0_${index}` : "slot_1_0", url: `http://127.0.0.1:58175/e2e-media/${id}.svg`, width: 1600, height: 900 })),
+    media: ["version_first", "version_second", "version_third"].map((id, index) => ({ id, kind: "image" as const, label: `Desk · v${index + 1}`, requestId: index < 2 ? "request_first" : "request_second", slotId: index < 2 ? `slot_0_${index}` : "slot_1_0", url: `http://127.0.0.1:58175/e2e-media/${id}.svg`, width: id === "version_second" ? 900 : 1600, height: 900 })),
   });
   await page.goto(`/app/project/${PROJECT_ID}?conversation=${CONVERSATION_ID}`);
   await expect(page.getByRole("article", { name: "The same desk at dawn." })).toBeVisible();
@@ -89,12 +90,38 @@ test("a result's verb binds it into the request being written, keeping the words
   await expect(words).toHaveValue("A brass lamp turns on.");
 });
 
-test("Edit a region opens the picture at Focus size with a canvas to paint on", async ({ page }) => {
+test("Edit a region stays greyed while a painted area cannot reach a model", async ({ page }) => {
   await open(page);
-  await page.getByRole("article", { name: "The same desk at dawn." }).getByRole("button", { name: "Edit a region" }).click();
-  const canvas = page.getByRole("dialog", { name: "Focus" }).locator("canvas.ps-drawing-canvas");
-  await expect(canvas).toBeVisible();
-  const box = await canvas.boundingBox();
-  expect(box?.width ?? 0).toBeGreaterThan(600);
-  expect(box?.height ?? 0).toBeGreaterThan(300);
+  await expect(page.getByRole("article", { name: "The same desk at dawn." }).getByRole("button", { name: "Edit a region" })).toBeDisabled();
+});
+
+test("Back closes Focus and stays in the conversation", async ({ page }) => {
+  await open(page);
+  const conversation = page.url();
+  await page.getByRole("article", { name: "The same desk at dawn." }).getByRole("button", { name: "Open Desk · v3" }).click();
+  await expect(page.getByRole("dialog", { name: "Focus" })).toBeVisible();
+  await expect(page).toHaveURL(/focus=version_third/);
+  await page.goBack();
+  await expect(page.getByRole("dialog", { name: "Focus" })).toHaveCount(0);
+  expect(page.url()).toBe(conversation);
+});
+
+test("Focus letterboxes a square picture instead of cropping it", async ({ page }) => {
+  await open(page);
+  await page.getByRole("article", { name: "A quiet desk under one warm lamp, late evening." }).getByRole("button", { name: "Open Desk · v2, 2 of 2" }).click();
+  const surface = await page.locator(".vf-focus-stage .vf-viewer-surface").boundingBox();
+  const picture = await page.locator(".vf-focus-stage .vf-picture-stage > .vf-media-display").boundingBox();
+  expect(picture?.height ?? 0).toBeLessThanOrEqual((surface?.height ?? 0) + 1);
+});
+
+test("the Media library scrolls to rows past the window", async ({ page }) => {
+  await injectAuthUser(page);
+  await page.route("**/e2e-media/**", route => route.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='9'><rect width='16' height='9' fill='#d3a44e'/></svg>" }));
+  const ids = Array.from({ length: 16 }, (_, index) => `version_many_${index}`);
+  await mockWorkspace(page, { profiles, requests: [{ id: "request_many", action: "make-image", instructions: "Many desks.", profileId: "e2e-picture", parameters: { aspectRatio: "16:9" }, results: ids.map(versionId => ({ versionId })) }], media: ids.map((id, index) => ({ id, kind: "image" as const, label: `Desk ${index + 1}`, requestId: "request_many", slotId: `slot_0_${index}`, url: `http://127.0.0.1:58175/e2e-media/${id}.svg`, width: 1600, height: 900 })) });
+  await page.goto(`/app/project/${PROJECT_ID}?conversation=${CONVERSATION_ID}&view=media`);
+  const library = page.locator(".vf-media-library");
+  await expect(library.getByRole("button", { name: "Open Desk 16" })).toBeAttached();
+  await library.evaluate(node => { node.scrollTop = node.scrollHeight; });
+  await expect(library.getByRole("button", { name: "Open Desk 1", exact: true })).toBeInViewport();
 });

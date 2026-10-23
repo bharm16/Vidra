@@ -13,7 +13,12 @@ const fillPercent = (value: number, max: number): string => `${max > 0 ? Math.mi
 /** Range inputs paint their filled track from `--ve-fill`; WebKit has no native filled-track part. */
 export function rangeFill(value: number, max: number): CSSProperties { return { "--ve-fill": fillPercent(value, max) } as CSSProperties; }
 
-export const PanelFrame = forwardRef<HTMLElement, { title: string; children: ReactNode; onClose(): void; kind?: "timing" | "timing-repair" | "caption" | "caption-create" | "audio" | "framing" | "media" | "actions" | "item-actions" }>(function PanelFrame({ title, children, onClose, kind }, ref): ReactElement { return <section ref={ref} className="ve-edit-panel" data-panel={kind} aria-label={title} onKeyDown={event => { if (event.key === "Escape" && kind !== "caption" && kind !== "caption-create") { event.stopPropagation(); onClose(); } }}><header className="ve-panel-heading"><h2>{title}</h2><FreshIconButton icon="close" label={`Close ${title.toLowerCase()}`} onClick={onClose} /></header>{children}</section>; });
+export const PanelFrame = forwardRef<HTMLElement, { title: string; children: ReactNode; onClose(): void; kind?: "timing" | "timing-repair" | "caption" | "caption-create" | "audio" | "framing" | "media" | "actions" | "item-actions" }>(function PanelFrame({ title, children, onClose, kind }, ref): ReactElement {
+  const own = useRef<HTMLElement | null>(null);
+  // Focus moves into a panel as it opens, so Escape closes it before a stray click can pick a tile.
+  useEffect(() => { const node = own.current; if (node && !node.contains(document.activeElement)) node.focus({ preventScroll: true }); }, [title]);
+  const attach = (node: HTMLElement | null): void => { own.current = node; if (typeof ref === "function") ref(node); else if (ref) ref.current = node; };
+  return <section ref={attach} tabIndex={-1} className="ve-edit-panel" data-panel={kind} aria-label={title} onKeyDown={event => { if (event.key === "Escape" && kind !== "caption" && kind !== "caption-create") { event.stopPropagation(); onClose(); } }}><header className="ve-panel-heading"><h2>{title}</h2><FreshIconButton icon="close" label={`Close ${title.toLowerCase()}`} onClick={onClose} /></header>{children}</section>; });
 
 function editableFrameTime(frames: number): string { return frames % 3 === 0 ? frameTime(frames,true) : `${Math.floor(frames / 1800)}:${((frames % 1800) / 30).toFixed(2).padStart(5,"0")}`; }
 function parseTimeSeconds(value: string): number { const parts=value.split(":"); return parts.length === 2 ? Number(parts[0])*60+Number(parts[1]) : Number(value); }

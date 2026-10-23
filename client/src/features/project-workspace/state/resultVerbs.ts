@@ -4,9 +4,10 @@ import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { resultVerbs } from "@shared/workflow/actionRegistry";
 
 /** A button on a result (Rule 8): a profile-backed action that opens the composer with the result bound, or a workspace verb. */
-export type ResultVerb =
+export type ResultVerb = (
   | { kind: "action"; label: string; action: CreationAction; role: DraftInput["role"] }
-  | { kind: "variation" | "region" | "reference" | "frame" | "add-to-video"; label: string };
+  | { kind: "variation" | "region" | "reference" | "frame" | "add-to-video"; label: string }
+) & { disabled?: boolean };
 
 const ORDER: Record<"image" | "video" | "audio", readonly string[]> = {
   image: ["New variation", "Edit", "Edit a region", "Animate", "Upscale", "Use as reference"],
@@ -20,7 +21,8 @@ export function verbsForResult(version: Pick<MediaVersion, "kind">, profiles: re
   const verbs: ResultVerb[] = resultVerbs(kind, profiles).map(verb => ({ kind: "action", label: verb.label, action: verb.action, role: verb.role }));
   if (kind === "image") {
     if (options.variation) verbs.push({ kind: "variation", label: "New variation" });
-    if (profiles.some(profile => profile.availability === "qualified" && profile.inputs.some(rule => rule.role === "mask"))) verbs.push({ kind: "region", label: "Edit a region" });
+    // A model takes an area, but a painted area never reaches the request yet (no mask upload): the verb is greyed, with no reason text.
+    if (profiles.some(profile => profile.availability === "qualified" && profile.inputs.some(rule => rule.role === "mask"))) verbs.push({ kind: "region", label: "Edit a region", disabled: true });
     verbs.push({ kind: "reference", label: "Use as reference" });
   }
   if (kind === "video") verbs.push({ kind: "frame", label: "Use a frame" });

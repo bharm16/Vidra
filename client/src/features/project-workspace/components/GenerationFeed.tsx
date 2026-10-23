@@ -161,23 +161,23 @@ function Generation({ request, props }: { request: AcceptedRequest; props: Gener
   const pictures = entry.group === "picture";
   return <article id={`vf-request-${request.id}`} className="vf-generation" data-kind={entry.group} data-count={request.slots.length} aria-label={words}>
     <header className="vf-generation-line"><p className="vf-generation-words">{words}</p><p className="vf-generation-setup">{requestHistoryDescription(request, profiles)}</p></header>
-    <div className="vf-generation-results" data-kind={entry.group} data-count={request.slots.length}>{request.slots.map(slot => {
+    <div className="vf-generation-results" data-kind={entry.group} data-count={request.slots.length}>{request.slots.map((slot, index) => {
       const version = slot.versionId ? media.find(candidate => candidate.id === slot.versionId) : undefined;
       if (slot.text !== undefined && slot.outcome === "completed" && request.snapshot.action === "transcribe") return <FeedCaptions key={slot.id} request={request} text={slot.text} readOnly={readOnly} onApplyText={onApplyText} onCaptionsToVideo={props.onCaptionsToVideo} />;
       if (slot.text !== undefined && slot.outcome === "completed") return <div className="vf-feed-text" key={slot.id}><p>{slot.text}</p>{!readOnly ? <FreshButton tone="quiet" onClick={() => onApplyText(request, slot.text ?? "")}>Use these words</FreshButton> : null}</div>;
       if (!version) return <SlotPlaceholder key={slot.id} request={request} slot={slot} onRetry={onRetry} />;
       if (version.kind === "audio") return <FeedAudio key={slot.id} version={version} access={access} onOpen={() => onOpen(version.id)} />;
       if (version.kind === "video" || version.kind === "export") return <FeedClip key={slot.id} version={version} access={access} onOpen={() => onOpen(version.id)} />;
-      return <FreshButton key={slot.id} tone="quiet" className="vf-feed-picture" data-selected={pictures && request.slots.length > 1 && version.id === target?.id || undefined} aria-label={`Open ${version.label}`} onClick={() => onOpen(version.id)}><MediaThumbnail version={version} access={access} className="vf-feed-media" /></FreshButton>;
+      return <FreshButton key={slot.id} tone="quiet" className="vf-feed-picture" data-selected={pictures && request.slots.length > 1 && version.id === target?.id || undefined} data-version-id={version.id} aria-label={request.slots.length > 1 ? `Open ${version.label}, ${index + 1} of ${request.slots.length}` : `Open ${version.label}`} onClick={() => onOpen(version.id)}><MediaThumbnail version={version} access={access} className="vf-feed-media" /></FreshButton>;
     })}</div>
     {target ? <div ref={fitting.row} className="vf-generation-actions" role="group" aria-label="Result actions">
       {/* A copy of every verb, measured off-screen, decides how many fit on the one row; the rest open from ··· (W61). */}
       <div ref={fitting.measure} className="vf-generation-measure" aria-hidden="true">{verbs.map(verb => <span key={verb.label} className="vf-button vf-generation-verb" data-tone="quiet"><span>{verb.label}</span></span>)}</div>
-      {verbs.slice(0, fitting.count).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" onClick={() => onVerb(verb, target, request)}>{verb.label}</FreshButton>)}
+      {verbs.slice(0, fitting.count).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" disabled={verb.disabled} onClick={() => onVerb(verb, target, request)}>{verb.label}</FreshButton>)}
       <span className="vf-flex" />
       {props.onReuseSetup && !readOnly ? <Button type="button" variant="ghost" className="vf-generation-icon" aria-label="Reuse setup" title="Reuse setup" onClick={() => props.onReuseSetup?.(request)}><span className="vf-icon" aria-hidden="true" style={{ maskImage: 'url("/design-assets/fresh-icon-copy.svg")' }} /></Button> : null}
       <Button type="button" variant="ghost" className="vf-generation-icon" aria-label="Download original" title="Download" onClick={() => onDownload(target)}><span className="vf-icon" aria-hidden="true" style={{ maskImage: 'url("/design-assets/fresh-icon-download.svg")' }} /></Button>
-      <RequestActions request={request} props={props} overflow={verbs.slice(fitting.count).map(verb => ({ label: verb.label, run: () => onVerb(verb, target, request) }))} />
+      <RequestActions request={request} props={props} overflow={verbs.slice(fitting.count).map(verb => ({ label: verb.label, disabled: verb.disabled, run: () => onVerb(verb, target, request) }))} />
     </div> : null}
   </article>;
 }
