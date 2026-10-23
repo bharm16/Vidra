@@ -23,6 +23,11 @@ import type { StorageService } from "@services/storage/StorageService";
 import { setTimeoutPolicyConfig } from "@services/video-generation/providers/timeoutPolicy";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import type { ServiceConfig } from "./service-config.types.ts";
+import { getFirestore } from "@infrastructure/firebaseAdmin";
+import { LegacyVideoSpendGuard, LegacyVideoSpendRefusedError } from "@services/video-generation/runtime/LegacyVideoSpendGuard";
+import type { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
+import { WorkflowPreflightError } from "@services/creation-requests/execution/types";
+import { workflowRuntimeProfiles } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
 
 /**
  * Every video provider registration that feeds VideoGenerationService.
@@ -37,6 +42,12 @@ export const VIDEO_PROVIDER_TOKENS = [
 ] as const;
 
 export function registerVideoGenerationServices(container: DIContainer): void {
+  container.register("legacyVideoSpendGuard", (authority: StudioWorkflowSpendGuard) => new LegacyVideoSpendGuard(getFirestore(), {
+    reserve: async (transaction, input) => {
+      try { return await authority.reserveProviderSpendInTransaction(transaction, input); }
+      catch (error) { if (error instanceof WorkflowPreflightError) throw new LegacyVideoSpendRefusedError(error.message); throw error; }
+    },
+  }, workflowRuntimeProfiles()), ["workflowSpendGuard"]);
   container.register(
     "replicateVideoProvider",
     (config: ServiceConfig) =>
@@ -116,6 +127,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       creditService: LegacyCreditRefundService,
       storageService: StorageService,
       sessionService: SessionService,
+      providerSpendGuard: LegacyVideoSpendGuard,
     ) => {
       if (!videoGenerationService) {
         return null;
@@ -126,6 +138,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
         creditService,
         storageService,
         {
+          providerSpendGuard,
           // SessionService structurally satisfies JobSessionAppendPort; the
           // worker pipeline calls appendGenerationToVersion on successful
           // job completion so video generations are durable server-side.
@@ -139,6 +152,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       "legacyCreditRefunder",
       "storageService",
       "sessionService",
+      "legacyVideoSpendGuard",
     ],
   );
 

@@ -5,22 +5,27 @@
  */
 
 import { z } from "zod";
+import { SPAN_CONTEXT_LIMITS } from "@config/spanContextLimits";
+
+const spanTextSchema = z.string().min(1).max(SPAN_CONTEXT_LIMITS.maxTextLength)
+  .refine((text) => text.trim().length > 0, "Span text must not be blank");
+const spanCategorySchema = z.string().min(1).max(SPAN_CONTEXT_LIMITS.maxCategoryLength);
 
 const labeledSpanSchema = z.object({
-  text: z.string().min(1),
-  role: z.string().min(1),
-  category: z.string().optional(),
+  text: spanTextSchema,
+  role: spanCategorySchema,
+  category: spanCategorySchema.optional(),
   start: z.number().int().min(0),
   end: z.number().int().min(0),
   confidence: z.number().min(0).max(1).optional(),
 });
 
 const nearbySpanSchema = z.object({
-  text: z.string().min(1),
-  role: z.string().min(1),
-  category: z.string().optional(),
+  text: spanTextSchema,
+  role: spanCategorySchema,
+  category: spanCategorySchema.optional(),
   confidence: z.number().min(0).max(1).optional(),
-  distance: z.number().int().min(0),
+  distance: z.number().int().min(0).max(SPAN_CONTEXT_LIMITS.maxPromptLength),
   position: z.enum(["before", "after"]),
   start: z.number().int().min(0).optional(),
   end: z.number().int().min(0).optional(),
@@ -74,9 +79,23 @@ export const suggestionSchema = z.object({
     })
     .optional()
     .nullable(),
-  allLabeledSpans: z.array(labeledSpanSchema).optional(),
-  nearbySpans: z.array(nearbySpanSchema).optional(),
+  allLabeledSpans: z.array(labeledSpanSchema).max(SPAN_CONTEXT_LIMITS.maxSpans).optional(),
+  nearbySpans: z.array(nearbySpanSchema).max(SPAN_CONTEXT_LIMITS.maxSpans).optional(),
   editHistory: z.array(editHistoryItemSchema).max(50).optional(),
+}).superRefine((request, ctx) => {
+  for (const field of ["allLabeledSpans", "nearbySpans"] as const) {
+    for (const [index, span] of (request[field] ?? []).entries()) {
+      const { start, end } = span;
+      if (start === undefined && end === undefined) continue;
+      if (start === undefined || end === undefined || end <= start || end > request.fullPrompt.length) {
+        ctx.addIssue({
+          code: "custom",
+          path: [field, index, "end"],
+          message: "Span offsets must form a nonempty range within fullPrompt",
+        });
+      }
+    }
+  }
 });
 
 export const customSuggestionSchema = z.object({

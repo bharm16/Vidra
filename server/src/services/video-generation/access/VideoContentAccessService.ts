@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { logger } from "@infrastructure/Logger";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 
 const DEFAULT_TOKEN_TTL_SECONDS = 60 * 60;
 const CONTENT_PATH_PREFIX = "/api/preview/video/content";
@@ -41,6 +42,8 @@ export class VideoContentAccessService {
   }
 
   issueToken({ assetId, userId, ttlMs }: IssueTokenParams): string {
+    assertNoLegacyApiKeyData(assetId);
+    if (userId) assertNoLegacyApiKeyData(userId);
     const payload = {
       assetId,
       userId,
@@ -82,6 +85,12 @@ export class VideoContentAccessService {
       return null;
     }
 
+    if (parsed.userId !== undefined && typeof parsed.userId !== "string") return null;
+    try {
+      assertNoLegacyApiKeyData(parsed.assetId);
+      if (parsed.userId) assertNoLegacyApiKeyData(parsed.userId);
+    } catch { return null; }
+
     if (
       !Number.isFinite(parsed.expiresAtMs) ||
       parsed.expiresAtMs <= Date.now()
@@ -97,6 +106,9 @@ export class VideoContentAccessService {
   }
 
   buildAccessUrl(url: string, assetId: string, userId?: string): string {
+    assertNoLegacyApiKeyData(url);
+    assertNoLegacyApiKeyData(assetId);
+    if (userId) assertNoLegacyApiKeyData(userId);
     if (!this.isLocalContentUrl(url)) {
       return url;
     }

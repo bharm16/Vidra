@@ -2,6 +2,7 @@ import type { Router } from "express";
 import { logger } from "@infrastructure/Logger";
 import type { ApiResponse } from "@shared/types/api";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireCreatorId } from "@middleware/intake";
 import { validateRequest } from "@middleware/validateRequest";
 import { sceneChangeSchema } from "@config/schemas";
 import type { SceneChangeDetectionService } from "@services/enhancement/services/SceneChangeDetectionService";
@@ -18,6 +19,8 @@ export function registerSceneChangeRoute(
     "/enhancement/scene-change",
     validateRequest(sceneChangeSchema),
     asyncHandler(async (req, res) => {
+      const ownerId = requireCreatorId(req, res);
+      if (!ownerId) return;
       const startTime = Date.now();
       const requestId = req.id || "unknown";
       const operation = "detect-scene-change";
@@ -38,11 +41,12 @@ export function registerSceneChangeRoute(
         changedField,
         hasNewValue: !!newValue,
         hasOldValue: !!oldValue,
-        affectedFieldCount: affectedFields?.length || 0,
+        affectedFieldCount: Object.keys(affectedFields ?? {}).length,
       });
 
       try {
         const result = await sceneDetectionService.detectSceneChange({
+          ownerId,
           changedField,
           newValue,
           oldValue,

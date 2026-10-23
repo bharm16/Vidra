@@ -1,4 +1,5 @@
 import type { ILogger } from "@interfaces/ILogger";
+import { isLegacyApiKeyUid } from "@utils/apiKeyUser";
 import { RetryPolicy } from "@server/utils/RetryPolicy";
 import {
   attachTakeToSession,
@@ -83,6 +84,7 @@ export async function attachCompletedJobToSession({
   log,
   logPrefix,
 }: AttachJobRequest): Promise<TakeAttachment | null> {
+  if (isLegacyApiKeyUid(job.userId)) return null;
   const { sessionId, promptVersionId } = job;
   if (!sessionId || !promptVersionId) return null;
 

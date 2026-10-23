@@ -1,5 +1,7 @@
 import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import { logger } from "@infrastructure/Logger";
+import { isLegacyApiKeyUid } from "@utils/apiKeyUser";
+import { LegacyVideoSpendRefusedError, type LegacyVideoDispatchSpendPort } from "./LegacyVideoSpendGuard";
 import type { CreditRefunder } from "@services/video-generation/refunds/ports";
 import {
   buildRefundKey,
@@ -113,6 +115,7 @@ export interface ProcessVideoJobDeps {
   jobStore: JobProcessingStore;
   videoGenerationService: JobGenerationService;
   storageService: JobStorageService | null;
+  providerSpendGuard?: LegacyVideoDispatchSpendPort | undefined;
   userCreditService?: CreditRefunder;
   /** Worker ID used for heartbeats and logging. */
   workerId: string;
@@ -156,6 +159,8 @@ export async function processVideoJob(
   job: VideoJobRecord,
   deps: ProcessVideoJobDeps,
 ): Promise<void> {
+  // Historical raw-key owners must never enter logs, grants or dispatch.
+  if (isLegacyApiKeyUid(job.userId)) return;
   const {
     jobStore,
     videoGenerationService,
@@ -218,9 +223,12 @@ export async function processVideoJob(
     }
     let result: VideoGenerationResult;
     try {
+      if (!deps.providerSpendGuard) throw new LegacyVideoSpendRefusedError("Legacy video spending authority is unavailable.");
+      const dispatch = await deps.providerSpendGuard.authorize(job, workerId);
+      if (!dispatch) return;
       result = await videoGenerationService.generateVideo(
         job.request.prompt,
-        job.request.options as Record<string, unknown> | undefined,
+        dispatch.options as Record<string, unknown>,
         signal,
       );
     } catch (error) {
@@ -386,6 +394,11 @@ export async function processVideoJob(
       request: job.request,
       attempts: job.attempts,
     });
+    if (error instanceof LegacyVideoSpendRefusedError) {
+      classifiedError.retryable = false;
+      classifiedError.category = "validation";
+      classifiedError.code = "VIDEO_JOB_SPEND_REFUSED";
+    }
 
     const errorInstance =
       error instanceof Error ? error : new Error(classifiedError.message);

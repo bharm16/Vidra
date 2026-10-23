@@ -1,4 +1,5 @@
 import { logger } from "@infrastructure/Logger";
+import { isLegacyApiKeyUid } from "@utils/apiKeyUser";
 import type { SessionAppendPort } from "@services/sessions/attachTakeToSession";
 import {
   attachCompletedJobToSession,
@@ -52,6 +53,7 @@ export async function resumePendingAttachments({
   let attached = 0;
   let failed = 0;
   for (const job of pending) {
+    if (isLegacyApiKeyUid(job.userId)) continue;
     const outcome = await attachCompletedJobToSession({
       job,
       jobStore,

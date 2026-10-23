@@ -1,6 +1,10 @@
 import { Readable } from "node:stream";
-import type { ReadableStream as NodeReadableStream } from "node:stream/web";
-import { assertUrlSafe } from "@server/shared/urlValidation";
+import { createBrotliDecompress, createGunzip, createInflate } from "node:zlib";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
+import {
+  requestPublicMedia,
+  type PublicNetworkDependencies,
+} from "./PublicNetworkTransport";
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 const MAX_REDIRECTS = 3;
@@ -11,6 +15,7 @@ export interface RemoteMediaFetchOptions {
   allowedContentTypes: readonly string[];
   maxBytes: number;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 export interface FetchedRemoteMedia {
@@ -19,132 +24,157 @@ export interface FetchedRemoteMedia {
   sourceUrl: string;
 }
 
-function normalizeContentType(value: string | null): string {
-  return (value ?? "").split(";", 1)[0]?.trim().toLowerCase() ?? "";
+export interface RemoteMediaStream {
+  stream: Readable;
+  contentType: string;
+  contentLength?: number;
+  sourceUrl: string;
+  cancel: (reason?: Error) => void;
 }
 
-function isAllowedContentType(
-  contentType: string,
-  allowedContentTypes: readonly string[],
-): boolean {
-  return allowedContentTypes.some((allowed) => contentType === allowed);
+function decodedBody(body: Readable, encoding: string | null): Readable {
+  if (!encoding || encoding === "identity") return body;
+  const decoder = encoding === "gzip" ? createGunzip()
+    : encoding === "deflate" ? createInflate()
+    : encoding === "br" ? createBrotliDecompress()
+    : undefined;
+  if (!decoder) throw new Error("Unsupported remote media content encoding");
+  body.on("error", error => decoder.destroy(error));
+  decoder.on("error", () => undefined);
+  decoder.once("close", () => body.destroy());
+  return body.pipe(decoder);
 }
 
-function parseContentLength(value: string | null): number | null {
-  if (!value) return null;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
-function isRedirect(response: Response): boolean {
-  return response.status >= 300 && response.status < 400;
-}
-
-async function fetchWithSafeRedirects(
-  sourceUrl: string,
-  fieldName: string,
-  signal: AbortSignal,
-): Promise<{ response: Response; finalUrl: string }> {
-  let nextUrl = sourceUrl;
-
-  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
-    assertUrlSafe(nextUrl, fieldName);
-    const response = await fetch(nextUrl, { signal, redirect: "manual" });
-    if (!isRedirect(response)) {
-      return { response, finalUrl: nextUrl };
-    }
-
-    const location = response.headers.get("location");
-    if (!location) {
-      throw new Error("Remote media redirect is missing a location");
-    }
-    if (redirectCount === MAX_REDIRECTS) {
-      throw new Error("Remote media exceeded the redirect limit");
-    }
-    nextUrl = new URL(location, nextUrl).toString();
-  }
-
-  throw new Error("Remote media exceeded the redirect limit");
-}
-
-async function readBoundedBuffer(
-  response: Response,
-  maxBytes: number,
-): Promise<Buffer> {
-  if (!response.body) {
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    if (buffer.length > maxBytes) {
-      throw new Error(`Remote media exceeds maximum size of ${maxBytes} bytes`);
-    }
-    return buffer;
-  }
-
-  const chunks: Buffer[] = [];
-  let totalBytes = 0;
-  const stream = Readable.fromWeb(
-    response.body as unknown as NodeReadableStream<Uint8Array>,
-  );
-  for await (const chunk of stream) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    totalBytes += buffer.length;
-    if (totalBytes > maxBytes) {
-      stream.destroy();
-      throw new Error(`Remote media exceeds maximum size of ${maxBytes} bytes`);
-    }
-    chunks.push(buffer);
-  }
-  return Buffer.concat(chunks, totalBytes);
-}
-
-/**
- * Fetch remote media under the application-wide ingestion policy. Redirect
- * targets are revalidated, MIME is allowlisted, and a missing/lying
- * Content-Length cannot bypass the byte limit.
- */
-export async function fetchRemoteMedia(
+/** A streaming ingestion capability: all redirects/DNS and actual bytes are bounded. */
+export async function openRemoteMedia(
   options: RemoteMediaFetchOptions,
-): Promise<FetchedRemoteMedia> {
-  if (!Number.isFinite(options.maxBytes) || options.maxBytes <= 0) {
+  dependencies: PublicNetworkDependencies = {},
+): Promise<RemoteMediaStream> {
+  assertNoLegacyApiKeyData(options.sourceUrl);
+  if (!Number.isSafeInteger(options.maxBytes) || options.maxBytes <= 0) {
     throw new Error("Remote media maximum size must be positive");
   }
-
   const controller = new AbortController();
+  let body: Readable | undefined;
+  let stream: Readable | undefined;
+  const externalAbort = (): void => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) externalAbort();
+  else options.signal?.addEventListener("abort", externalAbort, { once: true });
   const timeout = setTimeout(
-    () => controller.abort(),
+    () => controller.abort(new Error("Remote media request timed out")),
     options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
   );
+  timeout.unref();
+  const aborted = (): void => {
+    const error = controller.signal.reason instanceof Error
+      ? controller.signal.reason
+      : new Error("Remote media request aborted");
+    body?.destroy(error);
+    stream?.destroy(error);
+  };
+  controller.signal.addEventListener("abort", aborted, { once: true });
+  const dispose = (): void => {
+    clearTimeout(timeout);
+    options.signal?.removeEventListener("abort", externalAbort);
+    controller.signal.removeEventListener("abort", aborted);
+  };
+  const cancel = (reason?: Error): void => {
+    controller.abort(reason);
+    body?.destroy();
+    stream?.destroy();
+    dispose();
+  };
 
   try {
-    const { response, finalUrl } = await fetchWithSafeRedirects(
-      options.sourceUrl,
-      options.fieldName,
-      controller.signal,
-    );
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch remote media: ${response.status} ${response.statusText}`,
+    let nextUrl = new URL(options.sourceUrl);
+    for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
+      const response = await requestPublicMedia(
+        nextUrl, options.fieldName, controller.signal, dependencies,
       );
-    }
-
-    const contentType = normalizeContentType(response.headers.get("content-type"));
-    if (!isAllowedContentType(contentType, options.allowedContentTypes)) {
-      throw new Error(`Invalid remote media content type: ${contentType || "unknown"}`);
-    }
-
-    const contentLength = parseContentLength(response.headers.get("content-length"));
-    if (contentLength !== null && contentLength > options.maxBytes) {
-      throw new Error(
-        `Remote media exceeds maximum size of ${options.maxBytes} bytes`,
+      body = response.body;
+      body.on("error", () => undefined);
+      controller.signal.throwIfAborted();
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        body.destroy();
+        if (!location) throw new Error("Remote media redirect is missing a location");
+        assertNoLegacyApiKeyData(location);
+        if (redirects === MAX_REDIRECTS) throw new Error("Remote media exceeded the redirect limit");
+        nextUrl = new URL(location, nextUrl);
+        continue;
+      }
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`Failed to fetch remote media: ${response.status} ${response.statusText}`);
+      }
+      const contentType = (response.headers.get("content-type") ?? "").split(";", 1)[0]?.trim().toLowerCase() ?? "";
+      if (!options.allowedContentTypes.includes(contentType)) {
+        throw new Error(`Invalid remote media content type: ${contentType || "unknown"}`);
+      }
+      const rawLength = response.headers.get("content-length");
+      const contentLength = rawLength !== null && /^\d+$/.test(rawLength) ? Number(rawLength) : undefined;
+      const sizeError = (): Error => new Error(`Remote media exceeds maximum size of ${options.maxBytes} bytes`);
+      if (contentLength !== undefined && contentLength > options.maxBytes) throw sizeError();
+      const input = decodedBody(
+        body, response.headers.get("content-encoding")?.trim().toLowerCase() ?? null,
       );
+      let received = 0;
+      async function* bounded(): AsyncGenerator<Buffer> {
+        try {
+          for await (const chunk of input) {
+            controller.signal.throwIfAborted();
+            const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+            received += bytes.length;
+            if (received > options.maxBytes) throw sizeError();
+            yield bytes;
+          }
+        } finally {
+          input.destroy();
+          body?.destroy();
+          dispose();
+        }
+      }
+      stream = Readable.from(bounded(), { objectMode: false });
+      stream.on("error", () => undefined);
+      stream.once("close", () => {
+        input.destroy();
+        body?.destroy();
+        dispose();
+      });
+      return {
+        stream,
+        contentType,
+        ...(contentLength !== undefined ? { contentLength } : {}),
+        sourceUrl: nextUrl.href,
+        cancel,
+      };
     }
+    throw new Error("Remote media exceeded the redirect limit");
+  } catch (error) {
+    cancel(error instanceof Error ? error : new Error(String(error)));
+    throw error;
+  }
+}
 
+/** Only small purpose-bounded inputs are buffered; storage copies use the stream. */
+export async function fetchRemoteMedia(
+  options: RemoteMediaFetchOptions,
+  dependencies: PublicNetworkDependencies = {},
+): Promise<FetchedRemoteMedia> {
+  const remote = await openRemoteMedia(options, dependencies);
+  try {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of remote.stream) {
+      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      size += bytes.length;
+      chunks.push(bytes);
+    }
     return {
-      buffer: await readBoundedBuffer(response, options.maxBytes),
-      contentType,
-      sourceUrl: finalUrl,
+      buffer: Buffer.concat(chunks, size),
+      contentType: remote.contentType,
+      sourceUrl: remote.sourceUrl,
     };
   } finally {
-    clearTimeout(timeout);
+    remote.cancel();
   }
 }

@@ -73,8 +73,8 @@ export function creatorIdOf(req: Request): string | null {
  * Is this value a usable Creator identity?
  *
  * `apiAuth.ts` only ever sets `req.user.uid` from `decoded.uid` or from
- * `api-key:<key>`, so the two rejected shapes below cannot be produced by the
- * auth middleware as it stands. They are rejected anyway because they WERE
+ * a versioned nonsecret API-key principal. These rejected shapes cannot be
+ * produced by the auth middleware. They are rejected because they WERE
  * reachable through the other identity helpers this module replaces:
  * `extractUserId` substitutes the literal `"anonymous"` for a missing user,
  * and an IP address is what a request-scoped rate-limit key looks like. Four

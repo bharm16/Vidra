@@ -20,12 +20,16 @@ RUN npm ci --only=production --ignore-scripts && npm cache clean --force
 
 # Download model assets during build (cached when inputs are unchanged)
 COPY scripts/download-models.sh ./scripts/download-models.sh
+COPY scripts/lib/modelDownloadPath.ts ./scripts/lib/modelDownloadPath.ts
 ARG SPAN_LABELING_MODELS_GCS_URI
 ENV SPAN_LABELING_MODELS_GCS_URI=${SPAN_LABELING_MODELS_GCS_URI}
 RUN chmod +x ./scripts/download-models.sh && ./scripts/download-models.sh
 
-# Copy application code
-COPY . .
+# Copy only runtime inputs. Local credentials and unrelated checkout files
+# cannot enter the image through a broad root-context copy.
+COPY tsconfig.json ./
+COPY server ./server
+COPY shared ./shared
 
 # Stage 2: Production stage
 FROM node:20-alpine

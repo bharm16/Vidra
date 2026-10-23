@@ -29,6 +29,7 @@ export interface VideoGenerateIntakeArgs {
     videoJobStore: NonNullable<VideoGenerateServices["videoJobStore"]>;
     storageService: VideoGenerateServices["storageService"];
     sessionService: VideoGenerateServices["sessionService"];
+    legacyVideoSpendGuard: VideoGenerateServices["legacyVideoSpendGuard"];
   };
   idempotencyRecordId: string;
   idempotencyKey: string;
@@ -173,6 +174,7 @@ export async function runVideoGenerateIntake(
         videoJobStore,
         videoGenerationService,
         storageService: storageService ?? null,
+        providerSpendGuard: services.legacyVideoSpendGuard,
         sessionService: sessionService ?? null,
       });
     } catch (error) {
@@ -200,6 +202,7 @@ export async function runVideoGenerateIntake(
           videoJobStore,
           videoGenerationService,
           storageService: storageService ?? null,
+          providerSpendGuard: services.legacyVideoSpendGuard,
           sessionService: sessionService ?? null,
         });
       } catch {

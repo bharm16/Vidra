@@ -4,6 +4,7 @@ export async function veoFetch(
   path: string,
   init: RequestInit,
 ): Promise<unknown> {
+  init.signal?.throwIfAborted();
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
@@ -14,6 +15,7 @@ export async function veoFetch(
   });
 
   const text = await response.text();
+  init.signal?.throwIfAborted();
   let json: unknown;
   try {
     json = text ? JSON.parse(text) : {};

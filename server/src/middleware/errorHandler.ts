@@ -117,13 +117,14 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
+  const legacyIdentityDenied = err instanceof Error && err.name === "LegacyApiKeyIdentityError";
   const meta: Record<string, unknown> = {
     requestId: req.id,
     method: req.method,
-    path: req.path,
+    path: legacyIdentityDenied ? "[REDACTED]" : req.path,
   };
 
-  if (req.body && Object.keys(req.body).length > 0) {
+  if (!legacyIdentityDenied && req.body && Object.keys(req.body).length > 0) {
     try {
       const redactedBody = redactSensitiveData(req.body);
       const bodyStr = JSON.stringify(redactedBody);

@@ -1,4 +1,5 @@
-import { assertUrlSafe } from "@server/shared/urlValidation";
+import { fetchRemoteMedia } from "@services/owned-media/RemoteMediaFetcher";
+import type { PublicNetworkDependencies } from "@services/owned-media/PublicNetworkTransport";
 
 export interface VeoInlineData {
   inlineData: {
@@ -21,39 +22,25 @@ export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 export async function fetchAsVeoInline(
   url: string,
   kind: "image" | "video" = "image",
+  network: PublicNetworkDependencies = {},
+  signal?: AbortSignal,
 ): Promise<VeoInlineData> {
-  assertUrlSafe(url, "veoInlineMediaUrl");
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch ${kind} from ${url}: HTTP ${response.status}`,
-    );
-  }
-
-  const contentType = (
-    (response.headers.get("content-type") || "").split(";")[0] || ""
-  )
-    .trim()
-    .toLowerCase();
+  signal?.throwIfAborted();
   const allowedTypes =
     kind === "image" ? ALLOWED_IMAGE_TYPES : ALLOWED_VIDEO_TYPES;
-  const fallbackType = kind === "image" ? "image/png" : "video/mp4";
-  const mimeType = allowedTypes.has(contentType) ? contentType : fallbackType;
-
   const maxBytes = kind === "image" ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
-  const buffer = await response.arrayBuffer();
-  if (buffer.byteLength > maxBytes) {
-    throw new Error(
-      `${kind} at ${url} is ${(buffer.byteLength / 1024 / 1024).toFixed(1)}MB, exceeds ${
-        maxBytes / 1024 / 1024
-      }MB limit`,
-    );
-  }
+  const { buffer, contentType } = await fetchRemoteMedia({
+    sourceUrl: url,
+    fieldName: "veoInlineMediaUrl",
+    allowedContentTypes: [...allowedTypes],
+    maxBytes,
+    ...(signal ? { signal } : {}),
+  }, network);
 
   return {
     inlineData: {
-      mimeType,
-      data: Buffer.from(buffer).toString("base64"),
+      mimeType: contentType,
+      data: buffer.toString("base64"),
     },
   };
 }

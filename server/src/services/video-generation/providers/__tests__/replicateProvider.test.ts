@@ -4,6 +4,8 @@ import {
   generateReplicateVideo,
 } from "../replicateProvider";
 import type { VideoModelId } from "@shared/videoModels";
+import { Readable } from "node:stream";
+import * as networkBoundary from "@services/owned-media/PublicNetworkTransport";
 
 describe("buildReplicateInput", () => {
   it("includes a rounded seed when provided", () => {
@@ -75,18 +77,19 @@ describe("buildReplicateInput", () => {
 describe("generateReplicateVideo", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
 
   it("wraps extensionless startImage in a Blob for Replicate", async () => {
     const run = vi.fn().mockResolvedValue("https://example.com/video.mp4");
     const replicate = { run } as unknown as import("replicate").default;
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      headers: { get: () => "image/png" },
-      arrayBuffer: async () => new ArrayBuffer(4),
+    vi.spyOn(networkBoundary, "requestPublicMedia").mockResolvedValue({
+      status: 200,
+      statusText: "OK",
+      body: Readable.from([Buffer.alloc(4)]),
+      headers: new Headers({ "content-type": "image/png" }),
     });
-    vi.stubGlobal("fetch", fetchMock);
 
     const log = {
       info: vi.fn(),

@@ -9,20 +9,24 @@ type LogSink = {
 
 export function toNodeReadableStream(
   body: ReadableStream<Uint8Array> | null,
+  signal?: AbortSignal,
 ): NodeJS.ReadableStream {
   if (!body) {
     throw new Error("Response body is empty");
   }
-  return Readable.fromWeb(body);
+  return Readable.fromWeb(body, signal ? { signal } : {});
 }
 
 export async function storeVideoFromUrl(
   assetStore: VideoAssetStore,
   url: string,
   log?: LogSink,
+  signal?: AbortSignal,
 ): Promise<StoredVideoAsset> {
+  signal?.throwIfAborted();
   log?.info("Downloading provider video for storage", { url });
-  const response = await fetch(url, { method: "GET", redirect: "follow" });
+  const response = await fetch(url, { method: "GET", redirect: "follow", ...(signal ? { signal } : {}) });
+  signal?.throwIfAborted();
 
   if (!response.ok) {
     const text = await response.text();
@@ -34,6 +38,7 @@ export async function storeVideoFromUrl(
   const contentType = response.headers.get("content-type") || "video/mp4";
   const stream = toNodeReadableStream(
     response.body as ReadableStream<Uint8Array> | null,
+    signal,
   );
   return await assetStore.storeFromStream(stream, contentType);
 }

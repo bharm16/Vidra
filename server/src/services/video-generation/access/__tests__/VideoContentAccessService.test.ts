@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import crypto from "node:crypto";
+import { apiKeyUid } from "@utils/apiKeyUser";
 
 const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
@@ -17,6 +19,23 @@ import {
 } from "../VideoContentAccessService";
 
 describe("VideoContentAccessService", () => {
+  it("encodes only the nonsecret API-key principal in new content grants", () => {
+    const credential = "configured-test-secret";
+    const service = new VideoContentAccessService({ secret: "test-secret", ttlMs: 5000 });
+    const token = service.issueToken({ assetId: "asset-1", userId: apiKeyUid(credential) });
+    const decoded = Buffer.from(token.split(".")[0]!, "base64url").toString("utf8");
+    expect(decoded).not.toContain(credential);
+    expect(service.verifyToken(token, "asset-1")?.userId).toBe(apiKeyUid(credential));
+  });
+
+  it.each(["api-key:retired-test-secret", `api-key:v1:${"a".repeat(64)}`, "api-key-v1:not-a-principal"])("refuses issuance and historical valid signatures carrying unsafe API-key identities", userId => {
+    const service = new VideoContentAccessService({ secret: "test-secret", ttlMs: 5000 });
+    expect(() => service.issueToken({ assetId: "asset-1", userId })).toThrow("This media is unavailable.");
+    const encoded = Buffer.from(JSON.stringify({ assetId: "asset-1", userId, expiresAtMs: Date.now() + 5000, version: 1 })).toString("base64url");
+    const signature = crypto.createHmac("sha256", "test-secret").update(encoded).digest("base64url");
+    expect(service.verifyToken(`${encoded}.${signature}`, "asset-1")).toBeNull();
+    expect(() => service.buildAccessUrl(`https://storage.googleapis.com/bucket/users/${encodeURIComponent(userId)}/generations/clip.mp4`, "asset-1", "owner")).toThrow("This media is unavailable.");
+  });
   it("issues and verifies a valid token payload", () => {
     const service = new VideoContentAccessService({
       secret: "test-secret",

@@ -5,11 +5,12 @@ import { describe, expect, it, vi } from "vitest";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createSessionRoutes } from "@routes/sessions.routes";
 import { SessionAccessDeniedError } from "@services/sessions/SessionService";
+import { apiKeyUid } from "@utils/apiKeyUser";
 
 import { useTestApiKey } from "../test-helpers/apiRouteHarness";
 
 const TEST_API_KEY = "integration-sessions-key";
-const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
+const TEST_USER_ID = apiKeyUid(TEST_API_KEY);
 
 function buildSession(id: string) {
   return {

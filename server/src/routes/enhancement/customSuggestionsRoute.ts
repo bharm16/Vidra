@@ -2,6 +2,7 @@ import type { Router } from "express";
 import { logger } from "@infrastructure/Logger";
 import type { ApiResponse } from "@shared/types/api";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireCreatorId } from "@middleware/intake";
 import { validateRequest } from "@middleware/validateRequest";
 import { customSuggestionSchema } from "@config/schemas";
 import type { EnhancementService } from "@services/enhancement/EnhancementService";
@@ -18,6 +19,8 @@ export function registerCustomSuggestionsRoute(
     "/enhancement/custom-suggestions",
     validateRequest(customSuggestionSchema),
     asyncHandler(async (req, res) => {
+      const ownerId = requireCreatorId(req, res);
+      if (!ownerId) return;
       const startTime = Date.now();
       const requestId = req.id || "unknown";
       const operation = "get-custom-suggestions";
@@ -41,6 +44,7 @@ export function registerCustomSuggestionsRoute(
 
       try {
         const result = await enhancementService.getCustomSuggestions({
+          ownerId,
           highlightedText,
           customRequest,
           fullPrompt,

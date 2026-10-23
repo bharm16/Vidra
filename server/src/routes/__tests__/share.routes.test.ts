@@ -1,11 +1,13 @@
-import type { ShareService } from "@services/share/ShareService";
+import { ShareService } from "@services/share/ShareService";
+import type { ShareRecord } from "@services/share/types";
+import { errorHandler } from "@middleware/errorHandler";
 import express, {
   type NextFunction,
   type Request,
   type Response,
 } from "express";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createPublicClipRouter, createShareRouter } from "../share.routes";
 
 function fakeShareService(overrides: Partial<ShareService> = {}): ShareService {
@@ -46,6 +48,30 @@ function appWith(
 const BODY = { sessionId: "s", generationId: "g" };
 
 describe("share routes", () => {
+  it("refuses anonymous mint requests", async () => {
+    const mint = vi.fn();
+    const response = await request(appWith(fakeShareService({ mint }), { authed: false })).post("/api/share").send(BODY);
+    expect(response.status).toBe(401);
+    expect(mint).not.toHaveBeenCalled();
+  });
+
+  it("enforces media ownership through the real service and preserves the public DTO", async () => {
+    const rows = new Map<string, ShareRecord>();
+    let storagePath = "users/foreign/generations/private.mp4";
+    const service = new ShareService({ save: async record => { rows.set(record.shareId, record); }, get: async id => rows.get(id) ?? null }, {
+      getSession: async () => ({ id: "s", userId: "owner", status: "active", createdAt: new Date(), updatedAt: new Date(), prompt: { input: "", output: "", versions: [{ versionId: "v", signature: "sig", timestamp: "t", prompt: "Public description", generations: [{ id: "g", storagePath }] }] } }),
+    }, { getSharedViewUrl: async path => ({ viewUrl: `https://signed.example/${path}`, expiresAt: "" }) });
+    const app = appWith(service); app.use(errorHandler);
+    expect((await request(app).post("/api/share").send(BODY)).status).toBe(404);
+    expect(rows.size).toBe(0);
+    storagePath = "users/owner/generations/historical.mp4";
+    const minted = await request(app).post("/api/share").send(BODY);
+    expect(minted.status).toBe(200);
+    const response = await request(app).get(`/api/public/share/${minted.body.data.shareId}`);
+    expect(response.status).toBe(200);
+    expect(Object.keys(response.body.data).sort()).toEqual(["createdAt", "description", "model", "videoUrl"]);
+    expect(response.body.data.description).toBe("Public description");
+  });
   it("serves a public clip without auth", async () => {
     const res = await request(appWith(fakeShareService())).get(
       "/api/public/share/abc",

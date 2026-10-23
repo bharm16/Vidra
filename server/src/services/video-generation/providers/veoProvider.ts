@@ -10,6 +10,7 @@ import {
 } from "./veo/operations";
 import { fetchAsVeoInline } from "./veo/imageUtils";
 import { getProviderPollTimeoutMs } from "./timeoutPolicy";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 
 type LogSink = {
   info: (message: string, meta?: Record<string, unknown>) => void;
@@ -28,20 +29,25 @@ export async function generateVeoVideo(
   options: VideoGenerationOptions,
   assetStore: VideoAssetStore,
   log: LogSink,
+  signal?: AbortSignal,
 ): Promise<StoredVideoAsset> {
+  signal?.throwIfAborted();
+  for (const inputUrl of [options.startImage, options.endImage, options.extendVideoUrl, ...(options.referenceImages?.map(ref => ref.url) ?? [])]) {
+    if (inputUrl) assertNoLegacyApiKeyData(inputUrl);
+  }
   const timeoutMs = getProviderPollTimeoutMs();
   const input: VeoGenerationInput = { prompt };
 
   if (options.startImage) {
     log.info("Fetching start image for Veo i2v", { url: options.startImage });
-    input.startImage = await fetchAsVeoInline(options.startImage, "image");
+    input.startImage = await fetchAsVeoInline(options.startImage, "image", {}, signal);
   }
 
   if (options.endImage) {
     log.info("Fetching end image for Veo last-frame", {
       url: options.endImage,
     });
-    input.lastFrame = await fetchAsVeoInline(options.endImage, "image");
+    input.lastFrame = await fetchAsVeoInline(options.endImage, "image", {}, signal);
   }
 
   if (options.referenceImages?.length) {
@@ -49,7 +55,7 @@ export async function generateVeoVideo(
     log.info("Fetching reference images for Veo", { count: refs.length });
     input.referenceImages = await Promise.all(
       refs.map(async (ref) => ({
-        image: await fetchAsVeoInline(ref.url, "image"),
+        image: await fetchAsVeoInline(ref.url, "image", {}, signal),
         referenceType: ref.type,
       })),
     );
@@ -59,7 +65,7 @@ export async function generateVeoVideo(
     log.info("Fetching video for Veo extension", {
       url: options.extendVideoUrl,
     });
-    input.extendVideo = await fetchAsVeoInline(options.extendVideoUrl, "video");
+    input.extendVideo = await fetchAsVeoInline(options.extendVideoUrl, "video", {}, signal);
   }
 
   const veoParams: NonNullable<VeoGenerationInput["parameters"]> = {};
@@ -79,11 +85,13 @@ export async function generateVeoVideo(
     input.parameters = veoParams;
   }
 
+  signal?.throwIfAborted();
   const operationName = await startVeoGeneration(
     baseUrl,
     apiKey,
     input,
     VEO_MODEL_ID,
+    signal,
   );
 
   const mode = options.extendVideoUrl
@@ -102,7 +110,9 @@ export async function generateVeoVideo(
   const operation = await waitForVeoOperation(baseUrl, apiKey, operationName, {
     pollIntervalMs: VEO_STATUS_POLL_INTERVAL_MS,
     timeoutMs,
+    ...(signal ? { signal } : {}),
   });
+  signal?.throwIfAborted();
   const videoUri = extractVeoVideoUri(operation.response);
 
   if (!videoUri) {
@@ -114,9 +124,11 @@ export async function generateVeoVideo(
   const { stream, contentType } = await downloadVeoVideoStream(
     apiKey,
     videoUri,
+    signal,
   );
+  signal?.throwIfAborted();
   return await assetStore.storeFromStream(
-    toNodeReadableStream(stream),
+    toNodeReadableStream(stream, signal),
     contentType,
   );
 }

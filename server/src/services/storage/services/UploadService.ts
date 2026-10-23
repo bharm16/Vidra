@@ -1,8 +1,10 @@
-import { Storage } from "@google-cloud/storage";
+import { Storage, type File } from "@google-cloud/storage";
 import { pipeline } from "node:stream/promises";
-import { Readable } from "node:stream";
-import { ReadableStream } from "node:stream/web";
-import { assertUrlSafe } from "@server/shared/urlValidation";
+import {
+  openRemoteMedia,
+  type RemoteMediaStream,
+} from "@services/owned-media/RemoteMediaFetcher";
+import type { PublicNetworkDependencies } from "@services/owned-media/PublicNetworkTransport";
 import {
   STORAGE_CONFIG,
   STORAGE_TYPES,
@@ -38,18 +40,6 @@ function isAllowedContentType(type: StorageType, contentType: string): boolean {
   return allowed.some((allowedType) => normalized.startsWith(allowedType));
 }
 
-function toNodeReadableStream(
-  body: ReadableStream<Uint8Array> | NodeJS.ReadableStream | null,
-): NodeJS.ReadableStream {
-  if (!body) {
-    throw new Error("Response body is empty");
-  }
-  if (typeof (body as NodeJS.ReadableStream).pipe === "function") {
-    return body as NodeJS.ReadableStream;
-  }
-  return Readable.fromWeb(body as ReadableStream<Uint8Array>);
-}
-
 export class UploadService {
   private readonly storage: Storage;
   private readonly bucket;
@@ -57,6 +47,7 @@ export class UploadService {
   constructor(
     storage: Storage,
     bucketName: string = STORAGE_CONFIG.bucketName,
+    private readonly network: PublicNetworkDependencies = {},
   ) {
     this.storage = storage;
     this.bucket = this.storage.bucket(bucketName);
@@ -79,70 +70,52 @@ export class UploadService {
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+    let remote: RemoteMediaStream | undefined;
+    let destination: File | undefined;
+    let writeStarted = false;
+    let writeCompleted = false;
 
     try {
-      assertUrlSafe(sourceUrl, "sourceUrl");
-      const response = await fetch(sourceUrl, {
+      const typeKey = resolveStorageTypeKey(type);
+      remote = await openRemoteMedia({
+        sourceUrl,
+        fieldName: "sourceUrl",
+        allowedContentTypes: STORAGE_CONFIG.allowedContentTypes[typeKey],
+        maxBytes: STORAGE_CONFIG.maxFileSize[typeKey],
         signal: controller.signal,
-        redirect: "follow",
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch source: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const contentType = normalizeContentType(
-        response.headers.get("content-type") || "application/octet-stream",
-      );
-      if (!isAllowedContentType(type, contentType)) {
-        throw new Error(`Invalid content type: ${contentType}`);
-      }
-
-      const contentLengthHeader = response.headers.get("content-length");
-      const contentLength = contentLengthHeader
-        ? Number.parseInt(contentLengthHeader, 10)
-        : null;
-      const maxSize = STORAGE_CONFIG.maxFileSize[resolveStorageTypeKey(type)];
-      if (contentLength && contentLength > maxSize) {
-        throw new Error(
-          `File too large: ${contentLength} bytes (max: ${maxSize})`,
-        );
-      }
+      }, this.network);
+      const { contentType, contentLength } = remote;
 
       const extension = resolveExtension(contentType);
       const path = generateStoragePath(userId, type, extension);
       const file = this.bucket.file(path);
+      destination = file;
 
       const model =
         typeof metadata.model === "string" ? metadata.model : "unknown";
       const promptId =
         typeof metadata.promptId === "string" ? metadata.promptId : "";
 
-      await pipeline(
-        toNodeReadableStream(
-          response.body as ReadableStream<Uint8Array> | null,
-        ),
-        file.createWriteStream({
+      writeStarted = true;
+      await pipeline(remote.stream, file.createWriteStream({
+        metadata: {
+          contentType,
           metadata: {
-            contentType,
-            metadata: {
-              ...metadata,
-              userId,
-              type,
-              sourceUrl: sourceUrl.slice(0, 200),
-              model,
-              promptId,
-              createdAt: new Date().toISOString(),
-            },
+            ...metadata,
+            userId,
+            type,
+            sourceUrl: remote.sourceUrl.slice(0, 200),
+            model,
+            promptId,
+            createdAt: new Date().toISOString(),
           },
-          resumable: contentLength
-            ? contentLength > RESUMABLE_THRESHOLD_BYTES
-            : true,
-          preconditionOpts: PRECONDITION_OPTS,
-        }),
-      );
+        },
+        resumable: contentLength
+          ? contentLength > RESUMABLE_THRESHOLD_BYTES
+          : true,
+        preconditionOpts: PRECONDITION_OPTS,
+      }), { signal: controller.signal });
+      writeCompleted = true;
 
       const [fileMetadata] = await file.getMetadata();
 
@@ -152,7 +125,25 @@ export class UploadService {
         contentType: fileMetadata.contentType || contentType,
         createdAt: fileMetadata.timeCreated ?? new Date().toISOString(),
       };
+    } catch (error) {
+      remote?.cancel(error instanceof Error ? error : new Error(String(error)));
+      const code = typeof error === "object" && error !== null && "code" in error
+        ? error.code
+        : undefined;
+      // A create-only collision belongs to an earlier write; never delete it.
+      if (writeStarted && !writeCompleted && destination && code !== 412 && code !== "412") {
+        try {
+          await destination.delete({ ignoreNotFound: true });
+        } catch (cleanupError) {
+          throw new AggregateError(
+            [error, cleanupError],
+            "Remote upload failed and its partial object could not be removed",
+          );
+        }
+      }
+      throw error;
     } finally {
+      remote?.cancel();
       clearTimeout(timeout);
     }
   }

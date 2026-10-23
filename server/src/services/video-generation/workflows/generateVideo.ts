@@ -18,26 +18,40 @@ type LogSink = {
 };
 
 async function withWatchdog<T>(
-  operation: Promise<T>,
+  operation: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
+  callerSignal?: AbortSignal,
 ): Promise<T> {
-  let timer: NodeJS.Timeout | null = null;
+  const controller = new AbortController();
+  const forwardAbort = (): void => controller.abort(callerSignal?.reason);
+  if (callerSignal?.aborted) forwardAbort();
+  else callerSignal?.addEventListener("abort", forwardAbort, { once: true });
+  const timer = setTimeout(() => controller.abort(
+    new Error(`Video generation workflow timeout exceeded (${timeoutMs}ms)`),
+  ), timeoutMs);
+  timer.unref();
+  let rejectAborted: (() => void) | undefined;
   try {
+    controller.signal.throwIfAborted();
     return await new Promise<T>((resolve, reject) => {
-      timer = setTimeout(() => {
-        reject(
-          new Error(
-            `Video generation workflow timeout exceeded (${timeoutMs}ms)`,
-          ),
-        );
-      }, timeoutMs);
-
-      operation.then(resolve, reject);
+      rejectAborted = () => reject(controller.signal.reason);
+      controller.signal.addEventListener("abort", rejectAborted, { once: true });
+      void Promise.resolve().then(() => {
+        controller.signal.throwIfAborted();
+        return operation(controller.signal);
+      }).then(result => {
+        if (controller.signal.aborted) reject(controller.signal.reason);
+        else resolve(result);
+      }, reject);
     });
+  } catch (error) {
+    // A failed preparation may have sibling input reads in flight.
+    controller.abort(error);
+    throw error;
   } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
+    clearTimeout(timer);
+    callerSignal?.removeEventListener("abort", forwardAbort);
+    if (rejectAborted) controller.signal.removeEventListener("abort", rejectAborted);
   }
 }
 
@@ -47,7 +61,9 @@ export async function generateVideoWorkflow(
   providers: VideoProviderMap,
   assetStore: VideoAssetStore,
   log: LogSink,
+  signal?: AbortSignal,
 ): Promise<VideoGenerationResult> {
+  signal?.throwIfAborted();
   const workflowTimeoutMs = getWorkflowWatchdogTimeoutMs();
   const modelSelection =
     typeof options.model === "string" ? options.model.trim() : options.model;
@@ -90,8 +106,9 @@ export async function generateVideoWorkflow(
     }
     const { asset, seed, resolvedAspectRatio, providerCost } =
       await withWatchdog(
-        provider.generate(prompt, modelId, options, assetStore, log),
+        executionSignal => provider.generate(prompt, modelId, options, assetStore, log, executionSignal),
         workflowTimeoutMs,
+        signal,
       );
     return formatResult(
       asset,

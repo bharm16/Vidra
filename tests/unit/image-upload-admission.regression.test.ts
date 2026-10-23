@@ -1,4 +1,7 @@
 import { createOwnedPictureResolver } from "@services/owned-media";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,6 +13,7 @@ import type {
   AdmissionMediaStore,
 } from "@services/admission/admitPictureTake";
 import { runSupertestRequest } from "./test-helpers/supertestRequest";
+import { createDiskUpload } from "@utils/upload";
 
 /**
  * Uploading a first frame INSIDE a session admits it as a take — issue #86,
@@ -177,7 +181,7 @@ interface Harness {
   legacyStorage: ReturnType<typeof createLegacyStorage>;
 }
 
-function createHarness(userId: string = OWNER): Harness {
+function createHarness(userId: string = OWNER, uploadDirectory?: string): Harness {
   const store = createSessionStore();
   const mediaStore = createMediaStore();
   const legacyStorage = createLegacyStorage();
@@ -204,7 +208,7 @@ function createHarness(userId: string = OWNER): Harness {
     r.user = { uid: userId };
     // Stands in for multer: `readUploadBuffer` prefers `file.buffer`, so the
     // handler runs against real bytes without touching disk.
-    r.file = {
+    if (!uploadDirectory) r.file = {
       mimetype: "image/png",
       originalname: "frame.png",
       buffer: PNG,
@@ -212,6 +216,7 @@ function createHarness(userId: string = OWNER): Harness {
     next();
   });
   app.use(express.json());
+  if (uploadDirectory) app.use(createDiskUpload({ fileSizeBytes: 10 * 1024 * 1024, directory: uploadDirectory }).single("file"));
   app.post("/preview/upload", handler);
 
   return { app, store, mediaStore, legacyStorage };
@@ -229,6 +234,28 @@ function takesIn(harness: Harness, versionId: string) {
 describe("POST /preview/upload — first-frame admission (issue #86)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("admits a real multipart image with all six fields and near-limit metadata", async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vidra-admission-upload-test-"));
+    try {
+      const harness = createHarness(OWNER, directory);
+      const res = await request(harness.app).post("/preview/upload")
+        .field("source", "pending-first-frame")
+        .field("label", "My first frame")
+        .field("metadata", JSON.stringify({ expectedCreatorId: OWNER, note: "x".repeat(65_400) }))
+        .field("sessionId", SESSION_ID)
+        .field("promptVersionId", "v1")
+        .field("admissionKey", "multipart_admission")
+        .attach("file", PNG, "frame.png");
+      expect(res.status).toBe(201);
+      expect(res.body.data.attachment.state).toBe("attached");
+      expect(res.body.data.promptVersionId).toBe("v1");
+      expect(takesIn(harness, "v1")).toHaveLength(1);
+      expect(harness.mediaStore.calls).toBe(1);
+      expect(harness.legacyStorage.uploadBuffer).not.toHaveBeenCalled();
+      await vi.waitFor(async () => { expect(await fs.readdir(directory)).toEqual([]); });
+    } finally { await fs.rm(directory, { recursive: true, force: true }); }
   });
 
   it("admits an uploaded first frame as a picture take under the named words-version", async () => {

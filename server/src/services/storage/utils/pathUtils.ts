@@ -4,6 +4,7 @@ import {
   parseGcsObjectUrl,
 } from "@shared/utils/gcsObjectUrl";
 import type { StorageType } from "../config/storageConfig";
+import { assertNoLegacyApiKeyData, isLegacyApiKeyUid } from "@utils/apiKeyUser";
 
 const DEFAULT_EXTENSIONS: Record<StorageType, string> = {
   "preview-image": "webp",
@@ -24,6 +25,7 @@ export function generateStoragePath(
   type: StorageType,
   extension?: string | null,
 ): string {
+  assertNoLegacyApiKeyData(userId);
   const timestamp = Date.now();
   const hash = crypto.randomBytes(8).toString("hex");
   const resolvedExtension = (
@@ -43,6 +45,8 @@ export function storagePathForBasename(
   type: StorageType,
   basename: string,
 ): string {
+  assertNoLegacyApiKeyData(userId);
+  assertNoLegacyApiKeyData(basename);
   return `users/${userId}/${TYPE_SEGMENTS[type]}/${basename}`;
 }
 
@@ -69,7 +73,8 @@ export function extractUserIdFromPath(path: string): string | null {
 }
 
 export function validatePathOwnership(path: string, userId: string): boolean {
-  return extractUserIdFromPath(path) === userId;
+  const pathOwner = extractUserIdFromPath(path);
+  return !isLegacyApiKeyUid(userId) && pathOwner !== null && !isLegacyApiKeyUid(pathOwner) && pathOwner === userId;
 }
 
 export function getTypeFromPath(path: string): StorageType | null {

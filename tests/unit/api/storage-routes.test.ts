@@ -22,11 +22,12 @@ const { storageServiceMock } = vi.hoisted(() => {
 
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createStorageRoutes } from "@routes/storage.routes";
+import { apiKeyUid } from "@utils/apiKeyUser";
 
 import { useTestApiKey } from "../test-helpers/apiRouteHarness";
 
 const TEST_API_KEY = "integration-storage-key";
-const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
+const TEST_USER_ID = apiKeyUid(TEST_API_KEY);
 
 function createApp() {
   const app = express();

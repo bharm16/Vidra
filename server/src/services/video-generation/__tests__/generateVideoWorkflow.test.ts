@@ -112,6 +112,7 @@ describe("generateVideoWorkflow", () => {
       expect.objectContaining({ model: "google/veo-3" }),
       assetStore,
       log,
+      expect.any(AbortSignal),
     );
 
     expect(result).toMatchObject({
@@ -313,6 +314,7 @@ describe("generateVideoWorkflow", () => {
       );
       await vi.advanceTimersByTimeAsync(11_000);
       await assertion;
+      expect(vi.mocked(providers.gemini.generate).mock.calls[0]?.[5]?.aborted).toBe(true);
     } finally {
       // Restore defaults
       setTimeoutPolicyConfig({

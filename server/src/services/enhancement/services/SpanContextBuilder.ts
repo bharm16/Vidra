@@ -1,5 +1,6 @@
 import { getParentCategory } from "@shared/taxonomy";
 import { hashString } from "@utils/hash";
+import { SPAN_CONTEXT_LIMITS } from "@config/spanContextLimits";
 import type { LabeledSpan, NearbySpan } from "./types";
 
 export interface SpanContextInput {
@@ -29,6 +30,7 @@ export interface SpanContextResult {
  */
 export class SpanContextBuilder {
   buildSpanContext(input: SpanContextInput): SpanContextResult {
+    this._assertInputBounds(input);
     const {
       allLabeledSpans,
       nearbySpans,
@@ -44,14 +46,17 @@ export class SpanContextBuilder {
       getParentCategory(phraseRole) ||
       null;
 
-    const guidanceSpans = (allLabeledSpans || [])
+    // Dedupe before text searches and clause lookup. Keep insertion order and
+    // confidence/range distinctions so category ranking retains its semantics.
+    const uniqueSpans = this._dedupeSpans(allLabeledSpans || []);
+    const guidanceSpans = uniqueSpans
       .map((span) => ({
         category: span.category || span.role,
         text: span.text,
       }))
       .filter((span) => span.text && span.text.trim());
 
-    const anchorCandidates = (allLabeledSpans || [])
+    const anchorCandidates = uniqueSpans
       .map((span) => ({
         text: (span.text || "").replace(/\s+/g, " ").trim(),
         category: span.category || span.role || "unknown",
@@ -265,14 +270,60 @@ export class SpanContextBuilder {
       return null;
     }
 
-    for (let i = 0; i < clauses.length; i += 1) {
-      const clause = clauses[i];
-      if (!clause) continue;
-      if (spanRange.start >= clause.start && spanRange.start <= clause.end) {
-        return i;
-      }
+    // Ranges are sorted and inclusive. Delimiters and trimmed whitespace are
+    // gaps, so a start between clauses must still resolve to null.
+    let low = 0;
+    let high = clauses.length - 1;
+    while (low <= high) {
+      const middle = low + Math.floor((high - low) / 2);
+      const clause = clauses[middle];
+      if (!clause) return null;
+      if (spanRange.start < clause.start) high = middle - 1;
+      else if (spanRange.start > clause.end) low = middle + 1;
+      else return middle;
     }
 
     return null;
+  }
+
+  private _dedupeSpans(spans: LabeledSpan[]): LabeledSpan[] {
+    const seen = new Set<string>();
+    return spans.filter((span) => {
+      const key = JSON.stringify([
+        span.text.replace(/\s+/g, " ").trim(),
+        span.category || span.role,
+        span.confidence ?? 0,
+        span.start,
+        span.end,
+      ]);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  private _assertInputBounds(input: SpanContextInput): void {
+    if (input.fullPrompt.length > SPAN_CONTEXT_LIMITS.maxPromptLength ||
+        input.highlightedText.length > SPAN_CONTEXT_LIMITS.maxTextLength) {
+      throw new RangeError("Span context prompt exceeds the supported length");
+    }
+    for (const spans of [input.allLabeledSpans, input.nearbySpans]) {
+      if (spans.length > SPAN_CONTEXT_LIMITS.maxSpans) {
+        throw new RangeError(`Span context must not exceed ${SPAN_CONTEXT_LIMITS.maxSpans} spans per array`);
+      }
+      for (const span of spans) {
+        if (!span.text.trim() || span.text.length > SPAN_CONTEXT_LIMITS.maxTextLength ||
+            span.role.length > SPAN_CONTEXT_LIMITS.maxCategoryLength ||
+            (span.category?.length ?? 0) > SPAN_CONTEXT_LIMITS.maxCategoryLength) {
+          throw new RangeError("Span context text exceeds the supported bounds");
+        }
+        const { start, end } = span;
+        if (start === undefined && end === undefined) continue;
+        if (start === undefined || end === undefined || !Number.isInteger(start) ||
+            !Number.isInteger(end) || start < 0 || end <= start || end > input.fullPrompt.length) {
+          throw new RangeError("Span offsets must form a nonempty range within fullPrompt");
+        }
+      }
+    }
   }
 }

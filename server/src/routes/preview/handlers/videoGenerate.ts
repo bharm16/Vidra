@@ -2,6 +2,7 @@ import { validateGenerationDestination } from "./generationDestination";
 import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import type { Request, Response } from "express";
 import { isIP } from "node:net";
+import { isLegacyApiKeyUid } from "@utils/apiKeyUser";
 import { logger } from "@infrastructure/Logger";
 import { parseVideoRequest } from "@routes/preview/videoRequest";
 import { sendApiError } from "@middleware/apiErrorResponse";
@@ -21,6 +22,7 @@ export const createVideoGenerateHandler =
   ({
     videoGenerationService,
     videoJobStore,
+    legacyVideoSpendGuard,
     storageService,
     requestIdempotencyService,
     sessionService,
@@ -124,7 +126,7 @@ export const createVideoGenerateHandler =
     const requestId = (req as Request & { id?: string }).id;
     const rawMotionMeta = extractMotionMeta(generationParams);
 
-    if (!userId || userId === "anonymous" || isIP(userId) !== 0) {
+    if (!userId || userId === "anonymous" || isIP(userId) !== 0 || isLegacyApiKeyUid(userId)) {
       return sendApiError(res, req, 401, {
         error: "Authentication required",
         code: GENERATION_ERROR_CODES.AUTH_REQUIRED,
@@ -270,6 +272,7 @@ export const createVideoGenerateHandler =
       services: {
         videoGenerationService,
         videoJobStore,
+        legacyVideoSpendGuard,
         storageService,
         sessionService,
       },

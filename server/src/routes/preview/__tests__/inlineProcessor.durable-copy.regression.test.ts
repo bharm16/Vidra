@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 import type { CreditRefunder } from "@services/video-generation/refunds/ports";
 import type { JobStorageService } from "@services/video-generation/runtime/processVideoJob";
+import { scheduleInlineVideoProcessing } from "../inlineProcessor";
 
 /**
  * Pin for the paid-content durability invariant (owner directive: "a user
@@ -127,14 +128,12 @@ describe("regression: a paid render either lands durably or the job fails and re
   async function invokeProcessor(
     storageService: JobStorageService,
   ): Promise<void> {
-    const { scheduleInlineVideoProcessing } = await import(
-      "../inlineProcessor"
-    );
     scheduleInlineVideoProcessing({
       jobId: "job-1",
       requestId: "req-1",
       videoJobStore: jobStore as never,
       videoGenerationService: { generateVideo } as never,
+      providerSpendGuard: { authorize: async (job) => ({ options: job.request.options }) },
       userCreditService: userCreditService as never,
       storageService: storageService as never,
     });

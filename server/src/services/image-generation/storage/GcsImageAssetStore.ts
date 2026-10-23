@@ -10,6 +10,7 @@ import type { Bucket } from "@google-cloud/storage";
 import { logger } from "@infrastructure/Logger";
 import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { fetchRemoteMedia, ownerSegment } from "@services/owned-media";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 import type { ImageAssetStore, StoredImageAsset } from "./types";
 
 const IMAGE_CONTENT_TYPES = [
@@ -49,6 +50,7 @@ export class GcsImageAssetStore implements ImageAssetStore {
     userId: string,
     contentType?: string,
   ): Promise<StoredImageAsset> {
+    assertNoLegacyApiKeyData(sourceUrl);
     const id = uuidv4();
     const objectPath = this.objectPath(userId, id);
 

@@ -17,6 +17,16 @@ __tests__/
 .env.production
 .env.*
 
+# Local cloud identities must never enter an image or build context.
+gcs-service-account.json
+firebase-service-account.json
+**/gcs-service-account.json
+**/firebase-service-account.json
+**/*-firebase-adminsdk-*.json
+**/.secrets/
+**/*.pem
+**/*.key
+
 # IDE
 .vscode/
 .idea/

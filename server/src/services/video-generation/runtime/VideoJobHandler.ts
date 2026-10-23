@@ -8,8 +8,10 @@ import type { VideoGenerationService } from "../VideoGenerationService";
 import type { VideoJobStore } from "./VideoJobStore";
 import type { VideoJobRecord } from "./types";
 import { processVideoJob, type JobSessionAppendPort } from "./processVideoJob";
+import type { LegacyVideoDispatchSpendPort } from "./LegacyVideoSpendGuard";
 
 interface VideoJobHandlerOptions {
+  providerSpendGuard?: LegacyVideoDispatchSpendPort;
   /**
    * ISSUE-12: when provided, processVideoJob calls
    * sessionService.appendGenerationToVersion after markCompleted succeeds,
@@ -46,6 +48,7 @@ export class VideoJobHandler implements JobHandler<VideoJobRecord> {
       jobStore: this.jobStore,
       videoGenerationService: this.videoGenerationService as never,
       storageService: this.storageService,
+      providerSpendGuard: this.options.providerSpendGuard,
       userCreditService: this.userCreditService,
       workerId: ctx.workerId,
       leaseMs: ctx.leaseMs,

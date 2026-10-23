@@ -1,6 +1,7 @@
 import type Replicate from "replicate";
 import type { VideoGenerationOptions, VideoModelId } from "../types";
 import { resolveImageInput, summarizeInputForLog } from "./imagePreprocessing";
+import { runCancellableVideoPrediction } from "./replicateVideoPrediction";
 
 type LogSink = {
   info: (message: string, meta?: Record<string, unknown>) => void;
@@ -260,7 +261,9 @@ export async function generateReplicateVideo(
   modelId: VideoModelId,
   options: VideoGenerationOptions,
   log: LogSink,
+  signal?: AbortSignal,
 ): Promise<{ url: string; seed?: number }> {
+  signal?.throwIfAborted();
   const resolvedModelId = resolveWanModelForI2V(
     modelId,
     Boolean(options.startImage),
@@ -271,13 +274,15 @@ export async function generateReplicateVideo(
     options,
   );
   if (typeof input.image === "string") {
-    input.image = await resolveImageInput(input.image, log, "startImage");
+    input.image = await resolveImageInput(input.image, log, "startImage", {}, signal);
   }
   if (typeof input.style_reference === "string") {
     input.style_reference = await resolveImageInput(
       input.style_reference,
       log,
       "style_reference",
+      {},
+      signal,
     );
   }
 
@@ -288,10 +293,11 @@ export async function generateReplicateVideo(
     isI2V: Boolean(options.startImage),
   });
 
-  const output = (await replicate.run(
-    resolvedModelId as `${string}/${string}`,
-    { input },
-  )) as unknown;
+  signal?.throwIfAborted();
+  const output = signal
+    ? await runCancellableVideoPrediction(replicate, resolvedModelId, input, signal, log)
+    : await replicate.run(resolvedModelId as `${string}/${string}`, { input });
+  signal?.throwIfAborted();
 
   log.info("replicate.run finished", {
     outputType: typeof output,

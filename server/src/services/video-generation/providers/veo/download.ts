@@ -3,14 +3,18 @@ import type { ReadableStream } from "node:stream/web";
 export async function downloadVeoVideoStream(
   apiKey: string,
   videoUri: string,
+  signal?: AbortSignal,
 ): Promise<{ stream: ReadableStream<Uint8Array>; contentType: string }> {
+  signal?.throwIfAborted();
   const response = await fetch(videoUri, {
     method: "GET",
     headers: {
       "x-goog-api-key": apiKey,
     },
     redirect: "follow",
+    ...(signal ? { signal } : {}),
   });
+  signal?.throwIfAborted();
 
   if (!response.ok) {
     const text = await response.text();

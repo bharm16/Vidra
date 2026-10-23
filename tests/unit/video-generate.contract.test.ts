@@ -12,6 +12,10 @@ import { SessionService } from "@services/sessions/SessionService";
 import { InMemorySessionStore } from "./test-helpers/inMemoryStores";
 import type { SessionRecord } from "@services/sessions/types";
 import type { PreviewRoutesServices } from "@routes/types";
+import { LegacyVideoSpendGuard, LegacyVideoSpendRefusedError } from "@services/video-generation/runtime/LegacyVideoSpendGuard";
+import { WorkflowPreflightError } from "@services/creation-requests/execution/types";
+import { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
+import { workflowRuntimeProfiles } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
 
 // The only module double is Firebase Admin, a process-external boundary. The
 // real HTTP handler, idempotency adapter, job adapter and session service run.
@@ -37,6 +41,7 @@ interface Ref {
   path: string;
   get: () => Promise<Snapshot>;
   set: (data: Data, options?: { merge: boolean }) => Promise<void>;
+  collection: (name: string) => { doc: (id?: string) => Ref };
 }
 interface Snapshot {
   exists: boolean;
@@ -46,6 +51,7 @@ interface Transaction {
   get: (ref: Ref) => Promise<Snapshot>;
   set: (ref: Ref, data: Data, options?: { merge: boolean }) => void;
   update: (ref: Ref, data: Data) => void;
+  create: (ref: Ref, data: Data) => void;
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -73,6 +79,7 @@ class MemoryFirestore {
       set: async (data, options): Promise<void> => {
         this.write(path, data, options?.merge ?? false);
       },
+      collection: (name) => this.collection(`${path}/${name}`),
     };
   }
   private snapshot(path: string): Snapshot {
@@ -106,6 +113,10 @@ class MemoryFirestore {
         update: (ref, data): void => {
           writes.push({ ref, data, merge: true });
         },
+        create: (ref, data): void => {
+          if (this.docs.has(ref.path)) throw new Error("Document exists");
+          writes.push({ ref, data, merge: false });
+        },
       });
       const publishesJob = writes.some(
         (write) =>
@@ -138,11 +149,11 @@ class MemoryFirestore {
   }
   jobs(): Data[] {
     return [...this.docs]
-      .filter(([path]) => path.startsWith("video_jobs/"))
+      .filter(([path]) => path.startsWith("video_jobs/") && path.split("/").length === 2)
       .map(([, data]) => data);
   }
 }
-const MODEL = "google/veo-3";
+const MODEL = "wan-video/wan-2.2-t2v-fast";
 const OWNER = "creator-a";
 const KEY = "free-intake-1";
 let scheduled: Array<() => void>;
@@ -200,7 +211,12 @@ async function harness(): Promise<{
     status: "completed",
     inputMode: "t2v",
   }));
+  const providerSpendAuthority = new StudioWorkflowSpendGuard(db as never, { dailyCapCents: 500 }, () => Date.parse("2026-10-20T00:00:00.000Z"));
   const services = {
+    legacyVideoSpendGuard: new LegacyVideoSpendGuard(db as never, { reserve: async (transaction, input) => {
+      try { return await providerSpendAuthority.reserveProviderSpendInTransaction(transaction, input); }
+      catch (error) { if (error instanceof WorkflowPreflightError) throw new LegacyVideoSpendRefusedError(error.message); throw error; }
+    } }, workflowRuntimeProfiles()),
     videoJobStore: jobs,
     requestIdempotencyService: receipts,
     userCreditService: credits as never,
@@ -286,6 +302,7 @@ describe("free generation HTTP intake (#124, ADR-0023)", () => {
       imageGenerationService: h.services.imageGenerationService,
       videoGenerationService: h.services.videoGenerationService,
       videoJobStore: h.jobs,
+      legacyVideoSpendGuard: h.services.legacyVideoSpendGuard,
       requestIdempotencyService: h.receipts,
       userCreditService: { ...h.credits, ensureStarterGrant },
       sessionService: h.services.sessionService,
@@ -367,6 +384,22 @@ describe("free generation HTTP intake (#124, ADR-0023)", () => {
     expect(h.generateVideo).toHaveBeenCalledTimes(1);
     expect(h.credits.reserveCredits).not.toHaveBeenCalled();
     expect(h.credits.refundCredits).not.toHaveBeenCalled();
+  });
+  it("fresh legacy keys cannot dispatch past the same exhausted Studio allowance", async () => {
+    const h = await harness();
+    const day = new Date().toISOString().slice(0, 10);
+    db.docs.set(`studio_usage/${OWNER}_${day}`, { userId: OWNER, day, reservedCents: 500 });
+    for (const [index, key] of ["exhausted-first", "exhausted-fresh"].entries()) {
+      const accepted = await clip(h.app, {}, OWNER, key);
+      expect(accepted.status).toBe(202);
+      scheduled[index]!();
+      await expect.poll(async () => (await h.jobs.getJob(accepted.body.jobId))?.status).toBe("failed");
+      expect((await clip(h.app, {}, OWNER, key)).body).toEqual(accepted.body);
+    }
+    expect(h.generateVideo).not.toHaveBeenCalled();
+    expect(h.credits.reserveCredits).not.toHaveBeenCalled();
+    expect(h.credits.refundCredits).not.toHaveBeenCalled();
+    expect(db.docs.get(`studio_usage/${OWNER}_${day}`)?.reservedCents).toBe(500);
   });
   it("keeps terminal provider failure bookkeeping for free jobs without issuing a refund", async () => {
     const h = await harness();
