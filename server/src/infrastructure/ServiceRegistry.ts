@@ -24,6 +24,7 @@ import type { PromptOptimizationService } from "@services/prompt-optimization/Pr
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
 import type { VideoJobWorker } from "@services/video-generation/runtime/VideoJobWorker";
+import type { LegacyVideoSpendGuard } from "@services/video-generation/runtime/LegacyVideoSpendGuard";
 import type { VideoWorkerHeartbeatStore } from "@services/video-generation/runtime/VideoWorkerHeartbeatStore";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
@@ -61,6 +62,7 @@ export interface ServiceRegistry {
   // Generation (nullable — resolves to null when provider creds are absent)
   imageGenerationService: ImageGenerationService | null;
   videoGenerationService: VideoGenerationService | null;
+  legacyVideoSpendGuard: LegacyVideoSpendGuard;
 
   // Credits / billing
   legacyCreditRefunder: LegacyCreditRefundService;

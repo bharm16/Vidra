@@ -33,8 +33,10 @@ export class ReplicateVideoProvider implements VideoProvider {
     options: VideoGenerationOptions,
     assetStore: VideoAssetStore,
     log: VideoProviderLog,
+    signal?: AbortSignal,
   ): Promise<VideoGenerateResult> {
     if (!this.replicate) missingCredential(this.id);
+    signal?.throwIfAborted();
 
     const { url, seed } = await generateReplicateVideo(
       this.replicate,
@@ -42,8 +44,10 @@ export class ReplicateVideoProvider implements VideoProvider {
       modelId,
       options,
       log,
+      signal,
     );
-    const asset = await storeVideoFromUrl(assetStore, url, log);
+    signal?.throwIfAborted();
+    const asset = await storeVideoFromUrl(assetStore, url, log, signal);
     return { asset, ...(seed !== undefined ? { seed } : {}) };
   }
 }

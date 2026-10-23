@@ -218,6 +218,16 @@ describe("errorHandler", () => {
   });
 
   describe("sensitive data redaction", () => {
+    it.each(["retired-test-secret", `v1:${"a".repeat(64)}`])("does not log a legacy-identity denial's body, query or path", async credential => {
+      const { logger } = await import("@infrastructure/Logger");
+      const error = Object.assign(new Error("This media is unavailable."), createDomainError("AUTH_REQUIRED", 403, "This media is unavailable."), { name: "LegacyApiKeyIdentityError" });
+      const req = Object.assign(createMockRequest({ method: "POST", path: `/api/storage/api-key:${credential}`, body: { storagePath: `users/api-key:${credential}/generations/clip.mp4` } }), { query: { path: `users/api-key:${credential}/generations/clip.mp4` } });
+      const res = createMockResponse();
+      errorHandler(error, req, res, mockNext);
+      expect(res.statusCode).toBe(403);
+      expect(JSON.stringify([vi.mocked(logger.warn).mock.calls, vi.mocked(logger.error).mock.calls, res.responseBody])).not.toContain(credential);
+      expect(vi.mocked(logger.warn).mock.calls[0]?.[1]).not.toHaveProperty("bodyPreview");
+    });
     it("omits sketch bytes and working words from failure logs", async () => {
       const { logger } = await import("@infrastructure/Logger");
       const body = { outputDataUri: "data:picture/private-output", drawingDataUri: "data:picture/private-drawing", prompt: "private short prompt", instructions: "private working words" };

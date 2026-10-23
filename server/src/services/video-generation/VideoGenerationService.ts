@@ -42,6 +42,7 @@ export class VideoGenerationService {
   async generateVideo(
     prompt: string,
     options: VideoGenerationOptions = {},
+    signal?: AbortSignal,
   ): Promise<VideoGenerationResult> {
     return await generateVideoWorkflow(
       prompt,
@@ -49,6 +50,7 @@ export class VideoGenerationService {
       this.providers,
       this.assetStore,
       this.log,
+      signal,
     );
   }
 

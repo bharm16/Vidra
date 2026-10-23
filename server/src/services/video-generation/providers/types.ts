@@ -96,6 +96,8 @@ export interface VideoProvider {
     options: VideoGenerationOptions,
     assetStore: VideoAssetStore,
     log: VideoProviderLog,
+    /** Transient execution context; never part of persisted model options. */
+    signal?: AbortSignal,
   ): Promise<VideoGenerateResult>;
 }
 

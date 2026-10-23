@@ -96,6 +96,7 @@ describe("generateVeoVideo", () => {
       "key",
       { prompt: "a prompt" },
       "veo-3.1-generate-preview",
+      undefined,
     );
     expect(result).toEqual(asset);
   });
@@ -124,6 +125,8 @@ describe("generateVeoVideo", () => {
     expect(fetchAsVeoInlineMock).toHaveBeenCalledWith(
       "https://images.example.com/start.png",
       "image",
+      {},
+      undefined,
     );
     const input = startVeoGenerationMock.mock
       .calls[0]?.[2] as VeoGenerationInput;
@@ -154,6 +157,8 @@ describe("generateVeoVideo", () => {
     expect(fetchAsVeoInlineMock).toHaveBeenCalledWith(
       "https://images.example.com/end.png",
       "image",
+      {},
+      undefined,
     );
     const input = startVeoGenerationMock.mock
       .calls[0]?.[2] as VeoGenerationInput;
@@ -190,11 +195,15 @@ describe("generateVeoVideo", () => {
       1,
       "https://images.example.com/ref-1.png",
       "image",
+      {},
+      undefined,
     );
     expect(fetchAsVeoInlineMock).toHaveBeenNthCalledWith(
       2,
       "https://images.example.com/ref-2.jpg",
       "image",
+      {},
+      undefined,
     );
     const input = startVeoGenerationMock.mock
       .calls[0]?.[2] as VeoGenerationInput;
@@ -228,6 +237,8 @@ describe("generateVeoVideo", () => {
     expect(fetchAsVeoInlineMock).toHaveBeenCalledWith(
       "https://videos.example.com/input.mp4",
       "video",
+      {},
+      undefined,
     );
     const input = startVeoGenerationMock.mock
       .calls[0]?.[2] as VeoGenerationInput;

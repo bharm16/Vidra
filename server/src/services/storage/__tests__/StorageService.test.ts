@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { StorageService } from "../StorageService";
+import { apiKeyUid } from "@utils/apiKeyUser";
+
+const logs = vi.hoisted(() => ({ debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() }));
+vi.mock("@infrastructure/Logger", () => ({ logger: { ...logs, child: () => logs } }));
 
 const buildStorageService = () => {
   const mockBucket = {
@@ -74,6 +78,21 @@ const buildStorageService = () => {
 describe("StorageService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("returns an upload identity without the raw API key in paths or log inputs", async () => {
+    const { service } = buildStorageService();
+    const credential = "configured-test-secret";
+    const result = await service.getUploadUrl(apiKeyUid(credential), "preview-video", "video/mp4");
+    expect(result.storagePath).toContain(apiKeyUid(credential));
+    expect(JSON.stringify({ result, logs: [logs.debug.mock.calls, logs.info.mock.calls] })).not.toContain(credential);
+  });
+
+  it.each(["users/api-key:retired-test-secret/generations/clip.mp4", `users/api-key:v1:${"a".repeat(64)}/generations/clip.mp4`, "users/api-key-v1:not-a-principal/generations/clip.mp4"])("rejects unsafe API-key metadata before logging or accessing storage", async path => {
+    const { service, mockUploadService } = buildStorageService();
+    await expect(service.confirmUpload("owner", path)).rejects.toMatchObject({ code: "AUTH_REQUIRED" });
+    expect(mockUploadService.confirmUpload).not.toHaveBeenCalled();
+    expect(JSON.stringify([logs.debug.mock.calls, logs.info.mock.calls, logs.error.mock.calls])).not.toContain(path);
   });
 
   it("returns upload URL for valid type and content type", async () => {

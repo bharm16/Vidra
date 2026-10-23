@@ -1,6 +1,7 @@
 import { STORAGE_CONFIG } from "../config/storageConfig";
 import { logger } from "@infrastructure/Logger";
 import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 
 type SuccessLogLevel = "debug" | "info";
 
@@ -53,6 +54,7 @@ export class SignedUrlService {
     uploadUrl: string;
     expiresAt: string;
   }> {
+    assertNoLegacyApiKeyData(path);
     return this.withTiming(
       "getUploadUrl",
       { path, contentType, maxSizeBytes: maxSize ?? null },
@@ -75,6 +77,7 @@ export class SignedUrlService {
     viewUrl: string;
     expiresAt: string;
   }> {
+    assertNoLegacyApiKeyData(path);
     return this.withTiming("getViewUrl", { path, disposition }, async () => {
       const grant = await this.minter.mintRead(path, {
         ttlMs: STORAGE_CONFIG.urlExpiration.view,
@@ -92,6 +95,7 @@ export class SignedUrlService {
     path: string,
     disposition = "inline",
   ): Promise<{ viewUrl: string; expiresAt: string } | null> {
+    assertNoLegacyApiKeyData(path);
     return this.withTiming(
       "getViewUrlIfPresent",
       { path, disposition },
@@ -114,6 +118,7 @@ export class SignedUrlService {
     downloadUrl: string;
     expiresAt: string;
   }> {
+    assertNoLegacyApiKeyData(path);
     return this.withTiming(
       "getDownloadUrl",
       { path, hasFilename: Boolean(filename) },

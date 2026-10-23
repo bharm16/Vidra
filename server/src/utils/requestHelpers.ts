@@ -5,46 +5,30 @@
  */
 
 import type { Request } from "express";
+import { isLegacyApiKeyUid } from "./apiKeyUser";
 
 /**
  * Extract userId from request
- * Checks multiple sources in order of priority:
- * 1. Firebase auth user (req.user.uid)
- * 2. API key (req.apiKey)
- * 3. Request body userId (for backward compatibility)
- * 4. Falls back to 'anonymous'
+ * Uses only the identity established by authentication. Unverified request
+ * fields and credentials must never become log or persistence identities.
  *
  * @param req - Express request object
  * @returns userId string
  */
 export function extractUserId(req: Request): string {
-  const reqWithAuth = req as Request & {
-    user?: { uid?: string };
-    apiKey?: string;
-    body?: { userId?: string };
-  };
-
-  return (
-    reqWithAuth.user?.uid ||
-    reqWithAuth.apiKey ||
-    reqWithAuth.body?.userId ||
-    "anonymous"
-  );
+  return extractFirebaseUid(req) ?? "anonymous";
 }
 
 /**
- * Extract the authenticated Firebase uid, or null when the request is
- * unauthenticated.
- *
- * Unlike extractUserId, this does NOT fall back to API key, request-body
- * userId, or "anonymous" — handlers that must reject unauthenticated callers
- * (e.g. preview generation/asset access) depend on the null to do so. The cast
- * bridges Express's untyped Request to the shape the Firebase auth middleware
- * attaches; centralising it keeps that unsafe cast in one place.
+ * Extract the authenticated uid, including a nonsecret API-key principal, or
+ * null when no safe identity was established. Handlers that reject anonymous
+ * callers depend on null rather than extractUserId's log label. No credential
+ * or request-body field can supply a fallback identity.
  *
  * @param req - Express request object
- * @returns Firebase uid string, or null if unauthenticated
+ * @returns Authenticated uid, or null if unauthenticated
  */
 export function extractFirebaseUid(req: Request): string | null {
-  return (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
+  const uid = (req as Request & { user?: { uid?: string } }).user?.uid;
+  return uid && !isLegacyApiKeyUid(uid) ? uid : null;
 }

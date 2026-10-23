@@ -1,3 +1,5 @@
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
+
 /**
  * The single answer to "which path segment identifies this object's owner?".
  *
@@ -16,6 +18,7 @@
  * already allows, so calling this on an already-normalised segment is safe.
  */
 export function ownerSegment(userId: string | null | undefined): string {
+  assertNoLegacyApiKeyData(userId ?? "");
   const normalized = (userId ?? "").trim().replace(/[^a-zA-Z0-9._:@-]/g, "_");
   if (!normalized) {
     throw new Error("Media owner is required");

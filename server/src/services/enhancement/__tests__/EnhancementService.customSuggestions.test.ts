@@ -75,10 +75,14 @@ function createService(responses: string[] = []) {
       JSON.stringify(params),
   );
 
+  const entries = new Map<string, unknown>();
   const cacheService = {
     getConfig: vi.fn(() => ({ ttl: 60, namespace: "enhancement" })),
-    get: vi.fn(async () => null),
-    set: vi.fn(async () => true),
+    get: vi.fn(async (key: string) => entries.get(key) ?? null),
+    set: vi.fn(async (key: string, value: unknown) => {
+      entries.set(key, value);
+      return true;
+    }),
     generateKey: generateKeySpy,
   } as unknown as CacheService;
 
@@ -96,6 +100,7 @@ function createService(responses: string[] = []) {
     execute,
     filterOriginalEchoesSpy,
     generateKeySpy,
+    cacheService,
   };
 }
 
@@ -183,5 +188,59 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
     expect(rescuePrompt).toContain("RESCUE PASS:");
     expect(rescuePrompt).toContain("custom request");
     expect(result.suggestions.length).toBeGreaterThan(1);
+  });
+
+  const privateRequest = {
+    ownerId: "owner-a",
+    highlightedText: "the dress",
+    customRequest: "make this more cinematic",
+    fullPrompt: `A woman walks in the dress. ${"A".repeat(650)} private tail A`,
+    contextBefore: "A woman walks in ",
+    contextAfter: ".",
+    metadata: { spanId: "same-span", constraints: { privateNote: "A" } },
+  };
+  const modelResult = llmJson([
+    { text: "long flowing scarlet gown", category: "subject.appearance" },
+    { text: "tailored navy peacoat", category: "subject.appearance" },
+    { text: "weathered leather duster", category: "subject.appearance" },
+    { text: "minimalist linen tunic", category: "subject.appearance" },
+  ]);
+
+  it("reuses identical same-owner custom requests with opaque cache keys", async () => {
+    const { service, execute, cacheService } = createService([modelResult]);
+    const first = await service.getCustomSuggestions(privateRequest);
+    expect(await service.getCustomSuggestions({ ...privateRequest })).toBe(first);
+    expect(execute).toHaveBeenCalledTimes(1);
+    const key = vi.mocked(cacheService.set).mock.calls[0]?.[0];
+    expect(key).toMatch(/^enhancement:private-v3:[a-f0-9]{64}$/);
+    expect(key).not.toContain("owner-a");
+    expect(key).not.toContain("private tail");
+  });
+
+  it.each([
+    { ownerId: "owner-b" },
+    { fullPrompt: `A woman walks in the dress. ${"A".repeat(650)} private tail B` },
+    { metadata: { spanId: "same-span", constraints: { privateNote: "B" } } },
+    { contextBefore: "A woman waits in " },
+    { contextAfter: " at dusk." },
+    { customRequest: "make this historically accurate" },
+    { customRequest: "MAKE THIS MORE CINEMATIC" },
+  ])("separates complete private custom inputs: %j", async (change) => {
+    const { service, execute, cacheService } = createService([modelResult]);
+    const first = await service.getCustomSuggestions(privateRequest);
+    const second = await service.getCustomSuggestions({ ...privateRequest, ...change });
+    expect(second).not.toBe(first);
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(new Set(vi.mocked(cacheService.set).mock.calls.map(([key]) => key)).size).toBe(2);
+  });
+
+  it("bypasses cache for custom callers without a verified owner", async () => {
+    const { service, execute, cacheService } = createService([modelResult]);
+    const { ownerId: _ownerId, ...request } = privateRequest;
+    await service.getCustomSuggestions(request);
+    await service.getCustomSuggestions(request);
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(cacheService.get).not.toHaveBeenCalled();
+    expect(cacheService.set).not.toHaveBeenCalled();
   });
 });

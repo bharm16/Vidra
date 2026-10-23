@@ -1,5 +1,6 @@
 import type { Bucket, File, GetSignedUrlConfig } from "@google-cloud/storage";
 import type { SignedUrlLedger } from "./SignedUrlLedger";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 
 /**
  * Every signed URL this server issues is a v4 URL.
@@ -67,6 +68,7 @@ export class SignedUrlMinter {
     objectPath: string,
     options: ReadGrantOptions,
   ): Promise<SignedUrlGrant> {
+    assertNoLegacyApiKeyData(objectPath);
     return this.signRead(this.bucket.file(objectPath), objectPath, options);
   }
 
@@ -79,6 +81,7 @@ export class SignedUrlMinter {
     objectPath: string,
     options: ReadGrantOptions,
   ): Promise<SignedUrlGrant | null> {
+    assertNoLegacyApiKeyData(objectPath);
     const file = this.bucket.file(objectPath);
     const [exists] = await file.exists();
     if (!exists) {
@@ -91,6 +94,7 @@ export class SignedUrlMinter {
     objectPath: string,
     options: WriteGrantOptions,
   ): Promise<SignedUrlGrant> {
+    assertNoLegacyApiKeyData(objectPath);
     const expiresAtMs = Date.now() + options.ttlMs;
     const extensionHeaders: Record<string, string> = {
       "x-goog-if-generation-match": "0",

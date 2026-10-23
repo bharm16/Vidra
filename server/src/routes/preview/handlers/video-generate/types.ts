@@ -7,6 +7,7 @@ export type VideoGenerateServices = Pick<
   PreviewRoutesServices,
   | "videoGenerationService"
   | "videoJobStore"
+  | "legacyVideoSpendGuard"
   | "userCreditService"
   | "storageService"
   | "requestIdempotencyService"

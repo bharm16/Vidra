@@ -66,6 +66,12 @@ const states = (store: ReturnType<typeof createStore>): string[] =>
   store.setAttachment.mock.calls.map((call) => call[1].state);
 
 describe("resumePendingAttachments", () => {
+  it("skips historical raw-key owners before attachment or owner/path logging", async () => {
+    const store = createStore([pendingJob({ userId: "api-key:retired-secret-fixture" })]);
+    const appendGenerationToVersion = vi.fn(async () => undefined);
+    expect(await resumePendingAttachments({ jobStore: store as never, sessionService: { appendGenerationToVersion } })).toEqual({ scanned: 1, attached: 0, failed: 0 });
+    expect(appendGenerationToVersion).not.toHaveBeenCalled(); expect(store.setAttachment).not.toHaveBeenCalled();
+  });
   it("re-sends the exact record the dead worker owed, under the same take identity", async () => {
     const store = createStore([pendingJob()]);
     const appendGenerationToVersion = vi.fn(async () => undefined);

@@ -163,6 +163,7 @@ describe("scheduleInlineVideoProcessing", () => {
       requestId: overrides?.requestId ?? "req-1",
       videoJobStore: jobStore as never,
       videoGenerationService: { generateVideo } as never,
+      providerSpendGuard: { authorize: async (job) => ({ options: job.request.options }) },
       userCreditService: userCreditService as never,
       storageService:
         overrides?.storage !== undefined
@@ -368,6 +369,7 @@ describe("scheduleInlineVideoProcessing", () => {
       requestId: "req-1",
       videoJobStore: jobStore as never,
       videoGenerationService: { generateVideo } as never,
+      providerSpendGuard: { authorize: async (job) => ({ options: job.request.options }) },
       userCreditService: userCreditService as never,
       storageService: storageService as never,
     });

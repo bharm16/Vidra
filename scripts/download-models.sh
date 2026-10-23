@@ -32,6 +32,7 @@ if [[ "${MODEL_SOURCE_URI}" != gs://* ]]; then
   exit 1
 fi
 
+mkdir -p "$(dirname "${MODEL_DIR}")"
 TMP_DIR="$(mktemp -d "${MODEL_DIR%/}.tmp.XXXXXX")"
 cleanup() {
   rm -rf "${TMP_DIR}"
@@ -58,17 +59,20 @@ download_with_gcloud() {
 download_with_node_sdk() {
   echo "Downloading span-labeling models via @google-cloud/storage from ${MODEL_SOURCE_URI} ..."
 
-  MODEL_SOURCE_URI="${MODEL_SOURCE_URI}" DEST_DIR="${TMP_DIR}" node --input-type=module <<'NODE'
+  MODEL_SOURCE_URI="${MODEL_SOURCE_URI}" DEST_DIR="${TMP_DIR}" MODEL_SCRIPT_DIR="${SCRIPT_DIR}" node --import tsx --input-type=module <<'NODE'
 import { Storage } from '@google-cloud/storage';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const sourceUri = process.env.MODEL_SOURCE_URI;
 const destinationDir = process.env.DEST_DIR;
+const scriptDirectory = process.env.MODEL_SCRIPT_DIR;
 
-if (!sourceUri || !destinationDir) {
-  throw new Error('MODEL_SOURCE_URI and DEST_DIR are required');
+if (!sourceUri || !destinationDir || !scriptDirectory) {
+  throw new Error('MODEL_SOURCE_URI, DEST_DIR and MODEL_SCRIPT_DIR are required');
 }
+const { modelDownloadPath } = await import(pathToFileURL(path.join(scriptDirectory, 'lib/modelDownloadPath.ts')).href);
 
 const match = /^gs:\/\/([^/]+)\/?(.*)$/.exec(sourceUri);
 if (!match) {
@@ -89,6 +93,8 @@ const objects = files.filter((file) => file.name !== prefix && !file.name.endsWi
 if (objects.length === 0) {
   throw new Error(`No model files found at ${sourceUri}`);
 }
+// Validate the complete list before creating directories or downloading bytes.
+const targets = objects.map(file => ({ file, destination: modelDownloadPath(destinationDir, file.name, prefix) }));
 
 const concurrency = 4;
 let index = 0;
@@ -97,11 +103,9 @@ const worker = async () => {
   while (true) {
     const current = index;
     index += 1;
-    if (current >= objects.length) break;
+    if (current >= targets.length) break;
 
-    const file = objects[current];
-    const relativePath = prefix ? file.name.slice(prefix.length) : file.name;
-    const destinationPath = path.join(destinationDir, relativePath);
+    const { file, destination: destinationPath } = targets[current];
 
     await fs.mkdir(path.dirname(destinationPath), { recursive: true });
     await file.download({ destination: destinationPath });

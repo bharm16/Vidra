@@ -2,11 +2,10 @@ import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
 import type { CacheService } from "@services/cache/CacheService";
-import { sha256Hex } from "@utils/hash";
 import { TemperatureOptimizer } from "@utils/TemperatureOptimizer";
 import { EnhancementMetricsService } from "./services/EnhancementMetricsService";
 import { detectPlaceholder } from "./services/placeholderDetection";
-import { CacheKeyFactory } from "./utils/CacheKeyFactory";
+import { privateCacheKey } from "./utils/privateCacheKey";
 import { PROMPT_MODES } from "./constants";
 import { SpanContextBuilder } from "./services/SpanContextBuilder";
 import { EnhancementV2Engine } from "./v2/index.js";
@@ -105,9 +104,10 @@ export class EnhancementService {
    * Get enhancement suggestions for highlighted text
    */
   async getEnhancementSuggestions({
+    ownerId,
     highlightedText,
-    contextBefore,
-    contextAfter,
+    contextBefore = "",
+    contextAfter = "",
     fullPrompt,
     originalUserPrompt,
     brainstormContext,
@@ -188,35 +188,49 @@ export class EnhancementService {
           editHistory,
         ) || undefined;
 
-      const cacheStart = Date.now();
-      const cacheKey = CacheKeyFactory.generateKey(
-        `${this.cacheConfig.namespace}:v2`,
-        {
-          engineVersion: "v2",
-          highlightedText,
-          contextBefore,
-          contextAfter,
-          fullPrompt,
-          originalUserPrompt,
-          isVideoPrompt,
-          brainstormSignature,
-          highlightedCategory: highlightedCategory ?? null,
-          highlightWordCount,
-          phraseRole,
-          videoConstraints,
-          editHistory,
-          modelTarget,
-          promptSection,
-          policyVersion: this.enhancementConfig.policyVersion,
-          spanFingerprint: spanContext.spanFingerprint,
-        },
-        this.cacheService,
+      const isPlaceholder = detectPlaceholder(
+        highlightedText,
+        contextBefore,
+        contextAfter,
+        fullPrompt,
       );
+      const temperature = this._getEnhancementTemperature();
+      const v2Context: EnhancementV2RequestContext = {
+        highlightedText,
+        contextBefore,
+        contextAfter,
+        fullPrompt,
+        originalUserPrompt: originalUserPrompt ?? fullPrompt,
+        brainstormContext: brainstormContext ?? null,
+        highlightedCategory: highlightedCategory ?? null,
+        highlightedCategoryConfidence: highlightedCategoryConfidence ?? null,
+        isPlaceholder,
+        isVideoPrompt,
+        phraseRole,
+        highlightWordCount,
+        videoConstraints,
+        modelTarget,
+        promptSection,
+        spanAnchors: spanContext.spanAnchors,
+        nearbySpanHints: spanContext.nearbySpanHints,
+        lockedSpanCategories: spanContext.lockedSpanCategories,
+        ...(focusGuidance !== undefined ? { focusGuidance } : {}),
+        debug,
+      };
 
-      const cached = await this.cacheService.get<EnhancementResult>(
-        cacheKey,
-        "enhancement",
-      );
+      const cacheStart = Date.now();
+      const cacheKey = privateCacheKey(this.cacheConfig.namespace, ownerId, {
+        engineVersion: "v2",
+        mode: "ordinary",
+        policyVersion: this.enhancementConfig.policyVersion,
+        context: v2Context,
+        editHistory,
+        brainstormSignature,
+        spanFingerprint: spanContext.spanFingerprint,
+      });
+      const cached = cacheKey
+        ? await this.cacheService.get<EnhancementResult>(cacheKey, "enhancement")
+        : null;
       metrics.cacheCheck = Date.now() - cacheStart;
 
       if (cached && !debug) {
@@ -246,13 +260,6 @@ export class EnhancementService {
         });
       }
 
-      const isPlaceholder = detectPlaceholder(
-        highlightedText,
-        contextBefore,
-        contextAfter,
-        fullPrompt,
-      );
-      const temperature = this._getEnhancementTemperature();
       let result: EnhancementResult;
       let rawSuggestionsSnapshot: Suggestion[] = [];
       let finalSuggestionsSnapshot: Suggestion[] = [];
@@ -270,28 +277,7 @@ export class EnhancementService {
 
       const postStart = Date.now();
 
-      const execution = await this._executeEnhancementV2({
-        highlightedText,
-        contextBefore,
-        contextAfter,
-        fullPrompt,
-        originalUserPrompt,
-        brainstormContext: brainstormContext ?? null,
-        highlightedCategory: highlightedCategory ?? null,
-        highlightedCategoryConfidence: highlightedCategoryConfidence ?? null,
-        isPlaceholder,
-        isVideoPrompt,
-        phraseRole,
-        highlightWordCount,
-        videoConstraints,
-        modelTarget,
-        promptSection,
-        spanAnchors: spanContext.spanAnchors,
-        nearbySpanHints: spanContext.nearbySpanHints,
-        lockedSpanCategories: spanContext.lockedSpanCategories,
-        ...(focusGuidance !== undefined ? { focusGuidance } : {}),
-        debug,
-      });
+      const execution = await this._executeEnhancementV2(v2Context);
 
       result = execution.result;
       // Snapshot clones feed the `_debug` payload below — only needed when
@@ -320,9 +306,11 @@ export class EnhancementService {
       // Clients should use this for cache invalidation instead of computing their own.
       result.spanFingerprint = spanContext.spanFingerprint;
 
-      await this.cacheService.set(cacheKey, result, {
-        ttl: this.cacheConfig.ttl,
-      });
+      if (cacheKey) {
+        await this.cacheService.set(cacheKey, result, {
+          ttl: this.cacheConfig.ttl,
+        });
+      }
 
       metrics.total = Date.now() - startTotal;
       metrics.promptMode = PROMPT_MODES.ENHANCEMENT;
@@ -414,6 +402,7 @@ export class EnhancementService {
    * survive scoring.
    */
   async getCustomSuggestions({
+    ownerId,
     highlightedText,
     customRequest,
     fullPrompt,
@@ -432,38 +421,6 @@ export class EnhancementService {
       hasContextAfter: Boolean(contextAfter?.trim()),
       hasMetadata: Boolean(metadata && Object.keys(metadata).length > 0),
     });
-
-    // Check cache. Hash full inputs instead of substring-truncating — the
-    // previous truncation (fullPrompt to 500, contexts to 200) caused silent
-    // collisions for prompts that diverged past those positions and produced
-    // wrong cached suggestions.
-    const cacheKey = this.cacheService.generateKey(this.cacheConfig.namespace, {
-      engineVersion: "v2",
-      mode: "custom",
-      policyVersion: this.enhancementConfig.policyVersion,
-      highlightedText,
-      customRequest,
-      fullPromptHash: sha256Hex(fullPrompt, 16),
-      contextBeforeHash: contextBefore ? sha256Hex(contextBefore, 16) : null,
-      contextAfterHash: contextAfter ? sha256Hex(contextAfter, 16) : null,
-      spanId:
-        (metadata as { spanId?: string } | null)?.spanId ??
-        (metadata as { span?: { id?: string } } | null)?.span?.id ??
-        null,
-    });
-
-    const cached = await this.cacheService.get<{ suggestions: Suggestion[] }>(
-      cacheKey,
-      "enhancement",
-    );
-    if (cached) {
-      this.log.debug("Cache hit for custom suggestions", {
-        operation,
-        duration: Math.round(performance.now() - startTime),
-        suggestionCount: cached.suggestions?.length || 0,
-      });
-      return cached;
-    }
 
     const isVideoPrompt =
       this.core.videoPromptService.isVideoPrompt(fullPrompt);
@@ -494,13 +451,36 @@ export class EnhancementService {
       customMetadata: metadata ?? null,
     };
 
+    const cacheKey = privateCacheKey(this.cacheConfig.namespace, ownerId, {
+      engineVersion: "v2",
+      mode: "custom",
+      policyVersion: this.enhancementConfig.policyVersion,
+      context: v2Context,
+    });
+    const cached = cacheKey
+      ? await this.cacheService.get<{ suggestions: Suggestion[] }>(
+          cacheKey,
+          "enhancement",
+        )
+      : null;
+    if (cached) {
+      this.log.debug("Cache hit for custom suggestions", {
+        operation,
+        duration: Math.round(performance.now() - startTime),
+        suggestionCount: cached.suggestions?.length || 0,
+      });
+      return cached;
+    }
+
     const execution = await this.pipeline.enhancementV2.execute(v2Context);
     const suggestions = execution.finalSuggestions;
     const result = { suggestions };
 
-    await this.cacheService.set(cacheKey, result, {
-      ttl: this.cacheConfig.ttl,
-    });
+    if (cacheKey) {
+      await this.cacheService.set(cacheKey, result, {
+        ttl: this.cacheConfig.ttl,
+      });
+    }
 
     this.log.info("Operation completed.", {
       operation,

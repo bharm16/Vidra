@@ -29,6 +29,7 @@ export function registerPreviewRoutes(
     imageGenerationService: container.resolve("imageGenerationService"),
     videoGenerationService,
     videoJobStore: container.resolve("videoJobStore"),
+    legacyVideoSpendGuard: resolveOptionalService<PreviewRoutesServices["legacyVideoSpendGuard"]>(container, "legacyVideoSpendGuard", "preview") ?? null,
     videoContentAccessService: container.resolve("videoContentAccessService"),
     storageService: container.resolve("storageService"),
     requestIdempotencyService: container.resolve("requestIdempotencyService"),

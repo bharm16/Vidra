@@ -24,6 +24,7 @@ import {
   validatePathOwnership,
 } from "./utils/pathUtils";
 import { createForbiddenError } from "./utils/httpError";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 
 function normalizeContentType(value: string): string {
   const [primary] = value.split(";");
@@ -91,6 +92,9 @@ export class StorageService {
     fn: () => Promise<T>,
     successLevel: SuccessLogLevel = "info",
   ): Promise<T> {
+    for (const value of Object.values(meta)) {
+      if (typeof value === "string") assertNoLegacyApiKeyData(value);
+    }
     const startTime = Date.now();
     this.log.debug("Storage operation started", { operation, ...meta });
 

@@ -9,6 +9,9 @@ import {
 } from "vitest";
 import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { GcsImageAssetStore } from "../GcsImageAssetStore";
+import { Readable } from "node:stream";
+import * as networkBoundary from "@services/owned-media/PublicNetworkTransport";
+import { logger } from "@infrastructure/Logger";
 
 vi.mock("uuid", () => ({
   v4: vi.fn(() => "test-id"),
@@ -59,9 +62,26 @@ describe("GcsImageAssetStore", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   describe("error handling", () => {
+    it("refuses historical credential-bearing sources before URL logging, reads or writes", async () => {
+      const logged = vi.spyOn(logger, "debug");
+      const network = vi.spyOn(networkBoundary, "requestPublicMedia").mockRejectedValue(new Error("No network request is permitted"));
+      const store = new GcsImageAssetStore({
+        bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
+        basePath: "image-previews",
+        signedUrlTtlMs: 60000,
+        cacheControl: "private",
+      });
+      await expect(store.storeFromUrl("https://storage.googleapis.com/bucket/users/api-key:retired-key-fixture/input.png", "creator")).rejects.toThrow("This media is unavailable");
+      expect(logged).not.toHaveBeenCalled();
+      expect(network).not.toHaveBeenCalled();
+      expect(fileMock.save).not.toHaveBeenCalled();
+    });
+
     it("keeps sketch snapshot identification in object metadata for the dry-run inventory", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
@@ -97,12 +117,12 @@ describe("GcsImageAssetStore", () => {
         cacheControl: "public, max-age=60",
       });
 
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: false,
+      vi.spyOn(networkBoundary, "requestPublicMedia").mockResolvedValue({
         status: 404,
         statusText: "Not Found",
+        headers: new Headers(),
+        body: Readable.from([]),
       });
-      vi.stubGlobal("fetch", fetchMock);
 
       await expect(
         store.storeFromUrl("https://example.com/missing.webp", "user-1"),
@@ -170,18 +190,12 @@ describe("GcsImageAssetStore", () => {
       });
 
       const buffer = Buffer.from("image");
-      const arrayBuffer = buffer.buffer.slice(
-        buffer.byteOffset,
-        buffer.byteOffset + buffer.byteLength,
-      );
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
+      vi.spyOn(networkBoundary, "requestPublicMedia").mockResolvedValue({
         status: 200,
         statusText: "OK",
-        arrayBuffer: () => Promise.resolve(arrayBuffer),
-        headers: { get: vi.fn().mockReturnValue("image/png") },
+        body: Readable.from([buffer]),
+        headers: new Headers({ "content-type": "image/png" }),
       });
-      vi.stubGlobal("fetch", fetchMock);
 
       fileMock.getMetadata.mockResolvedValueOnce([{ size: "1024" }]);
       fileMock.getSignedUrl.mockResolvedValueOnce([

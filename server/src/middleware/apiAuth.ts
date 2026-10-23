@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
-import { API_KEY_UID_PREFIX } from "@utils/apiKeyUser";
+import { apiKeyUid, assertNoLegacyApiKeyData, isLegacyApiKeyUid } from "@utils/apiKeyUser";
 
 /**
  * API Key Authentication Middleware
@@ -49,6 +49,10 @@ export async function apiAuthMiddleware(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
+  // Credentials are transport input only, never request identity metadata.
+  delete req.apiKey;
+  let requestPath = req.path;
+  try { assertNoLegacyApiKeyData(requestPath); } catch { requestPath = "[REDACTED]"; }
   const headerApiKey = normalizeHeaderValue(req.headers["x-api-key"]);
   const authBearer = extractBearerToken(req.headers.authorization);
   const apiKeyCandidate = headerApiKey || authBearer;
@@ -58,7 +62,7 @@ export async function apiAuthMiddleware(
       "API key passed via query parameter (rejected — use X-API-Key header instead)",
       {
         ip: req.ip,
-        path: req.path,
+        path: requestPath,
         method: req.method,
         requestId: req.id,
       },
@@ -73,23 +77,23 @@ export async function apiAuthMiddleware(
   if (firebaseToken) {
     try {
       const decoded = await getAuth().verifyIdToken(firebaseToken);
+      if (isLegacyApiKeyUid(decoded.uid)) throw new Error("Legacy identity refused");
       req.user = { uid: decoded.uid };
       logger.info("API request authenticated via Firebase token", {
         ip: req.ip,
-        path: req.path,
+        path: requestPath,
         method: req.method,
         requestId: req.id,
         userId: decoded.uid,
       });
       next();
       return;
-    } catch (error) {
+    } catch {
       logger.warn("Invalid Firebase token", {
         ip: req.ip,
-        path: req.path,
+        path: requestPath,
         method: req.method,
         requestId: req.id,
-        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -110,13 +114,12 @@ export async function apiAuthMiddleware(
   if (apiKeyCandidate && allowedKeys.includes(apiKeyCandidate)) {
     logger.info("API request authenticated via API key", {
       ip: req.ip,
-      path: req.path,
+      path: requestPath,
       method: req.method,
       requestId: req.id,
     });
 
-    req.apiKey = apiKeyCandidate;
-    req.user = { uid: `${API_KEY_UID_PREFIX}${apiKeyCandidate}` };
+    req.user = { uid: apiKeyUid(apiKeyCandidate) };
     next();
     return;
   }
@@ -124,7 +127,7 @@ export async function apiAuthMiddleware(
   if (!apiKeyCandidate && !firebaseToken) {
     logger.warn("API request without authentication", {
       ip: req.ip,
-      path: req.path,
+      path: requestPath,
       method: req.method,
       requestId: req.id,
     });
@@ -139,7 +142,7 @@ export async function apiAuthMiddleware(
 
   logger.warn("Authentication failed", {
     ip: req.ip,
-    path: req.path,
+    path: requestPath,
     method: req.method,
     requestId: req.id,
   });

@@ -12,6 +12,7 @@ import type { RequestIdempotencyService } from "@services/admission/idempotency/
 import type { SessionService } from "@services/sessions/SessionService";
 import type { AdmissionMediaStore } from "@services/admission/admitPictureTake";
 import type { OwedTakeAttachmentStore } from "@services/sessions/attachTakeWithOwedTracking";
+import type { LegacyVideoDispatchSpendPort } from "@services/video-generation/runtime/LegacyVideoSpendGuard";
 
 export interface PreviewStorageService {
   saveFromUrl: (
@@ -81,6 +82,7 @@ export interface PreviewRoutesServices {
   imageGenerationService: ImageGenerationService | null;
   videoGenerationService: VideoGenerationService | null;
   videoJobStore?: VideoJobStore | null;
+  legacyVideoSpendGuard?: LegacyVideoDispatchSpendPort | null;
   videoContentAccessService?: VideoContentAccessService | null;
   userCreditService?: CreditRefunder | null;
   storageService?: PreviewStorageService | null;

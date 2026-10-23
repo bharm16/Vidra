@@ -15,6 +15,14 @@ Packages are deep modules: read [packages/README.md](packages/README.md) before 
 - Each text operation's model is chosen in `server/src/config/modelConfig.ts`; environment variables carry keys and timeouts, never model choices. Evaluate a candidate by pinning it in an eval run, then change the code.
 - Client feature `api/` modules validate wire responses with Zod and transform when UI shapes differ. Fetch calls stay out of components. UI-only types belong to the feature.
 
+## Security boundaries
+
+- API keys authenticate a versioned nonsecret principal; credentials never become owner IDs. Refuse historical raw-key identities before logging, encoding, signing or dispatch, without automatically aliasing their records to a new owner.
+- Public media grants require authoritative media ownership, independent of client-writable session records. Legacy share rows without issuer/resource proof fail closed; owners can create a new share.
+- Fetch untrusted media through the owned-media transport, which pins validated public DNS addresses, checks every redirect, limits actual streamed bytes and propagates cancellation. A hostname-string check or `Content-Length` alone is insufficient.
+- Every native provider dispatch needs a permanent reservation against the shared daily spending authority. Legacy jobs qualify only for reviewed model/settings envelopes; unsupported settings fail closed. Customer credits remain separate from provider cost.
+- Private text-result caches require authenticated owner scope and all effective generation inputs. Bound synchronous parser work and multipart fields, parts and total bytes; every temporary file needs cleanup on all exits.
+
 ## Current scope and behavior
 
 Authoring, span labeling, suggestions, optimization, supplied reference admission, free pictures/clips and Sketch in `/app` remain active. Studio and the standalone Live editor retired into `/app` ([ADR-0027](docs/adr/0027-studio-and-the-live-editor-retire-into-app.md)); Studio records stay readable. Generic sessions, words/take ancestry, authentication, durable media grants, receipts, leases and attachment recovery support the loop.

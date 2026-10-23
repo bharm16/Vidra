@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { isApiKeyUid } from "@utils/apiKeyUser";
 import type { SessionRecord } from "@server/domain/session/types";
 import type { SessionGenerationRecord } from "@shared/types/session";
 import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
@@ -771,7 +772,7 @@ describe.skipIf(!runAgainstEmulator)(
           // The owner is the verified Firebase identity — NOT an api-key
           // principal. `verifyIdToken` produced this uid.
           expect(dto.userId).toBe(creatorA.uid);
-          expect(dto.userId.startsWith("api-key:")).toBe(false);
+          expect(isApiKeyUid(dto.userId)).toBe(false);
           expect(takeIdsOf(dto)).toHaveLength(1);
 
           // The owner can still write: a rename lands.
@@ -873,7 +874,7 @@ describe.skipIf(!runAgainstEmulator)(
       });
       expect(impostor.status).toBe(403);
 
-      // The allowed key IS the bypass: its principal is `api-key:<key>`, a
+      // The allowed key authenticates a nonsecret API-key principal in a
       // different identity space from a verified Firebase uid.
       const created = await harness.post(
         "/api/sessions",
@@ -883,7 +884,7 @@ describe.skipIf(!runAgainstEmulator)(
       expect(created.status).toBe(200);
       const dto = created.json.data as SessionDtoJson;
       expect(dto.userId).toBe(REAL_ADAPTER_USER_ID);
-      expect(dto.userId.startsWith("api-key:")).toBe(true);
+      expect(isApiKeyUid(dto.userId)).toBe(true);
     });
 
     it("nothing left the process for the whole suite", () => {

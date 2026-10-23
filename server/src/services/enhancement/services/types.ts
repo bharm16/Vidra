@@ -494,6 +494,8 @@ export interface CategoryAligner {
  * Enhancement request parameters
  */
 export interface EnhancementRequestParams {
+  /** Verified intake identity; omitted by legacy callers to disable caching. */
+  ownerId?: string;
   highlightedText: string;
   contextBefore: string;
   contextAfter: string;
@@ -513,6 +515,8 @@ export interface EnhancementRequestParams {
  * Custom suggestion request parameters
  */
 export interface CustomSuggestionRequestParams {
+  /** Verified intake identity; omitted by legacy callers to disable caching. */
+  ownerId?: string;
   highlightedText: string;
   customRequest: string;
   fullPrompt: string;

@@ -1,5 +1,6 @@
 import { logger } from "@infrastructure/Logger";
 import { DEFAULT_VIDEO_JOB_LEASE_SECONDS } from "@config/env";
+import { isLegacyApiKeyUid } from "@utils/apiKeyUser";
 import type { PreviewRoutesServices } from "@routes/types";
 import type { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
 import {
@@ -22,6 +23,7 @@ interface InlineVideoProcessorParams {
    * what ShareService.mint and the space's picture→clip edge read.
    */
   sessionService?: JobSessionAppendPort | null;
+  providerSpendGuard?: PreviewRoutesServices["legacyVideoSpendGuard"];
 }
 
 function getVideoJobLeaseMs(): number {
@@ -44,6 +46,7 @@ export function scheduleInlineVideoProcessing({
   userCreditService,
   storageService,
   sessionService,
+  providerSpendGuard,
 }: InlineVideoProcessorParams): void {
   const leaseMs = getVideoJobLeaseMs();
   const workerId = `inline-preview-${requestId || Date.now()}`;
@@ -58,6 +61,7 @@ export function scheduleInlineVideoProcessing({
         });
         return;
       }
+      if (isLegacyApiKeyUid(claimed.userId)) return;
 
       logger.info("Inline preview job claimed", {
         jobId,
@@ -69,6 +73,7 @@ export function scheduleInlineVideoProcessing({
         jobStore: videoJobStore,
         videoGenerationService: videoGenerationService as never,
         storageService: storageService ?? null,
+        ...(providerSpendGuard ? { providerSpendGuard } : {}),
         ...(userCreditService ? { userCreditService } : {}),
         ...(sessionService ? { sessionService } : {}),
         workerId,

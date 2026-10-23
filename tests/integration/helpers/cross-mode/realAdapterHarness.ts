@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
+import { apiKeyUid } from "@utils/apiKeyUser";
 import { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import type {
   SketchBudgetStore,
@@ -47,8 +48,8 @@ import { installOutboundGuard, type OutboundGuard } from "./outboundGuard";
 
 /** The replay API-key bypass principal this harness authenticates as. */
 export const REAL_ADAPTER_API_KEY = "real-adapter-replay-key";
-/** apiAuth mints `api-key:<key>` as the principal (see @utils/apiKeyUser). */
-export const REAL_ADAPTER_USER_ID = `api-key:${REAL_ADAPTER_API_KEY}`;
+/** The nonsecret principal minted by apiAuth (see @utils/apiKeyUser). */
+export const REAL_ADAPTER_USER_ID = apiKeyUid(REAL_ADAPTER_API_KEY);
 
 /** The signed-URL host the production minter emits for the controlled bucket. */
 export const GCS_URL_HOST = "storage.googleapis.com";

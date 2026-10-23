@@ -4,6 +4,20 @@ import type { ILogger } from "@interfaces/ILogger";
 import type { CacheService } from "@services/cache/CacheService";
 import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
 import { TemperatureOptimizer } from "@utils/TemperatureOptimizer";
+import { privateCacheKey } from "../utils/privateCacheKey";
+
+interface SceneChangeParams {
+  ownerId?: string;
+  changedField: string;
+  newValue: string;
+  oldValue?: string | null;
+  fullPrompt: string;
+  // The HTTP contract is a field/value record; retain array support for
+  // existing in-process callers. Both forms are model-visible cache inputs.
+  affectedFields?: Record<string, unknown> | string[];
+  sectionHeading?: string | null;
+  sectionContext?: string | null;
+}
 
 /**
  * Scene change detection result
@@ -39,15 +53,7 @@ export class SceneChangeDetectionService {
   /**
    * Detect if a field change represents a scene change
    */
-  async detectSceneChange(params: {
-    changedField: string;
-    newValue: string;
-    oldValue?: string | null;
-    fullPrompt: string;
-    affectedFields: string[];
-    sectionHeading?: string | null;
-    sectionContext?: string | null;
-  }): Promise<SceneChangeResult> {
+  async detectSceneChange(params: SceneChangeParams): Promise<SceneChangeResult> {
     const startTime = performance.now();
     const operation = "detectSceneChange";
 
@@ -56,22 +62,19 @@ export class SceneChangeDetectionService {
       changedField: params.changedField,
       hasOldValue: !!params.oldValue,
       hasNewValue: !!params.newValue,
-      affectedFieldCount: params.affectedFields.length,
+      affectedFieldCount: Object.keys(params.affectedFields ?? {}).length,
     });
 
-    // Check cache
-    const cacheKey = this.cacheService.generateKey(this.cacheConfig.namespace, {
-      changedField: params.changedField,
-      newValue: params.newValue,
-      oldValue: params.oldValue,
-      fullPrompt: params.fullPrompt.substring(0, 500),
-      sectionHeading: params.sectionHeading,
+    // Hash the complete effective prompt, including section and field values.
+    const systemPrompt = this.buildSystemPrompt(params);
+    const cacheKey = privateCacheKey(this.cacheConfig.namespace, params.ownerId, {
+      operation: "video_scene_change_detection",
+      systemPrompt,
     });
 
-    const cached = await this.cacheService.get<SceneChangeResult>(
-      cacheKey,
-      "scene-detection",
-    );
+    const cached = cacheKey
+      ? await this.cacheService.get<SceneChangeResult>(cacheKey, "scene-detection")
+      : null;
     if (cached) {
       this.log.debug("Cache hit.", {
         operation,
@@ -80,9 +83,6 @@ export class SceneChangeDetectionService {
       });
       return cached;
     }
-
-    // Build system prompt
-    const systemPrompt = this.buildSystemPrompt(params);
 
     // Define schema for validation
     const schema: { type: "object" | "array"; required?: string[] } = {
@@ -119,9 +119,11 @@ export class SceneChangeDetectionService {
     )) as SceneChangeResult;
 
     // Cache the result
-    await this.cacheService.set(cacheKey, result, {
-      ttl: this.cacheConfig.ttl,
-    });
+    if (cacheKey) {
+      await this.cacheService.set(cacheKey, result, {
+        ttl: this.cacheConfig.ttl,
+      });
+    }
 
     this.log.info("Operation completed.", {
       operation,
@@ -137,15 +139,8 @@ export class SceneChangeDetectionService {
   /**
    * Build system prompt for scene detection
    */
-  private buildSystemPrompt(params: {
-    changedField: string;
-    newValue: string;
-    oldValue?: string | null;
-    fullPrompt: string;
-    affectedFields: string[];
-    sectionHeading?: string | null;
-    sectionContext?: string | null;
-  }): string {
+  private buildSystemPrompt(params: SceneChangeParams): string {
+    const affectedFields = JSON.stringify(params.affectedFields ?? {}, null, 2);
     return `You are an expert video production assistant with deep understanding of scene coherence and environmental compatibility.
 
 <analysis_process>
@@ -163,7 +158,7 @@ Step 2: Evaluate environmental compatibility
 - Example: "coffee shop" → "underwater cave" (incompatible scene change)
 
 Step 3: Analyze impact on related fields
-- Review affected fields: ${JSON.stringify(params.affectedFields, null, 2)}
+- Review affected fields: ${affectedFields}
 - For each field, would current values still make sense?
 - Which fields would become nonsensical or incompatible?
 
@@ -190,7 +185,7 @@ ${params.sectionContext ? params.sectionContext.substring(0, 1500) : "Not provid
 ${params.fullPrompt.substring(0, 1500)}
 
 **Potentially Affected Fields:**
-${JSON.stringify(params.affectedFields, null, 2)}
+${affectedFields}
 
 **Your Task:**
 Determine if this represents a COMPLETE SCENE/ENVIRONMENT CHANGE requiring updates to related fields.

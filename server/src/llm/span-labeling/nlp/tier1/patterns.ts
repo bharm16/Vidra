@@ -87,7 +87,10 @@ const PATTERN_DEFINITIONS: Array<{
   },
   {
     role: "camera.focus",
-    regex: /\bf\s*\/\s*\d+(?:\.\d+)?\s*-\s*f?\s*\/?\s*\d+(?:\.\d+)?\b/gi,
+    // Each optional second-number prefix starts with a literal. Keeping the
+    // slash-present and slash-absent forms separate prevents several \s*
+    // groups from repartitioning one failed whitespace run.
+    regex: /\bf\s*\/\s*\d+(?:\.\d+)?\s*-\s*(?:f\s*\/\s*|f\s*|\/\s*)?\d+(?:\.\d+)?\b/gi,
     confidence: 0.9,
   },
   {

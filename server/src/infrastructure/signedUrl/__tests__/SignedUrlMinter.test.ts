@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SignedUrlMinter } from "../SignedUrlMinter";
 import { SignedUrlLedger } from "../SignedUrlLedger";
 import { createFakeBucket, SIGNATURE } from "./fakeGcsSigning";
+import { apiKeyUid } from "@utils/apiKeyUser";
 
 const OBJECT_PATH = "users/u1/previews/images/1785598164559-abc.webp";
 
@@ -23,6 +24,23 @@ const settle = async (): Promise<void> => {
 };
 
 describe("SignedUrlMinter", () => {
+  it("refuses key-bearing legacy paths before issuing any read or write grant", async () => {
+    const bucket = createFakeBucket();
+    const minter = new SignedUrlMinter(bucket as never);
+    for (const path of ["users/api-key:retired-test-secret/generations/clip.mp4", "image-previews/api-key:retired-test-secret/image.webp", `users/api-key:v1:${"a".repeat(64)}/generations/clip.mp4`, "users/api-key-v1:not-a-principal/generations/clip.mp4"]) {
+      await expect(minter.mintRead(path, { ttlMs: 60_000 })).rejects.toMatchObject({ code: "AUTH_REQUIRED" });
+      await expect(minter.mintReadIfPresent(path, { ttlMs: 60_000 })).rejects.toMatchObject({ code: "AUTH_REQUIRED" });
+      await expect(minter.mintWrite(path, { ttlMs: 60_000, contentType: "video/mp4" })).rejects.toMatchObject({ code: "AUTH_REQUIRED" });
+      expect(bucket.file(path).getSignedUrl).not.toHaveBeenCalled();
+    }
+  });
+
+  it("signs nonsecret API-key owner paths without embedding the credential", async () => {
+    const credential = "configured-test-secret";
+    const minter = new SignedUrlMinter(createFakeBucket() as never);
+    const grant = await minter.mintRead(`users/${apiKeyUid(credential)}/generations/clip.mp4`, { ttlMs: 60_000 });
+    expect(decodeURIComponent(grant.url)).not.toContain(credential);
+  });
   it("signs v4 rather than taking the SDK's v2 default", async () => {
     const bucket = createFakeBucket();
     const minter = new SignedUrlMinter(bucket as never);

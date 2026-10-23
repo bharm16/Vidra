@@ -39,8 +39,10 @@ export class VeoVideoProvider implements VideoProvider {
     options: VideoGenerationOptions,
     assetStore: VideoAssetStore,
     log: VideoProviderLog,
+    signal?: AbortSignal,
   ): Promise<VideoGenerateResult> {
     if (!this.apiKey) missingCredential(this.id);
+    signal?.throwIfAborted();
 
     const asset = await generateVeoVideo(
       this.apiKey,
@@ -49,6 +51,7 @@ export class VeoVideoProvider implements VideoProvider {
       options,
       assetStore,
       log,
+      signal,
     );
     return { asset };
   }

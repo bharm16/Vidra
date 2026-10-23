@@ -31,6 +31,14 @@ export function registerNlpTestRoute(router: Router): void {
           .json({ error: "prompt query parameter is required" });
       }
 
+      // Keep diagnostic extraction available, under the ordinary prompt limit.
+      // Preserve the original text so reported character offsets stay exact.
+      if (promptValue.length > 10_000) {
+        return res.status(400).json({
+          error: "prompt must not exceed 10,000 characters",
+        });
+      }
+
       try {
         const result = await extractSemanticSpans(promptValue);
 

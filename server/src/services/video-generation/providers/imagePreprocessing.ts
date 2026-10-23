@@ -1,5 +1,7 @@
 import { Blob as NodeBlob } from "node:buffer";
-import { assertUrlSafe } from "@server/shared/urlValidation";
+import { fetchRemoteMedia } from "@services/owned-media/RemoteMediaFetcher";
+import type { PublicNetworkDependencies } from "@services/owned-media/PublicNetworkTransport";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 
 type LogSink = {
   info: (message: string, meta?: Record<string, unknown>) => void;
@@ -18,6 +20,8 @@ export const SUPPORTED_IMAGE_MIME_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
+
+export const MAX_REPLICATE_IMAGE_BYTES = 20 * 1024 * 1024;
 
 export const isBlobLike = (value: unknown): value is Blob =>
   (typeof Blob !== "undefined" && value instanceof Blob) ||
@@ -79,10 +83,14 @@ export async function resolveImageInput(
   imageUrl: string,
   log: LogSink,
   fieldName: "startImage" | "style_reference",
+  network: PublicNetworkDependencies = {},
+  signal?: AbortSignal,
 ): Promise<string | Blob> {
+  signal?.throwIfAborted();
   if (imageUrl.startsWith("data:")) {
     return imageUrl;
   }
+  assertNoLegacyApiKeyData(imageUrl);
 
   const extension = getUrlExtension(imageUrl);
   if (extension && SUPPORTED_IMAGE_EXTENSIONS.has(extension)) {
@@ -94,25 +102,16 @@ export async function resolveImageInput(
     hasExtension: Boolean(extension),
   });
 
-  assertUrlSafe(imageUrl, fieldName);
-  const response = await fetch(imageUrl, { redirect: "follow" });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${fieldName} (${response.status})`);
-  }
-
-  const contentType = normalizeContentType(
-    response.headers.get("content-type"),
-  );
-  if (!SUPPORTED_IMAGE_MIME_TYPES.has(contentType)) {
-    throw new Error(
-      `Unsupported ${fieldName} format '${contentType || "unknown"}'. Supported formats: .jpg, .jpeg, .png, .webp`,
-    );
-  }
-
-  const buffer = await response.arrayBuffer();
+  const { buffer, contentType } = await fetchRemoteMedia({
+    sourceUrl: imageUrl,
+    fieldName,
+    allowedContentTypes: [...SUPPORTED_IMAGE_MIME_TYPES],
+    maxBytes: MAX_REPLICATE_IMAGE_BYTES,
+    ...(signal ? { signal } : {}),
+  }, network);
   const BlobCtor =
     typeof globalThis.Blob === "function"
       ? globalThis.Blob
       : (NodeBlob as unknown as typeof Blob);
-  return new BlobCtor([buffer], { type: contentType });
+  return new BlobCtor([new Uint8Array(buffer)], { type: contentType });
 }

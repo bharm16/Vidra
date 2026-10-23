@@ -1,4 +1,5 @@
-import { sleep, pollingDelay } from "@utils/sleep";
+import { pollingDelay } from "@utils/sleep";
+import { setTimeout as sleep } from "node:timers/promises";
 import { veoFetch } from "./httpClient";
 import {
   VEO_OPERATION_SCHEMA,
@@ -31,7 +32,9 @@ export async function startVeoGeneration(
   apiKey: string,
   input: VeoGenerationInput,
   modelId: string,
+  signal?: AbortSignal,
 ): Promise<string> {
+  signal?.throwIfAborted();
   const instance: Record<string, unknown> = { prompt: input.prompt };
   if (input.startImage) {
     instance.image = input.startImage;
@@ -84,8 +87,10 @@ export async function startVeoGeneration(
     {
       method: "POST",
       body: JSON.stringify(body),
+      ...(signal ? { signal } : {}),
     },
   );
+  signal?.throwIfAborted();
 
   return VEO_START_RESPONSE_SCHEMA.parse(json).name;
 }
@@ -94,15 +99,18 @@ export async function waitForVeoOperation(
   baseUrl: string,
   apiKey: string,
   operationName: string,
-  options: { pollIntervalMs: number; timeoutMs: number },
+  options: { pollIntervalMs: number; timeoutMs: number; signal?: AbortSignal },
 ): Promise<VeoOperation> {
   const start = Date.now();
   const cleanedName = operationName.replace(/^\/+/, "");
 
   while (true) {
+    options.signal?.throwIfAborted();
     const json = await veoFetch(baseUrl, apiKey, `/${cleanedName}`, {
       method: "GET",
+      ...(options.signal ? { signal: options.signal } : {}),
     });
+    options.signal?.throwIfAborted();
     const parsed = VEO_OPERATION_SCHEMA.parse(json);
 
     if (parsed.done) {
@@ -119,7 +127,7 @@ export async function waitForVeoOperation(
       throw new Error(`Timed out waiting for Veo operation ${operationName}`);
     }
 
-    await sleep(pollingDelay(options.pollIntervalMs, elapsed));
+    await sleep(pollingDelay(options.pollIntervalMs, elapsed), undefined, options.signal ? { signal: options.signal } : {});
   }
 }
 

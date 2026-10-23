@@ -118,85 +118,94 @@ export const createImageUploadHandler =
       }>
     >,
   ): Promise<Response | void> => {
-    const userId = extractFirebaseUid(req);
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: "Authentication required",
-        message: "You must be logged in to upload images.",
-      });
-    }
-
-    const file = (req as Request & { file?: Express.Multer.File }).file;
-    if (!file) {
-      return res.status(400).json({
-        success: false,
-        error: "No file provided",
-        message: "Upload must include a file field.",
-      });
-    }
-
-    if (!ALLOWED_CONTENT_TYPES.has(file.mimetype)) {
-      return res.status(400).json({
-        success: false,
-        error: "Unsupported file type",
-        message: "Supported types: PNG, JPEG, WebP.",
-      });
-    }
-
-    const metadata = parseMetadata(
-      (req as Request & { body?: { metadata?: unknown } }).body?.metadata,
-    );
-    const source = normalizeOptionalString(
-      (req as Request & { body?: { source?: unknown } }).body?.source,
-    );
-    const label = normalizeOptionalString(
-      (req as Request & { body?: { label?: unknown } }).body?.label,
-    );
-
-    // Capture the chooser's authenticated creator in a pending request. If
-    // sign-in changes while client auth headers resolve, refuse before storing
-    // that file under a different creator than the recovery link names.
-    if (
-      source === "pending-first-frame" &&
-      metadata.expectedCreatorId !== userId
-    ) {
-      return res.status(409).json({
-        success: false,
-        error: "Sign-in changed before upload",
-        message: "Choose this reference again from your current account.",
-      });
-    }
-
-    const admission = readAdmissionIntent(
-      (req as Request & { body?: Record<string, unknown> }).body ?? {},
-    );
-    if (admission.kind === "invalid") {
-      return res.status(400).json({
-        success: false,
-        error: "Incomplete admission",
-        message: admission.message,
-      });
-    }
-
-    if (admission.kind === "admit") {
-      if (!imageAssetStore || !sessionService || !requestIdempotencyService) {
-        return res.status(503).json({
+    const file = req.file;
+    let cleanup: Promise<void> | undefined;
+    const cleanupOnce = (): Promise<void> =>
+      (cleanup ??= cleanupUploadFile(file));
+    const disconnect = (): void => {
+      if (!res.writableFinished) void cleanupOnce();
+    };
+    req.once("aborted", disconnect);
+    res.once("close", disconnect);
+    try {
+      if (req.aborted || res.destroyed) return;
+      const userId = extractFirebaseUid(req);
+      if (!userId) {
+        return res.status(401).json({
           success: false,
-          error: "Admission unavailable",
-          message:
-            "Admitting an uploaded first frame requires the asset store, the session service and the idempotency service.",
+          error: "Authentication required",
+          message: "You must be logged in to upload images.",
         });
       }
-    } else if (!storageService) {
-      return res.status(503).json({
-        success: false,
-        error: "Storage service unavailable",
-        message: "Storage service is not configured for preview uploads.",
-      });
-    }
 
-    try {
+      if (!file) {
+        return res.status(400).json({
+          success: false,
+          error: "No file provided",
+          message: "Upload must include a file field.",
+        });
+      }
+
+      if (!ALLOWED_CONTENT_TYPES.has(file.mimetype)) {
+        return res.status(400).json({
+          success: false,
+          error: "Unsupported file type",
+          message: "Supported types: PNG, JPEG, WebP.",
+        });
+      }
+
+      const metadata = parseMetadata(
+        (req as Request & { body?: { metadata?: unknown } }).body?.metadata,
+      );
+      const source = normalizeOptionalString(
+        (req as Request & { body?: { source?: unknown } }).body?.source,
+      );
+      const label = normalizeOptionalString(
+        (req as Request & { body?: { label?: unknown } }).body?.label,
+      );
+
+      // Capture the chooser's authenticated creator in a pending request. If
+      // sign-in changes while client auth headers resolve, refuse before storing
+      // that file under a different creator than the recovery link names.
+      if (
+        source === "pending-first-frame" &&
+        metadata.expectedCreatorId !== userId
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: "Sign-in changed before upload",
+          message: "Choose this reference again from your current account.",
+        });
+      }
+
+      const admission = readAdmissionIntent(
+        (req as Request & { body?: Record<string, unknown> }).body ?? {},
+      );
+      if (admission.kind === "invalid") {
+        return res.status(400).json({
+          success: false,
+          error: "Incomplete admission",
+          message: admission.message,
+        });
+      }
+
+      if (admission.kind === "admit") {
+        if (!imageAssetStore || !sessionService || !requestIdempotencyService) {
+          return res.status(503).json({
+            success: false,
+            error: "Admission unavailable",
+            message:
+              "Admitting an uploaded first frame requires the asset store, the session service and the idempotency service.",
+          });
+        }
+      } else if (!storageService) {
+        return res.status(503).json({
+          success: false,
+          error: "Storage service unavailable",
+          message: "Storage service is not configured for preview uploads.",
+        });
+      }
+
       const buffer = await readUploadBuffer(file);
       const verifiedMime = await validateImageBuffer(buffer, "file");
 
@@ -332,6 +341,8 @@ export const createImageUploadHandler =
         message: errorMessage,
       });
     } finally {
-      await cleanupUploadFile(file);
+      req.off("aborted", disconnect);
+      res.off("close", disconnect);
+      await cleanupOnce();
     }
   };
