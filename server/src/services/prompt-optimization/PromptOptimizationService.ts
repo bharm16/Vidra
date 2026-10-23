@@ -8,6 +8,7 @@ import { OptimizationCacheService } from "./services/OptimizationCacheService";
 import { VideoPromptCompilationService } from "./services/VideoPromptCompilationService";
 import { IntentLockService } from "./services/IntentLockService";
 import { PromptLintGateService } from "./services/PromptLintGateService";
+import { GuidedWordingService } from "./services/GuidedWordingService";
 import { finishPrompt } from "./services/finishPrompt";
 import type { VideoPromptService } from "../video-prompt-analysis/VideoPromptService";
 import type { CacheService } from "@services/cache/CacheService";
@@ -31,6 +32,7 @@ export class PromptOptimizationService {
   private readonly compilationService: VideoPromptCompilationService | null;
   private readonly intentLock: IntentLockService;
   private readonly promptLint: PromptLintGateService;
+  private readonly guidedWording: GuidedWordingService;
   private readonly log: ILogger;
 
   constructor(
@@ -55,6 +57,7 @@ export class PromptOptimizationService {
         )
       : null;
     this.intentLock = new IntentLockService();
+    this.guidedWording = new GuidedWordingService(aiService);
     this.promptLint = new PromptLintGateService(
       videoPromptService
         ? {
@@ -79,6 +82,14 @@ export class PromptOptimizationService {
       this.log.warn(
         "Received startImage on /api/optimize; ignoring — I2V optimization is no longer supported",
         { operation: "optimize.i2vIgnored" },
+      );
+    }
+
+    if (request.modelGuidance) {
+      return this.guidedWording.rewrite(
+        request.prompt,
+        request.modelGuidance,
+        request.signal,
       );
     }
 

@@ -41,6 +41,8 @@ interface ModelConfigEntry {
   useDeveloperMessage?: boolean;
   /** Gemini 2.5+ only: caps thinking tokens, which count against maxTokens. 0 disables thinking. */
   thinkingBudget?: number;
+  /** Anthropic only: how much the model thinks before answering. */
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
 }
 
 /**
@@ -62,7 +64,7 @@ const QWEN_FALLBACK = {
  * Model Configuration Object
  *
  * Each operation defines:
- * - client: Which API client to use ('openai', 'qwen', 'groq', or 'gemini')
+ * - client: Which API client to use ('openai', 'qwen', 'groq', 'gemini' or 'anthropic')
  * - model: Specific model identifier
  * - temperature: Sampling temperature (0-2)
  * - maxTokens: Maximum tokens to generate
@@ -90,6 +92,25 @@ const MODEL_CONFIG_ENTRIES = {
     fallbackTo: "qwen",
     fallbackConfig: QWEN_FALLBACK,
     useDeveloperMessage: true, // GPT-4o: Use developer role for format constraints
+  },
+
+  /**
+   * Improve wording for a model whose profile carries wording guidance: one
+   * plain-text rewrite. Swap the model with IMPROVE_WORDING_PROVIDER and
+   * IMPROVE_WORDING_MODEL; without that provider's key the router falls back.
+   * Temperature is ignored by the Anthropic adapter, which rejects sampling.
+   * High effort measured 12/12 against 10/12 at medium and 5/12 at low on
+   * Haiku 5.5 (quoted words, rule leaks, repeated dialogue), for about 2 s.
+   */
+  improve_wording: {
+    client: process.env.IMPROVE_WORDING_PROVIDER || "anthropic",
+    model: process.env.IMPROVE_WORDING_MODEL || "claude-haiku-5-5",
+    effort: "high",
+    temperature: 0.7,
+    maxTokens: 4000,
+    timeout: 30000,
+    fallbackTo: "qwen",
+    fallbackConfig: QWEN_FALLBACK,
   },
 
   /**

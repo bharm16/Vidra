@@ -62,6 +62,8 @@ export interface CompletionOptions extends LLMAdapterOptions {
   topLogprobs?: number;
   /** Gemini 2.5+ only: caps thinking tokens, which count against maxTokens. 0 disables thinking. */
   thinkingBudget?: number;
+  /** Anthropic only: how much the model thinks before answering. */
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
   prediction?: { type: "content"; content: string };
   retryOnValidationFailure?: boolean;
   maxRetries?: number;

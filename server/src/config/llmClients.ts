@@ -21,6 +21,7 @@ export const REGISTERED_LLM_CLIENTS = [
   "groq",
   "qwen",
   "gemini",
+  "anthropic",
 ] as const;
 
 export type RegisteredLlmClient = (typeof REGISTERED_LLM_CLIENTS)[number];

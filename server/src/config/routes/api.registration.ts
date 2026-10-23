@@ -20,6 +20,7 @@ import {
   createPublicWorkflowCatalogRoutes,
   createWorkflowCatalogRoutes,
 } from "@routes/creation-requests.routes";
+import { wordingGuidanceFor } from "@services/creation-requests/replicate-models";
 import type { RequestHistoryStore } from "@services/media-history/RequestHistoryStore";
 import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import type { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
@@ -131,6 +132,7 @@ export function registerApiRoutes(
   // Main API routes
   const apiRoutes = createAPIRoutes({
     promptOptimizationService: container.resolve("promptOptimizationService"),
+    wordingGuidance: wordingGuidanceFor,
     enhancementService: container.resolve("enhancementService"),
     sceneDetectionService: container.resolve("sceneDetectionService"),
     storageService: container.resolve<StorageRoutesService>("storageService"),

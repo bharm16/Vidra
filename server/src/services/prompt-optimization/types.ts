@@ -63,6 +63,11 @@ export interface OptimizationRequest {
   lockedSpans?: LockedSpan[];
   shotPlan?: ShotPlan | null;
   shotPlanAttempted?: boolean;
+  /**
+   * The selected model's own wording guidance. When present, the words are
+   * rewritten to follow it instead of running the structured video flow.
+   */
+  modelGuidance?: string;
   signal?: AbortSignal;
   /** Present in legacy I2V calls; ignored after the I2V pipeline removal. */
   startImage?: string;

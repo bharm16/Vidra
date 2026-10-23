@@ -4,6 +4,7 @@ import { LLMClient } from "@clients/LLMClient";
 import { GeminiAdapter } from "@clients/adapters/GeminiAdapter";
 import { GroqLlamaAdapter } from "@clients/adapters/GroqLlamaAdapter";
 import { GroqQwenAdapter } from "@clients/adapters/GroqQwenAdapter";
+import { AnthropicAdapter } from "@clients/adapters/AnthropicAdapter";
 import { OpenAICompatibleAdapter } from "@clients/adapters/OpenAICompatibleAdapter";
 import { AIModelService } from "@services/ai-model/index";
 import { setProviderSettings } from "@services/ai-model/routing/ExecutionPlan";
@@ -75,6 +76,27 @@ export function registerLLMServices(container: DIContainer): void {
   );
 
   container.register(
+    "anthropicClient",
+    (config: ServiceConfig) => {
+      if (!config.anthropic.apiKey) {
+        logger.warn("ANTHROPIC_API_KEY not provided, Anthropic adapter disabled");
+        return null;
+      }
+      return new LLMClient({
+        adapter: new AnthropicAdapter({
+          apiKey: config.anthropic.apiKey,
+          defaultModel: config.anthropic.model,
+          defaultTimeout: config.anthropic.timeout,
+        }),
+        providerName: "anthropic",
+        defaultModel: config.anthropic.model,
+        defaultTimeout: config.anthropic.timeout,
+      });
+    },
+    ["config"],
+  );
+
+  container.register(
     "geminiClient",
     (config: ServiceConfig) => {
       if (!config.gemini.apiKey) {
@@ -110,6 +132,7 @@ export function registerLLMServices(container: DIContainer): void {
       groqClient: LLMClient | null,
       qwenClient: LLMClient | null,
       geminiClient: LLMClient | null,
+      anthropicClient: LLMClient | null,
       config: ServiceConfig,
       llmProviderCircuitManager: LlmProviderCircuitManager,
     ) => {
@@ -118,6 +141,10 @@ export function registerLLMServices(container: DIContainer): void {
         groq: { model: config.groq.model, timeout: config.groq.timeout },
         qwen: { model: config.qwen.model, timeout: config.qwen.timeout },
         gemini: { model: config.gemini.model, timeout: config.gemini.timeout },
+        anthropic: {
+          model: config.anthropic.model,
+          timeout: config.anthropic.timeout,
+        },
       });
 
       const clients = {
@@ -125,6 +152,7 @@ export function registerLLMServices(container: DIContainer): void {
         groq: groqClient,
         qwen: qwenClient,
         gemini: geminiClient,
+        anthropic: anthropicClient,
       };
 
       return new AIModelService({
@@ -137,6 +165,7 @@ export function registerLLMServices(container: DIContainer): void {
       "groqClient",
       "qwenClient",
       "geminiClient",
+      "anthropicClient",
       "config",
       "llmProviderCircuitManager",
     ],

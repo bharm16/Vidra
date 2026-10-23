@@ -51,6 +51,7 @@ export interface ServiceRegistry {
   groqClient: LLMClient | null;
   qwenClient: LLMClient | null;
   geminiClient: LLMClient | null;
+  anthropicClient: LLMClient | null;
   aiService: AIModelService;
   spanLabelingCacheService: SpanLabelingCacheService;
 

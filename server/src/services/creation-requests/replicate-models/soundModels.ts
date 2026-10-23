@@ -17,6 +17,18 @@ import {
 import { TimestampGranularitySchema, formatTranscript } from "./transcript";
 import type { ReplicateModelDefinition } from "./types";
 
+// Improve wording follows Google's Lyria prompt guide; sources are cited in
+// docs/research/2026-10-23-model-prompting-guides.md.
+
+const LYRIA_WORDING = [
+  "Lead with the genre (plus era or region if given), then instruments and how they sound together, then tempo in BPM, key, and mood words.",
+  "Every take is a 30-second clip, so keep structure light.",
+  "If the creator supplied lyrics, keep them unchanged under a \"Lyrics:\" header, separate from the musical direction, and do not translate them.",
+  "Write in the language the lyrics should be sung in.",
+  "For no vocals, add \"Instrumental only, no vocals.\"",
+  "Describe a sound instead of naming a real artist, and never quote existing song lyrics.",
+].join("\n");
+
 const MINUTE = 60_000;
 
 /** Eleven v3 accepts up to 3,000 characters per request; it also bounds the spend ceiling. */
@@ -142,6 +154,7 @@ const lyria3: ReplicateModelDefinition = {
   }),
   timeoutMs: 8 * MINUTE,
   pollIntervalMs: 2000,
+  wordingGuidance: LYRIA_WORDING,
   input: (call) =>
     withOptional(
       { prompt: call.sentInstructions },

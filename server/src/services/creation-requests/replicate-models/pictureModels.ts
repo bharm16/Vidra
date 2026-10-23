@@ -16,6 +16,45 @@ import {
 } from "./profileParts";
 import type { ModelCall, ReplicateModelDefinition } from "./types";
 
+// Improve wording follows each model's own prompting guide; sources are cited in
+// docs/research/2026-10-23-model-prompting-guides.md.
+
+export const NANO_MAKE_WORDING = [
+  "Write a narrative description, not a keyword list: subject, setting, lighting, camera angle and lens, and what the picture is for.",
+  "Put any words that must appear in the picture in quotation marks, with a described font style.",
+  "With several attached pictures, refer to them by position (\"image 1\", \"image 2\") and say what comes from each.",
+  "When the creator leaves something out, describe the scene so it is simply absent (\"an empty, deserted street\"); never write \"no\", \"without\" or \"not\".",
+].join("\n");
+
+export const NANO_EDIT_WORDING = [
+  "Write the edit as: \"Using the provided image, change only [X] to [Y]. Keep everything else exactly the same, preserving the original style, lighting and composition.\"",
+  "Describe faces, logos and other critical details closely when they must survive the edit.",
+  "With several attached pictures, refer to them by position (\"image 1\", \"image 2\") and say what comes from each.",
+  "When the creator leaves something out, describe the scene so it is simply absent (\"an empty, deserted street\"); never write \"no\", \"without\" or \"not\".",
+].join("\n");
+
+export const GPT_MAKE_WORDING = [
+  "State the deliverable and its use first, then scene, subject, details and constraints; short labeled lines are fine for complex requests.",
+  "Use concrete materials, light, framing and pose. Say \"photorealistic\" when realism is wanted.",
+  "Quote exact on-image text, give its placement and type style, and say it appears once with no extra text.",
+  "Name attached pictures as \"image 1\", \"image 2\" with their roles. Exclusions may be short constraint phrases.",
+  "Never write size, quality or background settings into the words.",
+].join("\n");
+
+export const GPT_EDIT_WORDING = [
+  "\"Change only X.\" Then list what must stay, such as face, pose, layout and lighting, and end with \"Do not change anything else.\"",
+  "Quote exact on-image text and give its placement.",
+  "Name attached pictures as \"image 1\", \"image 2\" with their roles. Exclusions may be short constraint phrases.",
+  "Never write size, quality or background settings into the words.",
+].join("\n");
+
+const IDEOGRAM_EDIT_WORDING = [
+  "Rewrite into one short edit instruction: what changes in the marked area or picture, then \"Keep ... exactly the same\" naming what must not move. One change per request.",
+  "Quote any new on-image words exactly and say where they sit.",
+  "Describe the wanted result positively; never write \"no X\", \"without X\" or \"not X\".",
+  "Do not add scene description, weights, flags, shape or other settings.",
+].join("\n");
+
 const MINUTE = 60_000;
 
 /**
@@ -94,6 +133,7 @@ const nanoMake: ReplicateModelDefinition = {
   }),
   timeoutMs: 8 * MINUTE,
   pollIntervalMs: 1000,
+  wordingGuidance: NANO_MAKE_WORDING,
   preflight: matchNeedsPicture,
   input: (call) => nanoInput(call, urls(call, "reference")),
 };
@@ -120,6 +160,7 @@ const nanoEdit: ReplicateModelDefinition = {
   }),
   timeoutMs: 8 * MINUTE,
   pollIntervalMs: 1000,
+  wordingGuidance: NANO_EDIT_WORDING,
   input: (call) =>
     nanoInput(call, [requiredUrl(call, "primary"), ...urls(call, "reference")]),
 };
@@ -212,6 +253,7 @@ const gptMake: ReplicateModelDefinition = {
   }),
   timeoutMs: 12 * MINUTE,
   pollIntervalMs: 2000,
+  wordingGuidance: GPT_MAKE_WORDING,
   input: (call) => gptInput(call, urls(call, "reference")),
 };
 
@@ -235,6 +277,7 @@ const gptEdit: ReplicateModelDefinition = {
   }),
   timeoutMs: 12 * MINUTE,
   pollIntervalMs: 2000,
+  wordingGuidance: GPT_EDIT_WORDING,
   input: (call) =>
     gptInput(call, [requiredUrl(call, "primary"), ...urls(call, "reference")]),
 };
@@ -273,6 +316,7 @@ const ideogramEdit: ReplicateModelDefinition = {
   }),
   timeoutMs: 8 * MINUTE,
   pollIntervalMs: 1000,
+  wordingGuidance: IDEOGRAM_EDIT_WORDING,
   preflight: (call) =>
     call.inputs.mask?.length && (call.inputs.reference?.length ?? 0) > 3
       ? "An area edit can use up to 3 reference pictures."

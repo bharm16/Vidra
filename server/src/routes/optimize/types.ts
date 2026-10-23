@@ -7,4 +7,6 @@ export type PromptOptimizationServiceContract = Pick<
 
 export interface OptimizeServices {
   promptOptimizationService: PromptOptimizationServiceContract;
+  /** A generation profile's wording guidance, bound at registration. */
+  wordingGuidance?: (profileId: string) => string | undefined;
 }

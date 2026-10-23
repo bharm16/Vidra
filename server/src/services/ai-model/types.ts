@@ -54,6 +54,7 @@ export interface ModelConfigEntry {
   useSeed?: boolean;
   useDeveloperMessage?: boolean;
   thinkingBudget?: number;
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
 }
 
 export interface RequestOptions extends CompletionOptions {

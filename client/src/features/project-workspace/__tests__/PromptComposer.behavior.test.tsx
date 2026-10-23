@@ -9,7 +9,7 @@ import type { LabeledSpan } from "@/features/span-highlighting/hooks/useSpanLabe
 
 const ports = vi.hoisted(() => {
   const spans: { current: LabeledSpan[] | undefined } = { current: undefined };
-  return { suggestions: vi.fn(), spans, status: { current: "success" }, labelingEnabled: { current: undefined as boolean | undefined } };
+  return { suggestions: vi.fn(), improved: vi.fn(), spans, status: { current: "success" }, labelingEnabled: { current: undefined as boolean | undefined } };
 });
 vi.mock("@/features/span-highlighting/hooks/useSpanLabeling", async () => {
   const { useEffect, useRef } = await import("react");
@@ -20,6 +20,7 @@ vi.mock("@/features/span-highlighting/hooks/useSpanLabeling", async () => {
   } };
 });
 vi.mock("@/api/enhancementSuggestionsApi", () => ({ requestEnhancementSuggestions: ports.suggestions }));
+vi.mock("@/api/promptOptimizationApi", () => ({ requestImprovedWords: ports.improved }));
 vi.mock("@/features/prompt-optimizer/api/customSuggestionsApi", () => ({ fetchCustomSuggestions: vi.fn() }));
 const timestamp = "2026-10-17T06:00:00.000Z";
 const profile = CapabilityProfileSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "controlled", revision: "1", label: "Available model", action: "make-image", provider: "controlled", endpoint: "controlled/picture", mode: "text-to-image", availability: "qualified", inputs: [], output: { kind: "image", maxCount: 1 }, maxContextCharacters: 32000, parameters: {}, recovery: { start: "supported", status: "supported", cancel: "supported", result: "supported", deadlineSeconds: 600 }, generatedAudio: "unsupported", pricing: { mode: "free", maximumCreditsPerSlot: 0 } });
@@ -375,6 +376,13 @@ it("keeps Improve wording and Ask a question on the words row, inert while the w
   expect(screen.getByRole("button", { name: "Ask a question" })).toBeEnabled();
   expect(screen.queryByRole("button", { name: "Choose action" })).not.toBeInTheDocument();
   expect(onActionChange).not.toHaveBeenCalled();
+});
+
+it("Improve wording sends the selected model so the rewrite can follow its guidance", async () => {
+  ports.improved.mockResolvedValue("Cool blue lights. Keep the camera low.");
+  render(<PromptComposer controller={controller()} onChooseInput={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Improve wording" }));
+  await waitFor(() => expect(ports.improved).toHaveBeenCalledWith(draft.instructions, true, "controlled"));
 });
 
 it("asks a question about the words and returns to the output it left", () => {
