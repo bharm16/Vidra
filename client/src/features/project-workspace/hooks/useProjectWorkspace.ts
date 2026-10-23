@@ -24,11 +24,16 @@ import {
   settleModel,
 } from "../state/inputBinding";
 import { autoSettings, resolveAuto, settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
-import { actionEntry, placeActions } from "@shared/workflow/actionRegistry";
+import { actionEntry, composerOutput, composerTool, placeActions } from "@shared/workflow/actionRegistry";
 import { DEFAULT_CONVERSATION_NAME } from "@shared/workflow/conversationName";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
 function id(prefix: string): string { return `${prefix}_${crypto.randomUUID()}`; }
+function inputKey(input: DraftInput): string { return input.state === "resolved" ? input.versionId : input.state === "importing" ? input.importId : `${input.requestId}:${input.slotId}`; }
+/** The switch output or rail tool an action belongs to. */
+function placeOf(action: CreationAction): string { return composerOutput(action) ?? composerTool(action) ?? action; }
+/** What a draft held on one output when it was switched away, so switching back restores it as it was. */
+interface LeftSetup { action: CreationAction; settings: DraftContent["settings"]; roles: Map<string, DraftInput["role"]>; }
 /** The newest active conversation with nothing made in it yet. */
 export function unusedConversation(rows: ConversationListing[], folderId?: string): ConversationListing | undefined {
   return rows.filter(row => row.status === "active" && row.acceptanceSequence === 0 && row.folderId === folderId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0];
@@ -116,6 +121,8 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   viewRef.current = view;
   // The model last used for each action, so switching outputs never drops back to "Choose model".
   const rememberedSettings = useRef<Partial<Record<CreationAction, DraftContent["settings"]>>>({});
+  // Per draft and output: Video → Music → Video brings back the same start frame, model and settings.
+  const leftSetups = useRef(new Map<string, LeftSetup>());
   // Drafts this tab created; only these take Auto's starting values automatically, so a draft open in two tabs never races.
   const freshDraftIds = useRef(new Set<string>());
   // Inputs a switch set aside per draft; switching back restores them.
@@ -219,7 +226,8 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
         const rows = await api.listConversations(projectId, abort.signal);
         if (rows.some(row => row.ownerId !== ownerId || row.projectId !== projectId)) throw new Error("The conversation list does not belong to this project and account.");
         let chosen: ConversationListing | undefined = requestedConversationId ? rows.find(row => row.id === requestedConversationId) : library ? unusedConversation(rows, folderId) : rows.find(row => row.status === "active") ?? rows[0];
-        if (requestedConversationId && !chosen) throw new Error("This conversation is unavailable in the current project.");
+        // A missing conversation is not a failed load: retrying cannot find it (404).
+        if (requestedConversationId && !chosen) throw Object.assign(new Error("This conversation is unavailable in the current project."), { status: 404 });
         if (!chosen && library && owned.status === "active") {
           // Reusing an unused conversation keeps repeat visits from piling up empty rows.
           const created = await api.createConversation(projectId, id("conversation"), DEFAULT_CONVERSATION_NAME, folderId);
@@ -509,10 +517,16 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     if (buffer.content.settings.profileId !== "unselected") rememberedSettings.current[buffer.content.action] = buffer.content.settings;
     const draftKey = buffer.record.id;
     const held = parkedRef.current[draftKey] ?? [];
-    const moved = inputsForAction([...buffer.content.inputs, ...held], action, profiles, mediaRef.current, viewRef.current.requests);
+    const leaving = buffer.content;
+    leftSetups.current.set(`${draftKey}:${placeOf(leaving.action)}`, { action: leaving.action, settings: leaving.settings, roles: new Map(leaving.inputs.map(input => [inputKey(input), input.role])) });
+    const back = leftSetups.current.get(`${draftKey}:${placeOf(action)}`);
+    // Returning to an output resumes the action it was left on (a start frame keeps Animate), and each input its role there.
+    const target = back && placeActions(action).includes(back.action) ? back.action : action;
+    const restored = [...leaving.inputs, ...held].map(input => { const role = back?.roles.get(inputKey(input)); return role && role !== input.role ? { ...input, role } : input; });
+    const moved = inputsForAction(restored, target, profiles, mediaRef.current, viewRef.current.requests);
     setParked(current => ({ ...current, [draftKey]: moved.parked }));
-    const next = { ...buffer.content, action, inputs: moved.inputs };
-    edit(settleModel({ ...next, settings: settingsForOutput(next, action, profiles, rememberedSettings.current[action], mediaRef.current) }, profiles));
+    const next = { ...leaving, action: target, inputs: moved.inputs };
+    edit(settleModel({ ...next, settings: settingsForOutput(next, target, profiles, back ? back.settings : rememberedSettings.current[target], mediaRef.current) }, profiles));
   }, [edit, profiles]);
 
   /** Working words and settings stay (Rule 8): the result joins the open draft; only a missing draft starts a new one. */
@@ -729,15 +743,16 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const abort = new AbortController();
     const conversationId = conversation.id;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    // Each running request's status read drives it on the server; the whole history only needs an occasional read.
+    // Each running request's status read drives it on the server; the whole history only needs an occasional read,
+    // and the media list only when a result lands (a new version, or a slot that has just become ready).
     let ticks = 0;
+    const landed = new Set<string>();
     const tick = async (): Promise<void> => {
       const epoch = mediaEpoch.current;
       const readHistory = ticks++ % 5 === 0;
       try {
-        const [historyResults, mediaResults, statusResults] = await Promise.all([
+        const [historyResults, statusResults] = await Promise.all([
           Promise.allSettled(readHistory ? [api.history(projectId, conversationId, abort.signal)] : []),
-          Promise.allSettled([api.media(projectId, abort.signal)]),
           Promise.allSettled(pollingIds.split(",").map(requestId => api.requestStatus(projectId, requestId, abort.signal))),
         ]);
         if (abort.signal.aborted || !inScope() || conversationRef.current?.id !== conversationId) return;
@@ -745,6 +760,15 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
         const history = historyResults[0]; if (history?.status === "fulfilled") observed.push(...history.value);
         for (const result of statusResults) if (result.status === "fulfilled") observed.push(result.value);
         if (observed.some(request => request.ownerId !== ownerId || request.projectId !== projectId || request.conversationId !== conversationId)) throw new Error("A request update returned a different account or conversation.");
+        let arrived = false;
+        for (const request of observed) for (const slot of request.slots) {
+          if (!slot.versionId) continue;
+          const key = `${request.id}:${slot.id}:${slot.delivery}`;
+          if (!mediaRef.current.some(version => version.id === slot.versionId) || (slot.delivery === "ready" && !landed.has(key))) arrived = true;
+          if (slot.delivery === "ready") landed.add(key);
+        }
+        const mediaResults = await Promise.allSettled(arrived ? [api.media(projectId, abort.signal)] : []);
+        if (abort.signal.aborted || !inScope() || conversationRef.current?.id !== conversationId) return;
         const incoming = mediaResults[0];
         if (incoming?.status === "fulfilled") {
           const rows = incoming.value;
@@ -774,7 +798,20 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     discardParkedInput: input => { const draftId = viewRef.current.activeDraftId; if (draftId) setParked(current => ({ ...current, [draftId]: (current[draftId] ?? []).filter(candidate => candidate !== input) })); },
     flush: async () => (await Promise.all(Object.values(viewRef.current.drafts).filter(buffer => buffer.acknowledgedSequence !== buffer.sequence).map(buffer => flushId(buffer.record.id)))).every(Boolean), prepare, submit, make, refreshMedia, changeAction, newConversation, openConversation, openConversationDraft, requestCancel, retryRequest, applyText, applyMediaInput, recover, resend,
     observeProject: record => { if (!inScope() || record.ownerId !== ownerId || record.id !== projectId) return; setProject(current => !current || record.revision >= current.revision ? record : current); },
-    observeConversation: record => { if (!inScope() || record.ownerId !== ownerId || record.projectId !== projectId) return; setConversations(rows => { const current = rows.find(row => row.id === record.id); return current && current.revision > record.revision ? rows : [...rows.filter(row => row.id !== record.id), current?.media ? { ...record, media: current.media } : record]; }); setConversation(current => current?.id === record.id && record.revision >= current.revision ? record : current); },
+    observeConversation: record => {
+      if (!inScope() || record.ownerId !== ownerId || record.projectId !== projectId) return;
+      setConversations(rows => { const current = rows.find(row => row.id === record.id); return current && current.revision > record.revision ? rows : [...rows.filter(row => row.id !== record.id), current?.media ? { ...record, media: current.media } : record]; });
+      setConversation(current => current?.id === record.id && record.revision >= current.revision ? record : current);
+      // A library home's own conversation archived elsewhere: home moves to another unused one instead of turning read only.
+      const open = conversationRef.current;
+      if (library && requestedConversationRef.current === undefined && open?.id === record.id && record.status === "archived" && record.revision >= open.revision) {
+        beginSelectionIntent();
+        void Promise.all(Object.values(viewRef.current.drafts).filter(buffer => buffer.acknowledgedSequence !== buffer.sequence).map(buffer => flushId(buffer.record.id))).finally(() => {
+          if (!inScope()) return;
+          emit({ type: "conversation" }); setPrepared(undefined); setLoadVersion(version => version + 1);
+        });
+      }
+    },
     canLeave: () => Object.values(viewRef.current.drafts).every(buffer => draftHasSafeRetention(buffer)),
     viewMedia: versionId => emit({ type: "view-media", versionId }), undo: () => changeHistory("undo"), redo: () => changeHistory("redo"),
     updateMedia: version => { if (version.ownerId === ownerId && version.projectId === projectId) { mediaEpoch.current += 1; setMedia(rows => [...rows.filter(row => row.id !== version.id), version]); } },

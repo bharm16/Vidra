@@ -9,6 +9,8 @@ import { ProjectManagementApi } from "../api/projectManagementApi";
 export interface ConversationFolderMenuProps {
   ownerId: string;
   conversation: Conversation;
+  /** The project a filed conversation is in, once known. */
+  folderName?: string | undefined;
   disabled?: boolean;
   onFile(folderId: string | null): void;
 }
@@ -20,6 +22,7 @@ export interface ConversationFolderMenuProps {
 export function ConversationFolderMenu({
   ownerId,
   conversation,
+  folderName,
   disabled = false,
   onFile,
 }: ConversationFolderMenuProps): ReactElement {
@@ -50,7 +53,11 @@ export function ConversationFolderMenu({
   }, [api, attempt, open]);
   if (conversation.folderId)
     return (
-      <FreshButton disabled={disabled} onClick={() => onFile(null)}>
+      <FreshButton
+        disabled={disabled}
+        aria-label={`Remove ${conversation.name} from ${folderName ?? "its project"}`}
+        onClick={() => onFile(null)}
+      >
         Remove from project
       </FreshButton>
     );

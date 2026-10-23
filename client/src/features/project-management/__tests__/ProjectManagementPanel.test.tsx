@@ -35,7 +35,7 @@ describe("Project and conversation management", () => {
     cleanup();
     panel({ project: library, conversations: [{ ...conversation, folderId: folder.id }] });
     fireEvent.click(screen.getByRole("button", { name: /^Conversations/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Remove from project" }));
+    fireEvent.click(screen.getByRole("button", { name: `Remove ${conversation.name} from its project` }));
     await waitFor(() => expect(calls.changeConversation).toHaveBeenLastCalledWith(library.id, conversation.id, { expectedRevision: 1, folderId: null }));
   });
   it("offers no rename or trash for the library, which holds work outside named projects", () => {
@@ -64,14 +64,30 @@ describe("Project and conversation management", () => {
   });
   it("opens and archives the exact named conversation", async () => {
     panel(); fireEvent.click(screen.getByRole("button", { name: "Conversations" }));
-    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+    fireEvent.click(screen.getByRole("button", { name: `Archive ${conversation.name}` }));
     await waitFor(() => expect(callbacks.onConversationChange).toHaveBeenCalledWith(expect.objectContaining({ id: conversation.id, revision: 2 })));
     expect(calls.changeConversation).toHaveBeenCalledWith(project.id, conversation.id, { expectedRevision: 1, status: "archived" });
+  });
+  it("an archive can be undone, and focus never falls back to the dialog", async () => {
+    const view = panel(); fireEvent.click(screen.getByRole("button", { name: "Conversations" }));
+    fireEvent.click(screen.getByRole("button", { name: `Archive ${conversation.name}` }));
+    await waitFor(() => expect(callbacks.onConversationChange).toHaveBeenCalled());
+    view.rerender(<ProjectManagementPanel ownerId="creator" project={project} conversations={[{ ...conversation, revision: 2, status: "archived" }]} {...callbacks} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Conversation archived");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Back to project options" })).toHaveFocus());
+    calls.changeConversation.mockResolvedValue({ ...conversation, revision: 3, status: "active" });
+    fireEvent.click(screen.getByRole("button", { name: `Undo: restore ${conversation.name}` }));
+    await waitFor(() => expect(calls.changeConversation).toHaveBeenLastCalledWith(project.id, conversation.id, { expectedRevision: 2, status: "active" }));
+  });
+  it("Rename puts the cursor in the conversation's name field", () => {
+    panel(); fireEvent.click(screen.getByRole("button", { name: "Conversations" }));
+    fireEvent.click(screen.getByRole("button", { name: `Rename ${conversation.name}` }));
+    expect(screen.getByLabelText("Conversation name")).toHaveFocus();
   });
   it("restores archived conversations without creating a replacement", async () => {
     panel({ conversations: [{ ...conversation, status: "archived", revision: 3 }] });
     fireEvent.click(screen.getByRole("button", { name: "Archived conversations" }));
-    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+    fireEvent.click(screen.getByRole("button", { name: `Restore ${conversation.name}` }));
     await waitFor(() => expect(calls.changeConversation).toHaveBeenCalledWith(project.id, conversation.id, { expectedRevision: 3, status: "active" }));
   });
   it("moves the project to trash only after its explicit action", async () => {

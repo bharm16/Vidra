@@ -1,10 +1,12 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { ProjectAreaMaskSchema } from "@shared/schemas/workflow/sketch.schemas";
 import { AreaEditPanel } from "../AreaEditPanel";
 
-vi.mock("../components/DrawingCanvas", async () => { const { forwardRef } = await import("react"); return { DrawingCanvas: forwardRef(function DrawingCanvas({ onSnapshot, onHistory }: { onSnapshot(uri: string): void; onHistory(undo: boolean, redo: boolean, painted: boolean): void }, _ref) { return <canvas data-testid="paint" onPointerUp={() => { onSnapshot("data:image/png;base64,YQ=="); onHistory(true, false, true); }} />; }) }; });
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
+const canvasCalls = vi.hoisted(() => ({ undo: vi.fn(), redo: vi.fn(), clear: vi.fn() }));
+vi.mock("../components/DrawingCanvas", async () => { const { forwardRef, useImperativeHandle } = await import("react"); return { DrawingCanvas: forwardRef(function DrawingCanvas({ onSnapshot, onHistory, tool }: { onSnapshot(uri: string): void; onHistory(undo: boolean, redo: boolean, painted: boolean): void; tool: string }, ref) { useImperativeHandle(ref, () => ({ ...canvasCalls, importPicture: vi.fn() })); return <canvas data-testid="paint" data-tool={tool} onPointerUp={() => { onSnapshot("data:image/png;base64,YQ=="); onHistory(true, false, true); }} />; }) }; });
 const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_source", projectId: "project_one", ownerId: "owner", kind: "image", label: "Exact source", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "source", storagePath: "users/owner/previews/images/source.png" }, metadata: { state: "verified", width: 1200, height: 800, durationSeconds: 0, audio: "absent", probeVersion: "controlled" }, association: "linked", createdAt: "2026-10-17T00:00:00.000Z" });
 it("keeps a source-bound selection and hands it over on Done", () => {
   const done = vi.fn(); render(<AreaEditPanel version={version} sourceUrl="/source.png" onDone={done} />);
@@ -39,4 +41,17 @@ it("cannot rebind a just-painted mask to another source when the host changes th
   view.rerender(<AreaEditPanel version={other} sourceUrl="/other.png" onDone={done} />);
   expect(screen.getByRole("button", { name: "Done" })).toBeDisabled(); fireEvent.click(screen.getByRole("button", { name: "Done" })); expect(done).not.toHaveBeenCalled();
   fireEvent.pointerUp(screen.getByTestId("paint")); fireEvent.click(screen.getByRole("button", { name: "Done" })); expect(done).toHaveBeenCalledWith(expect.objectContaining({ versionId: other.id }));
+});
+it("Clear needs something painted and returns to the brush; ⌘Z and ⌘⇧Z undo and redo strokes", () => {
+  render(<AreaEditPanel version={version} sourceUrl="/source.png" onDone={vi.fn()} />);
+  expect(screen.getByRole("button", { name: "Clear" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Erase selection" }));
+  fireEvent.pointerUp(screen.getByTestId("paint"));
+  fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+  expect(canvasCalls.clear).toHaveBeenCalledOnce();
+  expect(screen.getByTestId("paint")).toHaveAttribute("data-tool", "brush");
+  fireEvent.keyDown(window, { key: "z", metaKey: true });
+  expect(canvasCalls.undo).toHaveBeenCalledOnce();
+  fireEvent.keyDown(window, { key: "Z", metaKey: true, shiftKey: true });
+  expect(canvasCalls.redo).toHaveBeenCalledOnce();
 });

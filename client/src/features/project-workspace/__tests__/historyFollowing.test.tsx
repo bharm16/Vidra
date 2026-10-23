@@ -89,6 +89,15 @@ it("keeps the newest request in view while pictures load after opening at the en
   size.height = 900; resize(); expect(history.scrollTop).toBe(660);
 });
 
+it("stays at the end when the scroll that following caused arrives after the composer grew (phone)", () => {
+  render(<ConversationHistory {...props()} />);
+  const history = screen.getByLabelText("Conversation history"); const size = geometry(history, false);
+  size.height = 968; size.viewport = 300; resize(); expect(history.scrollTop).toBe(668);
+  // The composer grows (three wrapped setting rows) before the follow's own scroll event lands.
+  size.viewport = 242; fireEvent.scroll(history);
+  resize(); expect(history.scrollTop).toBe(726);
+});
+
 it("keeps manual intent when desktop styling removes the clip marker or a hidden history has zero dimensions", () => {
   render(<ConversationHistory {...props()} />);
   const history = screen.getByLabelText("Conversation history"); const size = geometry(history);

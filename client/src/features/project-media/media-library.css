@@ -435,7 +435,8 @@
   overflow: auto;
   padding-top: var(--vf-space-8);
 }
-.vf-rail [aria-current="page"] {
+.vf-rail [aria-current="page"],
+.vf-rail [data-current] {
   background: #ffffff26;
 }
 @media (max-width: 1100px) {

@@ -94,3 +94,12 @@ it("rejects foreign draft/history records and a receipt for a different submissi
   client.rawRequest.mockResolvedValueOnce(success([{ schemaVersion: "vidra-workflow/v2", id: "draft_expected", ownerId: "foreign", projectId: project.id, conversationId: conversation.id, revision: 1, status: "open", ...snapshot, createdAt: project.createdAt, updatedAt: project.updatedAt }]));
   await expect(api.listDrafts(project.id, conversation.id)).rejects.toThrow();
 });
+
+it("reads exports saved before edits were named \"edit N\" under the current name, leaving other labels alone", async () => {
+  const { currentExportLabel } = await import("../api/workflowApi");
+  const { MediaVersionSchema } = await import("@shared/schemas/workflow/media.schemas");
+  const base = { schemaVersion: "vidra-workflow/v2", id: "version_export", ownerId: "owner", projectId: "project_one", kind: "export", label: "Video · revision 6", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "export", storagePath: "users/owner/exports/export.mp4" }, metadata: { state: "pending" }, association: "linked", createdAt: "2026-10-17T00:00:00.000Z" };
+  expect(currentExportLabel(MediaVersionSchema.parse(base)).label).toBe("Video · edit 6");
+  expect(currentExportLabel(MediaVersionSchema.parse({ ...base, label: "Launch cut" })).label).toBe("Launch cut");
+  expect(currentExportLabel(MediaVersionSchema.parse({ ...base, kind: "image", label: "Video · revision 6" })).label).toBe("Video · revision 6");
+});

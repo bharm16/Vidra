@@ -159,6 +159,9 @@ export function useSpanLabeling({
   const lastPayloadRef = useRef<SpanLabelingPayload | null>(null);
   const onResultRef = useRef(onResult);
   const lastEmitKeyRef = useRef<string | null>(null);
+  // The words last sent for labeling. A re-render that changes only the draft, the cache id or a callback
+  // keeps that request instead of aborting it and sending the same words again.
+  const scheduledKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     onResultRef.current = onResult;
@@ -387,6 +390,7 @@ export function useSpanLabeling({
   const onError = useCallback(
     (error: Error, payload: SpanLabelingPayload) => {
       log.error("Error", error);
+      scheduledKeyRef.current = null;
       const fallbackResult = createFallbackResult(payload, error, cacheService);
 
       if (fallbackResult) {
@@ -483,6 +487,7 @@ export function useSpanLabeling({
   useEffect(() => {
     const normalized = sanitizeText(text);
     if (!enabled || !normalized.trim()) {
+      scheduledKeyRef.current = null;
       cancelPending();
       setState(createDisabledState());
       return;
@@ -534,6 +539,7 @@ export function useSpanLabeling({
     }
 
     if (initialMatch) {
+      scheduledKeyRef.current = null;
       const normalizedMeta = normalizeMetaVersion(
         stableInitialData.meta ?? null,
         templateVersion,
@@ -564,8 +570,11 @@ export function useSpanLabeling({
       return;
     }
 
+    const requestKey = JSON.stringify([normalized, maxSpans, minConfidence, mergedPolicy, templateVersion, immediate]);
+    if (scheduledKeyRef.current === requestKey) return;
+    cancelPending();
+    scheduledKeyRef.current = requestKey;
     schedule(payload, immediate);
-    return () => cancelPending();
   }, [
     text,
     enabled,
@@ -589,7 +598,7 @@ export function useSpanLabeling({
     schedule(lastPayloadRef.current, true);
   }, [schedule]);
 
-  useEffect(() => () => cancelPending(), [cancelPending]);
+  useEffect(() => () => { scheduledKeyRef.current = null; cancelPending(); }, [cancelPending]);
 
   return {
     spans: state.spans,

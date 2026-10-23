@@ -60,12 +60,12 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "paint-the-area",
       "title": "Paint the area",
-      "body": "Use the brush and eraser to refine the shaded area. Check the selection before choosing Use selection."
+      "body": "Use the brush and eraser to refine the shaded area. Check the selection before choosing Done."
     },
     {
       "id": "describe-the-change",
       "title": "Describe the change",
-      "body": "The image and its selection appear in the draft as separate explicit roles. Write the change you want and review the selected model. Area generation is unavailable for the current models."
+      "body": "The image and its selection appear in the draft as separate explicit roles. Write the change you want. Only models that can edit an area stay available while it is bound."
     },
     {
       "id": "recheck-after-a-source-change",

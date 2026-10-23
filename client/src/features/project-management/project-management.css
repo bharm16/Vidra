@@ -260,6 +260,23 @@
 }
 .vf-project-conversation-actions {
   flex-wrap: wrap;
+  align-items: flex-start;
+}
+/* Add to project's choices open on their own line under the row's buttons, never stretching them. */
+.vf-project-conversation-actions > .vf-conversation-draft-rows {
+  flex-basis: 100%;
+}
+.vf-project-conversation-moved {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vf-space-8);
+  font-size: 13px;
+  color: var(--vf-secondary);
+}
+/* The menu opens from a row inside the Conversations dialog, so it stacks above the dialog. */
+.vf.vf-conversation-draft-menu {
+  z-index: calc(var(--z-modal) + 1);
 }
 .vf-conversation-draft-menu {
   width: 336px;

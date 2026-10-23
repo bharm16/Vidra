@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { ProjectAreaMaskSchema, type ProjectAreaMask } from "@shared/schemas/workflow/sketch.schemas";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
@@ -18,6 +18,9 @@ export interface AreaEditPanelProps {
   onClose?(): void; onOptions?(): void;
 }
 
+// The brush size a person chose last, kept when they come back to paint another area.
+let lastBrushSize = 48;
+
 /** Selection remains tied to the exact picture. */
 export function AreaEditPanel({ version, sourceUrl, initialMask, saved = false, standalone = false, rail, onDone, onClose, onOptions }: AreaEditPanelProps): ReactElement {
   const filterId = `area-selection-${useId().replaceAll(":", "")}`;
@@ -27,10 +30,21 @@ export function AreaEditPanel({ version, sourceUrl, initialMask, saved = false, 
   const sourceKey = `${version.id}:${width}x${height}`;
   const [redrawnFor, setRedrawnFor] = useState<string>();
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
-  const [size, setSize] = useState(48);
+  const [size, setSize] = useState(lastBrushSize);
   const [hasPaint, setHasPaint] = useState(false); const [undo, setUndo] = useState(false); const [redo, setRedo] = useState(false);
   const [mask, setMask] = useState<{ sourceKey: string; dataUri: string }>(); const canvas = useRef<DrawingCanvasHandle>(null);
   const invalid = mismatch && redrawnFor !== sourceKey;
+  // ⌘Z / ⌘⇧Z (Ctrl elsewhere) undo and redo strokes while the editor is open, as in every other editor; text fields keep their own.
+  useEffect(() => {
+    const keys = (event: KeyboardEvent): void => {
+      if (event.key.toLowerCase() !== "z" || !(event.metaKey || event.ctrlKey) || event.altKey || event.defaultPrevented) return;
+      if (event.target instanceof HTMLElement && event.target.closest("textarea,select,[contenteditable=true],input:not([type=range])")) return;
+      event.preventDefault();
+      if (event.shiftKey) canvas.current?.redo(); else canvas.current?.undo();
+    };
+    window.addEventListener("keydown", keys);
+    return () => window.removeEventListener("keydown", keys);
+  }, []);
   const validGeometry = version.kind === "image" && width > 0 && height > 0 && width <= 16384 && height <= 16384 && width * height <= 40_000_000;
   const removing = !hasPaint && (saved || Boolean(initialMask));
   const selection = <section className="vf ps-area-stage" aria-label="Paint an area" data-source-version={version.id}>
@@ -41,7 +55,7 @@ export function AreaEditPanel({ version, sourceUrl, initialMask, saved = false, 
       {validGeometry ? <div className="ps-area-picture" style={{ aspectRatio: `${width} / ${height}`, width: `min(100%, calc(100cqh * ${width / height}))`, "--ps-area-filter": `url(#${filterId})` } as CSSProperties}><img src={sourceUrl} alt={version.label} /><DrawingCanvas key={sourceKey} ref={canvas} mask label="Paint area on the exact source picture" tool={tool} ink="#b8a0ff" brushSize={size} width={width} height={height} {...(!mismatch && initialMask ? { initialDataUri: initialMask.dataUri } : {})} onSnapshot={dataUri => setMask({ sourceKey, dataUri })} onHistory={(canUndo, canRedo, painted) => { setUndo(canUndo); setRedo(canRedo); setHasPaint(painted); }} /></div> : <p role="alert">{metadata && width > 0 && height > 0 ? "This picture is too large for area selection. Use another picture." : "Open a verified picture before painting an area."}</p>}
     </div>
     <footer className="ps-area-toolbar" aria-label="Area tools">
-      <div className="ps-tools ps-area-drawing-tools"><SketchToolButton name="brush" label="Paint area" selected={tool === "brush"} onClick={() => setTool("brush")} /><SketchToolButton name="eraser" label="Erase selection" selected={tool === "eraser"} onClick={() => setTool("eraser")} /><span className="ps-divider" /><label className="ps-mask-size">Size<input type="range" aria-label="Area brush size" min={1} max={96} value={size} style={{ "--ps-range-value": `${(size - 1) / 95 * 100}%` } as CSSProperties} onChange={event => setSize(Number(event.target.value))} /><output>{size}</output></label><span className="ps-divider" /><SketchToolButton name="undo" label="Undo area stroke" disabled={!undo} onClick={() => canvas.current?.undo()} /><SketchToolButton name="redo" label="Redo area stroke" disabled={!redo} onClick={() => canvas.current?.redo()} /><FreshButton className="ps-area-clear" tone="quiet" onClick={() => canvas.current?.clear()}>Clear</FreshButton></div>
+      <div className="ps-tools ps-area-drawing-tools"><SketchToolButton name="brush" label="Paint area" selected={tool === "brush"} onClick={() => setTool("brush")} /><SketchToolButton name="eraser" label="Erase selection" selected={tool === "eraser"} onClick={() => setTool("eraser")} /><span className="ps-divider" /><label className="ps-mask-size">Size<input type="range" aria-label="Area brush size" min={1} max={96} value={size} style={{ "--ps-range-value": `${(size - 1) / 95 * 100}%` } as CSSProperties} onChange={event => { lastBrushSize = Number(event.target.value); setSize(lastBrushSize); }} /><output>{size}</output></label><span className="ps-divider" /><SketchToolButton name="undo" label="Undo area stroke" disabled={!undo} onClick={() => canvas.current?.undo()} /><SketchToolButton name="redo" label="Redo area stroke" disabled={!redo} onClick={() => canvas.current?.redo()} /><FreshButton className="ps-area-clear" tone="quiet" disabled={!hasPaint} onClick={() => { canvas.current?.clear(); setTool("brush"); }}>Clear</FreshButton></div>
       {invalid ? <FreshButton tone="primary" onClick={() => { canvas.current?.clear(); setHasPaint(false); setRedrawnFor(sourceKey); }}>Redraw selection</FreshButton> : <FreshButton tone="primary" disabled={!validGeometry || (hasPaint ? mask?.sourceKey !== sourceKey : !removing)} onClick={() => { if (!hasPaint) { if (removing) onDone(undefined); } else if (mask?.sourceKey === sourceKey) onDone(ProjectAreaMaskSchema.parse({ versionId: version.id, width, height, transform: "identity", dataUri: mask.dataUri })); }}>Done</FreshButton>}
     </footer>
     {invalid ? <p className="vf-notice" role="alert">This selection belongs to a different picture or size. Redraw it on this exact version.</p> : null}

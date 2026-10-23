@@ -76,6 +76,11 @@ it("reports stale and coupled settings without silently replacing them", () => {
   expect(derivedParameter({ policy: "derived", from: "input-aspect", role: "primary" }, { ...content, inputs: [{ state: "resolved", role: "primary", versionId: media("input").id }] }, [media("input")])).toBe("16:9");
 });
 
+it("names a picture's shape only when it is a familiar one (1248×720 is 26:15)", () => {
+  const odd = MediaVersionSchema.parse({ ...media("odd"), metadata: { state: "verified", width: 1248, height: 720, durationSeconds: 0, audio: "absent", probeVersion: "controlled" } });
+  expect(derivedParameter({ policy: "derived", from: "input-aspect", role: "primary" }, { ...content, inputs: [{ state: "resolved", role: "primary", versionId: odd.id }] }, [odd])).toBe("Same as picture");
+});
+
 it("keeps saved choices readable without guessing editable domains for an unresolved model", () => {
   const unresolved = { ...content, settings: { ...content.settings, profileId: "missing", parameters: { aspectRatio: "16:9", duration: 5, negativePrompt: "Adapter-only value" } } };
   const original = structuredClone(unresolved);

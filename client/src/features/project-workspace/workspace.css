@@ -1644,16 +1644,21 @@ body:has(.vf-settings-sheet) > [data-state]:not([role="dialog"]) {
 .vf-input-picture {
   position: relative;
 }
+/* The filter widens the masked tint below it: a brush stroke a few pixels wide on the tile still shows. */
 .vf-input-area {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 0 1px #b8a0ff) drop-shadow(0 0 1px #b8a0ff) drop-shadow(0 0 1px #0009);
+}
+.vf-input-area > span {
+  position: absolute;
+  inset: 0;
   background: #b8a0ff;
-  opacity: 0.28;
+  opacity: 0.85;
   mask-position: center;
   mask-size: cover;
   mask-repeat: no-repeat;
-}
-.vf-input-area {
   mask-mode: luminance;
 }
 .vf-setting-icon {

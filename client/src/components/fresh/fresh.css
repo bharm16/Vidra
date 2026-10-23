@@ -282,6 +282,7 @@
   border-radius: var(--vf-radius-control);
 }
 :root .vf-icon-button[aria-current="page"],
+:root .vf-icon-button[data-current],
 :root .vf-icon-button[aria-pressed="true"] {
   background: #f7f7f726;
 }
@@ -324,10 +325,10 @@
 .vf-mobile-label-navigation {
   display: none;
 }
-.vf-fresh-rail .vf-icon-button:not([aria-current]) .vf-icon {
+.vf-fresh-rail .vf-icon-button:not([aria-current]):not([data-current]) .vf-icon {
   opacity: 0.6;
 }
-.vf-fresh-rail .vf-icon-button:not([aria-current]) {
+.vf-fresh-rail .vf-icon-button:not([aria-current]):not([data-current]) {
   color: var(--vf-secondary);
 }
 .vf-fresh-rail .vf-icon-button:hover .vf-icon,

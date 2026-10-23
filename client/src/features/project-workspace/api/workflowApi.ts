@@ -31,6 +31,12 @@ const SaveResultSchema = z.discriminatedUnion("state", [
   z.object({ state: z.literal("conflict"), current: CreationDraftSchema, retained: DraftConflictSchema }),
 ]);
 
+/** Exports saved before edits were named "edit N" read as "Video · revision N"; both numbers are the same edit revision. */
+export function currentExportLabel(version: MediaVersion): MediaVersion {
+  const legacy = version.kind === "export" ? /^Video · revision (\d+)$/.exec(version.label) : null;
+  return legacy ? { ...version, label: `Video · edit ${legacy[1]}` } : version;
+}
+
 export class WorkflowApiError extends Error {
   constructor(message: string, readonly status: number, readonly code: ApiErrorCode | undefined) { super(message); this.name = "WorkflowApiError"; }
 }
@@ -181,7 +187,7 @@ export class WorkflowApi {
     ProjectIdSchema.parse(projectId); RequestIdSchema.parse(requestId);
     return this.request(`/creation-requests/${encodeURIComponent(requestId)}/reconcile`, this.owned(AcceptedRequestSchema, { projectId, id: requestId }), "POST", {});
   }
-  media(projectId: string, signal?: AbortSignal): Promise<MediaVersion[]> { return this.request(`/projects/${encodeURIComponent(projectId)}/media`, z.array(this.owned(MediaVersionSchema, { projectId })), "GET", undefined, signal); }
+  async media(projectId: string, signal?: AbortSignal): Promise<MediaVersion[]> { return (await this.request(`/projects/${encodeURIComponent(projectId)}/media`, z.array(this.owned(MediaVersionSchema, { projectId })), "GET", undefined, signal)).map(currentExportLabel); }
   imports(projectId: string, signal?: AbortSignal): Promise<ImportRecord[]> { return this.request(`/projects/${encodeURIComponent(projectId)}/imports`, z.array(this.owned(ImportRecordSchema, { projectId })), "GET", undefined, signal); }
   beginImport(projectId: string, command: ImportCommand, signal?: AbortSignal): Promise<z.infer<typeof ImportSessionSchema>> { return this.request(`/projects/${encodeURIComponent(projectId)}/imports`, ImportSessionSchema.refine(value => value.record.ownerId === this.ownerId && value.record.projectId === projectId && value.record.id === command.id && value.record.sha256 === command.sha256 && value.record.bytes === command.bytes, "The upload grant does not match this file or account"), "POST", ImportCommandSchema.parse(command), signal); }
   finishImport(projectId: string, id: string, signal?: AbortSignal): Promise<MediaVersion> { return this.request(`/projects/${encodeURIComponent(projectId)}/imports/${encodeURIComponent(id)}/finish`, this.owned(MediaVersionSchema, { projectId, id: importedVersionId(id) }), "POST", {}, signal); }
