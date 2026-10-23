@@ -1,0 +1,11 @@
+{
+  "family": "DM Mono",
+  "license": "SIL Open Font License 1.1",
+  "sources": [
+    {
+      "weight": 400,
+      "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYhh0.ttf",
+      "sha256": "c97fcd822f825e9e731867b650a39ee678b609bead29385e320171b573ec0910"
+    }
+  ]
+}

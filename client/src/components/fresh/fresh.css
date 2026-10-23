@@ -217,6 +217,20 @@
   font-display: swap;
   src: url("/design-assets/figtree-700.ttf") format("truetype");
 }
+@font-face {
+  font-family: Figtree;
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/design-assets/figtree-900.ttf") format("truetype");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/design-assets/dm-mono-400.ttf") format("truetype");
+}
 .vf {
   --vf-raised: #242424;
   --vf-phrase-surface: #242424;

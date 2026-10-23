@@ -9,13 +9,14 @@ import { SystemRoutePage } from "../SystemPage";
 import { ContactSupportPage } from "@/pages/ContactSupportPage";
 import { supportDraft, supportDraftSchema, supportTopic } from "../support";
 import { SiteShell } from "../SiteShell";
-import { PricingPage } from "../PublicPages";
+import { LandingPage, PricingPage } from "../PublicPages";
+import { ProductChapterRedirect } from "../ProductChapterRedirect";
 
 const { openDraft } = vi.hoisted(() => ({ openDraft: vi.fn<(url: string) => void>() }));
-vi.mock("@/hooks/useAuthUser", () => ({ useAuthUser: (options: { onChange?: (user: null) => void }): null => { const { onChange } = options; useEffect(() => { onChange?.(null); }, [onChange]); return null; } }));
+vi.mock("@/hooks/useAuthUser", () => ({ useAuthUser: (options?: { onChange?: (user: null) => void }): null => { const onChange = options?.onChange; useEffect(() => { onChange?.(null); }, [onChange]); return null; } }));
 vi.mock("../support", async importOriginal => ({ ...await importOriginal<typeof import("../support")>(), openSupportDraft: openDraft }));
 
-function Location(): ReactElement { const location = useLocation(); return <output data-testid="location">{location.pathname}{location.search}</output>; }
+function Location(): ReactElement { const location = useLocation(); return <output data-testid="location">{location.pathname}{location.search}{location.hash}</output>; }
 async function renderDocs(path = "/docs"): Promise<void> {
   render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/docs/*" element={<DocsPage />} /></Routes><Location /></MemoryRouter>);
   const slug = new URL(path, "http://localhost").pathname.slice("/docs/".length);
@@ -168,19 +169,42 @@ describe("public navigation and system recovery", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(trigger).toHaveFocus();
   });
-  it("keeps the free-testing deep link and expands all pricing questions together", () => {
+  it("keeps the free-testing deep link and opens one pricing answer at a time", () => {
     render(<MemoryRouter><SiteShell><PricingPage /></SiteShell></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: /What happens when I reach the limit/ }));
-    expect(screen.getByText(/Your available allowance and the action’s limits are checked/)).toBeVisible();
-    expect(screen.getByText(/Generation pauses. You can still open, edit and download saved media/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/signup?redirect=%2Fapp");
+    const allowance = screen.getByRole("button", { name: "How does the allowance work?" });
+    const paid = screen.getByRole("button", { name: "Can I pay for more?" });
+    expect(allowance).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(paid);
+    expect(paid).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/Paid plans aren’t available while we test/)).toBeVisible();
+    expect(allowance).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText(/Your saved work stays open, editable and downloadable/)).not.toBeVisible();
+    fireEvent.click(paid);
+    expect(paid).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText(/Paid plans aren’t available while we test/)).not.toBeVisible();
     expect(screen.queryByRole("link", { name: /Buy|Subscribe/ })).not.toBeInTheDocument();
   });
-  it("does not expose retired Pricing navigation", async () => {
+  it("leads the header with Product, Pricing and Docs", async () => {
     render(<MemoryRouter><SiteShell><p>Public content</p></SiteShell></MemoryRouter>);
     await screen.findByRole("link", { name: "Sign in" });
-    expect(screen.queryByRole("link", { name: "Pricing" })).not.toBeInTheDocument();
+    const navigation = screen.getByRole("navigation", { name: "Main navigation" });
+    expect(within(navigation).getAllByRole("link").map(link => [link.textContent, link.getAttribute("href")])).toEqual([["Product", "/product"], ["Pricing", "/pricing"], ["Docs", "/docs"]]);
     // Visitors start writing first; making something is what asks for an account.
     expect(screen.getByRole("link", { name: "Start creating" })).toHaveAttribute("href", "/app");
+  });
+  it("points each tool on the landing page at its chapter of the product page", () => {
+    render(<MemoryRouter><LandingPage /></MemoryRouter>);
+    expect(screen.getByRole("heading", { name: "Film anything.", level: 1 })).toBeVisible();
+    const tools = screen.getByRole("navigation", { name: "Product" });
+    expect(within(tools).getAllByRole("link").map(link => [link.textContent, link.getAttribute("href")])).toEqual([["Images", "/product#images"], ["Video", "/product#video"], ["Editor", "/product#editor"], ["Sketch", "/product#sketch"]]);
+  });
+  it("sends earlier per-tool links to that chapter of the one product page", () => {
+    for (const [from, to] of [["/product/video", "/product#video"], ["/products/sketch", "/product#sketch"], ["/product/retired", "/product"]] as const) {
+      const { unmount } = render(<MemoryRouter initialEntries={[from]}><Routes><Route path="/product/:product" element={<ProductChapterRedirect />} /><Route path="/products/:product" element={<ProductChapterRedirect />} /><Route path="/product" element={<Location />} /></Routes></MemoryRouter>);
+      expect(screen.getByTestId("location").textContent).toBe(to);
+      unmount();
+    }
   });
   it("retries the current failure without creating new work", () => {
     const retry = vi.fn();

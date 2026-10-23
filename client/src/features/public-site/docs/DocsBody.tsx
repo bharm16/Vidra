@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { SiteLink } from "../SiteShell";
-import { PUBLIC_DESK, PUBLIC_RUNNER } from "../MarketingPreview";
+import { PUBLIC_DESK, PUBLIC_RUNNER } from "../stills";
 import { MobileContentsSheet } from "../MobileContentsSheet";
 import { findArticle, type DocArticle } from "./articles";
 import { findNavigationArticle } from "./navigation";

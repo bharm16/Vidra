@@ -12,6 +12,7 @@ import { ToastProvider } from "./components/Toast";
 import { AuthGateDialog } from "@features/auth-gate";
 import { SystemRoutePage } from "./features/public-site/SystemPage";
 import { SiteShell } from "./features/public-site/SiteShell";
+import { ProductChapterRedirect } from "./features/public-site/ProductChapterRedirect";
 
 const LandingPage = lazy(() => import("./features/public-site/PublicPages").then(module => ({ default: module.LandingPage })));
 const ProductPage = lazy(() => import("./features/public-site/PublicPages").then(module => ({ default: module.ProductPage })));
@@ -86,10 +87,11 @@ function AppRoutes(): React.ReactElement {
         <Route path="/app/project/:projectId" element={<Suspense fallback={<RouteFallback />}><ProjectWorkspace /></Suspense>} />
 
         <Route path="/home" element={<Navigate to="/" replace />} />
-        <Route path="/product/:product" element={<SiteShell><ProductPage /></SiteShell>} />
-        <Route path="/products/:product" element={<SiteShell><ProductPage /></SiteShell>} />
+        <Route path="/product" element={<SiteShell><ProductPage /></SiteShell>} />
+        <Route path="/product/:product" element={<ProductChapterRedirect />} />
+        <Route path="/products/:product" element={<ProductChapterRedirect />} />
         <Route path="/pricing" element={<SiteShell><PricingPage /></SiteShell>} />
-        <Route path="/products" element={<Navigate to="/" replace />} />
+        <Route path="/products" element={<Navigate to="/product" replace />} />
         <Route path="/docs/*" element={<DocsPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />

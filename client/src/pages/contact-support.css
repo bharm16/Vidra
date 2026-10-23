@@ -1,6 +1,4 @@
-.vf-site:has(> .vf-support) {
-  padding-bottom: 0;
-}
+/* Support (Figma 14 › S01–S12, 16 › N28): the phone still beside the conversation starter. */
 .vf-support-overlay {
   background: rgb(11 11 11 / 70%);
 }
@@ -9,23 +7,47 @@
   background: rgb(17 17 17 / 64%);
 }
 .vf-support {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 920px;
+}
+/* Out of flow, so the portrait still fills its half without setting the height. */
+.vf-support-still {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+.vf-support-talk {
+  display: flex;
+  grid-column: 2;
+  flex-direction: column;
+  gap: var(--vf-space-40);
+  min-width: 0;
+  padding: 120px var(--vf-space-80) var(--vf-space-80);
+}
+.vf-support-contact {
   display: flex;
   flex-direction: column;
-  gap: var(--vf-space-32);
-  width: min(960px, calc(100% - 64px));
-  margin: 66px auto 50px;
-  min-height: calc(100dvh - 196px);
+  gap: var(--vf-space-12);
 }
-.vf-support h1 {
-  font-size: 40px;
-  line-height: 48px;
+.vf-support-address {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--vf-space-16);
+}
+.vf-support-address p {
+  overflow-wrap: anywhere;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -1px;
-}
-.vf-support-columns {
-  display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(0, 352px);
-  gap: var(--vf-space-48);
+  line-height: 30px;
+  letter-spacing: -0.24px;
+  user-select: text;
 }
 .vf-support form {
   display: flex;
@@ -41,8 +63,7 @@
   padding: 0;
 }
 .vf-support legend,
-.vf-support label,
-.vf-support-label {
+.vf-support label {
   color: var(--vf-secondary);
   font-size: 12px;
   line-height: 16px;
@@ -167,7 +188,7 @@
   font-size: 12px;
   line-height: 16px;
 }
-.vf-support aside [aria-live] .vf-support-error {
+.vf-support-contact [aria-live] .vf-support-error {
   color: #ffb38a;
   font-size: 15px;
   line-height: 22px;
@@ -188,56 +209,7 @@
   width: 14px;
   height: 14px;
 }
-.vf-support aside {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  gap: var(--vf-space-24);
-}
-.vf-support aside h2 {
-  font-size: 20px;
-  line-height: 26px;
-  font-weight: 700;
-  letter-spacing: -0.2px;
-}
-.vf-support aside > .vf-button {
-  justify-content: center;
-  width: 320px;
-  max-width: 100%;
-  white-space: normal;
-}
-.vf-support aside > button.vf-button {
-  width: 240px;
-}
-.vf-support aside .vf-button span {
-  white-space: normal;
-  text-align: center;
-}
-.vf-support-address {
-  overflow-wrap: anywhere;
-  font-size: 15px;
-  line-height: 22px;
-  user-select: text;
-}
-.vf-support-legal {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--vf-space-24);
-  margin-top: auto;
-  height: 24px;
-  color: var(--vf-secondary);
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-}
-.vf-support-legal > a:first-child {
-  width: 160px;
-}
-.vf-support-legal > a:last-child {
-  width: 180px;
-}
-.vf-support .vf-support-mobile-topic,
-.vf-support-mobile-address {
+.vf-support .vf-support-mobile-topic {
   display: none;
 }
 .vf-support-topic-menu {
@@ -370,11 +342,7 @@
   box-shadow: none;
 }
 @media (width >= 768px) {
-  .vf-site:has(> .vf-support[data-topics-open])
-    > .vf-site-header
-    .vf-button[data-tone="quiet"],
-  .vf-support[data-topics-open] .vf-support-topics > .vf-button,
-  .vf-support[data-topics-open] aside > .vf-button {
+  .vf-support[data-topics-open] .vf-support-topics > .vf-button {
     justify-content: flex-start;
     padding: 0 var(--vf-space-12);
   }
@@ -384,8 +352,10 @@
   .vf-support[data-topics-open] .vf-support-topics > .vf-button {
     flex: 0 1 181px;
   }
-  .vf-support[data-topics-open] aside > .vf-button span {
-    text-align: start;
+}
+@media (768px <= width < 1100px) {
+  .vf-support-talk {
+    padding: var(--vf-space-80) var(--vf-space-40);
   }
 }
 @media (width < 768px) {
@@ -396,20 +366,27 @@
     background: rgb(11 11 11 / 66%);
   }
   .vf-support {
-    width: calc(100% - 48px);
-    margin-top: var(--vf-space-40);
-    margin-bottom: var(--vf-space-40);
+    display: flex;
+    flex-direction: column;
     min-height: 0;
   }
-  .vf-support h1 {
-    font-size: 32px;
-    line-height: 38px;
-    letter-spacing: -0.8px;
+  .vf-support-still {
+    position: static;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 390 / 360;
   }
-  .vf-support[data-ready] h1 {
-    font-size: 40px;
-    line-height: 48px;
-    letter-spacing: -1px;
+  .vf-support-talk {
+    gap: var(--vf-space-24);
+    padding: var(--vf-space-32) var(--vf-site-margin) var(--vf-space-56);
+  }
+  .vf-support-address {
+    gap: var(--vf-space-12);
+  }
+  .vf-support-address p {
+    font-size: 20px;
+    line-height: 26px;
+    letter-spacing: -0.2px;
   }
   .vf-support .vf-support-desktop,
   .vf-support-handoff .vf-support-desktop {
@@ -419,15 +396,10 @@
   .vf-support-handoff .vf-support-mobile {
     display: inline;
   }
-  .vf-support-columns {
-    display: block;
-  }
   .vf-support form {
-    gap: var(--vf-space-32);
+    gap: var(--vf-space-24);
   }
-  .vf-support-desktop-topics,
-  .vf-support aside,
-  .vf-support-legal {
+  .vf-support-desktop-topics {
     display: none;
   }
   .vf-support .vf-support-mobile-topic {
@@ -468,22 +440,6 @@
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
-  }
-  .vf-support-mobile-address {
-    display: flex;
-    flex-direction: column;
-    gap: var(--vf-space-32);
-  }
-  .vf-support-mobile-address p {
-    font-size: 15px;
-    line-height: 22px;
-    color: var(--vf-secondary);
-  }
-  .vf-support[data-ready] .vf-support-mobile-address > p:first-child {
-    display: none;
-  }
-  .vf-support-mobile-address > .vf-button {
-    width: 100%;
   }
   .vf-support-handoff {
     position: fixed;
