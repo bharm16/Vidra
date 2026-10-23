@@ -112,6 +112,7 @@
     "test:unit": "vitest run --config config/test/vitest.unit.config.js",
     "eval:golden-set": "tsx --tsconfig server/tsconfig.json scripts/evaluation/golden-set-relaxed-f1.ts",
     "eval:golden-set:bless": "tsx --tsconfig server/tsconfig.json scripts/evaluation/golden-set-relaxed-f1.ts --bless",
+    "eval:improve-wording": "tsx --tsconfig server/tsconfig.json scripts/evaluation/improve-wording.ts",
     "test:e2e": "playwright test --config config/test/playwright.config.js",
     "typecheck": "bash scripts/typecheck.sh",
     "verify": "bash scripts/verify.sh"

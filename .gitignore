@@ -148,3 +148,4 @@ docs/design/*-2026-*.md
 
 # Golden-set eval output; each run rewrites it.
 scripts/evaluation/golden-set-results-latest.json
+scripts/evaluation/improve-wording-results-latest.md
