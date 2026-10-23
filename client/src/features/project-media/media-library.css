@@ -716,3 +716,29 @@
   width: 72%;
   height: 36%;
 }
+/* The selected card's verbs float in the Media action bar (M23). */
+.vf-media-action-bar {
+  position: fixed;
+  left: calc(56px + (100vw - 56px) / 2);
+  bottom: 24px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: var(--vf-space-2);
+  padding: var(--vf-space-6);
+  border: 1px solid var(--vf-border);
+  border-radius: var(--vf-radius-notice);
+  background: var(--vf-panel);
+  translate: -50% 0;
+}
+.vf-media-action-bar .vf-action-bar-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--vf-space-4);
+  background: var(--vf-border);
+}
+@media (width < 768px) {
+  .vf-media-action-bar {
+    display: none;
+  }
+}

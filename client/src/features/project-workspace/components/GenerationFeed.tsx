@@ -11,7 +11,7 @@ import { RequestSlotStatus, slotProgress } from "./RequestResults";
 import { RequestActions, type ConversationHistoryProps } from "./ConversationHistory";
 import { requestHistoryDescription } from "../state/requestDescription";
 import { verbsForResult, type ResultVerb } from "../state/resultVerbs";
-import { parseWebVtt, cueTime } from "../state/webVtt";
+import { parseWebVtt, cueTime } from "@shared/workflow/webVtt";
 import { Waveform, useAudioPeaks } from "@/components/fresh/Waveform";
 import "./generation-feed.css";
 

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { cueTime, parseWebVtt } from "../state/webVtt";
+import { cueTime, parseWebVtt } from "../webVtt";
 
 it("reads cues with their time and speaker, dropping inline word timings", () => {
   const vtt = "WEBVTT\n\n00:00:00.000 --> 00:00:02.000\n<v Speaker 1>Welcome <00:00:01.000>back in.\n\n00:01:04.500 --> 00:01:07.000\n[applause]\n";

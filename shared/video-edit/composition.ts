@@ -84,8 +84,10 @@ export function absoluteText(composition: VideoComposition, text: VideoText): { 
   return start === undefined ? undefined : { startFrame: start + text.startFrame, endFrame: start + text.endFrame };
 }
 /** Visual items, then background audio, that play this exact source version. */
-export function sourceElementIds(composition: VideoComposition, versionId: string): string[] { return [...composition.items.filter(item => item.versionId === versionId).map(item => item.id), ...(composition.backgroundAudio?.versionId === versionId ? [composition.backgroundAudio.id] : [])]; }
-export function sourceVersionIds(composition: VideoComposition): Array<VideoItem["versionId"]> { return [...new Set([...composition.items.map(item => item.versionId), ...(composition.backgroundAudio ? [composition.backgroundAudio.versionId] : [])])]; }
+/** The edit's audio lanes beside clip sound: voiceover, then music. */
+export function audioTracks(composition: VideoComposition): NonNullable<VideoComposition["backgroundAudio"]>[] { return [composition.voiceover, composition.backgroundAudio].filter((track): track is NonNullable<VideoComposition["backgroundAudio"]> => track !== undefined); }
+export function sourceElementIds(composition: VideoComposition, versionId: string): string[] { return [...composition.items.filter(item => item.versionId === versionId).map(item => item.id), ...audioTracks(composition).filter(track => track.versionId === versionId).map(track => track.id)]; }
+export function sourceVersionIds(composition: VideoComposition): Array<VideoItem["versionId"]> { return [...new Set([...composition.items.map(item => item.versionId), ...audioTracks(composition).map(track => track.versionId)])]; }
 /** Old revisions use the complete displayed clip without rewriting their captured manifest. */
 export function sourceAudioInterval(item: VideoItem): { startFrame: number; endFrame: number } { return item.sourceAudio.timing ?? { startFrame: 0, endFrame: item.displayFrames }; }
 /** A format change is an explicit edit; equal-height previews retain equal-height captions. */
@@ -125,6 +127,7 @@ export function applyEditCommand(value: VideoComposition, command: Exclude<EditC
     case "remove_text": composition.text = composition.text.filter(text => text.id !== command.textId); break;
     case "source_audio": { const item = itemById(command.itemId); item.sourceAudio = { ...item.sourceAudio, muted: command.muted, gain: command.gain, ...(command.timing ? { timing: command.timing } : {}), ...(command.removed !== undefined ? { removed: command.removed } : {}) }; break; }
     case "background_audio": if (command.audio) composition.backgroundAudio = command.audio; else delete composition.backgroundAudio; break;
+    case "voiceover_audio": if (command.audio) composition.voiceover = command.audio; else delete composition.voiceover; break;
     case "copy_audio": { if (composition.backgroundAudio) throw new Error("The background audio track is occupied. Remove it before copying audio."); const row = timelineItems(composition).find(candidate => candidate.item.id === command.itemId); if (!row || row.item.kind !== "clip") throw new Error("Choose a clip with source audio."); if (row.item.sourceAudio.removed) throw new Error("This clip audio was removed. Undo its removal before copying it."); const audio = sourceAudioInterval(row.item); if (audio.startFrame < 0 || audio.endFrame <= audio.startFrame || audio.endFrame > row.item.displayFrames) throw new Error("Fit this clip's audio timing before copying it."); composition.backgroundAudio = { id: command.audioId, versionId: row.item.versionId, sourceInFrame: row.item.inFrame + audio.startFrame, startFrame: row.startFrame + audio.startFrame, endFrame: row.startFrame + audio.endFrame, gain: 0.25 }; break; }
     case "repair_timing": { const plan = planTimingRepair(composition, undefined, command.target); if (!plan.canApply) throw new Error("This timing cannot be shortened automatically."); return plan.repairedComposition; }
   }
@@ -139,7 +142,7 @@ export function validateVideoComposition(composition: VideoComposition, sources:
   if (!duration) issue("composition", "empty", "Add a picture or clip before exporting.");
   if (duration > VIDEO_EDIT_LIMITS.maxFrames) issue("composition", "duration", "The video exceeds the 60-second limit. Shorten the visual track.");
   if (new TextEncoder().encode(JSON.stringify(composition)).length > VIDEO_EDIT_LIMITS.maxCompositionBytes) issue("composition", "size", "This edit exceeds the supported document size.");
-  const ids = [...composition.items.map(item => item.id), ...composition.text.map(text => text.id), ...(composition.backgroundAudio ? [composition.backgroundAudio.id] : [])];
+  const ids = [...composition.items.map(item => item.id), ...composition.text.map(text => text.id), ...audioTracks(composition).map(track => track.id)];
   if (new Set(ids).size !== ids.length) issue("composition", "identity", "Each visual, text and audio element needs its own identity.");
   let bytes = 0; let decodeSeconds = 0;
   for (const versionId of sourceVersionIds(composition)) {
@@ -171,11 +174,10 @@ export function validateVideoComposition(composition: VideoComposition, sources:
     if (text.x + text.width > 1.000001 || text.y + text.height > 1.000001) issue(text.id, "text_bounds", "Keep this text box inside the output.");
     if (!text.text.trim()) issue(text.id, "text_empty", "Enter text or remove this text element.");
   }
-  const audio = composition.backgroundAudio;
-  if (audio) {
+  for (const audio of audioTracks(composition)) {
     const source = sources.find(version => version.id === audio.versionId);
     if (source?.metadata.state === "verified" && source.metadata.audio !== "present") issue(audio.id, "audio_missing", "This source does not contain audio.");
-    if (audio.endFrame <= audio.startFrame || audio.startFrame >= duration) issue(audio.id, "audio_timing", "Place the background audio within the video.");
+    if (audio.endFrame <= audio.startFrame || audio.startFrame >= duration) issue(audio.id, "audio_timing", audio === composition.voiceover ? "Place the voiceover within the video." : "Place the background audio within the video.");
     const usedFrames = Math.max(0, Math.min(duration, audio.endFrame) - audio.startFrame);
     if (source?.metadata.state === "verified" && audio.sourceInFrame + usedFrames > (normalizedFrames.get(audio.versionId) ?? Math.floor(source.metadata.durationSeconds * 30 + 1e-6))) issue(audio.id, "audio_bounds", "This audio interval extends beyond the selected source.");
   }

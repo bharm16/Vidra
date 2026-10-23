@@ -15,7 +15,7 @@ function captionPreviewText(caption: VideoText, issues: readonly VideoValidation
 
 /** The playhead is a view preference. Sources and captions always use exact saved IDs. */
 export function EditorPreview({ composition, issues = [], frame, playing, volume, muted, media, sources, onFrame, onPlaying, onRetry, onFailed, onChooseMedia, chooseControl }: Props): ReactElement {
-  const player = useRef<HTMLVideoElement>(null); const background = useRef<HTMLAudioElement>(null); const output = useRef<HTMLDivElement>(null);
+  const player = useRef<HTMLVideoElement>(null); const background = useRef<HTMLAudioElement>(null); const voiceover = useRef<HTMLAudioElement>(null); const output = useRef<HTMLDivElement>(null);
   const ambient = useRef<HTMLVideoElement>(null);
   const gainGraphs = useRef(new Map<HTMLMediaElement, { context: AudioContext; gain: GainNode }>());
   const sharedAudioContext = useRef<AudioContext>();
@@ -34,6 +34,7 @@ export function EditorPreview({ composition, issues = [], frame, playing, volume
   const state = useRef({ frame, onFrame, onPlaying, duration, blocked: false }); state.current = { frame, onFrame, onPlaying, duration, blocked: Boolean(item && (!source?.url || source.error)) };
   const sourceFrame = item && current ? item.inFrame + Math.max(0, Math.min(item.displayFrames - 1, frame - current.startFrame)) : 0;
   const bg = composition.backgroundAudio; const bgSource = bg ? sources[bg.versionId] : undefined; const bgActive = Boolean(bg && frame >= bg.startFrame && frame < Math.min(bg.endFrame, duration));
+  const vo = composition.voiceover; const voSource = vo ? sources[vo.versionId] : undefined; const voActive = Boolean(vo && frame >= vo.startFrame && frame < Math.min(vo.endFrame, duration));
   useEffect(() => { const video = player.current; const audio = background.current; const atmosphere = ambient.current; return () => { if (video && !video.paused) video.pause(); if (audio && !audio.paused) audio.pause(); if (atmosphere && !atmosphere.paused) atmosphere.pause(); }; }, [source?.url, bgSource?.url]);
   useEffect(() => {
     if (!playing) return;
@@ -63,6 +64,14 @@ export function EditorPreview({ composition, issues = [], frame, playing, volume
     applyGain(audio, volume * bg.gain, muted);
     if (playing && bgActive && audio.paused) void audio.play().catch(() => onPlaying(false)); else if ((!playing || !bgActive) && !audio.paused) audio.pause();
   }, [bg, bgActive, frame, playing, volume, muted, bgSource?.url, onPlaying, applyGain]);
+  useEffect(() => {
+    const audio = voiceover.current; if (!audio || !vo) return;
+    const target = Math.max(0, (vo.sourceInFrame + frame - vo.startFrame) / 30);
+    if (Math.abs(audio.currentTime - target) > .15 || !playing) audio.currentTime = target;
+    applyGain(audio, volume * vo.gain, muted);
+    if (playing && voActive && audio.paused) void audio.play().catch(() => onPlaying(false)); else if ((!playing || !voActive) && !audio.paused) audio.pause();
+  }, [vo, voActive, frame, playing, volume, muted, voSource?.url, onPlaying, applyGain]);
+  useEffect(() => { const audio = voiceover.current; return () => { if (audio && !audio.paused) audio.pause(); }; }, [voSource?.url]);
   useEffect(() => { if (item && source?.error) onPlaying(false); }, [item, source?.error, onPlaying]);
   const crop = item?.fit === "crop" ? item.crop : undefined;
   const ratio = composition.preset === "landscape" ? 16 / 9 : composition.preset === "portrait" ? 9 / 16 : 1;
@@ -76,6 +85,8 @@ export function EditorPreview({ composition, issues = [], frame, playing, volume
       {composition.text.filter(caption => { const range = absoluteText(composition, caption); return range !== undefined && (caption.anchor.kind !== "item" || current?.item.id === caption.anchor.itemId) && frame >= range.startFrame && frame < range.endFrame; }).map(caption => <div key={caption.id} className="ve-caption-preview" style={{ left: `${caption.x * 100}%`, top: `${caption.y * 100}%`, width: `${caption.width * 100}%`, height: `${caption.height * 100}%`, fontSize: `calc(var(--ve-output-width) * ${caption.fontSize / (composition.preset === "portrait" ? 1080 : composition.preset === "square" ? 1080 : 1920)})`, fontWeight: caption.fontWeight, fontFamily: caption.fontFamily === "Figtree" ? "'Vidra Video Figtree', Figtree, sans-serif" : undefined, letterSpacing: caption.letterSpacingEm === undefined ? undefined : `${caption.letterSpacingEm}em`, lineHeight: caption.lineHeightEm, color: caption.color, background: caption.background ?? "transparent", textAlign: caption.align }}>{captionPreviewText(caption, issues)}</div>)}
     </div>}
     {bg && bgSource?.url ? <audio key={`${bg.versionId}:${bgSource.url}`} ref={background} src={bgSource.url} crossOrigin="anonymous" preload="auto" onError={() => { onFailed(bg.versionId); onPlaying(false); }} /> : null}
+    {vo && voSource?.url ? <audio key={`${vo.versionId}:${voSource.url}`} ref={voiceover} src={voSource.url} crossOrigin="anonymous" preload="auto" onError={() => { onFailed(vo.versionId); onPlaying(false); }} /> : null}
+    {vo && voSource?.error ? <p className="ve-audio-warning" role="status">Voiceover unavailable. <FreshButton onClick={() => onRetry(vo.versionId)}>Retry audio</FreshButton></p> : null}
     {bg && bgSource?.error ? <p className="ve-audio-warning" role="status">Background audio unavailable. <FreshButton onClick={() => onRetry(bg.versionId)}>Retry audio</FreshButton></p> : null}
     {audioError ? <p className="ve-audio-warning" role="status">{audioError}</p> : null}
   </div>;

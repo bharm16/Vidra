@@ -345,7 +345,7 @@
 .vf-focus.vf {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: 40;
   background: var(--vf-canvas);
   outline: none;
 }
@@ -638,9 +638,4 @@
 .vf-audio-waveform.vf-waveform > span {
   max-width: 4px;
   border-radius: 2px;
-}
-.vf-media-action-glyph.vf-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--vf-secondary);
 }
