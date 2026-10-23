@@ -3,8 +3,9 @@
 /**
  * Improve Wording Evaluation
  *
- * Runs fixed sample words through Improve wording's guided rewrite, once per
- * model profile that carries wording guidance, and scores each result with
+ * Runs fixed sample words through Improve wording's guided rewrite, at least
+ * once per distinct wording guidance (it refuses to run when one has no case),
+ * and scores each result with
  * mechanical checks: quoted words kept letter for letter, no rule text leaking
  * into the result, edits kept short, no "no X" wording for models that misread
  * it, nothing invented to appear on screen.
@@ -66,11 +67,13 @@ const CASES: Case[] = [
   { profile: "wan-3-t2v", words: "a woman tells her dog 'we're going home now' on a rainy street, no music", once: ["we're going home now"], require: [/no (bgm|music)/i] },
   { profile: "wan-3-i2v", words: "make her turn and smile at the camera", require: [/smil/i] },
   { profile: "gemini-omni-1.1-t2v", words: "chef flips a pancake and says 'perfect!', all in one shot", keep: ["perfect!"], require: [/single continuous shot|no scene cuts/i] },
+  { profile: "gemini-omni-1.1-i2v", words: "she turns and waves goodbye, then says 'see you soon'", keep: ["see you soon"], require: [/wave/i] },
   { profile: "gemini-omni-1.1-edit", words: "remove the phone from his hand", require: [/keep everything else the same/i], maxWords: 30 },
   { profile: "grok-imagine-video-extension", words: "the cat jumps off the table", require: [/cat/i], maxWords: 60 },
   { profile: "nano-banana-2.1", words: "poster for a coffee shop called Bean There, no people", require: [/"Bean There"/], avoid: [NO_NEGATIVE_WORDS], onlyQuotes: ["Bean There"] },
   { profile: "nano-banana-2.1-edit", words: "make the sofa green", require: [/keep everything else exactly the same/i], maxWords: 40 },
   { profile: "gpt-image-2.5-sunburst", words: "product shot of a perfume bottle with NOIR on the label, 16:9", keep: ["NOIR"], require: [/photorealistic|photograph/i] },
+  { profile: "gpt-image-2.5-sunburst-edit", words: "change the label text to BLANC, keep the bottle the same", keep: ["BLANC"], require: [/change only|do not change anything else/i], maxWords: 60 },
   { profile: "ideogram-4.5-precise-edit", words: "replace the sky with a sunset, no clouds", require: [/keep/i], avoid: [NO_NEGATIVE_WORDS], maxWords: 40 },
   { profile: "recraft-v4.1-svg", words: "fox logo", require: [/fox/i, /vector/i] },
   { profile: "recraft-v4.1-svg", words: "coffee cup icon", require: [/coffee cup/i] },
@@ -122,7 +125,7 @@ async function main(): Promise<number> {
   const { registerCoreServices } = await import("../../server/src/config/services/core.services.js");
   const { registerLLMServices } = await import("../../server/src/config/services/llm.services.js");
   const { GuidedWordingService } = await import("../../server/src/services/prompt-optimization/services/GuidedWordingService.js");
-  const { wordingGuidanceFor } = await import("../../server/src/services/creation-requests/replicate-models/index.js");
+  const { REPLICATE_MODEL_DEFINITIONS, wordingGuidanceFor } = await import("../../server/src/services/creation-requests/replicate-models/index.js");
   const { AIModelService } = await import("../../server/src/services/ai-model/AIModelService.js");
 
   if (!isOperationName("improve_wording")) throw new Error("improve_wording operation is missing");
@@ -149,6 +152,15 @@ async function main(): Promise<number> {
     return 2;
   }
   const service = new GuidedWordingService(ai);
+
+  // Every distinct guidance must have a case, so a guidance or model change
+  // can't pass without being exercised. Profiles that share guidance share one.
+  const covered = new Set(CASES.map((c) => wordingGuidanceFor(c.profile)));
+  const uncovered = REPLICATE_MODEL_DEFINITIONS.filter((d) => d.wordingGuidance && !covered.has(d.wordingGuidance)).map((d) => d.profile.id);
+  if (uncovered.length) {
+    console.error(`No case exercises the wording guidance of: ${uncovered.join(", ")}`);
+    return 2;
+  }
 
   console.log(`Improve wording eval: ${pinned.client} / ${pinned.model} / effort ${pinned.effort ?? "model default"} x${opts.repeats}\n`);
   const report: string[] = [`# Improve wording eval\n\n${pinned.client} / ${pinned.model} / effort ${pinned.effort ?? "model default"}, ${new Date().toISOString()}\n`];
