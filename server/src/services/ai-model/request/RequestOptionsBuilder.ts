@@ -74,5 +74,10 @@ export function buildRequestOptions(
     requestOptions.thinkingBudget = thinkingBudget;
   }
 
+  const effort = params.effort ?? config.effort;
+  if (effort !== undefined) {
+    requestOptions.effort = effort;
+  }
+
   return requestOptions;
 }

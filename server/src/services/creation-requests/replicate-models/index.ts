@@ -34,6 +34,11 @@ export function replicateModelFor(profile: {
     : undefined;
 }
 
+/** Improve wording's instructions for a profile, when its model documents any. */
+export function wordingGuidanceFor(profileId: string): string | undefined {
+  return BY_PROFILE_ID.get(profileId)?.wordingGuidance;
+}
+
 export type {
   ModelCall,
   ModelInput,

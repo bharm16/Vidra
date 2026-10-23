@@ -37,6 +37,11 @@ export function registerCoreServices(container: DIContainer): void {
       timeout: parseInt(process.env.QWEN_TIMEOUT_MS || "10000", 10),
       model: process.env.QWEN_MODEL || DEFAULT_QWEN_MODEL,
     },
+    anthropic: {
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      timeout: parseInt(process.env.ANTHROPIC_TIMEOUT_MS || "30000", 10),
+      model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
+    },
     gemini: {
       apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
       timeout: parseInt(process.env.GEMINI_TIMEOUT_MS || "30000", 10),

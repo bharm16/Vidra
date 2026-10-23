@@ -16,15 +16,16 @@ test.describe("public pages and workspace entry", () => {
   test("home redirects to the public front door with independent creation choices", async ({ page }) => {
     await page.goto("/home");
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { name: /Images, clips,.*finished videos/i, level: 1 })).toBeVisible();
-    await expect(page.getByRole("main").getByRole("link", { name: "Images", exact: false })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Film anything.", level: 1 })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Product", exact: true }).getByRole("link", { name: "Images", exact: true })).toHaveAttribute("href", "/product#images");
     await expect(page.getByLabel("Shot description")).toHaveCount(0);
   });
 
   test("a public clip capability opens a signed-out composer that keeps its words through sign-up", async ({ page }) => {
     await page.route("**/api/public/workflow/profiles", async route => { await route.fulfill(jsonResponse({ success: true, data: [clipModel] })); });
     await page.goto("/product/video");
-    await page.getByRole("main").getByRole("link", { name: "Start creating", exact: true }).click();
+    await expect(page).toHaveURL(/\/product#video$/);
+    await page.getByRole("main").getByRole("link", { name: "Make a clip", exact: true }).click();
     await expect(page).toHaveURL(/\/app\?intent=make-video$/);
     const words = page.getByLabel("Current request words", { exact: true });
     await expect(words).toHaveAttribute("placeholder", "Describe your video…");

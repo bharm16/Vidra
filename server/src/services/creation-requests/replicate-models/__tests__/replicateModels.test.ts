@@ -5,7 +5,11 @@ import {
 } from "@shared/schemas/workflow/capability.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { validateProfileParameters } from "@shared/workflow/capabilityEvaluation";
-import { REPLICATE_MODEL_DEFINITIONS, replicateModelFor } from "..";
+import {
+  REPLICATE_MODEL_DEFINITIONS,
+  replicateModelFor,
+  wordingGuidanceFor,
+} from "..";
 import type { ModelCall, ReplicateModelDefinition } from "../types";
 
 const tools = {
@@ -593,5 +597,31 @@ describe("native Replicate model definitions", () => {
       call(scribe),
     );
     expect(captions).toMatch(/^WEBVTT/);
+  });
+});
+
+describe("Improve wording guidance", () => {
+  it("gives each model its own guidance, and none to a model without words", () => {
+    const wan = wordingGuidanceFor("wan-3-t2v");
+    const geminiEdit = wordingGuidanceFor("gemini-omni-1.1-edit");
+    expect(wan).toContain("Shot 1");
+    expect(geminiEdit).toContain("Keep everything else the same.");
+    expect(wan).not.toBe(geminiEdit);
+    expect(wordingGuidanceFor("topaz-video-upscale")).toBeUndefined();
+    expect(wordingGuidanceFor("no-such-profile")).toBeUndefined();
+  });
+
+  it("arrives with every profile that offers Improve wording", () => {
+    // Reframe's words only steer what fills the new space; no guide covers them.
+    const exempt = new Set(["luma-reframe-video"]);
+    const missing = REPLICATE_MODEL_DEFINITIONS.filter(
+      ({ profile, wordingGuidance }) =>
+        ["required", "optional"].includes(
+          profile.presentation?.words ?? "required",
+        ) &&
+        !exempt.has(profile.id) &&
+        !wordingGuidance,
+    ).map(({ profile }) => profile.id);
+    expect(missing).toEqual([]);
   });
 });

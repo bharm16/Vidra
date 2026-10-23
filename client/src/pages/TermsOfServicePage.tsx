@@ -26,7 +26,7 @@ export function TermsOfServicePage(): ReactElement {
               <section>
                 <SectionHeading id="summary">Summary</SectionHeading>
                 <p>
-                  These Terms govern your use of {productName} (the<br />
+                  These Terms govern your use of {productName} (the
                   &ldquo;Service&rdquo;). By accessing or using the Service, you
                   agree to these Terms.
                 </p>
@@ -35,8 +35,8 @@ export function TermsOfServicePage(): ReactElement {
               <section>
                 <SectionHeading id="who">Who we are</SectionHeading>
                 <p>
-                  The Service is provided by {companyName} (&ldquo;we&rdquo;,<br />
-                  &ldquo;us&rdquo;, &ldquo;our&rdquo;). Contact:<br />
+                  The Service is provided by {companyName} (&ldquo;we&rdquo;,
+                  &ldquo;us&rdquo;, &ldquo;our&rdquo;). Contact:{" "}
                   <a
                     className="font-medium hover:underline"
                     style={{ color: "var(--foreground)" }}
@@ -44,7 +44,7 @@ export function TermsOfServicePage(): ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  <br />.
+                  .
                 </p>
               </section>
 
@@ -71,7 +71,7 @@ export function TermsOfServicePage(): ReactElement {
                 <p>
                   Don&apos;t misuse the Service. Don&apos;t reverse engineer,
                   disrupt, or overload our systems, and don&apos;t use the
-                  <br />Service to generate unlawful, harmful, or infringing content.
+                  Service to generate unlawful, harmful, or infringing content.
                 </p>
               </section>
 
@@ -83,7 +83,7 @@ export function TermsOfServicePage(): ReactElement {
               <section>
                 <SectionHeading id="privacy">Privacy</SectionHeading>
                 <p>
-                  Our<br />
+                  Our{" "}
                   <Link
                     to="/privacy-policy"
                     className="font-medium hover:underline"
@@ -138,7 +138,7 @@ export function TermsOfServicePage(): ReactElement {
                 <p>
                   We may update these Terms. Material changes will be
                   communicated. Continued use means you accept the updated
-                  <br />Terms.
+                  Terms.
                 </p>
               </section>
 
@@ -153,7 +153,7 @@ export function TermsOfServicePage(): ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  <br />.
+                  .
                 </p>
               </section>
   </LegalPageLayout>;

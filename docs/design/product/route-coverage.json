@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "date": "2026-10-17",
+  "date": "2026-10-23",
   "source": "client/src/App.tsx",
-  "currentRouteCount": 35,
+  "currentRouteCount": 33,
   "routeChangesAreProposed": false,
   "currentRoutes": [
     {
@@ -24,6 +24,28 @@
           "height": 900,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93659"
         },
+        {
+          "key": "N38",
+          "nodeId": "969:94033",
+          "name": "N38 \u00b7 Mobile First workspace visit",
+          "width": 390,
+          "height": 844,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94033"
+        },
+        {
+          "key": "N39",
+          "nodeId": "969:94083",
+          "name": "N39 \u00b7 Mobile Return to a project",
+          "width": 390,
+          "height": 844,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94083"
+        }
+      ],
+      "contract": "Implemented owner-scoped entry. Signed in, it opens the owner's library on its conversations with a fresh composer and no project selected; signed out, a guest composer. The project browser moved to /app/projects on 2026-10-19."
+    },
+    {
+      "path": "/app/projects",
+      "screens": [
         {
           "key": "X12",
           "nodeId": "971:95026",
@@ -47,25 +69,9 @@
           "width": 1440,
           "height": 960,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259"
-        },
-        {
-          "key": "N38",
-          "nodeId": "969:94033",
-          "name": "N38 \u00b7 Mobile First workspace visit",
-          "width": 390,
-          "height": 844,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94033"
-        },
-        {
-          "key": "N39",
-          "nodeId": "969:94083",
-          "name": "N39 \u00b7 Mobile Return to a project",
-          "width": 390,
-          "height": 844,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=969-94083"
         }
       ],
-      "contract": "Implemented owner-scoped project browser with empty/search/loading states, stable creation and explicit project selection. Media and editor screens belong to the selected project route."
+      "contract": "Implemented owner-scoped project browser with empty, search and loading states. Signed-out visitors sign in first; opening a project goes to /app/project/:projectId."
     },
     {
       "path": "/app/project/:projectId",
@@ -2181,119 +2187,77 @@
           "nodeId": "959:87947",
           "name": "W01 \u00b7 Landing page",
           "width": 1440,
-          "height": 2388,
+          "height": 4114,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947"
         }
       ],
       "contract": "Compatibility alias redirects to the implemented public landing at /. Workspace entry is /app."
     },
     {
-      "path": "/product/:product",
+      "path": "/product",
       "screens": [
         {
           "key": "W04",
-          "nodeId": "959:88411",
-          "name": "W04 \u00b7 Image creation product page",
+          "nodeId": "1071:90960",
+          "name": "W04 \u00b7 Reuse setup creates a separate working draft",
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Vidra?node-id=1071-90960",
           "width": 1440,
-          "height": 1958,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411"
-        },
-        {
-          "key": "W05",
-          "nodeId": "959:88495",
-          "name": "W05 \u00b7 Video generation product page",
-          "width": 1440,
-          "height": 1958,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495"
-        },
-        {
-          "key": "W06",
-          "nodeId": "959:88576",
-          "name": "W06 \u00b7 Video editing product page",
-          "width": 1440,
-          "height": 2026,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576"
-        },
-        {
-          "key": "W07",
-          "nodeId": "959:88732",
-          "name": "W07 \u00b7 Sketch product page",
-          "width": 1440,
-          "height": 1958,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732"
+          "height": 900
         },
         {
           "key": "N03",
           "nodeId": "966:93768",
-          "name": "N03 \u00b7 Mobile Image product page",
+          "name": "N03 \u00b7 Mobile Product page",
           "width": 390,
-          "height": 1404,
+          "height": 2842,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93768"
-        },
-        {
-          "key": "N04",
-          "nodeId": "966:93799",
-          "name": "N04 \u00b7 Mobile Video product page",
-          "width": 390,
-          "height": 1430,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93799"
-        },
-        {
-          "key": "N05",
-          "nodeId": "966:93830",
-          "name": "N05 \u00b7 Mobile Editor product page",
-          "width": 390,
-          "height": 1452,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93830"
-        },
-        {
-          "key": "N06",
-          "nodeId": "966:93861",
-          "name": "N06 \u00b7 Mobile Sketch product page",
-          "width": 390,
-          "height": 1456,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93861"
         }
       ],
-      "contract": "Implemented public product pages for images, video, editor and sketch. CTA intent enters /app with no mandatory creation sequence."
+      "contract": "Implemented public Product page. Images, Video, Editor and Sketch are chapters (#images, #video, #editor, #sketch); each chapter's call to action enters /app with its intent (make-image, make-video, video-edit, sketch) and no mandatory creation sequence."
+    },
+    {
+      "path": "/product/:product",
+      "screens": [
+        {
+          "key": "W04",
+          "nodeId": "1071:90960",
+          "name": "W04 \u00b7 Reuse setup creates a separate working draft",
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Vidra?node-id=1071-90960",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "key": "N03",
+          "nodeId": "966:93768",
+          "name": "N03 \u00b7 Mobile Product page",
+          "width": 390,
+          "height": 2842,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93768"
+        }
+      ],
+      "contract": "Compatibility links for the earlier per-tool pages redirect to that chapter of /product (images, video, editor or sketch); any other tool opens /product."
     },
     {
       "path": "/products/:product",
       "screens": [
         {
           "key": "W04",
-          "nodeId": "959:88411",
-          "name": "W04 \u00b7 Image creation product page",
+          "nodeId": "1071:90960",
+          "name": "W04 \u00b7 Reuse setup creates a separate working draft",
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Vidra?node-id=1071-90960",
           "width": 1440,
-          "height": 1958,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411"
+          "height": 900
         },
         {
-          "key": "W05",
-          "nodeId": "959:88495",
-          "name": "W05 \u00b7 Video generation product page",
-          "width": 1440,
-          "height": 1958,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495"
-        },
-        {
-          "key": "W06",
-          "nodeId": "959:88576",
-          "name": "W06 \u00b7 Video editing product page",
-          "width": 1440,
-          "height": 2026,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576"
-        },
-        {
-          "key": "W07",
-          "nodeId": "959:88732",
-          "name": "W07 \u00b7 Sketch product page",
-          "width": 1440,
-          "height": 1958,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732"
+          "key": "N03",
+          "nodeId": "966:93768",
+          "name": "N03 \u00b7 Mobile Product page",
+          "width": 390,
+          "height": 2842,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93768"
         }
       ],
-      "contract": "Compatibility spelling for the same explicit public product pages as /product/:product."
+      "contract": "Compatibility spelling of /product/:product; it redirects the same way."
     },
     {
       "path": "/pricing",
@@ -2303,57 +2267,41 @@
           "nodeId": "959:88816",
           "name": "W08 \u00b7 Pricing during free testing",
           "width": 1440,
-          "height": 1454,
+          "height": 1480,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88816"
-        },
-        {
-          "key": "W09",
-          "nodeId": "959:88920",
-          "name": "W09 \u00b7 Pricing questions expanded",
-          "width": 1440,
-          "height": 1798,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88920"
         },
         {
           "key": "N07",
           "nodeId": "966:93892",
           "name": "N07 \u00b7 Mobile Pricing",
           "width": 390,
-          "height": 1186,
+          "height": 1128,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93892"
-        },
-        {
-          "key": "N152",
-          "nodeId": "1019:98516",
-          "name": "N152 \u00b7 Mobile pricing questions expanded",
-          "width": 390,
-          "height": 1376,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1019-98516"
         }
       ],
-      "contract": "Implemented direct-link free-testing information and expandable questions. No paid plans or checkout; no Pricing navigation item is added."
+      "contract": "Implemented direct-link free-testing information. Questions open one answer at a time in place. No paid plans or checkout; Pricing is in the public header navigation."
     },
     {
       "path": "/products",
       "screens": [
         {
-          "key": "W01",
-          "nodeId": "959:87947",
-          "name": "W01 \u00b7 Landing page",
+          "key": "W04",
+          "nodeId": "1071:90960",
+          "name": "W04 \u00b7 Reuse setup creates a separate working draft",
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Vidra?node-id=1071-90960",
           "width": 1440,
-          "height": 2388,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947"
+          "height": 900
         },
         {
-          "key": "W02",
-          "nodeId": "959:88089",
-          "name": "W02 \u00b7 Product navigation open",
-          "width": 1440,
-          "height": 2388,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88089"
+          "key": "N03",
+          "nodeId": "966:93768",
+          "name": "N03 \u00b7 Mobile Product page",
+          "width": 390,
+          "height": 2842,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93768"
         }
       ],
-      "contract": "Compatibility alias redirects to public landing; product pages are /product/:product and /products/:product."
+      "contract": "Compatibility alias redirects to /product."
     },
     {
       "path": "/docs/*",
@@ -2363,7 +2311,7 @@
           "nodeId": "963:91185",
           "name": "H01 \u00b7 Documentation home",
           "width": 1440,
-          "height": 1562,
+          "height": 1784,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185"
         },
         {
@@ -2371,7 +2319,7 @@
           "nodeId": "963:91320",
           "name": "H13 \u00b7 Search documentation",
           "width": 1440,
-          "height": 1562,
+          "height": 1784,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91320"
         },
         {
@@ -2379,7 +2327,7 @@
           "nodeId": "963:91471",
           "name": "H14 \u00b7 Documentation search results",
           "width": 1440,
-          "height": 1562,
+          "height": 1784,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91471"
         },
         {
@@ -2387,7 +2335,7 @@
           "nodeId": "963:91630",
           "name": "H15 \u00b7 Documentation search has no matches",
           "width": 1440,
-          "height": 1562,
+          "height": 1784,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91630"
         },
         {
@@ -2395,7 +2343,7 @@
           "nodeId": "963:91783",
           "name": "H16 \u00b7 Documentation search unavailable",
           "width": 1440,
-          "height": 1562,
+          "height": 1784,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91783"
         },
         {
@@ -2419,7 +2367,7 @@
           "nodeId": "963:89912",
           "name": "H02 \u00b7 Get started",
           "width": 1440,
-          "height": 1604,
+          "height": 1826,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-89912"
         },
         {
@@ -2427,7 +2375,7 @@
           "nodeId": "963:90023",
           "name": "H03 \u00b7 Create and edit images",
           "width": 1440,
-          "height": 1578,
+          "height": 1800,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90023"
         },
         {
@@ -2435,7 +2383,7 @@
           "nodeId": "963:90134",
           "name": "H04 \u00b7 Generate a video clip",
           "width": 1440,
-          "height": 1656,
+          "height": 1878,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90134"
         },
         {
@@ -2443,7 +2391,7 @@
           "nodeId": "963:90245",
           "name": "H05 \u00b7 Assemble and export a video",
           "width": 1440,
-          "height": 1630,
+          "height": 1852,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245"
         },
         {
@@ -2451,7 +2399,7 @@
           "nodeId": "963:90401",
           "name": "H06 \u00b7 Import and organize media",
           "width": 1440,
-          "height": 1604,
+          "height": 1826,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90401"
         },
         {
@@ -2459,7 +2407,7 @@
           "nodeId": "963:90512",
           "name": "H07 \u00b7 Conversations, drafts and versions",
           "width": 1440,
-          "height": 1630,
+          "height": 1852,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512"
         },
         {
@@ -2467,7 +2415,7 @@
           "nodeId": "963:90630",
           "name": "H08 \u00b7 Draw with Sketch",
           "width": 1440,
-          "height": 1604,
+          "height": 1826,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90630"
         },
         {
@@ -2475,7 +2423,7 @@
           "nodeId": "963:90741",
           "name": "H09 \u00b7 Choose models and settings",
           "width": 1440,
-          "height": 1630,
+          "height": 1852,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90741"
         },
         {
@@ -2483,7 +2431,7 @@
           "nodeId": "963:90852",
           "name": "H10 \u00b7 Share and download your work",
           "width": 1440,
-          "height": 1604,
+          "height": 1826,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90852"
         },
         {
@@ -2491,7 +2439,7 @@
           "nodeId": "963:90963",
           "name": "H11 \u00b7 Recover interrupted work",
           "width": 1440,
-          "height": 1656,
+          "height": 1878,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90963"
         },
         {
@@ -2499,7 +2447,7 @@
           "nodeId": "963:91074",
           "name": "H12 \u00b7 Understand your testing allowance",
           "width": 1440,
-          "height": 1578,
+          "height": 1800,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91074"
         },
         {
@@ -2507,7 +2455,7 @@
           "nodeId": "971:94418",
           "name": "H19 \u00b7 Improve words without generating media",
           "width": 1440,
-          "height": 1626,
+          "height": 1848,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418"
         },
         {
@@ -2515,7 +2463,7 @@
           "nodeId": "971:94529",
           "name": "H20 \u00b7 Select an area to edit",
           "width": 1440,
-          "height": 1578,
+          "height": 1800,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529"
         },
         {
@@ -2523,7 +2471,7 @@
           "nodeId": "968:93826",
           "name": "N18 \u00b7 Mobile Docs home",
           "width": 390,
-          "height": 1651,
+          "height": 1755,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93826"
         },
         {
@@ -2531,7 +2479,7 @@
           "nodeId": "968:93867",
           "name": "N19 \u00b7 Mobile Documentation article",
           "width": 390,
-          "height": 1898,
+          "height": 2002,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93867"
         },
         {
@@ -2755,7 +2703,7 @@
           "nodeId": "959:89028",
           "name": "W10 \u00b7 Privacy policy",
           "width": 1440,
-          "height": 3078,
+          "height": 2885,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89028"
         },
         {
@@ -2763,7 +2711,7 @@
           "nodeId": "968:94206",
           "name": "N30 \u00b7 Mobile Privacy policy",
           "width": 390,
-          "height": 3434,
+          "height": 3260,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94206"
         }
       ],
@@ -2777,7 +2725,7 @@
           "nodeId": "959:89112",
           "name": "W11 \u00b7 Terms of service",
           "width": 1440,
-          "height": 2952,
+          "height": 2749,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89112"
         },
         {
@@ -2785,7 +2733,7 @@
           "nodeId": "968:94254",
           "name": "N31 \u00b7 Mobile Terms of service",
           "width": 390,
-          "height": 3184,
+          "height": 2924,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94254"
         }
       ],
@@ -2799,7 +2747,7 @@
           "nodeId": "965:92848",
           "name": "S01 \u00b7 Contact support",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848"
         },
         {
@@ -2807,7 +2755,7 @@
           "nodeId": "965:92901",
           "name": "S02 \u00b7 Support details ready",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92901"
         },
         {
@@ -2815,7 +2763,7 @@
           "nodeId": "965:92954",
           "name": "S03 \u00b7 Support form validation",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92954"
         },
         {
@@ -2823,7 +2771,7 @@
           "nodeId": "965:93014",
           "name": "S04 \u00b7 Choose a support topic",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93014"
         },
         {
@@ -2831,7 +2779,7 @@
           "nodeId": "965:93074",
           "name": "S05 \u00b7 Continue in your email app",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93074"
         },
         {
@@ -2839,7 +2787,7 @@
           "nodeId": "965:93136",
           "name": "S06 \u00b7 No email app available",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93136"
         },
         {
@@ -2847,7 +2795,7 @@
           "nodeId": "965:93198",
           "name": "S07 \u00b7 Support address copied",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93198"
         },
         {
@@ -2855,7 +2803,7 @@
           "nodeId": "965:93251",
           "name": "S08 \u00b7 Clipboard permission failed",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93251"
         },
         {
@@ -2863,7 +2811,7 @@
           "nodeId": "965:93305",
           "name": "S09 \u00b7 Security report",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93305"
         },
         {
@@ -2871,7 +2819,7 @@
           "nodeId": "965:93359",
           "name": "S10 \u00b7 Request account data or deletion",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93359"
         },
         {
@@ -2879,7 +2827,7 @@
           "nodeId": "980:95180",
           "name": "S11 \u00b7 Product feedback",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95180"
         },
         {
@@ -2887,7 +2835,7 @@
           "nodeId": "980:95234",
           "name": "S12 \u00b7 Account deletion request",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95234"
         }
       ],
@@ -2901,7 +2849,7 @@
           "nodeId": "965:92848",
           "name": "S01 \u00b7 Contact support",
           "width": 1440,
-          "height": 1040,
+          "height": 1600,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848"
         }
       ],
@@ -3061,23 +3009,15 @@
           "nodeId": "959:87947",
           "name": "W01 \u00b7 Landing page",
           "width": 1440,
-          "height": 2388,
+          "height": 4114,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947"
-        },
-        {
-          "key": "W02",
-          "nodeId": "959:88089",
-          "name": "W02 \u00b7 Product navigation open",
-          "width": 1440,
-          "height": 2388,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88089"
         },
         {
           "key": "W03",
           "nodeId": "959:88269",
           "name": "W03 \u00b7 Landing page for a returning creator",
           "width": 1440,
-          "height": 2388,
+          "height": 4114,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88269"
         },
         {
@@ -3085,7 +3025,7 @@
           "nodeId": "966:93576",
           "name": "N01 \u00b7 Mobile Landing page",
           "width": 390,
-          "height": 2352,
+          "height": 2393,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93576"
         },
         {
@@ -3101,194 +3041,53 @@
           "nodeId": "1019:98732",
           "name": "N153 \u00b7 Mobile landing while signed in",
           "width": 390,
-          "height": 2352,
+          "height": 2393,
           "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1019-98732"
         }
       ],
       "contract": "Implemented public landing for guests and returning members; workspace/project creation is reached through /app. This mapping records source routing, not production/provider qualification."
     },
     {
+      "path": "/studio/*",
+      "screens": [
+        {
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
+        }
+      ],
+      "contract": "Retired Studio links (ADR-0027) redirect to /app; Studio records stay readable in the workspace."
+    },
+    {
       "path": "/live-editor",
       "screens": [
         {
-          "key": "M13",
-          "nodeId": "898:92992",
-          "name": "M13 \u00b7 Sketch before live preview starts",
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
           "width": 1440,
           "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-92992"
-        },
-        {
-          "key": "M14",
-          "nodeId": "898:93121",
-          "name": "M14 \u00b7 Sketch live preview",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93121"
-        },
-        {
-          "key": "M15",
-          "nodeId": "898:93250",
-          "name": "M15 \u00b7 Keep the last good preview after an error",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93250"
-        },
-        {
-          "key": "M17",
-          "nodeId": "898:93519",
-          "name": "M17 \u00b7 Allowance reached with an image still available",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93519"
-        },
-        {
-          "key": "M18",
-          "nodeId": "898:93648",
-          "name": "M18 \u00b7 Accept exactly the displayed Sketch image",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93648"
-        },
-        {
-          "key": "M19",
-          "nodeId": "898:93795",
-          "name": "M19 \u00b7 Connecting to Sketch",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93795"
-        },
-        {
-          "key": "M20",
-          "nodeId": "898:93924",
-          "name": "M20 \u00b7 Accepted image with explicit use as input",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93924"
-        },
-        {
-          "key": "B08",
-          "nodeId": "912:327096",
-          "name": "B08 \u00b7 Mobile Sketch with explicit acceptance",
-          "width": 390,
-          "height": 844,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=912-327096"
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
         }
       ],
-      "contract": "Retained legacy realtime Sketch route. Current project-owned Sketch uses /app/project/:projectId?view=sketch; these designs describe the retained behavior, not a claim of legacy route visual parity."
-    },
-    {
-      "path": "/studio",
-      "screens": [
-        {
-          "key": "P02",
-          "nodeId": "1872:51710",
-          "name": "P02 \u00b7 Project conversations",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1872-51710"
-        },
-        {
-          "key": "C05",
-          "nodeId": "888:85240",
-          "name": "C05 \u00b7 Inspect one image while editing another",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
-        }
-      ],
-      "contract": "Retained legacy Studio index; current project browser is /app. Existing legacy identity remains authoritative."
-    },
-    {
-      "path": "/studio/new",
-      "screens": [
-        {
-          "key": "C01",
-          "nodeId": "888:85153",
-          "name": "C01 \u00b7 New request",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85153"
-        },
-        {
-          "key": "C37",
-          "nodeId": "930:105076",
-          "name": "C37 \u00b7 Image action chosen before writing",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=930-105076"
-        }
-      ],
-      "contract": "Retained legacy Studio creation route. Current new-project request entry is /app then /app/project/:projectId."
-    },
-    {
-      "path": "/studio/:projectId",
-      "screens": [
-        {
-          "key": "C05",
-          "nodeId": "888:85240",
-          "name": "C05 \u00b7 Inspect one image while editing another",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
-        }
-      ],
-      "contract": "Retained legacy Studio project route; authorize its existing project identity. New workflow project routing uses /app/project/:projectId.",
-      "historicalRetiredReferenceNote": "Former null-node P04/P05 failure-state examples remain only in historicalRouteSnapshot20261010. They are retired dedicated screens, not current active design references."
+      "contract": "Retired Live editor link (ADR-0027) redirects to /app. Project-owned Sketch uses /app/project/:projectId?view=sketch."
     },
     {
       "path": "/history",
       "screens": [
         {
-          "key": "P02",
-          "nodeId": "1872:51710",
-          "name": "P02 \u00b7 Project conversations",
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
           "width": 1440,
           "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1872-51710"
-        },
-        {
-          "key": "M01",
-          "nodeId": "897:91827",
-          "name": "M01 \u00b7 Browse project media",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=897-91827"
-        },
-        {
-          "key": "C13",
-          "nodeId": "891:86691",
-          "name": "C13 \u00b7 Follow the actual version branch",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=891-86691"
-        },
-        {
-          "key": "X12",
-          "nodeId": "971:95026",
-          "name": "X12 \u00b7 First project browser",
-          "width": 1440,
-          "height": 960,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95026"
-        },
-        {
-          "key": "X14",
-          "nodeId": "971:95182",
-          "name": "X14 \u00b7 Project search has no matches",
-          "width": 1440,
-          "height": 960,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95182"
-        },
-        {
-          "key": "X15",
-          "nodeId": "971:95259",
-          "name": "X15 \u00b7 Project browser loading",
-          "width": 1440,
-          "height": 960,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259"
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
         }
       ],
-      "contract": "Retained legacy history route; new project browser/media/version history lives at /app and /app/project/:projectId."
+      "contract": "Compatibility link redirects to /app; media and version history live in the project workspace."
     },
     {
       "path": "/account",
@@ -3415,77 +3214,32 @@
       "contract": "Compatibility alias redirects to /app?intent=make-image; project selection/creation preserves explicit intent."
     },
     {
-      "path": "/session/:sessionId",
+      "path": "/session/*",
       "screens": [
         {
-          "key": "C05",
-          "nodeId": "888:85240",
-          "name": "C05 \u00b7 Inspect one image while editing another",
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
           "width": 1440,
           "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
         }
       ],
-      "contract": "authoritative legacy-session resolver; do not cast a session ID to a new project ID",
-      "historicalRetiredReferenceNote": "Former null-node P04/P05 failure-state examples remain only in historicalRouteSnapshot20261010. They are retired dedicated screens, not current active design references."
-    },
-    {
-      "path": "/session/:sessionId/studio",
-      "screens": [
-        {
-          "key": "C05",
-          "nodeId": "888:85240",
-          "name": "C05 \u00b7 Inspect one image while editing another",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
-        }
-      ],
-      "contract": "preserve identity and requested view through the resolver"
-    },
-    {
-      "path": "/session/:sessionId/create",
-      "screens": [
-        {
-          "key": "C01",
-          "nodeId": "888:85153",
-          "name": "C01 \u00b7 New request",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85153"
-        },
-        {
-          "key": "C05",
-          "nodeId": "888:85240",
-          "name": "C05 \u00b7 Inspect one image while editing another",
-          "width": 1440,
-          "height": 900,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
-        }
-      ],
-      "contract": "preserve identity and draft intent through the resolver"
+      "contract": "Retired legacy session links redirect to /app (2026-10-19)."
     },
     {
       "path": "/prompt/:uuid",
       "screens": [
         {
-          "key": "X01",
-          "nodeId": "965:93412",
-          "name": "X01 \u00b7 Page not found",
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
           "width": 1440,
-          "height": 960,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93412"
-        },
-        {
-          "key": "X06",
-          "nodeId": "965:93546",
-          "name": "X06 \u00b7 Access denied",
-          "width": 1440,
-          "height": 960,
-          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93546"
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
         }
       ],
-      "contract": "resolve and authorize the saved reference; missing and denied remain distinct"
+      "contract": "Compatibility link redirects to /app."
     },
     {
       "path": "*",
@@ -4971,5 +4725,126 @@
       "proofBoundary": "Reference consistency only; no browser/provider or application acceptance claim."
     }
   },
-  "historicalRetirementPathRule": "Paths recorded inside screenRemoval historical retirement references retain their original snapshot coordinates. They are historical records and are not reinterpreted as indexes into the October 17 currentRoutes array."
+  "historicalRetirementPathRule": "Paths recorded inside screenRemoval historical retirement references retain their original snapshot coordinates. They are historical records and are not reinterpreted as indexes into the October 17 currentRoutes array.",
+  "screenRemoval20261023": {
+    "status": "applied",
+    "record": "Public site v4 Figma rollout on pages 14\u201316, 2026-10-23; implemented in bharm16/Vidra#244",
+    "policy": "One Product page, W04 and N03 at /product, replaced the per-tool product pages; /product/:tool and /products/:tool redirect to its chapters. The header has no product menu, and pricing questions open in place on W08 and N07. Do not redraw the per-tool pages, the product menu or an expanded-questions screen.",
+    "retiredScreens": [
+      "W02",
+      "W05",
+      "W06",
+      "W07",
+      "W09",
+      "O08",
+      "N04",
+      "N05",
+      "N06",
+      "N152"
+    ]
+  },
+  "routeReconciliation20261023": {
+    "status": "applied",
+    "source": "client/src/App.tsx",
+    "note": "currentRoutes lists the 33 paths in App.tsx in source order. Studio, the Live editor, /history, legacy sessions and saved prompts redirect to /app (ADR-0027 and the 2026-10-19 session retirement); /app opens the library and the project browser moved to /app/projects (2026-10-19); the public site v4 added /product with chapters (bharm16/Vidra#244). Screen names and sizes match the live Figma frames on pages 14\u201316. proposedRoutes, historical snapshots and removal records are unchanged; previousEntries keeps each replaced entry's screen keys and contract.",
+    "addedRoutes": ["/app/projects", "/product", "/studio/*", "/session/*"],
+    "removedRoutes": [
+      "/studio",
+      "/studio/new",
+      "/studio/:projectId",
+      "/session/:sessionId",
+      "/session/:sessionId/studio",
+      "/session/:sessionId/create"
+    ],
+    "changedRoutes": [
+      "/app",
+      "/product/:product",
+      "/products/:product",
+      "/pricing",
+      "/products",
+      "/",
+      "/live-editor",
+      "/history",
+      "/prompt/:uuid"
+    ],
+    "previousEntries": [
+      {
+        "path": "/app",
+        "screens": ["X07", "X08", "X12", "X14", "X15", "N38", "N39"],
+        "contract": "Implemented owner-scoped project browser with empty/search/loading states, stable creation and explicit project selection. Media and editor screens belong to the selected project route."
+      },
+      {
+        "path": "/product/:product",
+        "screens": ["W04", "W05", "W06", "W07", "N03", "N04", "N05", "N06"],
+        "contract": "Implemented public product pages for images, video, editor and sketch. CTA intent enters /app with no mandatory creation sequence."
+      },
+      {
+        "path": "/products/:product",
+        "screens": ["W04", "W05", "W06", "W07"],
+        "contract": "Compatibility spelling for the same explicit public product pages as /product/:product."
+      },
+      {
+        "path": "/pricing",
+        "screens": ["W08", "W09", "N07", "N152"],
+        "contract": "Implemented direct-link free-testing information and expandable questions. No paid plans or checkout; no Pricing navigation item is added."
+      },
+      {
+        "path": "/products",
+        "screens": ["W01", "W02"],
+        "contract": "Compatibility alias redirects to public landing; product pages are /product/:product and /products/:product."
+      },
+      {
+        "path": "/",
+        "screens": ["W01", "W02", "W03", "N01", "N02", "N153"],
+        "contract": "Implemented public landing for guests and returning members; workspace/project creation is reached through /app. This mapping records source routing, not production/provider qualification."
+      },
+      {
+        "path": "/live-editor",
+        "screens": ["M13", "M14", "M15", "M17", "M18", "M19", "M20", "B08"],
+        "contract": "Retained legacy realtime Sketch route. Current project-owned Sketch uses /app/project/:projectId?view=sketch; these designs describe the retained behavior, not a claim of legacy route visual parity."
+      },
+      {
+        "path": "/history",
+        "screens": ["P02", "M01", "C13", "X12", "X14", "X15"],
+        "contract": "Retained legacy history route; new project browser/media/version history lives at /app and /app/project/:projectId."
+      },
+      {
+        "path": "/prompt/:uuid",
+        "screens": ["X01", "X06"],
+        "contract": "resolve and authorize the saved reference; missing and denied remain distinct"
+      },
+      {
+        "path": "/studio",
+        "screens": ["P02", "C05"],
+        "contract": "Retained legacy Studio index; current project browser is /app. Existing legacy identity remains authoritative."
+      },
+      {
+        "path": "/studio/new",
+        "screens": ["C01", "C37"],
+        "contract": "Retained legacy Studio creation route. Current new-project request entry is /app then /app/project/:projectId."
+      },
+      {
+        "path": "/studio/:projectId",
+        "screens": ["C05"],
+        "contract": "Retained legacy Studio project route; authorize its existing project identity. New workflow project routing uses /app/project/:projectId.",
+        "historicalRetiredReferenceNote": "Former null-node P04/P05 failure-state examples remain only in historicalRouteSnapshot20261010. They are retired dedicated screens, not current active design references."
+      },
+      {
+        "path": "/session/:sessionId",
+        "screens": ["C05"],
+        "contract": "authoritative legacy-session resolver; do not cast a session ID to a new project ID",
+        "historicalRetiredReferenceNote": "Former null-node P04/P05 failure-state examples remain only in historicalRouteSnapshot20261010. They are retired dedicated screens, not current active design references."
+      },
+      {
+        "path": "/session/:sessionId/studio",
+        "screens": ["C05"],
+        "contract": "preserve identity and requested view through the resolver"
+      },
+      {
+        "path": "/session/:sessionId/create",
+        "screens": ["C01", "C05"],
+        "contract": "preserve identity and draft intent through the resolver"
+      }
+    ]
+  }
 }

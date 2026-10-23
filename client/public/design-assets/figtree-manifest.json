@@ -21,6 +21,11 @@
       "weight": 700,
       "url": "https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_eYR15e.ttf",
       "sha256": "88aad0bfccf47bc631abd1351a0c815be98edf58c2c8706f72deb24a531639d6"
+    },
+    {
+      "weight": 900,
+      "url": "https://fonts.gstatic.com/s/figtree/v9/_Xmz-HUzqDCFdgfMsYiV_F7wfS-Bs_fWR15e.ttf",
+      "sha256": "a77d37f9b02bc18bd55f965dbb2124299fa7a6207a858ea840d834b1f7633a35"
     }
   ]
 }

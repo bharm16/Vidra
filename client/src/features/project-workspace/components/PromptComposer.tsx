@@ -261,7 +261,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
     try {
       let values: string[];
       const action = bufferRef.current?.content.action ?? "";
-      if (whole) values = [await requestImprovedWords(target.text, action.includes("image") && action !== "animate-image")];
+      if (whole) values = [await requestImprovedWords(target.text, action.includes("image") && action !== "animate-image", activeProfile?.id)];
       else if (direction) {
         const result = await fetchCustomSuggestions({ highlightedText: target.text, customRequest: direction, fullPrompt: target.sourceText, contextBefore: target.sourceText.slice(0, target.start), contextAfter: target.sourceText.slice(target.end), metadata: { draftId: target.draftId, revision: target.sequence, startIndex: target.start, endIndex: target.end, contextKey: target.contextKey } });
         values = result.map(suggestion => suggestion.text ?? "").filter(value => value.trim().length > 0);

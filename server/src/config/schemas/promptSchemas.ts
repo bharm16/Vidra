@@ -18,6 +18,11 @@ export const promptSchema = z.object({
     .max(64, "Target model must not exceed 64 characters")
     .optional()
     .nullable(),
+  /** The selected capability profile; Improve wording follows its model's guidance. */
+  profileId: z
+    .string()
+    .max(128, "Profile id must not exceed 128 characters")
+    .optional(),
   context: z
     .object({
       specificAspects: z.string().max(5000).optional(),

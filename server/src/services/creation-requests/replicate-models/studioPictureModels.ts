@@ -1,4 +1,10 @@
-import { matchNeedsPicture } from "./pictureModels";
+import {
+  GPT_EDIT_WORDING,
+  GPT_MAKE_WORDING,
+  NANO_EDIT_WORDING,
+  NANO_MAKE_WORDING,
+  matchNeedsPicture,
+} from "./pictureModels";
 import {
   choice,
   flag,
@@ -18,6 +24,20 @@ import type {
   ModelProfile,
   ReplicateModelDefinition,
 } from "./types";
+
+// Improve wording follows Recraft's own V4.1 guidance; sources are cited in
+// docs/research/2026-10-23-model-prompting-guides.md.
+
+const RECRAFT_WORDING = [
+  "Keep short ideas short, always with the creator's subject; Recraft says a few words are enough and the model supplies taste.",
+  "When the creator gives detail, tighten it into a compact design brief: subject, medium, palette, composition and finish.",
+  "Put exact lettering in quotation marks. State any must-not constraints briefly inline. Do not add shape or size.",
+].join("\n");
+
+const RECRAFT_VECTOR_WORDING = [
+  "Say the creator's subject is drawn as a vector logo, icon or illustration with flat fills, such as \"Flat vector logo of an owl\".",
+  RECRAFT_WORDING,
+].join("\n");
 
 /**
  * The picture models Studio offered (ADR-0019), as exact workflow profiles
@@ -123,6 +143,7 @@ function recraft(options: {
     }),
     timeoutMs: 8 * MINUTE,
     pollIntervalMs: 1000,
+    wordingGuidance: options.vector ? RECRAFT_VECTOR_WORDING : RECRAFT_WORDING,
     ...(options.vector ? { unavailableReason: NO_VECTOR_STORAGE } : {}),
     input: (call) => {
       const shape = text(call, "aspectRatio");
@@ -279,6 +300,7 @@ function nano(tier: NanoTier, edit: boolean): ReplicateModelDefinition {
     }),
     timeoutMs: 8 * MINUTE,
     pollIntervalMs: 1000,
+    wordingGuidance: edit ? NANO_EDIT_WORDING : NANO_MAKE_WORDING,
     ...(edit ? {} : { preflight: matchNeedsPicture }),
     input: (call) =>
       withOptional(
@@ -379,6 +401,7 @@ function gptImage2(edit: boolean): ReplicateModelDefinition {
     }),
     timeoutMs: 12 * MINUTE,
     pollIntervalMs: 2000,
+    wordingGuidance: edit ? GPT_EDIT_WORDING : GPT_MAKE_WORDING,
     input: (call) =>
       withOptional(
         {

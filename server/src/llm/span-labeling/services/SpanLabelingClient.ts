@@ -122,7 +122,7 @@ export class SpanLabelingClient implements ILlmClient {
       : options;
     const modelConfig = this._getModelConfig(aiService, "span_labeling");
     const configuredModelName = modelConfig?.model;
-    const modelName = configuredModelName || process.env.SPAN_MODEL || "";
+    const modelName = configuredModelName || "";
     // The profile states the schema outright. This used to be a capability
     // lookup (`strictJsonSchema || provider === "groq" || provider === "qwen"`)
     // feeding a schema-factory if-chain, re-deriving the provider from env and
@@ -171,9 +171,6 @@ export class SpanLabelingClient implements ILlmClient {
         providerOptions,
         providerName,
         ...(configuredModelName ? { modelName: configuredModelName } : {}),
-        ...(process.env.SPAN_PROVIDER
-          ? { clientName: process.env.SPAN_PROVIDER }
-          : {}),
         ...(spanSchema && { schema: spanSchema }),
       });
     } else {
@@ -414,11 +411,6 @@ export class SpanLabelingClient implements ILlmClient {
     aiService: AIExecutionPort,
     operation: string,
   ): { model?: string } | null {
-    const envModel = process.env.SPAN_MODEL;
-    if (envModel) {
-      return { model: envModel };
-    }
-
     if (operation.includes("mini") || operation.includes("draft")) {
       return { model: "gpt-4o-mini-2024-07-18" };
     }
