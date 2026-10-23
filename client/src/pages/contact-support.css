@@ -33,7 +33,6 @@
 .vf-support-contact {
   display: flex;
   flex-direction: column;
-  gap: var(--vf-space-12);
 }
 .vf-support-address {
   display: flex;
@@ -188,7 +187,9 @@
   font-size: 12px;
   line-height: 16px;
 }
+/* The live region stays rendered, so only the notice itself adds space. */
 .vf-support-contact [aria-live] .vf-support-error {
+  margin-top: var(--vf-space-12);
   color: #ffb38a;
   font-size: 15px;
   line-height: 22px;
