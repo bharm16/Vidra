@@ -1,4 +1,5 @@
 import {
+  HIDDEN_SEED,
   SEED,
   choice,
   flag,
@@ -6,6 +7,7 @@ import {
   number,
   range,
   requiredUrl,
+  shown,
   text,
   toggle,
   url,
@@ -44,6 +46,13 @@ const nanoParameters = {
   imageSearch: toggle(false),
   outputFormat: choice(["jpg", "png"], "jpg"),
 };
+const NANO_PRESENTATION = {
+  aspectRatio: shown("Shape", { role: "shape", values: { match_input_image: "Same as picture" } }),
+  resolution: shown("Resolution", { role: "resolution" }),
+  googleSearch: shown("Web search"),
+  imageSearch: shown("Image search"),
+  outputFormat: shown("Format", { values: { jpg: "JPG", png: "PNG" } }),
+};
 function nanoInput(
   call: ModelCall,
   pictures: string[],
@@ -79,6 +88,7 @@ const nanoMake: ReplicateModelDefinition = {
     ],
     output: { kind: "image", maxCount: 8 },
     parameters: { aspectRatio: choice(NANO_SHAPES, "1:1"), ...nanoParameters },
+    presentation: { words: "required", parameters: NANO_PRESENTATION },
     generatedAudio: "unsupported",
     deadlineSeconds: 600,
   }),
@@ -104,6 +114,7 @@ const nanoEdit: ReplicateModelDefinition = {
       aspectRatio: choice(NANO_SHAPES, "match_input_image"),
       ...nanoParameters,
     },
+    presentation: { words: "required", parameters: NANO_PRESENTATION },
     generatedAudio: "unsupported",
     deadlineSeconds: 600,
   }),
@@ -147,6 +158,14 @@ const gptParameters = {
   outputFormat: choice(["webp", "png", "jpeg"], "webp"),
   moderation: choice(["auto", "low"], "auto"),
 };
+const GPT_PRESENTATION = {
+  aspectRatio: shown("Shape", { role: "shape", values: { auto: "Auto" } }),
+  quality: shown("Quality", { values: { low: "Low", medium: "Medium", high: "High", xhigh: "Extra high", max: "Max", auto: "Auto" } }),
+  background: shown("Background", { values: { auto: "Auto", transparent: "Transparent", opaque: "Opaque" } }),
+  outputCompression: shown("Compression", { format: "percent" }),
+  outputFormat: shown("Format", { values: { webp: "WebP", png: "PNG", jpeg: "JPEG" } }),
+  moderation: shown("Moderation", { values: { auto: "Standard", low: "Low" } }),
+};
 const gptConstraints = [
   {
     parameter: "background",
@@ -187,6 +206,7 @@ const gptMake: ReplicateModelDefinition = {
     output: { kind: "image", maxCount: 8 },
     parameters: { aspectRatio: choice(GPT_SHAPES, "1:1"), ...gptParameters },
     constraints: gptConstraints,
+    presentation: { words: "required", parameters: GPT_PRESENTATION },
     generatedAudio: "unsupported",
     deadlineSeconds: 900,
   }),
@@ -209,6 +229,7 @@ const gptEdit: ReplicateModelDefinition = {
     output: { kind: "image", maxCount: 8 },
     parameters: { aspectRatio: choice(GPT_SHAPES, "auto"), ...gptParameters },
     constraints: gptConstraints,
+    presentation: { words: "required", parameters: GPT_PRESENTATION },
     generatedAudio: "unsupported",
     deadlineSeconds: 900,
   }),
@@ -239,6 +260,13 @@ const ideogramEdit: ReplicateModelDefinition = {
     parameters: {
       quality: choice(["very_low", "low", "medium", "high"], "medium"),
       seed: SEED,
+    },
+    presentation: {
+      words: "required",
+      parameters: {
+        quality: shown("Quality", { values: { very_low: "Very low", low: "Low", medium: "Medium", high: "High" } }),
+        seed: HIDDEN_SEED,
+      },
     },
     generatedAudio: "unsupported",
     deadlineSeconds: 600,
@@ -311,6 +339,19 @@ const topazImage: ReplicateModelDefinition = {
       faceEnhancementStrength: range(0, 1, 0.01, 0.8),
       outputFormat: choice(["jpg", "png"], "jpg"),
       sourceSize: { policy: "derived", from: "input-aspect", role: "primary" },
+    },
+    presentation: {
+      words: "none",
+      parameters: {
+        enhanceModel: shown("Enhancement", { values: { "Standard V2": "Standard", "Low Resolution V2": "Low resolution", CGI: "CGI", "High Fidelity V2": "High fidelity", "Text Refine": "Text" } }),
+        upscaleFactor: shown("Scale", { role: "scale", values: { None: "1x" } }),
+        subjectDetection: shown("Subjects", { values: { None: "Off" } }),
+        faceEnhancement: shown("Enhance faces"),
+        faceEnhancementCreativity: shown("Creativity", { format: "fraction" }),
+        faceEnhancementStrength: shown("Strength", { format: "fraction" }),
+        outputFormat: shown("Format", { values: { jpg: "JPG", png: "PNG" } }),
+        sourceSize: shown("Size", { hidden: true }),
+      },
     },
     generatedAudio: "unsupported",
     deadlineSeconds: 900,

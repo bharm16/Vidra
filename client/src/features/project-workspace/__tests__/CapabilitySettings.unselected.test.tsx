@@ -1,16 +1,16 @@
 import { useState, type ReactElement } from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { CapabilityProfileSchema, type CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
+import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import { DraftContentSchema, type DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { CapabilitySettings } from "../components/CapabilitySettings";
 import { preModelParameterChoices } from "../state/capabilitySettings";
-import { veo, runner } from "./fixtures/modelCreationFixtures";
+import { presented, veo, runner } from "./fixtures/modelCreationFixtures";
 
 afterEach(cleanup);
 
-const candidate = CapabilityProfileSchema.parse({ ...veo, id: "candidate", inputs: [], parameters: {
+const candidate = presented({ ...veo, id: "candidate", inputs: [], parameters: {
   aspectRatio: { policy: "editable", domain: { kind: "enum", values: ["16:9", "9:16"] }, defaultValue: "16:9" },
   durationSeconds: { policy: "editable", domain: { kind: "enum", values: [4, 8, 12] }, defaultValue: 4 },
 } });
@@ -37,10 +37,10 @@ it("edits source C04 shape and duration preferences without selecting a model or
 });
 
 it("uses only qualified applicable candidate domains and preserves empty or historical settings", () => {
-  const unavailable = CapabilityProfileSchema.parse({ ...candidate, id: "unavailable", availability: "unavailable" });
-  const unqualified = CapabilityProfileSchema.parse({ ...candidate, id: "unqualified", availability: "unqualified" });
-  const otherAction = CapabilityProfileSchema.parse({ ...candidate, id: "other-action", action: "animate-image" });
-  const missingInput = CapabilityProfileSchema.parse({ ...candidate, id: "needs-image", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
+  const unavailable = presented({ ...candidate, id: "unavailable", availability: "unavailable" });
+  const unqualified = presented({ ...candidate, id: "unqualified", availability: "unqualified" });
+  const otherAction = presented({ ...candidate, id: "other-action", action: "animate-image" });
+  const missingInput = presented({ ...candidate, id: "needs-image", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
   expect(preModelParameterChoices([unavailable, unqualified, otherAction, missingInput], initial, [], "durationSeconds")).toEqual({ values: [], ranges: [] });
   const change = vi.fn(); const props = { profiles: [candidate], media: [], disabled: false, onProfile: vi.fn(), onChange: change };
   const view = render(<CapabilitySettings {...props} content={{ ...initial, settings: { ...initial.settings, parameters: {} } }} />);
@@ -52,7 +52,7 @@ it("uses only qualified applicable candidate domains and preserves empty or hist
 });
 
 it("opens an honest model action for derived or unknown duration instead of inventing seconds", () => {
-  const derived = CapabilityProfileSchema.parse({ ...candidate, parameters: { ...candidate.parameters, durationSeconds: { policy: "derived", from: "frame-duration" } } });
+  const derived = presented({ ...candidate, parameters: { ...candidate.parameters, durationSeconds: { policy: "derived", from: "frame-duration" } } });
   const change = vi.fn(); const select = vi.fn();
   render(<CapabilitySettings profiles={[derived]} content={initial} media={[]} disabled={false} onProfile={select} onChange={change} />);
   fireEvent.click(screen.getByRole("button", { name: "Duration: 5s" }));
@@ -62,13 +62,13 @@ it("opens an honest model action for derived or unknown duration instead of inve
   expect(screen.getByRole("searchbox", { name: "Search models" })).toBeInTheDocument();
   expect(change).not.toHaveBeenCalled(); expect(select).not.toHaveBeenCalled();
   for (const policy of [{ policy: "fixed", value: 5 }, { policy: "unknown", reason: "Not checked" }, { policy: "unsupported", reason: "No duration" }] as const) {
-    const profile = CapabilityProfileSchema.parse({ ...candidate, parameters: { durationSeconds: policy } });
+    const profile = presented({ ...candidate, parameters: { durationSeconds: policy } });
     expect(preModelParameterChoices([profile], initial, [], "durationSeconds")).toEqual({ values: [], ranges: [] });
   }
 });
 
 it("applies each candidate's active constraints without changing the retained out-of-domain value", () => {
-  const constrained = CapabilityProfileSchema.parse({ ...candidate, constraints: [{ parameter: "resolution", equals: "1080p", requires: { durationSeconds: [8] }, reason: "1080p needs eight seconds." }] });
+  const constrained = presented({ ...candidate, constraints: [{ parameter: "resolution", equals: "1080p", requires: { durationSeconds: [8] }, reason: "1080p needs eight seconds." }] });
   const content: DraftContent = { ...initial, settings: { ...initial.settings, parameters: { ...initial.settings.parameters, resolution: "1080p" } } };
   expect(preModelParameterChoices([constrained], content, [], "durationSeconds")).toEqual({ values: [8], ranges: [] });
   expect(content.settings.parameters.durationSeconds).toBe(5);
@@ -76,7 +76,7 @@ it("applies each candidate's active constraints without changing the retained ou
 });
 
 it("rejects known incompatible input kinds, counts and metadata while keeping a matching domain", () => {
-  const profile = CapabilityProfileSchema.parse({ ...candidate, inputs: [{ role: "clip", kinds: ["video"], minCount: 1, maxCount: 1, maxDurationSeconds: 8 }] });
+  const profile = presented({ ...candidate, inputs: [{ role: "clip", kinds: ["video"], minCount: 1, maxCount: 1, maxDurationSeconds: 8 }] });
   const content = DraftContentSchema.parse({ ...initial, inputs: [{ state: "resolved", role: "clip", versionId: "version_clip" }] });
   const clip = MediaVersionSchema.parse({ ...runner, id: "version_clip", projectId: initial.destination.projectId, kind: "video", metadata: { state: "verified", width: 1920, height: 1080, durationSeconds: 8, audio: "absent", probeVersion: "controlled" } });
   expect(preModelParameterChoices([profile], content, [clip], "durationSeconds").values).toEqual([4, 8, 12]);
@@ -87,8 +87,8 @@ it("rejects known incompatible input kinds, counts and metadata while keeping a 
 });
 
 it("keeps disjoint ranges separate and commits only an explicit in-step numeric choice", () => {
-  const ranged = CapabilityProfileSchema.parse({ ...candidate, parameters: { durationSeconds: { policy: "editable", domain: { kind: "range", min: 2, max: 6, step: 2 }, defaultValue: 6 } } });
-  const later = CapabilityProfileSchema.parse({ ...ranged, id: "later-range", parameters: { durationSeconds: { policy: "editable", domain: { kind: "range", min: 10, max: 14, step: 2 }, defaultValue: 10 } } });
+  const ranged = presented({ ...candidate, parameters: { durationSeconds: { policy: "editable", domain: { kind: "range", min: 2, max: 6, step: 2 }, defaultValue: 6 } } });
+  const later = presented({ ...ranged, id: "later-range", parameters: { durationSeconds: { policy: "editable", domain: { kind: "range", min: 10, max: 14, step: 2 }, defaultValue: 10 } } });
   expect(preModelParameterChoices([ranged, later, ranged], initial, [], "durationSeconds")).toEqual({ values: [], ranges: [{ kind: "range", min: 2, max: 6, step: 2 }, { kind: "range", min: 10, max: 14, step: 2 }] });
   const edit = vi.fn(); render(<Editable profile={ranged} onEdit={edit} />);
   fireEvent.click(screen.getByRole("button", { name: "Duration: 5s" }));
@@ -102,7 +102,7 @@ it("keeps disjoint ranges separate and commits only an explicit in-step numeric 
 });
 
 it("intersects finite constraints with a numeric range instead of broadening that range", () => {
-  const profile = CapabilityProfileSchema.parse({ ...candidate, parameters: { durationSeconds: { policy: "editable", domain: { kind: "range", min: 2, max: 12, step: 2 }, defaultValue: 4 } }, constraints: [
+  const profile = presented({ ...candidate, parameters: { durationSeconds: { policy: "editable", domain: { kind: "range", min: 2, max: 12, step: 2 }, defaultValue: 4 } }, constraints: [
     { parameter: "resolution", equals: "1080p", requires: { durationSeconds: [3, 4, 8] }, reason: "First restriction" },
     { parameter: "aspectRatio", equals: "16:9", requires: { durationSeconds: [8, 12] }, reason: "Second restriction" },
   ] });

@@ -176,7 +176,7 @@ function settleModel(content: DraftContent, profiles: readonly CapabilityProfile
   const profile = profiles.find(candidate => candidate.id === content.settings.profileId);
   if (profile && takesRoles(profile, roles)) return content;
   const next = candidateModels(content, profiles).find(candidate => candidate !== profile && takesRoles(candidate, roles));
-  return next ? { ...content, action: next.action, settings: settingsForProfile(next, content) } : content;
+  return next ? { ...content, action: next.action, settings: settingsForProfile(next, content, profile) } : content;
 }
 
 /** Picture inputs the request can still take: some model for the output accepts each beside the current inputs. */

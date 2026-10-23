@@ -1,5 +1,6 @@
 import {
   AUTO_COORDINATE,
+  HIDDEN_SEED,
   SEED,
   choice,
   flag,
@@ -8,6 +9,7 @@ import {
   number,
   range,
   requiredUrl,
+  shown,
   text,
   toggle,
   url,
@@ -35,6 +37,13 @@ const wanParameters = {
   promptExpansion: toggle(true),
   negativePrompt: words(2000, WAN_NEGATIVE),
   seed: SEED,
+};
+const WAN_PRESENTATION = {
+  durationSeconds: shown("Duration", { role: "duration", format: "seconds" }),
+  resolution: shown("Resolution", { role: "resolution" }),
+  promptExpansion: shown("Expand words"),
+  negativePrompt: shown("Avoid"),
+  seed: HIDDEN_SEED,
 };
 const wanConstraints = [
   {
@@ -78,6 +87,7 @@ const wan3Text: ReplicateModelDefinition = {
       ...wanParameters,
     },
     constraints: wanConstraints,
+    presentation: { words: "required", parameters: { aspectRatio: shown("Shape", { role: "shape", values: { adaptive: "Adaptive" } }), ...WAN_PRESENTATION } },
     generatedAudio: "unknown",
     deadlineSeconds: 1800,
   }),
@@ -112,6 +122,7 @@ const wan3Image: ReplicateModelDefinition = {
       ...wanParameters,
     },
     constraints: wanConstraints,
+    presentation: { words: "required", parameters: { aspectRatio: shown("Shape", { role: "shape" }), ...WAN_PRESENTATION } },
     generatedAudio: "unknown",
     deadlineSeconds: 1800,
   }),
@@ -128,6 +139,10 @@ const wan3Image: ReplicateModelDefinition = {
  */
 const GEMINI_RESOLUTIONS = ["360p", "720p", "1080p", "4k"] as const;
 const GEMINI_SHAPES = ["16:9", "9:16"] as const;
+const GEMINI_PRESENTATION = {
+  aspectRatio: shown("Shape", { role: "shape" }),
+  resolution: shown("Resolution", { role: "resolution", values: { "4k": "4K" } }),
+};
 
 const geminiText: ReplicateModelDefinition = {
   profile: nativeProfile({
@@ -142,6 +157,7 @@ const geminiText: ReplicateModelDefinition = {
       aspectRatio: choice(GEMINI_SHAPES, "16:9"),
       resolution: choice(GEMINI_RESOLUTIONS, "720p"),
     },
+    presentation: { words: "required", parameters: GEMINI_PRESENTATION },
     generatedAudio: "always",
     deadlineSeconds: 1800,
   }),
@@ -174,6 +190,7 @@ const geminiImage: ReplicateModelDefinition = {
       aspectRatio: choice(GEMINI_SHAPES, "16:9"),
       resolution: choice(GEMINI_RESOLUTIONS, "720p"),
     },
+    presentation: { words: "required", parameters: GEMINI_PRESENTATION },
     generatedAudio: "always",
     deadlineSeconds: 1800,
   }),
@@ -209,6 +226,7 @@ const geminiEdit: ReplicateModelDefinition = {
     ],
     output: { kind: "video", maxCount: 1 },
     parameters: { resolution: choice(GEMINI_RESOLUTIONS, "720p") },
+    presentation: { words: "required", parameters: { resolution: GEMINI_PRESENTATION.resolution } },
     generatedAudio: "always",
     deadlineSeconds: 1800,
   }),
@@ -245,6 +263,7 @@ const grokExtension: ReplicateModelDefinition = {
     ],
     output: { kind: "video", maxCount: 1 },
     parameters: { durationSeconds: range(2, 10, 1, 6) },
+    presentation: { words: "required", parameters: { durationSeconds: shown("Duration", { role: "duration", format: "seconds" }) } },
     generatedAudio: "unknown",
     deadlineSeconds: 1200,
   }),
@@ -291,6 +310,7 @@ const topazVideo: ReplicateModelDefinition = {
       resolution: choice(["720p", "1080p", "4k"], "1080p"),
       framesPerSecond: range(15, 60, 1, 30),
     },
+    presentation: { words: "none", parameters: { resolution: shown("Resolution", { role: "scale", values: { "4k": "4K" } }), framesPerSecond: shown("Frame rate", { format: "fps" }) } },
     generatedAudio: "unsupported",
     deadlineSeconds: 3600,
   }),
@@ -337,6 +357,18 @@ const lumaReframe: ReplicateModelDefinition = {
       cropYEnd: AUTO_COORDINATE,
       gridPositionX: AUTO_COORDINATE,
       gridPositionY: AUTO_COORDINATE,
+    },
+    presentation: {
+      words: "optional",
+      parameters: {
+        aspectRatio: shown("Shape", { role: "shape" }),
+        cropXStart: shown("Crop left", { auto: -1 }),
+        cropXEnd: shown("Crop right", { auto: -1 }),
+        cropYStart: shown("Crop top", { auto: -1 }),
+        cropYEnd: shown("Crop bottom", { auto: -1 }),
+        gridPositionX: shown("Place x", { auto: -1 }),
+        gridPositionY: shown("Place y", { auto: -1 }),
+      },
     },
     generatedAudio: "unsupported",
     deadlineSeconds: 1200,

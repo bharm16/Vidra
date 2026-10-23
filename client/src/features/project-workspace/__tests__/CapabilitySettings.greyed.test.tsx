@@ -1,18 +1,17 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { DraftInputSchema, type DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { CapabilitySettings } from "../components/CapabilitySettings";
 import { evaluateCapabilityDraft, settingsForProfile } from "../state/capabilitySettings";
-import { modelContent, veo, wan22 } from "./fixtures/modelCreationFixtures";
+import { modelContent, presented, veo, wan22 } from "./fixtures/modelCreationFixtures";
 
 afterEach(cleanup);
 
-const other = CapabilityProfileSchema.parse({ ...veo, id: "controlled-other", label: "Other", constraints: [], parameters: {
+const other = presented({ ...veo, id: "controlled-other", label: "Other", constraints: [], parameters: {
   aspectRatio: { policy: "editable", defaultValue: "16:9", domain: { kind: "enum", values: ["16:9", "9:16", "1:1"] } },
   durationSeconds: { policy: "editable", defaultValue: 5, domain: { kind: "enum", values: [5, 10] } },
 } });
-const image = CapabilityProfileSchema.parse({ ...veo, id: "controlled-image", label: "Picture", action: "make-image", output: { kind: "image", maxCount: 1 }, generatedAudio: "unsupported", constraints: [], parameters: {
+const image = presented({ ...veo, id: "controlled-image", label: "Picture", action: "make-image", output: { kind: "image", maxCount: 1 }, generatedAudio: "unsupported", constraints: [], parameters: {
   aspectRatio: { policy: "editable", defaultValue: "1:1", domain: { kind: "enum", values: ["1:1", "16:9"] } },
 } });
 const content = (profileId: string, parameters: DraftContent["settings"]["parameters"], action: DraftContent["action"] = "make-video"): DraftContent => {
@@ -42,7 +41,7 @@ it("keeps a greyed chip for a video setting the model cannot use, and none on pi
 });
 
 it("moves values the chosen model cannot use to its nearest offer", () => {
-  const switched = settingsForProfile(veo, content(other.id, { aspectRatio: "1:1", durationSeconds: 10, retired: "value" }));
+  const switched = settingsForProfile(veo, content(other.id, { aspectRatio: "1:1", durationSeconds: 10, retired: "value" }), other);
   expect(switched.parameters).toEqual({ aspectRatio: "16:9", duration: 8, resolution: "720p" });
   expect(settingsForProfile(veo, content(veo.id, { aspectRatio: "9:16", duration: 4, resolution: "4K" })).parameters).toEqual({ aspectRatio: "9:16", duration: 8, resolution: "4K" });
   expect(settingsForProfile(wan22, content(veo.id, { resolution: "1080p" })).parameters).toMatchObject({ resolution: "720p", numFrames: 81, framesPerSecond: 16 });
@@ -61,7 +60,7 @@ it("evaluates capability draft candidates, unsupported saved settings, and fixed
 });
 
 it("keeps every model for the output in the menu and greys out those that cannot take the attached inputs", () => {
-  const frames = CapabilityProfileSchema.parse({ ...wan22, id: "controlled-frames", label: "Frames", action: "animate-image", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
+  const frames = presented({ ...wan22, id: "controlled-frames", label: "Frames", action: "animate-image", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
   const base = modelContent(wan22);
   const animated: DraftContent = { ...base, action: "animate-image", inputs: [DraftInputSchema.parse({ state: "resolved", role: "start-frame", versionId: "version_runner" })], settings: settingsForProfile(frames, base) };
   const chosen = vi.fn();

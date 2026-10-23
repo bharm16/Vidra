@@ -1,11 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
-import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { ModelCreationArea, ModelInputActions } from "../components/ModelCreationArea";
 import { CapabilitySettings } from "../components/CapabilitySettings";
 import { allowedParameterValues, modelCapabilityDescription, modelCreationFeedback } from "../state/capabilitySettings";
-import { modelContent, modelSourceCases, veo, veoExtension, veoFrames, wan22 } from "./fixtures/modelCreationFixtures";
+import { modelContent, modelSourceCases, presented, veo, veoExtension, veoFrames, wan22 } from "./fixtures/modelCreationFixtures";
 
 afterEach(cleanup);
 
@@ -70,7 +69,7 @@ it("keeps frame-derived length readable without serialization or unsupported sou
 });
 
 it("does not advertise an unqualified extension offer as a ready capability", () => {
-  const extension = CapabilityProfileSchema.parse({ ...veoExtension, availability: "unqualified", unavailableReason: "No qualified adapter." });
+  const extension = presented({ ...veoExtension, availability: "unqualified", unavailableReason: "No qualified adapter." });
   expect(modelCapabilityDescription(veo, [veo, extension])).not.toContain("extension");
   expect(modelCapabilityDescription(extension, [veo, extension])).toBe("No qualified adapter.");
   expect(modelCreationFeedback(extension, modelContent(extension), [])).toEqual({ tone: "warning", message: "No qualified adapter." });
@@ -84,7 +83,7 @@ it("derives unsupported-input and extension feedback from real media kind and de
 });
 
 it("offers the declared image count using the image labels from C03", () => {
-  const image = CapabilityProfileSchema.parse({ ...veo, id: "image-count-fixture", action: "make-image", inputs: [], output: { kind: "image", maxCount: 4 }, parameters: {}, constraints: [], generatedAudio: "unsupported" });
+  const image = presented({ ...veo, id: "image-count-fixture", action: "make-image", inputs: [], output: { kind: "image", maxCount: 4 }, parameters: {}, constraints: [], generatedAudio: "unsupported" });
   const content = modelContent(image); const change = vi.fn();
   render(<CapabilitySettings profiles={[image]} content={content} media={[]} disabled={false} onProfile={vi.fn()} onChange={change} />);
   fireEvent.click(screen.getByRole("button", { name: "Images: 1 image" }));
@@ -95,7 +94,7 @@ it("offers the declared image count using the image labels from C03", () => {
 });
 
 it("places the unavailable-model line before primary controls and keeps the real reason accessible", () => {
-  const unavailable = CapabilityProfileSchema.parse({ ...veo, availability: "unqualified", unavailableReason: "No qualified adapter for this mode." });
+  const unavailable = presented({ ...veo, availability: "unqualified", unavailableReason: "No qualified adapter for this mode." });
   const { container } = render(<CapabilitySettings profiles={[unavailable]} content={modelContent(unavailable)} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()}><button type="button">Make video</button></CapabilitySettings>);
   const notice = screen.getByRole("status");
   expect(notice).toHaveTextContent("Veo 3.1 is unavailable");

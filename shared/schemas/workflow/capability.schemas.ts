@@ -38,6 +38,35 @@ export const ParameterPolicySchema = z.discriminatedUnion("policy", [
 ]);
 export type ParameterPolicy = z.infer<typeof ParameterPolicySchema>;
 
+/** What a setting is for, so every model's version of it lands in the same core chip. */
+export const ParameterRoleSchema = z.enum(["shape", "duration", "resolution", "sound", "voice", "language", "scale"]);
+export type ParameterRole = z.infer<typeof ParameterRoleSchema>;
+/** Whether a request needs words: required, optional guidance, an exact script, or none at all. */
+export const WordsPolicySchema = z.enum(["required", "optional", "script", "none"]);
+export type WordsPolicy = z.infer<typeof WordsPolicySchema>;
+/** How one setting reads. A setting with a role is a core chip; the rest sit under Advanced unless hidden. */
+export const ParameterPresentationSchema = z.strictObject({
+  label: z.string().min(1).max(80),
+  role: ParameterRoleSchema.optional(),
+  /** Display names for enum values, keyed by the value as text. */
+  values: z.record(z.string().max(160), z.string().min(1).max(80)).optional(),
+  /** fraction: 0–1 shown as a percentage; percent: 0–100; seconds; fps; times: a multiplier such as 1.0x; language: a language code chosen by name. */
+  format: z.enum(["fraction", "percent", "seconds", "fps", "times", "language"]).optional(),
+  /** The number that leaves the choice to the model; it reads as Auto. */
+  auto: z.number().finite().optional(),
+  /** What a text setting is for, shown while it is empty. */
+  placeholder: z.string().min(1).max(160).optional(),
+  /** Kept out of the composer (a seed, or an internal value). */
+  hidden: z.boolean().optional(),
+});
+export type ParameterPresentation = z.infer<typeof ParameterPresentationSchema>;
+/** Display data only: it never changes what is sent or reserved, so cost policies do not pin it. */
+export const ProfilePresentationSchema = z.strictObject({
+  words: WordsPolicySchema,
+  parameters: z.record(z.string().min(1).max(80), ParameterPresentationSchema),
+});
+export type ProfilePresentation = z.infer<typeof ProfilePresentationSchema>;
+
 export const CapabilityProfileSchema = z.strictObject({
   schemaVersion: WorkflowSchemaVersion,
   id: z.string().min(1).max(160),
@@ -76,7 +105,12 @@ export const CapabilityProfileSchema = z.strictObject({
   }),
   generatedAudio: z.enum(["unsupported", "always", "optional", "unknown"]),
   pricing: z.strictObject({ mode: z.literal("free"), maximumCreditsPerSlot: z.literal(0) }),
+  /** Absent on profiles captured before presentation was declared; they read as words required with no roles. */
+  presentation: ProfilePresentationSchema.optional(),
 }).superRefine((profile, ctx) => {
+  for (const name of Object.keys(profile.presentation?.parameters ?? {})) {
+    if (!Object.hasOwn(profile.parameters, name)) ctx.addIssue({ code: "custom", path: ["presentation", "parameters", name], message: "Presentation must describe a declared parameter" });
+  }
   for (const [name, parameter] of Object.entries(profile.parameters)) {
     if (parameter.policy !== "editable") continue;
     if (!isParameterValueInDomain(parameter.domain, parameter.defaultValue)) ctx.addIssue({ code: "custom", path: ["parameters", name, "defaultValue"], message: "Explicit default must belong to the parameter domain" });

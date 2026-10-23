@@ -347,8 +347,8 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!buffer || !interchangeableActions(buffer.content.action).includes(profile.action)) return;
-    edit({ ...buffer.content, action: profile.action, settings: settingsForProfile(profile, buffer.content) });
-  }, [edit]);
+    edit({ ...buffer.content, action: profile.action, settings: settingsForProfile(profile, buffer.content, profiles.find(candidate => candidate.id === buffer.content.settings.profileId)) });
+  }, [edit, profiles]);
 
   const prepare = useCallback(async (): Promise<void> => {
     const draftId = viewRef.current.activeDraftId;

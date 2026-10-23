@@ -55,7 +55,7 @@ export const DEFAULT_WORKFLOW_SPEND_POLICY: WorkflowSpendPolicy = WorkflowSpendP
     { profileId: "ideogram-4.5-precise-edit", profileRevision: "native/2026-10-19/1", mappingHash: "21d594fe3dc7c34271b0760f151f9df9050a774f81ae53171003919c539f57f7", maximumCentsPerSlot: 25, source: "https://replicate.com/ideogram-ai/ideogram-4-5-precise-edit" },
     { profileId: "topaz-image-upscale", profileRevision: "native/2026-10-19/1", mappingHash: "4c06d3034a615a6f6b53800a3d80e35710300d29456a9c5fdf2811d43a8b9b97", maximumCentsPerSlot: 18, source: "https://replicate.com/topazlabs/image-upscale" },
     { profileId: "elevenlabs-v3", profileRevision: "native/2026-10-19/1", mappingHash: "7248a2353157e86a47d1346e919767be9ab289fe3ac9470fd798cd45d89d3b30", maximumCentsPerSlot: 55, source: "https://replicate.com/elevenlabs/v3" },
-    { profileId: "lyria-3", profileRevision: "native/2026-10-19/1", mappingHash: "99c960afdd2df49f3170d6025a668a23dee205388f5f6e560395f8de002ee2ad", maximumCentsPerSlot: 5, source: "https://replicate.com/google/lyria-3" },
+    { profileId: "lyria-3", profileRevision: "native/2026-10-19/1", mappingHash: "dc613af55dc11d60d517e71dc85c388d11f49735fa8e0eb750a694f9b3d55b4d", maximumCentsPerSlot: 5, source: "https://replicate.com/google/lyria-3" },
     { profileId: "elevenlabs-scribe-v2", profileRevision: "native/2026-10-19/1", mappingHash: "f6eacf167039bc944d9fc3dd34cbb9411f9f2a61276b5f8a099dcd0b27bd1e53", maximumCentsPerSlot: 7, source: "https://replicate.com/elevenlabs/scribe-v2" },
   ],
 });

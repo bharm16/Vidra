@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ParameterPresentation } from "@shared/schemas/workflow/capability.schemas";
 import type {
   InputRole,
   ModelCall,
@@ -42,6 +43,15 @@ export const words = (
 export const toggle = (defaultValue: boolean): ParameterPolicy =>
   choice([true, false], defaultValue);
 
+/** How one setting reads in the composer; see ParameterPresentationSchema. */
+export const shown = (
+  label: string,
+  details: Omit<ParameterPresentation, "label"> = {},
+): ParameterPresentation => ({ label, ...details });
+
+/** Seeds stay out of the composer: New variation and Reuse setup decide them. */
+export const HIDDEN_SEED: ParameterPresentation = { label: "Seed", hidden: true };
+
 /** -1 lets preparation choose a concrete seed per slot, so retries stay reproducible. */
 export const SEED: ParameterPolicy = range(-1, 2147483647, 1, -1);
 
@@ -63,6 +73,7 @@ type ProfileFields = Pick<
   | "parameters"
   | "generatedAudio"
 > &
+  Required<Pick<ModelProfile, "presentation">> &
   Partial<Pick<ModelProfile, "constraints" | "maxContextCharacters">> & {
     deadlineSeconds: number;
   };
