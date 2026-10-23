@@ -7,7 +7,8 @@ import {
 } from "./identity.schemas";
 
 export const CreationActionSchema = z.enum([
-  "make-image", "edit-image", "upscale-image", "make-video", "animate-image",
+  "make-image", "edit-image", "upscale-image", "remove-background", "vectorize-image",
+  "make-video", "animate-image",
   "edit-video", "extend-video", "upscale-video", "reframe-video",
   "make-voiceover", "make-music", "transcribe",
   "ask", "expand-description", "improve-words",
@@ -15,6 +16,8 @@ export const CreationActionSchema = z.enum([
 ]);
 export type CreationAction = z.infer<typeof CreationActionSchema>;
 
+/** The most words a draft keeps; the composer stops typing there rather than failing the save. */
+export const MAX_DRAFT_WORDS = 32000;
 export const InputRoleSchema = z.enum(["primary", "reference", "mask", "start-frame", "end-frame", "clip", "audio"]);
 export const ResolvedInputSchema = z.strictObject({
   role: InputRoleSchema,
@@ -56,7 +59,7 @@ export const ContextualTargetSchema = z.discriminatedUnion("kind", [
 
 export const DraftContentSchema = z.strictObject({
   action: CreationActionSchema,
-  instructions: z.string().max(32000),
+  instructions: z.string().max(MAX_DRAFT_WORDS),
   inputs: z.array(DraftInputSchema).max(16),
   settings: DraftSettingsSchema,
   context: BranchContextSchema,

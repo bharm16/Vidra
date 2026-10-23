@@ -19,12 +19,25 @@ function clip(durationSeconds: number): VerifiedOutput {
 it("qualifies every native Replicate model within the existing daily free-testing cap", () => {
   const guard = new StudioWorkflowSpendGuard(unusedDatabase, { dailyCapCents: 500 }, now);
   const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(), videoAvailable: () => false, textAvailable: false, replicateAvailable: true, spendGuard: guard });
-  for (const { profile } of REPLICATE_MODEL_DEFINITIONS) {
-    expect(catalog.get(profile.id)?.availability, profile.id).toBe("qualified");
+  for (const { profile, unavailableReason } of REPLICATE_MODEL_DEFINITIONS) {
+    expect(catalog.get(profile.id)?.availability, profile.id).toBe(unavailableReason ? "unavailable" : "qualified");
     const ceiling = DEFAULT_WORKFLOW_SPEND_POLICY.ceilings.find(entry => entry.profileId === profile.id);
     expect(ceiling?.maximumCentsPerSlot, profile.id).toBeGreaterThan(0);
     expect(ceiling?.maximumCentsPerSlot, profile.id).toBeLessThanOrEqual(500);
   }
+});
+
+it("keeps vector (SVG) models unavailable while their output cannot be stored, though their ceilings qualify", () => {
+  const guard = new StudioWorkflowSpendGuard(unusedDatabase, { dailyCapCents: 500 }, now);
+  const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(), videoAvailable: () => false, textAvailable: false, replicateAvailable: true, spendGuard: guard });
+  for (const id of ["recraft-v4.1-svg", "recraft-v4.1-pro-svg", "recraft-vectorize"]) {
+    const profile = catalog.get(id)!;
+    expect(profile.availability, id).toBe("unavailable");
+    expect(profile.unavailableReason, id).toMatch(/SVG/);
+    expect(guard.qualified({ ...profile, availability: "qualified" }), id).toBe(true);
+  }
+  expect(catalog.get("recraft-v4.1")?.availability).toBe("qualified");
+  expect(catalog.get("recraft-remove-background")?.availability).toBe("qualified");
 });
 
 it("fails closed when a native model's offered settings change or exceed a smaller cap", () => {

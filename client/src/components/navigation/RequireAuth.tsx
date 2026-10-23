@@ -7,8 +7,8 @@ interface RequireAuthProps {
 }
 
 /**
- * Route guard for account-scoped surfaces (Library, Account, Live editor,
- * Studio): they render one creator's own work, so a signed-out visitor is
+ * Route guard for account-scoped surfaces (Account; formerly also the Live
+ * editor and Studio): they render one creator's own work, so a signed-out visitor is
  * sent to sign-in with a way back (SignInPage honors ?redirect=). The
  * workspace at "/" deliberately stays guest-reachable — its gate is the
  * "Sign in to make it" modal at submit time. Without this guard the pages

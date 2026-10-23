@@ -5,7 +5,6 @@ import { placeGhost } from "@/components/motion/ghost";
 import { group, play } from "@/components/motion/play";
 import { BUTTON_RESHAPE, reshape } from "@/components/motion/surface";
 import { RESHAPE_VALUE } from "@/components/motion/Swap";
-import type { OutputGroup } from "../components/OutputSwitch";
 
 /** Chips and tiles the new output drops fade in 0.16s, their words blurring out with the others', while a chip's shell closes in 0.2s (frame 2681). */
 const LEAVE = { fade: { duration: 160 }, close: { duration: 200 } };
@@ -68,8 +67,8 @@ function appear({ node, rect }: NewChip): void {
 
 export interface OutputReshape {
   /** What FlipScope watches: the output the request makes. */
-  output: OutputGroup | undefined;
-  /** True while rendering the commit that switches Video ↔ Image. */
+  output: string | undefined;
+  /** True while rendering the commit that switches output or rail tool. */
   switching: boolean;
   /** Keeps a copy of each chip before the commit, for its words to leave from. */
   capture(node: HTMLElement): HTMLElement | undefined;
@@ -78,11 +77,11 @@ export interface OutputReshape {
 }
 
 /**
- * Switching Video ↔ Image reshapes the composer in place (frame 2681): each chip slot's
+ * Switching output or rail tool reshapes the composer in place (frame 2681): each chip slot's
  * shell springs to the new output's chip while its words cross-fade, surplus chips fade out
  * and new ones grow in; tiles slide to their slots, and the words stay.
  */
-export function useOutputReshape(output: OutputGroup | undefined): OutputReshape {
+export function useOutputReshape(output: string | undefined): OutputReshape {
   const shown = useRef(output);
   const switching = shown.current !== undefined && output !== undefined && shown.current !== output;
   useLayoutEffect(() => { shown.current = output; });

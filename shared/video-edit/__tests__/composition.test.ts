@@ -91,3 +91,19 @@ describe("unavailable sources", () => {
   expect(sourceElementIds(composition, "version_other")).toEqual([]);
  });
 });
+
+describe("voiceover lane", () => {
+  it("places, changes and removes a voiceover take apart from music, and pins its source for export", () => {
+    const voice = { id: "audio_voice", versionId: "version_voice" as never, sourceInFrame: 0, startFrame: 30, endFrame: 120, gain: 1 };
+    const music = { id: "audio_music", versionId: "version_music" as never, sourceInFrame: 0, startFrame: 0, endFrame: 150, gain: 0.35 };
+    const base = VideoCompositionSchema.parse({ ...emptyVideoComposition(), items: [item("a")], backgroundAudio: music });
+    const placed = applyEditCommand(base, { kind: "voiceover_audio", audio: voice });
+    expect(placed.voiceover).toEqual(voice);
+    expect(placed.backgroundAudio).toEqual(music);
+    expect(sourceVersionIds(placed)).toEqual(["version_a", "version_voice", "version_music"]);
+    expect(sourceElementIds(placed, "version_voice")).toEqual(["audio_voice"]);
+    const late = applyEditCommand(placed, { kind: "voiceover_audio", audio: { ...voice, startFrame: 200, endFrame: 260 } });
+    expect(validateVideoComposition(late, [source("a")]).map(issue => [issue.elementId, issue.code])).toContainEqual(["audio_voice", "audio_timing"]);
+    expect(applyEditCommand(placed, { kind: "voiceover_audio", audio: null }).voiceover).toBeUndefined();
+  });
+});

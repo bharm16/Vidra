@@ -49,6 +49,11 @@ export interface ReplicateModelDefinition {
   /** Hard budget for create + poll. Kept below the profile's recovery deadline. */
   timeoutMs: number;
   pollIntervalMs: number;
+  /**
+   * Set when Vidra cannot keep what this model returns, so the catalog offers
+   * the profile as unavailable and preparation never accepts it.
+   */
+  unavailableReason?: string;
   /** A refusal proven before any provider call, so nothing is reserved or spent. */
   preflight?(call: ModelCall): string | undefined;
   input(

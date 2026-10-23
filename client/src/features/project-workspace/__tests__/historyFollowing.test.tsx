@@ -71,7 +71,7 @@ it("does not resume following when a resize natively clamps a manually scrolled 
   fireEvent.keyDown(history, { key: "End" }); expect(history.scrollTop).toBe(74);
 });
 
-it("retains the existing 80px progress-follow policy and ignores resize-only changes outside mobile clips", () => {
+it("retains the existing 80px progress-follow policy and ignores resize-only changes away from the end outside mobile clips", () => {
   const state = props(); const { rerender } = render(<ConversationHistory {...state} />);
   const history = screen.getByLabelText("Conversation history"); const size = geometry(history, false);
   size.height = 2000; size.viewport = 300; history.scrollTop = 1630; fireEvent.scroll(history);
@@ -80,6 +80,13 @@ it("retains the existing 80px progress-follow policy and ignores resize-only cha
   rerender(<ConversationHistory {...state} requests={running} />); expect(history.scrollTop).toBe(1800);
   history.scrollTop = 0; fireEvent.scroll(history); size.height = 2200;
   rerender(<ConversationHistory {...state} />); expect(history.scrollTop).toBe(0);
+});
+
+it("keeps the newest request in view while pictures load after opening at the end", () => {
+  render(<ConversationHistory {...props()} />);
+  const history = screen.getByLabelText("Conversation history"); const size = geometry(history, false);
+  size.height = 600; size.viewport = 240; resize(); expect(history.scrollTop).toBe(360);
+  size.height = 900; resize(); expect(history.scrollTop).toBe(660);
 });
 
 it("keeps manual intent when desktop styling removes the clip marker or a hidden history has zero dimensions", () => {

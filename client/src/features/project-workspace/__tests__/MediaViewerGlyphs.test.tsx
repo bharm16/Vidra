@@ -75,3 +75,12 @@ it("offers Edit a region for pictures and Extend for clips under Use", async () 
   await user.click(extend);
   expect(onExtend).toHaveBeenCalledWith(clip);
 });
+
+it("opens an upload's media details on click, since it has no request to show", async () => {
+  const user = userEvent.setup();
+  render(<MediaViewer version={version} access={access} onUseInput={vi.fn()} onReuseSetup={vi.fn()} canReuseSetup={false} />);
+  await user.click(await screen.findByRole("button", { name: "Media details" }));
+  const details = await screen.findByRole("region", { name: "Media details" });
+  expect(within(details).getByText("Stadium")).toBeInTheDocument();
+  expect(within(details).getByText("1344 × 768")).toBeInTheDocument();
+});

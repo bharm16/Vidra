@@ -7,6 +7,7 @@ import {
 import type { DraftContent } from "../schemas/workflow/draft.schemas";
 import type { MediaVersion } from "../schemas/workflow/media.schemas";
 import type { PreparationReason } from "../schemas/workflow/preparation.schemas";
+import { parameterRole } from "./actionRegistry";
 
 export type SettingRole = "shape" | "duration" | "resolution" | "sound";
 
@@ -84,16 +85,20 @@ export function withConstraints(
   return next;
 }
 
-/** Choosing a model keeps the values it can use and moves the rest to its nearest offer. */
+/**
+ * Choosing a model keeps the values it can use and moves the rest to its nearest offer.
+ * A value carries by name, or by the role both models declare when the previous model is known.
+ */
 export function settingsForProfile(
   profile: CapabilityProfile,
   content: DraftContent,
+  from?: CapabilityProfile,
 ): DraftContent["settings"] {
   const previous = content.settings.parameters;
   const retained = (name: string): ParameterValue | undefined => {
     if (previous[name] !== undefined) return previous[name];
-    const role = settingRole(name);
-    return role ? Object.entries(previous).find(([key]) => settingRole(key) === role)?.[1] : undefined;
+    const role = parameterRole(profile, name);
+    return role && from ? Object.entries(previous).find(([key]) => parameterRole(from, key) === role)?.[1] : undefined;
   };
   const parameters: DraftContent["settings"]["parameters"] = {};
   for (const [name, policy] of Object.entries(profile.parameters)) {

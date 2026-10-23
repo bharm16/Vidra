@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { ProjectSketchCaptureCommandSchema, type ProjectSketchCaptureCommand } from "@shared/schemas/workflow/sketch.schemas";
-import type { SketchSettings } from "@/features/realtime-sketch/hooks/useRealtimeSketch";
+import type { SketchSettings } from "@/features/realtime-sketch/config/constants";
 import type { LiveOutput } from "@/features/realtime-sketch/hooks/generationReducer";
 import { acceptProjectSketch } from "../api/projectSketchApi";
 import { SketchCheckpointStore, type SketchCheckpoint } from "../api/SketchCheckpointStore";

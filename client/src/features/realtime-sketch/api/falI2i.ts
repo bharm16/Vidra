@@ -28,7 +28,7 @@ export type SendSketchFrame = (
 
 /**
  * Both fal and our own error middleware report failures as JSON with the
- * human-readable cause in `detail` / `message`. The live editor shows this
+ * human-readable cause in `detail` / `message`. Sketch shows this
  * text to the creator, so unwrap it here — the anti-corruption layer — rather
  * than putting a raw JSON envelope on the product surface.
  */

@@ -31,6 +31,8 @@ export const VideoBackgroundAudioSchema = z.strictObject({ id: ElementIdSchema, 
 export const VideoCompositionSchema = z.strictObject({
   normalizationVersion: z.literal("vidra-cfr30/v1"), preset: VideoPresetSchema, fps: z.literal(30),
   items: z.array(VideoItemSchema).max(32), text: z.array(VideoTextSchema).max(100), backgroundAudio: VideoBackgroundAudioSchema.optional(),
+  /** The voiceover lane sits between clip sound and music (S11); a take arrives only by an explicit Add to video. */
+  voiceover: VideoBackgroundAudioSchema.optional(),
 });
 // Older stored issues may name a source by version in elementId and omit versionId.
 export const VideoValidationIssueSchema = z.strictObject({ elementId: z.string(), code: z.string(), message: z.string(), versionId: VersionIdSchema.optional(), unsupportedCodePoints: z.array(z.number().int().min(0).max(0x10ffff)).max(2000).optional() });
@@ -42,7 +44,7 @@ export const TimingRepairTargetSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("item"), itemId: ElementIdSchema }),
   z.strictObject({ kind: z.literal("composition") }),
 ]);
-export const EditCommandKindSchema = z.enum(["replace_composition", "insert", "remove", "move", "trim", "duration", "replace", "transform", "preset", "text", "remove_text", "source_audio", "background_audio", "copy_audio", "repair_timing", "restore"]);
+export const EditCommandKindSchema = z.enum(["replace_composition", "insert", "remove", "move", "trim", "duration", "replace", "transform", "preset", "text", "remove_text", "source_audio", "background_audio", "voiceover_audio", "copy_audio", "repair_timing", "restore"]);
 /** The saved command behind a revision. Revisions saved before this field existed have none. */
 export const VideoEditChangeSchema = z.strictObject({ kind: EditCommandKindSchema, restoredFrom: RevisionSchema.optional() })
   .refine(change => (change.kind === "restore") === (change.restoredFrom !== undefined), "Only a restore names the revision it restored.");
@@ -66,6 +68,7 @@ export const EditCommandSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("remove_text"), textId: ElementIdSchema }),
   z.strictObject({ kind: z.literal("source_audio"), itemId: ElementIdSchema, muted: z.boolean(), gain: z.number().min(0).max(4), timing: SourceAudioTimingSchema.optional(), removed: z.boolean().optional() }),
   z.strictObject({ kind: z.literal("background_audio"), audio: VideoBackgroundAudioSchema.nullable() }),
+  z.strictObject({ kind: z.literal("voiceover_audio"), audio: VideoBackgroundAudioSchema.nullable() }),
   z.strictObject({ kind: z.literal("copy_audio"), itemId: ElementIdSchema, audioId: ElementIdSchema }),
   z.strictObject({ kind: z.literal("repair_timing"), target: TimingRepairTargetSchema.optional() }),
   z.strictObject({ kind: z.literal("restore"), sourceRevision: RevisionSchema }),

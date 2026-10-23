@@ -78,21 +78,6 @@ export function resolveStorageTypeKey(
   return STORAGE_TYPE_KEYS[type] || "generation";
 }
 
-/** The one content type the vector lane accepts. */
-export const VECTOR_IMAGE_CONTENT_TYPE = "image/svg+xml";
-
-/**
- * Whether the studio can persist vector (SVG) output — the single source of
- * truth behind "no vector model is offered while its output cannot be stored"
- * (issue #118). Read here rather than restated so the picker gate cannot drift
- * from what storage will actually keep; the studio registry consumes it.
- */
-export function canStoreVector(): boolean {
-  return (
-    STORAGE_CONFIG.allowedContentTypes.previewVector as readonly string[]
-  ).includes(VECTOR_IMAGE_CONTENT_TYPE);
-}
-
 /**
  * Storage types whose stored bytes can execute script when a browser renders
  * them inline (an SVG can carry `<script>`/`onload`). Their view URLs are

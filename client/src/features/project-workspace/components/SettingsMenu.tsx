@@ -36,5 +36,9 @@ export function SettingsMenu({ title, trigger, children, open, onOpenChange, cla
     // A pointer-opened menu takes focus on its surface, not its first field (C39/G27); keyboard opening still lands in the first field.
     if (!pointerOpened.current || !(event.currentTarget instanceof HTMLElement)) return;
     event.preventDefault(); event.currentTarget.focus({ preventScroll: true });
+  }} onKeyDown={event => {
+    // Typing on a pointer-opened surface goes to its search, so a model name can be typed straight away.
+    if (event.target !== event.currentTarget || event.key.length !== 1 || event.metaKey || event.ctrlKey || event.altKey) return;
+    event.currentTarget.querySelector<HTMLInputElement>("input[type=search]")?.focus();
   }} side="bottom" align={align} alignOffset={alignOffset} sideOffset={sideOffset} collisionPadding={12}>{children}</PopoverContent> : null}</Popover>;
 }

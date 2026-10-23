@@ -89,12 +89,12 @@ it("enables a verified ready import while retaining its original receipt for ser
 it("removing the edit source restores picture creation and keeps the unfinished words", async () => {
   const state = controller();
   const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_base", ownerId: "creator", projectId: "project_current", kind: "image", label: "Desk", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "base", storagePath: "uploads/creator/base" }, metadata: { state: "pending" }, association: "linked", createdAt: timestamp });
-  const editDraft = CreationDraftSchema.parse({ ...draft, action: "edit-image", inputs: [{ state: "resolved", role: "primary", versionId: version.id }] });
-  state.active = openDraftBuffer(editDraft); state.media = [version]; state.profiles = [{ ...profile, action: "edit-image" }];
+  const editDraft = CreationDraftSchema.parse({ ...draft, action: "edit-image", inputs: [{ state: "resolved", role: "primary", versionId: version.id }], settings: { ...draft.settings, profileId: "controlled-edit" } });
+  state.active = openDraftBuffer(editDraft); state.media = [version]; state.profiles = [profile, { ...profile, id: "controlled-edit", action: "edit-image", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }] }];
   render(<PromptComposer controller={state} onChooseInput={vi.fn()} onSubmit={vi.fn(async () => undefined)} onSketch={vi.fn()} />);
   expect(screen.queryByText("Reference")).not.toBeInTheDocument();
   expect(screen.queryByText("Sketch")).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Remove primary input" }));
+  fireEvent.click(screen.getByRole("button", { name: "Remove picture" }));
   expect(state.edit).toHaveBeenCalledWith(expect.objectContaining({ action: "make-image", instructions: draft.instructions, inputs: [] }));
   await waitFor(() => expect(state.access).toHaveBeenCalledWith(version.id));
 });

@@ -39,3 +39,14 @@ it("opens only for a new explicit request token and preserves a missing selected
   fireEvent.click(await screen.findByRole("button", { name: "Open Desk" }));
   expect(onChoose).toHaveBeenCalledExactlyOnceWith(picture);
 });
+
+it("offers clips and audio to a captions input and leaves pictures out (S7)", async () => {
+  const take = MediaVersionSchema.parse({ ...picture, id: "version_take", label: "Interview.m4a", kind: "audio", metadata: { state: "verified", durationSeconds: 252, audio: "present", probeVersion: "controlled" } });
+  render(<ProjectMediaPicker versions={[picture, clip, take]} imports={imports} access={async () => ({ url: "/fixture.wav" })} onChoose={vi.fn()} disabled={false} onImport={vi.fn()} mediaKinds={["video", "audio"]} />);
+  fireEvent.click(screen.getByRole("button", { name: "Choose a media input" }));
+  expect(await screen.findByRole("searchbox", { name: "Find project media" })).toHaveAttribute("placeholder", "Search clips and audio");
+  expect(screen.getByRole("button", { name: "Open Interview.m4a" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Open Evening run" })).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Open Desk" })).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Choose a project input file")).toHaveAttribute("accept", expect.stringContaining("audio/mpeg"));
+});

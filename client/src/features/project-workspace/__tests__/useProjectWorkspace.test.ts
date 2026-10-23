@@ -157,6 +157,18 @@ it("binds an import to its captured draft without clearing words and never resto
   expect(result.current.active?.content.instructions).toBe("Original direction");
 });
 
+it("a result's verb binds the result into the working request and keeps its words, without a new draft", async () => {
+  const animate = CapabilityProfileSchema.parse({ ...profile, id: "controlled-animate", action: "animate-image", mode: "image-to-video", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
+  const picture = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_picture", ownerId: "creator", projectId: project.id, kind: "image", label: "Desk", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "file", storagePath: "users/creator/previews/images/file.png" }, metadata: { state: "pending" }, association: "linked", createdAt: timestamp });
+  ports.api.profiles.mockResolvedValue([profile, animate]); ports.api.media.mockResolvedValue([picture]);
+  const { result } = await loaded();
+  await waitFor(() => expect(result.current.media).toHaveLength(1));
+  await act(() => result.current.bindResult("animate-image", picture));
+  expect(ports.api.createDraft).not.toHaveBeenCalled();
+  expect(result.current.active?.record.id).toBe(original.id);
+  expect(result.current.active?.content).toMatchObject({ action: "animate-image", instructions: "Original direction", inputs: [{ state: "resolved", role: "start-frame", versionId: picture.id }] });
+});
+
 it("does not replace the only in-memory words with a new draft when both retention paths fail", async () => {
   ports.device.save.mockRejectedValue(new Error("Device storage unavailable"));
   ports.api.saveDraft.mockRejectedValue(new Error("Server save unavailable"));
@@ -503,12 +515,12 @@ it("keeps partial history failures inline after the owned project loads", async 
   expect(result.current.resourceErrors).toEqual(expect.arrayContaining([expect.stringMatching(/History could not load/)]));
 });
 
-it("C01 opens a persisted editable empty request that takes the first video model once models load, without preparing or dispatching media", async () => {
+it("C01 opens a persisted editable empty request on Video with Auto, without preparing or dispatching media", async () => {
   vi.stubGlobal("crypto", webcrypto);
   ports.api.listDrafts.mockResolvedValue([]);
   const { result } = await loaded();
   expect(ports.api.createDraft.mock.calls[0]?.[3]).toMatchObject({ action: "make-video", settings: { profileId: "unselected" } });
-  await waitFor(() => expect(result.current.active?.content).toMatchObject({ action: "make-video", instructions: "", inputs: [], settings: { profileId: "controlled-video", profileRevision: "1", outputCount: 1 } }));
+  await waitFor(() => expect(result.current.active?.content).toMatchObject({ action: "make-video", instructions: "", inputs: [], settings: { profileId: "unselected", profileRevision: "unresolved", outputCount: 1 } }));
   expect(result.current.active?.record.id).toMatch(/^draft_initial_[a-f0-9]{64}$/);
   expect(ports.api.createDraft).toHaveBeenCalledTimes(1);
   expect(ports.api.prepare).not.toHaveBeenCalled(); expect(ports.api.submit).not.toHaveBeenCalled();

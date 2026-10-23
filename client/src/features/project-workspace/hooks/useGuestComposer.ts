@@ -4,11 +4,13 @@ import { ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import { GuestDraftSchema, GuestDraftStore, type GuestDraft } from "@/repositories/workflow/GuestDraftStore";
 import type { PromptComposerProps } from "../components/PromptComposer";
-import type { CapabilityLookupStatus } from "../components/ModelCreationArea";
+import type { CapabilityLookupStatus } from "../components/CapabilitySettings";
 import { fetchPublicProfiles } from "../api/workflowApi";
 import { editDraftBuffer, openDraftBuffer, redoDraftBuffer, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
-import { settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
-import { interchangeableActions, wordsDraftContent } from "../state/inputBinding";
+import { autoSettings, settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
+import { canonicalJson } from "@shared/workflow/canonicalJson";
+import { wordsDraftContent } from "../state/inputBinding";
+import { placeActions } from "@shared/workflow/actionRegistry";
 
 const GUEST_PROJECT = ProjectIdSchema.parse("project_guest");
 const UNSELECTED = { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 } as const;
@@ -80,13 +82,13 @@ export function useGuestComposer(intent: string | null, store: GuestDraftStore =
     if (current.content.settings.profileId !== "unselected") remembered.current[current.content.action] = current.content.settings;
     return editDraftBuffer(current, { ...current.content, action, settings: settingsForOutput(current.content, action, profiles, remembered.current[action]) });
   }), [profiles, update]);
-  // Once models load, a composer without one takes its output's model instead of waiting on "Choose model".
+  // Once models load, Auto takes its candidates' starting values instead of showing empty chips.
   useEffect(() => {
     if (!profiles.length) return;
     update(current => {
-      if (current.content.settings.profileId !== "unselected") return current;
+      if (current.content.settings.profileId !== "unselected" || Object.keys(current.content.settings.parameters).length) return current;
       const settings = settingsForOutput(current.content, current.content.action, profiles);
-      return settings.profileId === "unselected" ? current : editDraftBuffer(current, { ...current.content, settings });
+      return canonicalJson(settings) === canonicalJson(current.content.settings) ? current : editDraftBuffer(current, { ...current.content, settings });
     });
   }, [profiles, update]);
   const keep = useCallback((): string => { persist(bufferRef.current); return guest.id; }, [guest.id, persist]);
@@ -96,7 +98,8 @@ export function useGuestComposer(intent: string | null, store: GuestDraftStore =
     project: { status: "active" }, conversation: { status: "active" }, view: { requests: [] },
     edit,
     newDraft: async action => changeAction(action),
-    chooseProfile: profile => update(current => !interchangeableActions(current.content.action).includes(profile.action) ? current : editDraftBuffer(current, { ...current.content, action: profile.action, settings: settingsForProfile(profile, current.content) })),
+    chooseAuto: () => update(current => current.content.settings.profileId === "unselected" ? current : editDraftBuffer(current, { ...current.content, settings: autoSettings(current.content, current.content.action, profiles) })),
+    chooseProfile: profile => update(current => !placeActions(current.content.action).includes(profile.action) ? current : editDraftBuffer(current, { ...current.content, action: profile.action, settings: settingsForProfile(profile, current.content) })),
     flush: async () => true,
     undo: () => update(undoDraftBuffer),
     redo: () => update(redoDraftBuffer),

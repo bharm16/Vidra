@@ -92,23 +92,28 @@ export function workflowRuntimeProfiles(runtime?: WorkflowRuntimeAvailability): 
       resolution: { policy: "fixed", value: "720p" }, aspectRatio: { policy: "editable", domain: { kind: "enum", values: ["16:9", "9:16"] }, defaultValue: "16:9" },
       numFrames: { policy: "editable", domain: { kind: "enum", values: [81, 121] }, defaultValue: 81 }, framesPerSecond: { policy: "fixed", value: 16 }, durationSeconds: { policy: "derived", from: "frame-duration" },
       promptExpansion: { policy: "fixed", value: false }, negativePrompt: { policy: "fixed", value: WAN_NEGATIVE },
-    } },
+    }, presentation: { words: "required", parameters: {
+      resolution: { label: "Resolution", role: "resolution" }, aspectRatio: { label: "Shape", role: "shape" }, numFrames: { label: "Frames" }, framesPerSecond: { label: "Generation frame rate", format: "fps" }, durationSeconds: { label: "Duration", role: "duration", format: "seconds" },
+    } } },
     { ...common, id: "wan-2.5-i2v", label: "Wan 2.5", action: "animate-image", endpoint: "wan-video/wan-2.5-i2v", mode: "image-to-video", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }], ...baseAvailability, generatedAudio: "unknown", parameters: {
       durationSeconds: { policy: "editable", domain: { kind: "enum", values: [5, 10] }, defaultValue: 5 }, resolution: { policy: "editable", domain: { kind: "enum", values: ["480p", "720p", "1080p"] }, defaultValue: "720p" },
       aspectRatio: { policy: "derived", from: "input-aspect", role: "start-frame" }, promptExpansion: { policy: "fixed", value: true }, negativePrompt: { policy: "fixed", value: WAN_NEGATIVE },
-    } },
+    }, presentation: { words: "required", parameters: {
+      durationSeconds: { label: "Duration", role: "duration", format: "seconds" }, resolution: { label: "Resolution", role: "resolution" }, aspectRatio: { label: "Shape", role: "shape" },
+    } } },
     { ...common, id: "flux-schnell", label: "Flux Schnell", action: "make-image", endpoint: "black-forest-labs/flux-schnell", mode: "text-to-image", inputs: [], output: { kind: "image", maxCount: 4 }, ...baseAvailability, generatedAudio: "unsupported", parameters: {
       aspectRatio: { policy: "editable", domain: { kind: "enum", values: ["1:1", "16:9", "21:9", "3:2", "2:3", "4:5", "5:4", "9:16", "9:21"] }, defaultValue: "16:9" }, outputFormat: { policy: "fixed", value: "webp" }, outputQuality: { policy: "fixed", value: 80 },
-    } },
+    }, presentation: { words: "required", parameters: { aspectRatio: { label: "Shape", role: "shape" } } } },
     { ...common, id: "flux-kontext-fast", label: "Flux Kontext Fast", action: "edit-image", endpoint: "prunaai/flux-kontext-fast", mode: "image-edit", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }], output: { kind: "image", maxCount: 1 }, ...baseAvailability, generatedAudio: "unsupported", parameters: {
       aspectRatio: { policy: "fixed", value: "match_input_image" }, outputFormat: { policy: "fixed", value: "webp" }, outputQuality: { policy: "fixed", value: 80 }, speedMode: { policy: "fixed", value: "Juiced" },
-    } },
+    }, presentation: { words: "required", parameters: { aspectRatio: { label: "Shape", role: "shape", values: { match_input_image: "Same as picture" } } } } },
   ];
-  profiles.push(...REPLICATE_MODEL_DEFINITIONS.map(definition => ({ ...definition.profile, ...baseAvailability })));
-  for (const [action, label] of [["ask", "Ask"], ["expand-description", "Expand description"], ["improve-words", "Improve words"]] as const) profiles.push({ ...common, id: `text-${action}`, label, action, provider: runtime?.textProvider ?? "configured-text", endpoint: runtime?.textModel ?? "studio_turn", mode: "text-assistance", inputs: [], output: { kind: "text", maxCount: 1 }, ...baseAvailability, generatedAudio: "unsupported", parameters: {} });
+  // A model whose output Vidra cannot keep is listed but never offered, whatever the runtime.
+  profiles.push(...REPLICATE_MODEL_DEFINITIONS.map(definition => ({ ...definition.profile, ...(definition.unavailableReason ? { availability: "unavailable", unavailableReason: definition.unavailableReason } : baseAvailability) })));
+  for (const [action, label] of [["ask", "Ask"], ["expand-description", "Expand description"], ["improve-words", "Improve words"]] as const) profiles.push({ ...common, id: `text-${action}`, label, action, provider: runtime?.textProvider ?? "configured-text", endpoint: runtime?.textModel ?? "studio_turn", mode: "text-assistance", inputs: [], output: { kind: "text", maxCount: 1 }, ...baseAvailability, generatedAudio: "unsupported", parameters: {}, presentation: { words: "required", parameters: {} } });
   return profiles.map(input => {
     const profile = CapabilityProfileSchema.parse(input);
-    if (!runtime) return profile;
+    if (!runtime || profile.availability === "unavailable") return profile;
     const runtimeWithoutSpend: WorkflowRuntimeAvailability = {
       imageProviders: runtime.imageProviders,
       videoAvailable: runtime.videoAvailable.bind(runtime),

@@ -1,82 +1,101 @@
 import {
   isParameterValueInDomain,
-  isParameterValueInRange,
   type CapabilityProfile,
   type ParameterPolicy,
   type ParameterRangeDomain,
+  type ParameterRole,
   type ParameterValue,
 } from "@shared/schemas/workflow/capability.schemas";
 import type { CreationAction, DraftContent, DraftInput } from "@shared/schemas/workflow/draft.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import {
   allowedParameterValues,
-  settingRole,
   settingsForAction,
   settingsForProfile,
   withConstraints,
-  type SettingRole,
 } from "@shared/workflow/capabilityEvaluation";
+import { actionEntry, parameterPresentation, parameterRole, placeActions, roleParameter, type CoreChip } from "@shared/workflow/actionRegistry";
+import { languageName } from "./languages";
 
-export {
-  allowedParameterValues,
-  settingRole,
-  settingsForAction,
-  settingsForProfile,
-  withConstraints,
-  type SettingRole,
-};
+export { allowedParameterValues, settingsForAction, settingsForProfile, withConstraints };
 
-const ORDER = ["aspectRatio", "aspect_ratio", "shape", "duration", "durationSeconds", "resolution", "generateAudio", "audio", "sound"];
-export function orderedParameters(profile: CapabilityProfile): [string, ParameterPolicy][] {
-  return Object.entries(profile.parameters).sort(([a], [b]) => {
-    const rank = (name: string): number => { const index = ORDER.indexOf(name); return index < 0 ? ORDER.length : index; };
-    return rank(a) - rank(b);
+const ROLE_LABELS: Record<ParameterRole, string> = { shape: "Shape", duration: "Duration", resolution: "Resolution", sound: "Sound", voice: "Voice", language: "Language", scale: "Scale" };
+export function roleLabel(role: ParameterRole): string {
+  return ROLE_LABELS[role];
+}
+
+/** The profile's own name for a setting; captured profiles without presentation fall back to the key. */
+export function settingLabel(profile: Pick<CapabilityProfile, "presentation"> | undefined, name: string): string {
+  const shown = profile ? parameterPresentation(profile, name) : undefined;
+  if (shown) return shown.label;
+  if (name === "outputCount") return "Results";
+  return name.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " ").replace(/^./, value => value.toUpperCase());
+}
+
+/** How one value reads on its chip or field: a declared name, Auto, or the declared number format. */
+export function valueLabel(profile: Pick<CapabilityProfile, "presentation"> | undefined, name: string, value: ParameterValue): string {
+  const shown = profile ? parameterPresentation(profile, name) : undefined;
+  const named = shown?.values?.[String(value)];
+  if (named) return named;
+  if (shown?.auto !== undefined && value === shown.auto) return "Auto";
+  if (value === "match_input_image") return "Same as picture";
+  if (typeof value === "boolean") return shown?.role === "sound" ? (value ? "Sound on" : "Sound off") : value ? "On" : "Off";
+  if (typeof value === "number") {
+    if (shown?.format === "fraction") return `${Math.round(value * 100)}%`;
+    if (shown?.format === "percent") return `${value}%`;
+    if (shown?.format === "seconds") return secondsLabel(value);
+    if (shown?.format === "fps") return `${value} fps`;
+    if (shown?.format === "times") return `${value.toFixed(1)}x`;
+  }
+  if (shown?.format === "language" && typeof value === "string") return languageName(value);
+  return String(value);
+}
+
+/** "1 clip", "4 images", "2 takes". */
+export function countLabel(action: CreationAction, count: number): string {
+  const noun = actionEntry(action).resultNoun;
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+export interface CoreChipEntry {
+  chip: Exclude<CoreChip, "model" | "count">;
+  name?: string;
+  policy?: ParameterPolicy;
+}
+
+/** The action's fixed core row (Rule 6): each role keeps its slot whether or not this model has the setting. */
+export function coreChipEntries(action: CreationAction, profile: CapabilityProfile | undefined): CoreChipEntry[] {
+  return actionEntry(action).coreChips.flatMap((chip): CoreChipEntry[] => {
+    if (chip === "model" || chip === "count") return [];
+    const found = profile ? roleParameter(profile, chip) : undefined;
+    return [found ? { chip, name: found[0], policy: found[1] } : { chip }];
   });
 }
 
-/** The composer exposes creation choices, not adapter serialization settings. */
-export function visibleParameters(profile: CapabilityProfile): [string, ParameterPolicy][] {
-  return orderedParameters(profile).filter(([name]) => ORDER.includes(name));
-}
-
-const CORE_SETTINGS: Record<CapabilityProfile["output"]["kind"], string[]> = { video: ["aspectRatio", "durationSeconds", "resolution", "sound"], image: ["aspectRatio"], audio: [], text: [], file: [] };
-/** Core settings the model has no control for keep their place in the row, without a policy. */
-export function settingEntries(profile: CapabilityProfile): [string, ParameterPolicy | undefined][] {
-  const visible = visibleParameters(profile);
-  const missing = CORE_SETTINGS[profile.output.kind].filter(name => !visible.some(([key]) => settingRole(key) === settingRole(name)) && !(settingRole(name) === "sound" && profile.generatedAudio === "always"));
-  const rank = (name: string): number => ORDER.indexOf(name);
-  return [...visible, ...missing.map((name): [string, undefined] => [name, undefined])].sort(([a], [b]) => rank(a) - rank(b));
-}
-
 export interface SettingOption { value: ParameterValue; enabled: boolean; }
-/** Values other models of the action offer stay listed but unavailable, so a menu keeps its shape across models. */
-export function settingOptions(profile: CapabilityProfile, profiles: CapabilityProfile[], content: DraftContent, name: string): SettingOption[] | undefined {
+/** Values other models of the same place offer for the role stay listed but unavailable, so a menu keeps its shape across models. */
+export function settingOptions(profile: CapabilityProfile, profiles: readonly CapabilityProfile[], content: DraftContent, name: string): SettingOption[] | undefined {
   const policy = profile.parameters[name];
   if (policy?.policy !== "editable" || policy.domain.kind !== "enum") return undefined;
   const allowed = allowedParameterValues(profile, content, name) ?? [];
-  const role = settingRole(name);
+  const role = parameterRole(profile, name);
   const values = [...policy.domain.values];
   if (role && role !== "sound") {
+    const actions = placeActions(profile.action);
     for (const other of profiles) {
-      if (other.action !== profile.action) continue;
-      for (const [key, candidate] of Object.entries(other.parameters)) {
-        if (settingRole(key) !== role || candidate.policy !== "editable" || candidate.domain.kind !== "enum") continue;
-        for (const value of candidate.domain.values) if (!values.includes(value)) values.push(value);
-      }
+      if (!actions.includes(other.action)) continue;
+      const found = roleParameter(other, role);
+      if (found?.[1].policy !== "editable" || found[1].domain.kind !== "enum") continue;
+      for (const value of found[1].domain.values) if (!values.includes(value)) values.push(value);
     }
   }
   if (values.every(value => typeof value === "number")) values.sort((a, b) => Number(a) - Number(b));
   return values.map(value => ({ value, enabled: allowed.includes(value) }));
 }
 
-/** Saved choices remain readable while their model cannot be resolved. */
-export function visibleSavedParameters(parameters: DraftContent["settings"]["parameters"]): [string, ParameterValue][] {
-  return Object.entries(parameters).filter(([name]) => ORDER.includes(name)).sort(([a], [b]) => ORDER.indexOf(a) - ORDER.indexOf(b));
-}
+export interface PreModelParameterChoices { name: string | undefined; values: ParameterValue[]; ranges: ParameterRangeDomain[]; }
 
-export interface PreModelParameterChoices { values: ParameterValue[]; ranges: ParameterRangeDomain[]; }
-
-function acceptsCurrentInputs(profile: CapabilityProfile, content: DraftContent, media: MediaVersion[]): boolean {
+export function acceptsCurrentInputs(profile: CapabilityProfile, content: DraftContent, media: MediaVersion[]): boolean {
   for (const rule of profile.inputs) {
     const count = content.inputs.filter(input => input.role === rule.role).length;
     if (count < rule.minCount || count > rule.maxCount) return false;
@@ -96,61 +115,70 @@ function acceptsCurrentInputs(profile: CapabilityProfile, content: DraftContent,
   });
 }
 
-/** Preferences have declared candidate witnesses; they do not resolve or qualify a request. */
-export function preModelParameterChoices(profiles: CapabilityProfile[], content: DraftContent, media: MediaVersion[], name: string): PreModelParameterChoices {
-  const choices: PreModelParameterChoices = { values: [], ranges: [] };
-  if (content.settings.profileId !== "unselected") return choices;
+/** What is attached fits the model: each input has a role it takes, within its counts, kinds and limits. Inputs still to add do not count against it. */
+function takesAttachedInputs(profile: CapabilityProfile, content: DraftContent, media: MediaVersion[]): boolean {
+  const attached = (role: DraftInput["role"]): number => content.inputs.filter(input => input.role === role).length;
+  return acceptsCurrentInputs({ ...profile, inputs: profile.inputs.map(rule => ({ ...rule, minCount: Math.min(rule.minCount, attached(rule.role)) })) }, content, media);
+}
+
+/** Auto's candidates: the action's qualified models that can take what is attached (Rule 5). The inputs already chose the action. */
+export function autoCandidates(profiles: readonly CapabilityProfile[], content: DraftContent, media: MediaVersion[]): CapabilityProfile[] {
+  return profiles.filter(profile => profile.action === content.action && profile.availability === "qualified" && takesAttachedInputs(profile, content, media));
+}
+
+/** Auto's chip for one role offers what its candidates offer; preparation still needs one exact model. */
+export function preModelParameterChoices(profiles: readonly CapabilityProfile[], content: DraftContent, media: MediaVersion[], role: ParameterRole): PreModelParameterChoices {
+  const choices: PreModelParameterChoices = { name: undefined, values: [], ranges: [] };
   const add = (value: ParameterValue): void => { if (!choices.values.includes(value)) choices.values.push(value); };
-  for (const profile of profiles) {
-    if (profile.action !== content.action || profile.availability !== "qualified" || !acceptsCurrentInputs(profile, content, media)) continue;
-    const policy = profile.parameters[name];
-    if (policy?.policy !== "editable" || (/audio|sound/i.test(name) && profile.generatedAudio === "unsupported")) continue;
-    const restrictions = profile.constraints.flatMap(constraint => {
-      const values = constraint.requires[name];
-      return content.settings.parameters[constraint.parameter] === constraint.equals && values ? [values] : [];
-    });
+  for (const profile of autoCandidates(profiles, content, media)) {
+    const found = roleParameter(profile, role);
+    if (found?.[1].policy !== "editable") continue;
+    const [name, policy] = found;
+    choices.name ??= name;
     const domain = policy.domain;
-    if (domain.kind === "enum") {
-      for (const value of allowedParameterValues(profile, content, name) ?? []) add(value);
-    } else if (domain.kind !== "range") {
-      continue;
-    } else if (restrictions.length) {
-      for (const value of restrictions[0] ?? []) if (isParameterValueInRange(domain, value) && restrictions.every(values => values.includes(value))) add(value);
-    } else if (!choices.ranges.some(range => range.min === domain.min && range.max === domain.max && range.step === domain.step)) {
-      choices.ranges.push({ ...domain });
-    }
+    if (domain.kind === "enum") for (const value of allowedParameterValues(profile, content, name) ?? []) add(value);
+    else if (domain.kind === "range" && !choices.ranges.some(range => range.min === domain.min && range.max === domain.max && range.step === domain.step)) choices.ranges.push({ ...domain });
   }
+  if (choices.values.every(value => typeof value === "number")) choices.values.sort((a, b) => Number(a) - Number(b));
   return choices;
 }
 
-type OutputKind = CapabilityProfile["output"]["kind"];
-const OUTPUT_NOUN: Record<OutputKind, string> = { image: "image", video: "video", audio: "audio clip", text: "response", file: "file" };
-
-export function parameterName(name: string, outputKind?: OutputKind): string {
-  if (name === "outputCount") return outputKind ? `${OUTPUT_NOUN[outputKind]}s`.replace(/^./, value => value.toUpperCase()) : "Results";
-  if (/aspect|shape/i.test(name)) return "Shape";
-  if (/duration/i.test(name)) return "Duration";
-  if (/audio|sound/i.test(name)) return "Sound";
-  if (/frame.?rate|fps/i.test(name)) return "Frame rate";
-  if (/num.?frames|frame.?count/i.test(name)) return "Frames";
-  return name.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " ").replace(/^./, value => value.toUpperCase());
+/** Auto keeps the core values its first candidate would start with, so its chips read like a model's. */
+export function autoSettings(content: DraftContent, action: CreationAction, profiles: readonly CapabilityProfile[], media: MediaVersion[] = []): DraftContent["settings"] {
+  const settings = settingsForAction(content);
+  const target = { ...content, action, settings };
+  const candidates = autoCandidates(profiles, target, media);
+  const parameters: DraftContent["settings"]["parameters"] = {};
+  for (const entry of coreChipEntries(action, candidates[0])) {
+    if (!entry.name || entry.policy?.policy !== "editable") continue;
+    const previous = content.settings.parameters[entry.name];
+    parameters[entry.name] = previous !== undefined && isParameterValueInDomain(entry.policy.domain, previous) ? previous : entry.policy.defaultValue;
+  }
+  const maxCount = Math.max(1, ...candidates.map(candidate => candidate.output.maxCount));
+  return { ...settings, parameters, outputCount: Math.max(1, Math.min(content.settings.outputCount, maxCount)) };
 }
 
-export function parameterLabel(name: string, value: ParameterValue, outputKind?: OutputKind): string {
-  if (value === "match_input_image") return "Same as picture";
-  if (name === "outputFormat" && value === "webp") return "WebP";
-  if (name === "outputCount") return `${String(value)} ${outputKind ? OUTPUT_NOUN[outputKind] : "result"}${value === 1 ? "" : "s"}`;
-  if (/audio|sound/i.test(name) && typeof value === "boolean") return value ? "Sound on" : "Sound off";
-  if (/duration/i.test(name) && typeof value === "number") return `${value}s`;
-  if (/fps|frame.?rate/i.test(name)) return `${String(value)} fps`;
-  return String(value);
+/** Make resolves Auto to one exact model: the first candidate that offers every chosen value, else the first that takes the inputs. */
+export function resolveAuto(content: DraftContent, profiles: readonly CapabilityProfile[], media: MediaVersion[]): CapabilityProfile | undefined {
+  const candidates = autoCandidates(profiles, content, media).filter(profile => acceptsCurrentInputs(profile, content, media));
+  const offers = (profile: CapabilityProfile): boolean => profile.output.maxCount >= content.settings.outputCount && Object.entries(content.settings.parameters).every(([name, value]) => {
+    const policy = profile.parameters[name];
+    return policy?.policy === "editable" ? isParameterValueInDomain(policy.domain, value) : policy?.policy === "fixed" ? policy.value === value : false;
+  });
+  return candidates.find(offers) ?? candidates[0];
+}
+
+/** 81 frames at 16 fps reads as the 5s a creator asked for, not 5.0625s. */
+export function secondsLabel(seconds: number): string {
+  return `${Math.abs(seconds - Math.round(seconds)) < 0.1 ? Math.round(seconds) : Number(seconds.toFixed(1))}s`;
 }
 
 export function derivedParameter(policy: Extract<ParameterPolicy, { policy: "derived" }>, content: DraftContent, media: MediaVersion[]): string {
   if (policy.from === "frame-duration") {
     const frames = content.settings.parameters.numFrames ?? content.settings.parameters.num_frames;
     const rate = content.settings.parameters.framesPerSecond ?? content.settings.parameters.frames_per_second;
-    return typeof frames === "number" && typeof rate === "number" && rate > 0 ? `~${(frames / rate).toFixed(1)}s` : "From frames";
+    if (typeof frames !== "number" || typeof rate !== "number" || rate <= 0) return "From frames";
+    return secondsLabel(frames / rate);
   }
   const input = content.inputs.find(candidate => candidate.state === "resolved" && (!policy.role || candidate.role === policy.role));
   const version = input?.state === "resolved" ? media.find(candidate => candidate.id === input.versionId) : undefined;
@@ -170,9 +198,9 @@ export function capabilityProblems(profile: CapabilityProfile, content: DraftCon
   for (const [name, policy] of Object.entries(profile.parameters)) {
     const value = content.settings.parameters[name];
     if (value === undefined) continue;
-    if (policy.policy === "fixed" && value !== policy.value) problems.push(`${parameterName(name)} must be ${parameterLabel(name, policy.value)} for this model.`);
+    if (policy.policy === "fixed" && value !== policy.value) problems.push(`${settingLabel(profile, name)} must be ${valueLabel(profile, name, policy.value)} for this model.`);
     if (policy.policy === "editable" && !isParameterValueInDomain(policy.domain, value)) {
-      problems.push(`Choose an available ${parameterName(name).toLowerCase()} for this model.`);
+      problems.push(`Choose an available ${settingLabel(profile, name).toLowerCase()} for this model.`);
     }
     if (policy.policy === "unsupported" || policy.policy === "unknown") problems.push(policy.reason);
   }
@@ -180,7 +208,7 @@ export function capabilityProblems(profile: CapabilityProfile, content: DraftCon
     if (content.settings.parameters[constraint.parameter] === constraint.equals && Object.entries(constraint.requires).some(([name, values]) => !values.includes(content.settings.parameters[name] ?? ""))) problems.push(constraint.reason);
   }
   for (const input of content.inputs) {
-    if (!profile.inputs.some(rule => rule.role === input.role)) problems.push(`This model does not use the ${input.role.replaceAll("-", " ")} input. Choose another action or remove it.`);
+    if (!profile.inputs.some(rule => rule.role === input.role)) problems.push(`This model does not use the ${input.role.replaceAll("-", " ")} input. Remove it or choose another model.`);
   }
   return [...new Set(problems)];
 }
@@ -189,30 +217,15 @@ function list(values: ParameterValue[]): string {
   return values.length < 2 ? String(values[0] ?? "") : `${values.slice(0, -1).join(", ")} or ${String(values.at(-1))}`;
 }
 
-export function parameterDescription(profile: CapabilityProfile | undefined, name: string, value: ParameterValue): string | undefined {
-  if (/aspect|shape/i.test(name) && typeof value === "string") return value === "16:9" ? "Landscape" : value === "9:16" ? "Portrait" : value === "1:1" ? "Square" : undefined;
-  if (!profile || !/resolution/i.test(name)) return undefined;
+/** A shape's common name, or the durations a resolution allows. */
+export function parameterDescription(profile: CapabilityProfile | undefined, name: string, value: ParameterValue, role = profile ? parameterRole(profile, name) : undefined): string | undefined {
+  if (role === "shape" && typeof value === "string") return value === "16:9" ? "Landscape" : value === "9:16" ? "Portrait" : value === "1:1" ? "Square" : undefined;
+  if (!profile || role !== "resolution") return undefined;
+  const durationName = roleParameter(profile, "duration")?.[0];
   const constrained = profile.constraints.find(rule => rule.parameter === name && rule.equals === value);
-  const duration = constrained && Object.entries(constrained.requires).find(([key]) => /duration/i.test(key))?.[1];
-  if (duration?.length) return `${list(duration)} seconds required`;
-  const durationPolicy = Object.entries(profile.parameters).find(([key]) => /duration/i.test(key))?.[1];
-  return durationPolicy?.policy === "editable" && durationPolicy.domain.kind === "enum" ? `${list(durationPolicy.domain.values)} seconds` : undefined;
-}
-
-/** Capability copy is derived from supplied qualified offers, without adding modes by model name. */
-export function modelCapabilityDescription(profile: CapabilityProfile, profiles: CapabilityProfile[]): string {
-  if (profile.availability !== "qualified") return profile.unavailableReason ?? "Currently unavailable";
-  const required = profile.inputs.find(input => input.minCount > 0 && input.kinds.includes("image"));
-  if (required) return `${required.role === "end-frame" ? "End image" : "Start image"} required · ${profile.generatedAudio === "unsupported" ? "no generated sound" : profile.generatedAudio === "unknown" ? "sound not confirmed" : "sound generated"}`;
-  if (profile.generatedAudio === "unsupported") return `${profile.output.kind === "video" ? "Text to video" : "Picture generation"} · no generated sound`;
-  const family = profiles.filter(other => other.provider === profile.provider && other.label === profile.label && other.availability === "qualified");
-  const modes: string[] = [];
-  if (family.some(other => /text/i.test(other.mode) && other.inputs.every(input => input.minCount === 0))) modes.push("text");
-  if (family.some(other => other.inputs.some(input => input.kinds.includes("image")))) modes.push("images");
-  if (family.some(other => other.action === "extend-video")) modes.push("extension");
-  const kinds = modes.length > 1 ? `${modes.slice(0, -1).join(", ")} and ${modes.at(-1)}` : modes[0];
-  const sound = profile.generatedAudio === "always" ? "Sound included" : profile.generatedAudio === "optional" ? "Optional sound" : "Sound not confirmed";
-  return kinds ? `${sound} · ${kinds}` : sound;
+  const duration = constrained && durationName ? constrained.requires[durationName] : undefined;
+  if (duration?.length && duration.length <= 4) return `${list(duration)} seconds required`;
+  return undefined;
 }
 
 export interface ModelCreationNotice {
@@ -230,35 +243,26 @@ export function modelCreationFeedback(profile: CapabilityProfile, content: Draft
     const kind = version.kind === "export" ? "video" : version.kind;
     const rule = profile.inputs.find(candidate => candidate.role === input.role);
     if (!rule || (kind !== "image" && kind !== "video" && kind !== "audio") || !rule.kinds.includes(kind)) return { tone: "danger", message: `${profile.label} cannot use ${kind === "audio" ? "audio files" : kind === "image" ? "this picture" : "this clip"}` };
+    if (profile.action === "extend-video" && version.metadata.state === "verified" && version.metadata.contentType !== undefined && version.metadata.contentType !== "video/mp4") return { tone: "warning", message: `${profile.label} needs an MP4 clip`, kind: "extension-ineligible" };
     if (profile.action === "extend-video" && version.metadata.state === "verified" && ((rule.maxDurationSeconds !== undefined && version.metadata.durationSeconds > rule.maxDurationSeconds) || (rule.minDurationSeconds !== undefined && version.metadata.durationSeconds < rule.minDurationSeconds))) return { tone: "warning", message: `${profile.label} cannot extend this clip`, kind: "extension-ineligible" };
   }
-  if (profile.inputs.some(rule => rule.role === "start-frame" && rule.minCount > content.inputs.filter(input => input.role === rule.role).length)) return { tone: "warning", message: "Add a start image" };
-  const parameters = content.settings.parameters;
-  const duration = Object.entries(profile.parameters).find(([name]) => /duration/i.test(name));
+  const duration = roleParameter(profile, "duration");
   if (profile.action === "extend-video" && duration?.[1].policy === "fixed" && typeof duration[1].value === "number") {
     const input = content.inputs.find(candidate => candidate.state === "resolved" && (candidate.role === "clip" || candidate.role === "primary"));
     const version = input?.state === "resolved" ? media.find(candidate => candidate.id === input.versionId) : undefined;
     if (version?.metadata.state === "verified") return { tone: "hint", message: `This adds ${duration[1].value} seconds to your ${version.metadata.durationSeconds}-second clip.` };
   }
-  if (content.inputs.some(input => input.role === "reference") && duration?.[1].policy === "fixed") return { tone: "hint", message: `Reference images use ${String(duration[1].value)} seconds.` };
-  if ((profile.action === "make-video" || profile.action === "animate-image") && content.inputs.some(input => input.state === "resolved" && media.some(version => version.id === input.versionId && version.origin.kind === "frame"))) return { tone: "hint", message: "Make a new clip from the chosen frame." };
-  for (const constraint of profile.constraints) {
-    if (parameters[constraint.parameter] !== constraint.equals || !/resolution/i.test(constraint.parameter)) continue;
-    const required = Object.entries(constraint.requires).find(([name]) => /duration/i.test(name));
-    if (required?.[1].length === 1 && required[1].includes(parameters[required[0]] ?? "")) return { tone: "hint", message: `${parameterLabel(constraint.parameter, constraint.equals)} uses ${String(required[1][0])} seconds.` };
-  }
-  const frames = parameters.numFrames;
-  const rate = parameters.framesPerSecond;
-  const framePolicy = profile.parameters.numFrames;
-  if (typeof frames === "number" && typeof rate === "number" && framePolicy?.policy === "editable" && frames !== framePolicy.defaultValue) return { tone: "hint", message: `${frames} frames at ${rate} fps.` };
   return undefined;
 }
 
+const INPUT_LABELS: Partial<Record<DraftInput["role"], string>> = { "start-frame": "Start frame", "end-frame": "End frame", reference: "Reference", mask: "Area", audio: "Audio" };
+
+/** A tile's caption: what the input is for in the request it belongs to. */
 export function modelInputLabel(role: DraftInput["role"], profile?: CapabilityProfile, version?: MediaVersion): string {
   if (role === "audio") return version?.label ?? "Audio";
-  if (role === "clip" || role === "primary" && (profile?.action === "extend-video" || profile?.inputs.some(rule => rule.role === "primary" && rule.kinds.includes("video")))) return "Extending";
-  const labels: Partial<Record<DraftInput["role"], string>> = { "start-frame": "Start frame", "end-frame": "End frame", reference: "Reference", primary: "Start frame", mask: "Area" };
-  return labels[role] ?? role;
+  if (role === "clip" || role === "primary" && profile?.inputs.some(rule => rule.role === "primary" && rule.kinds.includes("video") && !rule.kinds.includes("image"))) return profile?.action === "extend-video" ? "Extending" : "Clip";
+  if (role === "primary") return profile?.inputs.some(rule => rule.role === "primary" && rule.kinds.includes("audio")) ? version?.label ?? "Clip or audio" : "Picture";
+  return INPUT_LABELS[role] ?? role;
 }
 
 export interface CapabilityDraftEvaluation {
@@ -275,8 +279,9 @@ export function evaluateCapabilityDraft(
   content: DraftContent,
   media: MediaVersion[],
 ): CapabilityDraftEvaluation {
-  const candidates = profiles.filter(profile => profile.action === content.action);
-  const profile = candidates.find(candidate => candidate.id === content.settings.profileId);
+  const actions = placeActions(content.action);
+  const candidates = profiles.filter(profile => actions.includes(profile.action));
+  const profile = candidates.find(candidate => candidate.id === content.settings.profileId && candidate.action === content.action);
   const problems = profile ? capabilityProblems(profile, content) : [];
   const modelNotice = profile ? modelCreationFeedback(profile, content, media) : undefined;
   const unsupportedSaved = profile
@@ -295,12 +300,11 @@ export function evaluateCapabilityDraft(
   return { candidates, profile, problems, modelNotice, unsupportedSaved, fixedConflicts };
 }
 
-/** A composer always has a model: the one last used for this action, else the action's first qualified model. */
-export function settingsForOutput(content: DraftContent, action: CreationAction, profiles: readonly CapabilityProfile[], remembered?: DraftContent["settings"]): DraftContent["settings"] {
-  const qualified = profiles.filter(profile => profile.action === action && profile.availability === "qualified");
-  const prior = remembered ? qualified.find(profile => profile.id === remembered.profileId) : undefined;
-  const chosen = prior ?? qualified[0];
-  if (!chosen) return settingsForAction(content);
-  const settings = settingsForProfile(chosen, prior && remembered ? { ...content, settings: remembered } : content);
-  return { ...settings, outputCount: Math.max(1, Math.min(settings.outputCount, chosen.output.maxCount)) };
+/** A composer starts on the model last used for this action, else on Auto. */
+export function settingsForOutput(content: DraftContent, action: CreationAction, profiles: readonly CapabilityProfile[], remembered?: DraftContent["settings"], media: MediaVersion[] = []): DraftContent["settings"] {
+  const prior = remembered ? profiles.find(profile => profile.id === remembered.profileId && profile.action === action && profile.availability === "qualified") : undefined;
+  if (!prior || !remembered) return autoSettings(content, action, profiles, media);
+  const settings = settingsForProfile(prior, { ...content, settings: remembered });
+  return { ...settings, outputCount: Math.max(1, Math.min(settings.outputCount, prior.output.maxCount)) };
 }
+

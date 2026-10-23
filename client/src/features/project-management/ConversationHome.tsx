@@ -35,7 +35,8 @@ function mediaCount(media: ConversationMediaCount | undefined): string {
 export function ConversationHome({ title, actions, composer, conversations, onOpenConversation }: ConversationHomeProps): ReactElement {
   return <main className="vf-conversation-home" aria-label={title ?? "Project conversations"}>
     <div className="vf-conversation-home-content">
-      {title !== undefined ? <header className="vf-conversation-home-heading"><h1 className="vf-conversation-home-title">{title}</h1>{actions}</header> : null}
+      {/* The library home has no name (P02), only its options: rename, archive, restore and file conversations. */}
+      {title !== undefined || actions ? <header className="vf-conversation-home-heading" data-untitled={title === undefined || undefined}>{title !== undefined ? <h1 className="vf-conversation-home-title">{title}</h1> : <span />}{actions}</header> : null}
       {composer}
       <div className="vf-conversation-home-list" aria-label="Conversations">
         {conversations.filter(conversation => conversation.status === "active").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).map(conversation => <Button key={conversation.id} variant="ghost" className="vf-conversation-home-row !h-auto" onClick={() => onOpenConversation(conversation.id)}>

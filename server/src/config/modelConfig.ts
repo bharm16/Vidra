@@ -262,17 +262,16 @@ const MODEL_CONFIG_ENTRIES = {
   },
 
   // ============================================================================
-  // Studio (ADR-0019 — conversational image workspace)
+  // Composer text actions (Ask, Improve wording, Expand description)
   // ============================================================================
 
   /**
-   * Studio conversation policy: one JSON decision per turn (clarify /
-   * generate / edit / transform / diagnose / negotiate), with the
-   * `thinking` field streamed to the client as it generates.
+   * The text operation the workflow catalog binds Ask, Improve wording and
+   * Expand description to. It kept Studio's name when Studio's conversation
+   * policy retired (ADR-0027): the name is part of the text spend mapping hash.
    * gpt-5.6-luna (owner-directed 2026-07-25, verified against the live
-   * models API) carries the routing and prompt-writing judgment; still
-   * env-swappable per operation. Temperature 0.7 — the decision includes
-   * creative prompt writing.
+   * models API); still env-swappable per operation. The workflow executor
+   * asks for plain text, overriding the JSON default below.
    */
   studio_turn: {
     client: process.env.STUDIO_TURN_PROVIDER || "openai",

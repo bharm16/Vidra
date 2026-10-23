@@ -312,6 +312,8 @@
   flex: 1;
   min-width: 0;
   padding: 160px 24px 32px;
+  /* The home scrolls beside a fixed rail. */
+  overflow-y: auto;
 }
 .vf-conversation-home-content {
   width: min(720px, 100%);
@@ -336,12 +338,11 @@
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+/* The list runs down the page, which scrolls, instead of a three-row box with no sign that more rows follow. */
 .vf-conversation-home-list {
   display: flex;
   flex-direction: column;
   gap: var(--vf-space-4);
-  max-height: 188px;
-  overflow: auto;
 }
 .vf-conversation-home .vf-conversation-home-row {
   display: flex;

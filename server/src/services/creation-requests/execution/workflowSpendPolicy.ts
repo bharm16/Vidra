@@ -33,9 +33,16 @@ export function workflowSpendMappingHash(profile: CapabilityProfile): string {
  * 2 units x $0.08 at the 40 MP limit. Eleven v3: $0.10/1k characters x 5,000
  * (script + both continuity texts). Lyria 3: $0.04 per clip. Scribe v2:
  * $0.003667/min x 15 min.
+ *
+ * Studio's former roster, observed 2026-10-22 on each model page's billingConfig
+ * (ceil of maximum x 1.1, one picture per call): Recraft V4.1 and V4.1 Vector
+ * $0.04; V4.1 Pro and Pro Vector $0.25; Nano Banana 2 $0.151 at 4K; Nano Banana 2
+ * Lite $0.034 (one tier); Nano Banana Pro $0.30 at 4K (the Seedream fallback is
+ * $0.035); GPT Image 2 $0.128 at high/auto, its highest quality; Recraft Remove
+ * Background and Vectorize $0.01.
  */
 export const DEFAULT_WORKFLOW_SPEND_POLICY: WorkflowSpendPolicy = WorkflowSpendPolicySchema.parse({
-  revision: "replicate-public-pricing/2026-10-19/1", validUntil: "2026-11-17T00:00:00.000Z", ceilings: [
+  revision: "replicate-public-pricing/2026-10-22/1", validUntil: "2026-11-17T00:00:00.000Z", ceilings: [
     { profileId: "flux-schnell", profileRevision: "native/2026-10-17/1", mappingHash: "c72c1b19a3b93af496907f2a404f875bda6e0a3ae9cbb25b6b99632616c23cb6", maximumCentsPerSlot: 1, source: "https://replicate.com/black-forest-labs/flux-schnell" },
     { profileId: "flux-kontext-fast", profileRevision: "native/2026-10-17/1", mappingHash: "58acf499bb7e577f028e268d26b4c92cfdfe8e76673f79eea3bf21b2e2fa394a", maximumCentsPerSlot: 2, source: "https://replicate.com/prunaai/flux-kontext-fast" },
     { profileId: "wan-2.2-t2v", profileRevision: "native/2026-10-17/1", mappingHash: "557a9337f07f2a4b22b51a9172deaf080ac3966cfed194fbabb76cabce069ec1", maximumCentsPerSlot: 20, source: "https://replicate.com/wan-video/wan-2.2-t2v-fast" },
@@ -55,7 +62,21 @@ export const DEFAULT_WORKFLOW_SPEND_POLICY: WorkflowSpendPolicy = WorkflowSpendP
     { profileId: "ideogram-4.5-precise-edit", profileRevision: "native/2026-10-19/1", mappingHash: "21d594fe3dc7c34271b0760f151f9df9050a774f81ae53171003919c539f57f7", maximumCentsPerSlot: 25, source: "https://replicate.com/ideogram-ai/ideogram-4-5-precise-edit" },
     { profileId: "topaz-image-upscale", profileRevision: "native/2026-10-19/1", mappingHash: "4c06d3034a615a6f6b53800a3d80e35710300d29456a9c5fdf2811d43a8b9b97", maximumCentsPerSlot: 18, source: "https://replicate.com/topazlabs/image-upscale" },
     { profileId: "elevenlabs-v3", profileRevision: "native/2026-10-19/1", mappingHash: "7248a2353157e86a47d1346e919767be9ab289fe3ac9470fd798cd45d89d3b30", maximumCentsPerSlot: 55, source: "https://replicate.com/elevenlabs/v3" },
-    { profileId: "lyria-3", profileRevision: "native/2026-10-19/1", mappingHash: "99c960afdd2df49f3170d6025a668a23dee205388f5f6e560395f8de002ee2ad", maximumCentsPerSlot: 5, source: "https://replicate.com/google/lyria-3" },
+    { profileId: "lyria-3", profileRevision: "native/2026-10-19/1", mappingHash: "dc613af55dc11d60d517e71dc85c388d11f49735fa8e0eb750a694f9b3d55b4d", maximumCentsPerSlot: 5, source: "https://replicate.com/google/lyria-3" },
     { profileId: "elevenlabs-scribe-v2", profileRevision: "native/2026-10-19/1", mappingHash: "f6eacf167039bc944d9fc3dd34cbb9411f9f2a61276b5f8a099dcd0b27bd1e53", maximumCentsPerSlot: 7, source: "https://replicate.com/elevenlabs/scribe-v2" },
+    { profileId: "nano-banana-2-lite", profileRevision: "native/2026-10-19/1", mappingHash: "0c66d3d05d1d96f01d0a4b7ba5c03fa84a2459f8dedab0e3661493f92adc7a01", maximumCentsPerSlot: 4, source: "https://replicate.com/google/nano-banana-2-lite" },
+    { profileId: "nano-banana-2-lite-edit", profileRevision: "native/2026-10-19/1", mappingHash: "b9251960811ce896ca7e8e2c89870cfe3d20751d0fda12c2d5ce1a14e036e952", maximumCentsPerSlot: 4, source: "https://replicate.com/google/nano-banana-2-lite" },
+    { profileId: "recraft-v4.1", profileRevision: "native/2026-10-19/1", mappingHash: "3c9fc7ba21f2cb1589ca28ff50d7a67d599b0941fbeee2c3b8f00607b12f291a", maximumCentsPerSlot: 5, source: "https://replicate.com/recraft-ai/recraft-v4.1" },
+    { profileId: "recraft-v4.1-svg", profileRevision: "native/2026-10-19/1", mappingHash: "04c6dbfc000bab9436bfdc6d2ca3da952aa124a2919bb651f590db8ab5f73723", maximumCentsPerSlot: 5, source: "https://replicate.com/recraft-ai/recraft-v4.1-svg" },
+    { profileId: "gpt-image-2", profileRevision: "native/2026-10-19/1", mappingHash: "38cbcea80f954619504069280e95fcc038cfeca5ed68daa64a8e93efe1912922", maximumCentsPerSlot: 15, source: "https://replicate.com/openai/gpt-image-2" },
+    { profileId: "gpt-image-2-edit", profileRevision: "native/2026-10-19/1", mappingHash: "c45d43d961201da30738c8ef4e2300808471b98200b0ff4653868eb4a2566196", maximumCentsPerSlot: 15, source: "https://replicate.com/openai/gpt-image-2" },
+    { profileId: "nano-banana-2", profileRevision: "native/2026-10-19/1", mappingHash: "02e0fc8b510646b7c4af8921357e085ac2b4fae90560a029417a284bdc5eb08f", maximumCentsPerSlot: 17, source: "https://replicate.com/google/nano-banana-2" },
+    { profileId: "nano-banana-2-edit", profileRevision: "native/2026-10-19/1", mappingHash: "5bac730dd99293980903c77c4afbbe05b18c5ea52bd6530b262556785f1d6f2d", maximumCentsPerSlot: 17, source: "https://replicate.com/google/nano-banana-2" },
+    { profileId: "recraft-v4.1-pro", profileRevision: "native/2026-10-19/1", mappingHash: "517f2e6b15a29f9b5cc1acab410cc4fd84c5c148af1211786b4bbc1ed6e84d5d", maximumCentsPerSlot: 28, source: "https://replicate.com/recraft-ai/recraft-v4.1-pro" },
+    { profileId: "recraft-v4.1-pro-svg", profileRevision: "native/2026-10-19/1", mappingHash: "768d699140f56267447bb74da21d2f3514d5e19402de60eac044182e541a5130", maximumCentsPerSlot: 28, source: "https://replicate.com/recraft-ai/recraft-v4.1-pro-svg" },
+    { profileId: "nano-banana-pro", profileRevision: "native/2026-10-19/1", mappingHash: "1ecb8f256641f6bc79d179d07932df2d9ad35305aa7f48490d8946f6c7f408cf", maximumCentsPerSlot: 33, source: "https://replicate.com/google/nano-banana-pro" },
+    { profileId: "nano-banana-pro-edit", profileRevision: "native/2026-10-19/1", mappingHash: "ef32186809c698dba03c0acbfdf0c85e8fd43898ac1d34c05f7a45290488fa33", maximumCentsPerSlot: 33, source: "https://replicate.com/google/nano-banana-pro" },
+    { profileId: "recraft-remove-background", profileRevision: "native/2026-10-19/1", mappingHash: "9c459d227e01576536f56d37b5bb0c6b2717f346f221539f1e45398bae67cc86", maximumCentsPerSlot: 2, source: "https://replicate.com/recraft-ai/recraft-remove-background" },
+    { profileId: "recraft-vectorize", profileRevision: "native/2026-10-19/1", mappingHash: "34cf62620e044e2f76b491bcf9811a9fe29ef4bac2fc894152e1ff6102e2d6b8", maximumCentsPerSlot: 2, source: "https://replicate.com/recraft-ai/recraft-vectorize" },
   ],
 });

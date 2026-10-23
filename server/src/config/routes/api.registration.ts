@@ -266,8 +266,8 @@ export function registerApiRoutes(
     }),
   );
 
-  // Studio conversational image workspace (ADR-0019). Null when
-  // REPLICATE_API_TOKEN is missing — the surface simply isn't mounted then.
+  // Studio records, read-only after Studio retired into /app (ADR-0027).
+  // Null when storage is unavailable — the routes simply aren't mounted then.
   const studioService = resolveOptionalService<StudioService | null>(
     container,
     "studioService",

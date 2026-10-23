@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ComposerSubmit } from "../components/ComposerSubmit";
-import { outputGroup } from "../components/OutputSwitch";
+import { composerOutput } from "@shared/workflow/actionRegistry";
 
 afterEach(cleanup);
 
@@ -29,9 +29,23 @@ it("moves the selection with the arrow keys from the one focusable option", () =
 });
 
 it("treats an animation, an edit and an extension as video, and a picture edit as image", () => {
-  expect((["make-video", "animate-image", "edit-video", "extend-video"] as const).map(outputGroup)).toEqual(["video", "video", "video", "video"]);
-  expect((["make-image", "edit-image"] as const).map(outputGroup)).toEqual(["image", "image"]);
-  expect(outputGroup("ask")).toBeUndefined();
+  expect((["make-video", "animate-image", "edit-video", "extend-video"] as const).map(composerOutput)).toEqual(["video", "video", "video", "video"]);
+  expect((["make-image", "edit-image"] as const).map(composerOutput)).toEqual(["image", "image"]);
+  expect(composerOutput("ask")).toBeUndefined();
+});
+
+it("offers Video, Image, Voiceover and Music, Video first", () => {
+  const onActionChange = vi.fn();
+  render(<ComposerSubmit action="make-video" label="Make video" writable canSubmit busy={false} onActionChange={onActionChange} onSubmit={vi.fn()} />);
+  expect(screen.getAllByRole("radio").map(radio => radio.textContent)).toEqual(["Video", "Image", "Voiceover", "Music"]);
+  fireEvent.click(screen.getByRole("radio", { name: "Voiceover" }));
+  expect(onActionChange).toHaveBeenCalledWith("make-voiceover");
+});
+
+it("hides the switch on a rail tool, keeping only its primary", () => {
+  render(<ComposerSubmit action="upscale-image" label="Upscale image" writable canSubmit busy={false} onActionChange={vi.fn()} onSubmit={vi.fn()} />);
+  expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Upscale image" })).toBeEnabled();
 });
 
 it("keeps the switch inert in read-only work", () => {

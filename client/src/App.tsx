@@ -68,9 +68,6 @@ const ContactSupportPage = lazy(() =>
 
 const SharedClip = lazy(() => import("./features/share/SharedClip"));
 const WorkflowSharePage = lazy(() => import("./features/workflow-sharing/WorkflowSharePage").then(module => ({ default: module.WorkflowSharePage })));
-const LiveEditor = lazy(() => import("./features/realtime-sketch/LiveEditor"));
-const StudioPage = lazy(() => import("./features/studio/StudioPage"));
-const StudioIndexPage = lazy(() => import("./features/studio/StudioIndexPage"));
 const ProjectWorkspace = lazy(() => import("./features/project-workspace/ProjectWorkspace"));
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((module) => ({
@@ -115,45 +112,9 @@ function AppRoutes(): React.ReactElement {
       <Route path="/legacy/share/:uuid" element={<SharedClip />} />
       {/* App routes */}
       <Route path="/" element={<SiteShell><LandingPage /></SiteShell>} />
-      {/* The Live editor (ADR-0017) — the realtime sketch's own rail surface
-          on its own infinite plane, outside the page's anatomy. */}
-      <Route
-        path="/live-editor"
-        element={
-          <RequireAuth>
-            <LiveEditor />
-          </RequireAuth>
-        }
-      />
-      {/* The studio (ADR-0019) — conversational image generation and editing
-          on its own rail surface and plane. The rail destination is the
-          project index; a workspace is always addressed by its project, so
-          reload, Back and a pasted link all return the same thread.
-          "/studio/new" is a literal segment and outranks ":projectId". */}
-      <Route
-        path="/studio"
-        element={
-          <RequireAuth>
-            <StudioIndexPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/studio/new"
-        element={
-          <RequireAuth>
-            <StudioPage />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/studio/:projectId"
-        element={
-          <RequireAuth>
-            <StudioPage />
-          </RequireAuth>
-        }
-      />
+      {/* Studio and the Live editor retired into /app (ADR-0027); their saved links open it. */}
+      <Route path="/studio/*" element={<Navigate to="/app" replace />} />
+      <Route path="/live-editor" element={<Navigate to="/app" replace />} />
       {/* Rail surfaces — every app page carries the left rail itself, so
           these live outside MarketingShell's topnav chrome. */}
       <Route path="/history" element={<Navigate to="/app" replace />} />

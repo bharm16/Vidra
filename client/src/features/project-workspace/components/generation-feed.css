@@ -1,0 +1,676 @@
+/*
+ * The generations feed (page 04 P1–P5, "One composer, every action" 2574:10511):
+ * App rail 56, History rail 72 × 828 at x64 y64, feed 720 wide at x428 with blocks 48 apart,
+ * the wide composer docked with its bottom at y876 and growing upward, Focus 1040 × 585 at x268 y64.
+ * The feed column and Focus centre in the space right of the history rail, which puts them at
+ * x428 and x268 on a 1440-wide window.
+ */
+.vf-workspace.vf-feed-workspace {
+  --vf-feed-left: 136px;
+  --vf-feed-width: 720px;
+  position: relative;
+  display: block;
+  height: 100dvh;
+  overflow: hidden;
+}
+.vf-feed-workspace > .vf-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 56px;
+  z-index: 2;
+}
+.vf-feed-workspace > .vf-project-library,
+.vf-feed-workspace > .vf-media-library {
+  /* The workspace is a fixed, unscrolled block, so each library is its own scroll container. */
+  height: 100%;
+  margin-left: 56px;
+  overflow-y: auto;
+}
+
+/* History rail: one square per request, newest last (P1). */
+.vf-history-rail {
+  position: absolute;
+  top: 64px;
+  left: 64px;
+  z-index: 2;
+  display: flex;
+  width: 72px;
+  height: min(828px, calc(100dvh - 72px));
+  flex-direction: column;
+  padding: var(--vf-space-6);
+  border: 1px solid var(--vf-border);
+  border-radius: var(--vf-radius-panel);
+  background: var(--vf-panel);
+}
+.vf-history-rail-items {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--vf-space-8);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.vf-history-item.vf-history-item {
+  position: relative;
+  display: grid;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--vf-radius-control);
+  background: var(--vf-control);
+}
+.vf-history-item[aria-current="true"] {
+  border-color: var(--vf-white);
+}
+.vf-history-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.vf-history-glyph.vf-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--vf-secondary);
+}
+.vf-history-count {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: var(--vf-white);
+  font-size: 11px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px #0009;
+}
+.vf-history-preview.vf {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  width: 240px;
+  flex-direction: column;
+  gap: var(--vf-space-6);
+  padding: var(--vf-space-8);
+  border: 1px solid var(--vf-border);
+  border-radius: var(--vf-radius-menu);
+  background: var(--vf-panel);
+  pointer-events: none;
+}
+.vf-history-preview-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--vf-radius-small);
+  object-fit: cover;
+}
+.vf-history-preview-words {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: 12px;
+}
+.vf-history-preview-setup {
+  color: var(--vf-muted);
+  font-size: 11px;
+}
+
+/* The feed is the stage; it scrolls under the docked composer. */
+.vf-feed-stage {
+  position: absolute;
+  inset: 0 0 0 var(--vf-feed-left);
+  overflow-y: auto;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
+}
+.vf-feed-column {
+  width: min(var(--vf-feed-width), calc(100% - 48px));
+  margin: 0 auto;
+  /* The newest block ends 18px above the docked composer. */
+  padding: 64px 0 calc(var(--vf-composer-height, 240px) + 24px + 18px);
+}
+.vf-feed-notices:empty {
+  display: none;
+}
+.vf-feed-notices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vf-space-8);
+}
+/* Docked over the feed, a notice needs its own surface. */
+.vf-feed-notices > .vf-notice {
+  background: var(--vf-panel);
+}
+.vf-generation-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+.vf-generation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vf-space-12);
+  scroll-margin-top: 64px;
+}
+.vf-generation-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--vf-space-16);
+  min-width: 0;
+}
+.vf-generation-words {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vf-generation-setup {
+  flex: none;
+  color: var(--vf-muted);
+  font-size: 12px;
+}
+.vf-generation-results {
+  display: grid;
+  gap: var(--vf-space-8);
+}
+.vf-generation-results[data-kind="picture"]:not([data-count="1"]) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.vf-feed-clip,
+.vf-feed-picture.vf-button {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--vf-radius-media);
+  background: var(--vf-panel);
+  aspect-ratio: 16 / 9;
+}
+.vf-feed-clip > video,
+.vf-feed-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.vf-feed-picture.vf-button > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* The ring sits above the picture, which would otherwise paint over an outline. */
+.vf-feed-picture[data-selected]::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  border: 2px solid var(--vf-white);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.vf-feed-clip > .vf-thumbnail-fallback {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+.vf-feed-open.vf-feed-open {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.vf-feed-play.vf-icon-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  translate: -50% -50%;
+  border-radius: var(--vf-radius-pill);
+  background: #11111180;
+  backdrop-filter: blur(8px);
+}
+.vf-feed-duration {
+  position: absolute;
+  right: var(--vf-space-12);
+  bottom: var(--vf-space-8);
+  color: var(--vf-white);
+  font-size: 12px;
+  pointer-events: none;
+  text-shadow: 0 1px 2px #0009;
+}
+.vf-feed-slot-status {
+  display: grid;
+  min-height: 48px;
+  align-content: center;
+  padding: var(--vf-space-12);
+  border-radius: var(--vf-radius-control);
+  background: var(--vf-panel);
+}
+.vf-generation[data-kind="clip"] .vf-feed-slot-status,
+.vf-generation[data-kind="picture"] .vf-feed-slot-status {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--vf-radius-media);
+}
+.vf-feed-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--vf-space-8);
+  padding: var(--vf-space-12);
+  border-radius: var(--vf-radius-control);
+  background: var(--vf-panel);
+  white-space: pre-wrap;
+}
+.vf-generation-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--vf-space-2);
+  margin-top: calc(var(--vf-space-4) * -1);
+}
+.vf-generation-verb.vf-button {
+  min-height: 32px;
+  padding: 0 var(--vf-space-12);
+  color: var(--vf-secondary);
+  font-size: 13px;
+}
+.vf-generation-verb.vf-button:hover {
+  color: var(--vf-white);
+}
+.vf-generation-icon.vf-generation-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--vf-radius-control);
+  color: var(--vf-secondary);
+}
+.vf-generation-icon .vf-icon {
+  width: 18px;
+  height: 18px;
+}
+.vf-unknown-submission {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* The wide composer, docked under the feed with its bottom at y876. */
+.vf-feed-composer {
+  position: absolute;
+  left: calc(var(--vf-feed-left) + max(24px, (100% - var(--vf-feed-left) - var(--vf-feed-width)) / 2));
+  bottom: 24px;
+  z-index: 3;
+  display: flex;
+  width: min(var(--vf-feed-width), calc(100% - var(--vf-feed-left) - 48px));
+  flex-direction: column;
+  gap: var(--vf-space-8);
+}
+.vf-feed-composer .vf-composer-region {
+  width: 100%;
+}
+.vf-feed-composer .vf-settings {
+  flex-wrap: wrap;
+  padding-block: var(--vf-space-4);
+}
+.vf-feed-composer .vf-submit-row {
+  width: 100%;
+  margin-left: 0;
+  flex: none;
+  justify-content: flex-end;
+}
+.vf-feed-composer .vf-submit-row[data-switch] {
+  justify-content: space-between;
+}
+.vf-feed-composer .vf-submit-row > .vf-submit.vf-button {
+  width: 112px;
+  flex: none;
+}
+.vf-feed-composer .vf-prompt-editor,
+.vf-feed-composer .vf-prompt-words,
+.vf-feed-composer .vf-word-highlights {
+  min-height: 54px;
+}
+.vf-feed-composer .vf-prompt-words,
+.vf-feed-composer .vf-word-highlights {
+  max-height: min(240px, 30dvh);
+}
+.vf-feed-composer .vf-new-draft {
+  align-self: flex-end;
+}
+.vf-input-tile[data-not-used] .vf-input-picture {
+  opacity: 0.4;
+}
+.vf-input-tile[data-not-used] .vf-input-caption {
+  color: var(--vf-muted);
+}
+
+/* Focus: the large player on demand over the workspace, the history rail as its filmstrip (P3). */
+.vf-focus.vf {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: var(--vf-canvas);
+  outline: none;
+}
+.vf-focus-stage {
+  position: absolute;
+  top: 64px;
+  left: calc(var(--vf-feed-left) + max(24px, (100% - var(--vf-feed-left) - 1040px) / 2));
+  display: flex;
+  width: min(1040px, calc(100% - var(--vf-feed-left) - 48px));
+  height: calc(100% - 64px - 24px);
+  flex-direction: column;
+}
+.vf-focus-stage > .vf-viewer {
+  height: 100%;
+}
+.vf-focus-stage > .vf-inline-editor,
+.vf-focus-stage > .vf-area-viewer {
+  height: 100%;
+  min-height: 0;
+}
+.vf-focus-stage > .vf-area-viewer {
+  margin: 0;
+}
+.vf-focus-arrow.vf-focus-arrow {
+  position: absolute;
+  top: calc(64px + 585px / 2);
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--vf-radius-pill);
+  color: var(--vf-secondary);
+  translate: 0 -50%;
+}
+.vf-focus-arrow[data-side="previous"] {
+  left: calc(var(--vf-feed-left) + max(0px, (100% - var(--vf-feed-left) - 1040px) / 2) - 48px);
+}
+.vf-focus-arrow[data-side="next"] {
+  right: calc(max(0px, (100% - var(--vf-feed-left) - 1040px) / 2) - 48px);
+}
+.vf-focus-arrow:disabled {
+  opacity: 0;
+}
+.vf-focus-arrow .vf-icon {
+  width: 20px;
+  height: 20px;
+}
+.vf-focus-close.vf-icon-button {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 1;
+}
+
+/* Rail tools sit after Sketch; the active one reads like the selected destination. */
+.vf-rail-tool.vf-icon-button[aria-pressed="true"] {
+  color: var(--vf-white);
+  background: var(--vf-control);
+}
+
+/* Advanced: one field bar per setting (Rule 6). */
+.vf-advanced-menu.vf {
+  width: 320px;
+  max-height: min(520px, 70dvh);
+  overflow-y: auto;
+  padding: var(--vf-space-8);
+}
+.vf-advanced-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vf-space-4);
+}
+.vf-advanced-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vf-space-6);
+  padding: var(--vf-space-6) var(--vf-space-8);
+  border-radius: var(--vf-radius-control);
+  font-size: 13px;
+}
+.vf-advanced-field[data-kind="toggle"] {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.vf-advanced-bar.vf-button,
+.vf-advanced-bar-static {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vf-space-8);
+  padding: 0;
+  font-size: 13px;
+}
+.vf-advanced-bar.vf-button > span {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+.vf-advanced-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vf-space-4);
+  color: var(--vf-secondary);
+}
+.vf-advanced-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--vf-white);
+}
+.vf-advanced-field textarea.vf-field {
+  width: 100%;
+  resize: vertical;
+}
+.vf-toggle {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--vf-radius-pill);
+  background: var(--vf-border);
+  cursor: pointer;
+  transition: background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vf-toggle > span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--vf-radius-pill);
+  background: var(--vf-white);
+  transition: translate 200ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.vf-toggle[aria-checked="true"] {
+  background: #f7f7f766;
+}
+.vf-toggle[aria-checked="true"] > span {
+  translate: 14px 0;
+}
+.vf-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.vf-model-logo {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+}
+
+/* The docked composer is wide, so its words help reads in full (W61). */
+.vf-feed-composer .vf-words-help-action.vf-button {
+  width: auto;
+  padding: 0 var(--vf-space-10);
+}
+.vf-feed-composer .vf-words-help-label {
+  display: inline;
+}
+/* Upscale and Captions take no words: the composer is the input row and the chips (W64, W73). */
+.vf-feed-composer .vf-composer[data-words="none"] .vf-composer-writing {
+  min-height: 0;
+}
+
+/* Focus shows the result at 1040 × 585 with its toolbar and setup under it, without the old viewer card (W79). */
+.vf-focus-stage > .vf-viewer.vf-viewer {
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.vf-focus-stage .vf-viewer-surface {
+  height: min(585px, calc(100dvh - 64px - 140px));
+  flex: none;
+  border-radius: var(--vf-radius-media);
+}
+.vf-focus-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--vf-space-16);
+  margin-top: var(--vf-space-12);
+  font-size: 13px;
+}
+.vf-focus-caption > p:last-child {
+  flex: none;
+  color: var(--vf-muted);
+  font-size: 12px;
+}
+/* The docked composer sizes to its content and grows upward; words keep two lines at least (W61, W64). */
+.vf-feed-composer .vf-composer {
+  min-height: 0;
+}
+.vf-feed-composer .vf-prompt-editor,
+.vf-feed-composer .vf-prompt-words,
+.vf-feed-composer .vf-word-highlights {
+  min-height: 52px;
+}
+
+/* Audio takes as feed rows (S9, W80). */
+.vf-generation-results[data-kind="audio"] {
+  gap: var(--vf-space-8);
+}
+.vf-feed-audio {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  gap: var(--vf-space-8);
+  padding: 0 var(--vf-space-12) 0 var(--vf-space-6);
+  border-radius: var(--vf-radius-control);
+  background: var(--vf-panel);
+}
+.vf-feed-audio > audio {
+  display: none;
+}
+.vf-feed-audio-open.vf-feed-audio-open {
+  display: flex;
+  height: 32px;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  padding: 0;
+  border-radius: var(--vf-radius-small);
+  background: transparent;
+}
+.vf-feed-audio-open .vf-waveform {
+  justify-content: space-between;
+}
+.vf-feed-audio-open .vf-waveform > span {
+  flex: none;
+  width: 2px;
+}
+.vf-feed-audio-time {
+  flex: none;
+  color: var(--vf-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Captions as a text card (S10, W80). */
+.vf-feed-captions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--vf-space-8);
+  padding: var(--vf-space-12);
+  border-radius: var(--vf-radius-control);
+  background: var(--vf-panel);
+}
+.vf-feed-captions > ol {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--vf-space-8);
+  list-style: none;
+}
+.vf-feed-cue-time {
+  color: var(--vf-muted);
+  font-size: 12px;
+}
+.vf-feed-text-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vf-space-6);
+}
+
+/* Focus, Kind=Audio: playback over a waveform (W79). */
+.vf-audio-stage {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+.vf-audio-stage > audio {
+  display: none;
+}
+.vf-audio-waveform.vf-waveform {
+  width: 72%;
+  height: 40%;
+  /* Bars stop at their max width, so the row centers rather than starting at the left. */
+  justify-content: center;
+  gap: 6px;
+}
+.vf-audio-waveform.vf-waveform > span {
+  max-width: 4px;
+  border-radius: 2px;
+}
+
+.vf-generation-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: var(--vf-space-2);
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.vf-generation-verb.vf-button {
+  flex: none;
+  white-space: nowrap;
+}

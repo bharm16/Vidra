@@ -56,7 +56,7 @@ function isMobileClip(node: HTMLElement): boolean {
   return getComputedStyle(node).getPropertyValue("--vf-history-end-spacing").trim() !== "";
 }
 
-function RequestActions({ request, props }: { request: AcceptedRequest; props: ConversationHistoryProps }): ReactElement | null {
+export function RequestActions({ request, props, overflow = [] }: { request: AcceptedRequest; props: Pick<ConversationHistoryProps, "media" | "readOnly" | "readOnlyReason" | "onReuseSetup" | "onNewVariation" | "onUseWords" | "onViewSources" | "onViewVersions" | "onHideFromMedia">; overflow?: ReadonlyArray<{ label: string; disabled?: boolean | undefined; run(): void }> }): ReactElement | null {
   const hasResults = request.slots.some(slot => slot.versionId && props.media.some(version => version.id === slot.versionId));
   const hasSources = request.snapshot.inputs.some(input => input.state === "resolved");
   const readOnlyReason = props.readOnly ? props.readOnlyReason ?? "Current work is read-only." : undefined;
@@ -68,8 +68,8 @@ function RequestActions({ request, props }: { request: AcceptedRequest; props: C
     { label: "View versions", icon: "versions", action: props.onViewVersions, disabledReason: hasResults ? undefined : "No results are available for this request." },
     { label: "Hide from media", icon: "hide", action: props.onHideFromMedia, disabledReason: readOnlyReason ?? (hasResults ? undefined : "No results are available for this request.") },
   ];
-  if (!actions.some(item => item.action)) return null;
-  return <DropdownMenu><DropdownMenuTrigger asChild><FreshIconButton className="vf-history-request-actions" icon="more" label="Request actions" /></DropdownMenuTrigger><DropdownMenuContent className="vf vf-history-actions-menu" align="start" sideOffset={6} collisionPadding={8} aria-label="Request actions">{actions.filter(item => item.action).map(item => <DropdownMenuItem className="vf-history-action" key={item.label} disabled={Boolean(item.disabledReason)} title={item.disabledReason} onSelect={() => { if (!item.disabledReason) item.action?.(request); }}><img src={`/design-assets/prompt-history/${item.icon}.svg`} alt="" /><span>{item.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>;
+  if (!actions.some(item => item.action) && !overflow.length) return null;
+  return <DropdownMenu><DropdownMenuTrigger asChild><FreshIconButton className="vf-history-request-actions" icon="more" label="Request actions" /></DropdownMenuTrigger><DropdownMenuContent className="vf vf-history-actions-menu" align="start" sideOffset={6} collisionPadding={8} aria-label="Request actions">{overflow.map(item => <DropdownMenuItem className="vf-history-action" key={`verb:${item.label}`} disabled={Boolean(item.disabled)} onSelect={item.run}><span>{item.label}</span></DropdownMenuItem>)}{actions.filter(item => item.action).map(item => <DropdownMenuItem className="vf-history-action" key={item.label} disabled={Boolean(item.disabledReason)} title={item.disabledReason} onSelect={() => { if (!item.disabledReason) item.action?.(request); }}><img src={`/design-assets/prompt-history/${item.icon}.svg`} alt="" /><span>{item.label}</span></DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>;
 }
 
 /** Requests keep their acceptance order and exact slot identities during partial completion. */
@@ -77,10 +77,10 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
   const { requests, media, selected, pending, onView, onRecover, access, onRetry, onApplyText, describeRequest, newlyReadyVersionId, onInspectRequest } = props;
   const viewport = useRef<HTMLDivElement>(null);
   const following = useRef(true);
-  const scrollGeometry = useRef<{ height: number; viewport: number; clip: boolean }>();
+  const scrollGeometry = useRef<{ height: number; viewport: number; clip: boolean; atEnd: boolean }>();
   const followEnd = useCallback((node: HTMLElement): void => {
     node.scrollTop = node.scrollHeight;
-    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip: isMobileClip(node) };
+    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip: isMobileClip(node), atEnd: true };
   }, []);
   const last = requests.at(-1);
   const progressKey = `${last?.id ?? ""}:${last?.slots.map(slot => `${slot.outcome}:${slot.delivery}:${slot.versionId ?? ""}`).join(",") ?? ""}:${pending.length}`;
@@ -88,7 +88,8 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
   useLayoutEffect(() => {
     const node = viewport.current;
     if (!node || typeof ResizeObserver === "undefined") return;
-    const settle = (): void => { if (following.current && isMobileClip(node)) followEnd(node); };
+    // Pictures load after the first layout; a history resting at its end keeps the newest request in view as they grow.
+    const settle = (): void => { if (following.current && (isMobileClip(node) || scrollGeometry.current?.atEnd)) followEnd(node); };
     const observer = new ResizeObserver(settle);
     observer.observe(node);
     for (const child of node.children) observer.observe(child);
@@ -105,7 +106,7 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
     // Native resize clamping is not a deliberate return to the latest request.
     const remaining = node.scrollHeight - node.scrollTop - node.clientHeight;
     if (!(resized && (clip || previous?.clip))) following.current = clip ? remaining <= 1 : remaining < 80;
-    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip };
+    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip, atEnd: remaining <= 1 && (!resized || previous.atEnd) };
   }} onKeyDown={event => {
     if (event.key === "End" && !event.altKey && !event.ctrlKey && !event.metaKey && isMobileClip(event.currentTarget)) { following.current = true; followEnd(event.currentTarget); }
   }}>

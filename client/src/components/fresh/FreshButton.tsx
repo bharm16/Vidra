@@ -12,11 +12,12 @@ export const FreshButton = forwardRef<HTMLButtonElement, FreshButtonProps>(funct
   return <Button ref={ref} variant="unstyled" className={`vf-button !h-auto ${className}`} data-tone={tone} data-large={large || undefined} {...props}>{props.asChild ? children : <span>{children}</span>}</Button>;
 });
 
-export type FreshIconName = "folder" | "plus" | "conversation" | "media" | "video" | "sketch" | "help" | "account" | "down" | "more" | "close" | "undo" | "undo-2" | "redo-2" | "play" | "pause" | "volume" | "fullscreen" | "check";
+export type FreshIconName = "folder" | "plus" | "conversation" | "media" | "video" | "sketch" | "help" | "account" | "down" | "more" | "close" | "undo" | "undo-2" | "redo-2" | "play" | "pause" | "volume" | "fullscreen" | "check" | "upscale" | "reframe" | "captions" | "download";
 const ICON_FILES: Record<FreshIconName, string> = {
   folder: "workspace-nav-folder.svg", plus: "workspace-nav-plus.svg", conversation: "project-conversation.svg", media: "fresh-rail-media.svg", video: "fresh-rail-video.svg",
   sketch: "fresh-rail-sketch.svg", help: "workspace-nav-help.svg", account: "workspace-nav-account.svg", down: "workspace-frame6.svg", more: "workspace-frame7.svg",
   close: "workspace-frame16.svg", undo: "workspace-frame17.svg", "undo-2": "fresh-undo-2.svg", "redo-2": "fresh-redo-2.svg", play: "workspace-frame4.svg", pause: "workspace-frame1.svg", volume: "workspace-frame2.svg", fullscreen: "workspace-frame3.svg", check: "workspace-frame19.svg",
+  upscale: "fresh-icon-scaling.svg", reframe: "fresh-icon-frame.svg", captions: "fresh-icon-captions.svg", download: "fresh-icon-download.svg",
 };
 
 export function FreshIcon({ name }: { name: FreshIconName }): ReactElement {

@@ -37,6 +37,7 @@ function recordedDescription(kind: EditCommand["kind"], revision: VideoEdit, pre
     case "source_audio": return "Changed clip sound";
     case "copy_audio": return "Copied clip sound";
     case "background_audio": return !revision.composition.backgroundAudio ? "Removed music" : previous?.composition.backgroundAudio ? "Changed music" : "Added music";
+    case "voiceover_audio": return !revision.composition.voiceover ? "Removed voiceover" : previous?.composition.voiceover ? "Changed voiceover" : "Added voiceover";
     case "text": return previous && revision.composition.text.length > previous.composition.text.length ? "Added caption" : "Changed caption";
     default: return undefined;
   }

@@ -28,7 +28,7 @@ describe("public Docs journeys", () => {
     await renderDocs("/docs/start");
     const topics = screen.getByRole("navigation", { name: "Documentation topics" });
     for (const article of DOC_ARTICLES) expect(within(topics).getByRole("link", { name: article.label })).toHaveAttribute("href", `/docs/${article.slug}`);
-    expect(screen.getByText(/Each is a starting point in its own right/)).toBeVisible();
+    expect(screen.getByText(/Every result has its own buttons/)).toBeVisible();
     expect(screen.queryByText(/Type an idea, shape it into a picture/)).not.toBeInTheDocument();
   });
 

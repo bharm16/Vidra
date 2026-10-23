@@ -1020,6 +1020,9 @@
   min-width: 0;
   flex: 1;
 }
+.vf-model-option.vf-button > span > .vf-model-kind {
+  flex: none;
+}
 /* C39/C48/G03/G22: the selected-row check is an 18px trailing glyph at the row's end. */
 .vf-setting-menu .vf-setting-option.vf-button > span > .vf-icon,
 .vf-settings-sheet .vf-setting-option.vf-button > span > .vf-icon {
@@ -1738,6 +1741,8 @@ body:has(.vf-settings-sheet) > [data-state]:not([role="dialog"]) {
   position: absolute;
   inset: 0;
   display: grid;
+  /* One cell the stage's size, so the picture's 100% height is the stage's and contain letterboxes any shape. */
+  grid-template: 100% / 100%;
   place-items: center;
 }
 .vf-picture-stage > .vf-media-display {
@@ -2515,4 +2520,24 @@ body:has(.vf-settings-sheet) > [data-state]:not([role="dialog"]) {
 :root .vf-setting-option.vf-button:disabled,
 :root .vf-setting-option.vf-button:disabled small {
   color: var(--vf-muted);
+}
+
+/* On a phone the four-way switch takes its own row above the primary, inside a 16px gutter. */
+@media (width < 768px) {
+  .vf-submit-row[data-switch] {
+    flex-wrap: wrap;
+  }
+  .vf-submit-row[data-switch] > .vf-output-switch {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .vf-submit-row[data-switch] > .vf-output-switch > .vf-output-option.vf-button {
+    flex: 1;
+    min-width: 0;
+    padding: 0 var(--vf-space-6);
+  }
+  .vf-submit-row[data-switch] > .vf-submit.vf-button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
 }

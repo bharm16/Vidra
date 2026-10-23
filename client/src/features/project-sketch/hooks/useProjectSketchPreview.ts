@@ -3,8 +3,7 @@ import { ProjectSketchCaptureCommandSchema, SketchPictureDataUriSchema } from "@
 import { sendSketchFrame, SketchFrameRefused, type SendSketchFrame } from "@/features/realtime-sketch/api/falI2i";
 import { FalI2iResultSchema } from "@/features/realtime-sketch/api/schemas";
 import { createInitialGenerationState, generationReducer, type GenerationAction, type GenerationState } from "@/features/realtime-sketch/hooks/generationReducer";
-import type { SketchSettings } from "@/features/realtime-sketch/hooks/useRealtimeSketch";
-import { DEFAULT_STEPS, DEFAULT_STRENGTH, DEFAULT_SEED, IN_FLIGHT_WATCHDOG_MS } from "@/features/realtime-sketch/config/constants";
+import { DEFAULT_STEPS, DEFAULT_STRENGTH, DEFAULT_SEED, IN_FLIGHT_WATCHDOG_MS, type SketchSettings } from "@/features/realtime-sketch/config/constants";
 
 type Action = GenerationAction | { type: "stop"; clearError?: boolean } | { type: "resetAllowance" };
 function reducer(state: GenerationState, action: Action): GenerationState {

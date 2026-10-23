@@ -6,6 +6,7 @@ import { ResolvedInputSchema, type CreationDraft } from "@shared/schemas/workflo
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { validateProfileParameters } from "@shared/workflow/capabilityEvaluation";
+import { wordsPolicy } from "@shared/workflow/actionRegistry";
 import type { ProjectStore } from "@services/projects/ProjectStore";
 import type { ConversationStore } from "@services/projects/ConversationStore";
 import type { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
@@ -48,7 +49,8 @@ export class ActionPreparationService {
       if (profile.action !== draft.action || profile.revision !== draft.settings.profileRevision) block("profile_changed", "This action or capability profile changed. Review the current setup.");
       if (profile.availability !== "qualified") block("profile_unavailable", profile.unavailableReason ?? "This operation has not been qualified for execution.");
     }
-    if (!["import", "accept-sketch", "export-video", "upscale-image", "upscale-video", "reframe-video", "transcribe"].includes(draft.action) && !draft.instructions.trim()) block("settings_invalid", "Describe what you want to make or change.", "instructions");
+    const words = wordsPolicy(draft.action, profile);
+    if ((words === "required" || words === "script") && !draft.instructions.trim()) block("settings_invalid", "Describe what you want to make or change.", "instructions");
 
     const inputs: Array<ReturnType<typeof ResolvedInputSchema.parse>> = [];
     const media: MediaVersion[] = [];

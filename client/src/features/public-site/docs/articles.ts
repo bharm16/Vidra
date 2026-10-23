@@ -10,7 +10,7 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "choose-an-action",
       "title": "Choose an action",
-      "body": "Make an image, generate a video clip, or edit a video. You can also import media or open Sketch. Each is a starting point in its own right."
+      "body": "Choose Video, Image, Voiceover or Music beside Make; switching keeps your words and your place. Upscale, Reframe and Captions sit on the rail. Every result has its own buttons, such as Animate, Edit or Add to video. You can also import media or open Sketch."
     },
     {
       "id": "review-before-you-generate",
@@ -20,8 +20,8 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "keep-working",
       "title": "Keep working",
-      "body": "Once a request starts, it keeps its own setup. Start another draft or continue an eligible image follow-up while it runs. A finished result never sends that draft for you.",
-      "mobileBody": "Once accepted, the request keeps its own setup. Start another draft or continue an eligible image follow-up while it runs. A completed result does not submit that draft for you."
+      "body": "Once a request starts, it keeps its own setup. Write the next request while it runs; its result appears in the feed and never sends what you are writing.",
+      "mobileBody": "Once accepted, the request keeps its own setup. Write the next request while it runs; a completed result does not send what you are writing."
     },
     {
       "id": "keep-the-result",
@@ -38,7 +38,7 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "edit-an-exact-version",
       "title": "Edit an exact version",
-      "body": "Open the image you want, then choose Edit image. The new draft names the exact input version. Write what should change. The original stays available in version history."
+      "body": "Choose Edit under the image you want. That exact version joins your request and your words stay. Write what should change. The original stays available in version history."
     },
     {
       "id": "work-while-it-runs",
@@ -99,7 +99,7 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "choose-your-starting-point",
       "title": "Choose your starting point",
-      "body": "Make video starts from words. Animate an image uses the exact image version selected in the draft. Available actions depend on the selected model."
+      "body": "Make video starts from words. Attach a picture and it becomes the start frame; attach a clip to edit or extend it. What you attach decides which models fit, and models that cannot use it are greyed out."
     },
     {
       "id": "describe-the-shot",
@@ -109,8 +109,8 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "follow-the-request",
       "title": "Follow the request",
-      "body": "Once a video starts, it keeps the setup you sent. Sending a video opens a new empty draft. Closing the viewer or starting other work doesn’t add the finished clip to that draft.",
-      "mobileBody": "The accepted request keeps its captured setup. A video submission opens a separate empty draft. Closing the viewer or starting other work does not turn a completed clip into that draft’s input."
+      "body": "Once a video starts, it keeps the setup you sent, and the composer is free for the next request. The finished clip appears in the feed; it joins a request only when you choose one of its buttons.",
+      "mobileBody": "The accepted request keeps its captured setup, and the composer is free for the next request. A completed clip joins a request only when you choose one of its buttons."
     },
     {
       "id": "use-the-clip",
@@ -132,7 +132,7 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
     {
       "id": "add-text-and-audio",
       "title": "Add text and audio",
-      "body": "Add manual captions to a clip and position them inside the frame. The editor has one background audio track, anchored to video time. Copy audio keeps the original clip audio; muting is a separate choice."
+      "body": "Add manual captions to a clip, or bring in captions made with the Captions tool, and position them inside the frame. A voiceover has its own lane and music another, both anchored to video time and played over the clip sound. Copy audio keeps the original clip audio; muting is a separate choice."
     },
     {
       "id": "export-a-saved-cut",
@@ -165,8 +165,8 @@ const DOC_SECTIONS: Record<string, DocSection[]> = {
   "models": [
     {
       "id": "choose-the-action-first",
-      "title": "Choose the action first",
-      "body": "Available models are filtered by the action you want to perform. No model or input should be inferred from an unrelated image that happens to be open in the viewer."
+      "title": "Choose the output first",
+      "body": "Models are filtered by the output or tool you choose and by the inputs you attach; a model that cannot use them is greyed out. Auto picks a model that fits when you choose Make. No model or input is inferred from an unrelated image that happens to be open."
     },
     {
       "id": "resolve-incompatible-choices",

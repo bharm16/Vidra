@@ -50,15 +50,17 @@ it("restores kept words when the visitor comes back before signing in", () => {
   expect(screen.getByLabelText("Current request words")).toHaveValue("Kept words");
 });
 
-it("keeps each output's model when a visitor switches between Video and Image", async () => {
+it("starts each output on Auto and keeps a visitor's chosen model across switches", async () => {
   renderGuest();
   await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-  expect(await screen.findByRole("button", { name: "Model: Choose a model" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Model: Auto" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("radio", { name: "Image" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Model: Auto" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Available model" }));
   expect(await screen.findByRole("button", { name: "Model: Available model" })).toBeInTheDocument();
   expect(new GuestDraftStore().read()).toMatchObject({ action: "make-image", settings: { profileId: "controlled" } });
   fireEvent.click(screen.getByRole("radio", { name: "Video" }));
-  expect(await screen.findByRole("button", { name: "Model: Choose a model" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Model: Auto" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("radio", { name: "Image" }));
   expect(await screen.findByRole("button", { name: "Model: Available model" })).toBeInTheDocument();
 });

@@ -21,7 +21,7 @@ export function GuestWorkspace(): ReactElement {
     else if (destination !== "create") requireAccount();
   };
   return <div className="vf vf-project-home-shell">
-    <FreshRail active="create" onNavigate={navigation} mobile />
+    <FreshRail active="create" onNavigate={navigation} mobile tools />
     <ConversationHome conversations={[]} onOpenConversation={() => undefined} composer={<PromptComposer
       controller={guest.controller}
       capabilityLookupStatus={guest.lookupStatus}
