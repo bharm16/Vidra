@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 import off from "./switch-off.svg";
 import on from "./switch-on.svg";
 import offFocus from "./switch-off-focus.svg";

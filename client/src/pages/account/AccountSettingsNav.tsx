@@ -1,7 +1,7 @@
 import { useState, type ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { FreshButton } from "@/components/fresh/FreshButton";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@promptstudio/system/dialog";
 import { SiteHeader } from "@/features/public-site/SiteShell";
 
 export type AccountSection = "profile" | "security" | "usage" | "privacy";

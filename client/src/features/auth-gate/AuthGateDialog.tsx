@@ -1,12 +1,12 @@
 import React from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
-import { Input } from "@promptstudio/system/components/ui/input";
+import { Button } from "@promptstudio/system/button";
+import { Input } from "@promptstudio/system/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from "@promptstudio/system/components/ui/dialog";
+} from "@promptstudio/system/dialog";
 import { getAuthRepository } from "@repositories/index";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { GoogleGlyph } from "@/pages/auth/GoogleGlyph";

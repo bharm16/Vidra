@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactElement } from "react";
-import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@promptstudio/system/dialog";
 import { FreshButton } from "@/components/fresh/FreshButton";
 
 export function MobileContentsSheet({ items, className = "", tone = "quiet" }: { items: Array<{ id: string; label: string }>; className?: string; tone?: "quiet" | "secondary" }): ReactElement {

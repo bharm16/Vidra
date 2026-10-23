@@ -1,10 +1,10 @@
 import { useEffect, useId, useState, type ReactElement } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FreshButton } from "@/components/fresh/FreshButton";
-import { Input } from "@promptstudio/system/components/ui/input";
-import { Textarea } from "@promptstudio/system/components/ui/textarea";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/components/ui/dropdown-menu";
+import { Input } from "@promptstudio/system/input";
+import { Textarea } from "@promptstudio/system/textarea";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/dropdown-menu";
 import { SiteShell } from "@/features/public-site/SiteShell";
 import { SiteCtaButton } from "@/features/public-site/components/SiteCta";
 import { Still } from "@/features/public-site/components/Still";

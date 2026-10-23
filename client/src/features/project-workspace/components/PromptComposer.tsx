@@ -1,4 +1,4 @@
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
 import { MAX_DRAFT_WORDS, type CreationAction, type DraftInput } from "@shared/schemas/workflow/draft.schemas";

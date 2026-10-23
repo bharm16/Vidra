@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 
 export const AUTH_INPUT_CLASS = "vf-field";
 

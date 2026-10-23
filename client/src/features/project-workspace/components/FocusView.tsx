@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactElement, type ReactNode } from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { FreshIconButton } from "@/components/fresh/FreshButton";
 
 export interface FocusViewProps {

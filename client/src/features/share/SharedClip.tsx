@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { VideoPlayer } from "@components/MediaViewer/components/VideoPlayer";
 import { useSharedClip } from "./hooks/useSharedClip";
 import { cn } from "@/utils/cn";

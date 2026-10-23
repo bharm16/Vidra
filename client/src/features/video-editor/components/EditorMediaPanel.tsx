@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactElement } from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { FreshButton } from "@/components/fresh/FreshButton";
 import { ImportControl } from "@/features/project-imports/components/ImportControl";
 import type { ProjectImportsController } from "@/features/project-imports/hooks/useProjectImports";

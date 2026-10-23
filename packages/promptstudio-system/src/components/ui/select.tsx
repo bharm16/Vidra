@@ -3,10 +3,10 @@
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CaretDown, CaretUp } from "./icons";
+import { CaretDown, CaretUp } from "../../../icons";
 import selectionCheck from "./selection-check.svg";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 
 const Select = SelectPrimitive.Root;
 

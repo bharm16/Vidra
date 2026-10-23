@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 
 const avatarVariants = cva(
   "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-2",

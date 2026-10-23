@@ -1,7 +1,7 @@
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { Popover, PopoverAnchor, PopoverContent } from "@promptstudio/system/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@promptstudio/system/components/ui/dropdown-menu";
+import { Popover, PopoverAnchor, PopoverContent } from "@promptstudio/system/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@promptstudio/system/dropdown-menu";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
 import { WorkflowApi } from "@/features/project-workspace/api/workflowApi";
 import { ImportControl, type ImportLanding } from "@/features/project-imports/components/ImportControl";

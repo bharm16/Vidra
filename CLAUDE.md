@@ -6,6 +6,8 @@ Use current source, tests and `CONTEXT.md` for implementation scope. ADRs preser
 
 ## Boundaries
 
+Packages are deep modules: read [packages/README.md](packages/README.md) before adding or importing one.
+
 - Client and server import their own code and `shared/`; neither imports the other.
 - Shared code is pure types, schemas, constants and data utilities, without framework, network, database or filesystem dependencies. Run `npx tsc --noEmit` immediately after a shared contract change, before changing other files.
 - Services use constructor injection and canonical domain imports. `container.resolve()` belongs only in DI configuration and route factories.
@@ -37,11 +39,12 @@ Use explicit exported/async return types, `unknown` and guards instead of `any`,
 
 Add the smallest useful behavioral test. Auth, authorization, payment and user-data changes require a negative path. Exclusive tests retire with their implementation; tests for surviving data/recovery contracts stay. Server tests mock process-external boundaries (Firebase, SDKs, time, logging); client tests may mock their feature API.
 
-Before **every commit**, all three gates must pass:
+Before **every commit**, all four gates must pass:
 
 1. `npm run typecheck`
 2. `npm run lint`
-3. `npm run test:unit`
+3. `npm run lint:boundaries`
+4. `npm run test:unit`
 
 `npm run verify` runs these gates concurrently. A failed gate blocks a commit. There is no git pre-commit hook; run the gates yourself.
 

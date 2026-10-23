@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@promptstudio/system/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@promptstudio/system/select";
 
 export interface EditorSelectOption { value: string; label: string; }
 

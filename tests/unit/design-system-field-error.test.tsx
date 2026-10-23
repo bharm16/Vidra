@@ -1,6 +1,6 @@
 import { render, renderHook, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { useFieldError } from "@promptstudio/system/hooks/use-field-error";
+import { useFieldError } from "@promptstudio/system/use-field-error";
 
 /**
  * useFieldError is the shared "error field" contract that Input and Textarea

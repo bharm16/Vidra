@@ -1,6 +1,6 @@
 import React from "react";
-import { Toaster } from "@promptstudio/system/components/ui/toaster";
-import { useToast as useShadcnToast } from "@promptstudio/system/hooks/use-toast";
+import { Toaster } from "@promptstudio/system/toaster";
+import { useToast as useShadcnToast } from "@promptstudio/system/use-toast";
 
 export interface ToastProviderProps {
   children: React.ReactNode;

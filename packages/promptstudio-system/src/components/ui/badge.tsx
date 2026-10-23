@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 
 /**
  * Badge — the one status/label pill.

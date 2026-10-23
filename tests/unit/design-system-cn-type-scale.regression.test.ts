@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "@promptstudio/system/cn";
 
 /**
  * Invariant: a type-scale token and a text color survive `cn()` together.

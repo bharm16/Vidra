@@ -8,7 +8,7 @@ import {
   AlertTriangle,
   Sparkles,
   CheckCircle,
-} from "@promptstudio/system/components/ui";
+} from "@promptstudio/system/icons";
 
 // ===========================
 // DEFAULT STATES

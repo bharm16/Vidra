@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams, useSearchParams, useBlocker, useLocat
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { FreshRail, type FreshDestination } from "@/components/fresh/FreshRail";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { WorkflowApi } from "./api/workflowApi";
 import { MediaActionsApi } from "./api/mediaActionsApi";

@@ -5,7 +5,7 @@ import { getAuthRepository } from "@repositories/index";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { FreshButton } from "@/components/fresh/FreshButton";
 import { FreshRail } from "@/components/fresh/FreshRail";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
 import { prepareWorkspaceSignOut, type WorkspaceDraftReturnTarget } from "@/repositories/workflow/WorkspaceRetention";
 import { reopenWorkspaceState, workspaceEntryPath } from "@/features/project-workspace/state/workspaceEntry";
 import { AuthFieldError, AuthNotice } from "./auth/AuthFormControls";

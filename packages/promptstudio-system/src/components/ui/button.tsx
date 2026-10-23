@@ -2,7 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 import loaderLight from "./loader-light.svg";
 import loaderDark from "./loader-dark.svg";
 

@@ -4,7 +4,7 @@ import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import type { SubmissionCheckpoint } from "@/repositories/workflow/DraftCheckpointStore";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { actionEntry } from "@shared/workflow/actionRegistry";
 import { MediaThumbnail } from "./MediaThumbnail";
 import { RequestSlotStatus, slotProgress } from "./RequestResults";

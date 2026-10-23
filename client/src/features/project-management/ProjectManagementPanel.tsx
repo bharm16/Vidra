@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { z } from "zod";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/components/ui/dialog";
-import { Popover, PopoverAnchor, PopoverContent } from "@promptstudio/system/components/ui/popover";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
+import { Popover, PopoverAnchor, PopoverContent } from "@promptstudio/system/popover";
 import { getAuthRepository } from "@/repositories/index";
 import type { CreationDraft } from "@shared/schemas/workflow/draft.schemas";
 import { ConversationDraftMenu } from "./components/ConversationDraftMenu";

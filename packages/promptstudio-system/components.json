@@ -5,13 +5,13 @@
   "tsx": true,
   "tailwind": {
     "config": "tailwind.preset.js",
-    "css": "src/index.css",
+    "css": "index.css",
     "baseColor": "neutral",
     "cssVariables": true
   },
   "aliases": {
     "components": "@promptstudio/system/components",
-    "utils": "@promptstudio/system/lib/utils",
+    "utils": "@promptstudio/system/cn",
     "ui": "@promptstudio/system/components/ui",
     "lib": "@promptstudio/system/lib",
     "hooks": "@promptstudio/system/hooks"

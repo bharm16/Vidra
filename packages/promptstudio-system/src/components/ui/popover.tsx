@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 
 /** Radix types forceMount as the literal `true`, so it is spread only when set. */
 const mounting = (forceMount: true | undefined): { forceMount?: true } => (forceMount ? { forceMount } : {});

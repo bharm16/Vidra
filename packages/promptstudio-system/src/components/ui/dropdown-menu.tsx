@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { CaretRight } from "./icons";
+import { CaretRight } from "../../../icons";
 import selectionCheck from "./selection-check.svg";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 

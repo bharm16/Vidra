@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, type ReactElement } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@promptstudio/system/components/ui/button";
-import { Popover, PopoverAnchor, PopoverContent } from "@promptstudio/system/components/ui/popover";
+import { Button } from "@promptstudio/system/button";
+import { Popover, PopoverAnchor, PopoverContent } from "@promptstudio/system/popover";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { snapshotPicture } from "@/components/motion/flight";
 import { canAnimate, reducedMotion } from "@/components/motion/play";

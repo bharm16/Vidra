@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { Dialog, DialogClose, DialogContent, DialogTitle } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@promptstudio/system/dialog";
 import { FreshButton } from "@/components/fresh/FreshButton";
 import { SiteLink, SiteShell } from "../SiteShell";
 import { DOC_NAV_ARTICLES, DOC_GROUPS, findNavigationArticle } from "./navigation";
