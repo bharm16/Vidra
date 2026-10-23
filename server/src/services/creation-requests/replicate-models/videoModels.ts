@@ -19,6 +19,49 @@ import {
 } from "./profileParts";
 import type { ModelCall, ReplicateModelDefinition } from "./types";
 
+// Improve wording follows each model's own prompting guide; sources are cited in
+// docs/research/2026-10-23-model-prompting-guides.md.
+
+const WAN_SHARED_WORDING = [
+  "Use plain camera terms: push in, pull out, orbit, handheld follow, or \"Fixed shot, camera static\".",
+  "Write dialogue as Name says: \"exact words\", one speaker per line.",
+  "Keep any exclusions the creator gave as short \"No X.\" sentences at the end, such as \"No BGM.\"",
+  "Wan expands short prompts itself, so tighten rather than pad. Do not add on-screen text, shape or duration.",
+].join("\n");
+
+const WAN_TEXT_WORDING = [
+  "Order the words as: a one-line overall description, then the action, camera and lighting, then sound, then style and mood at the end.",
+  "For several shots, write \"Shot 1 [0-3s]: ...\" with shots of 2 to 5 seconds that meet end to end, in one style throughout.",
+  WAN_SHARED_WORDING,
+].join("\n");
+
+const WAN_IMAGE_WORDING = [
+  "A start picture is attached and already sets the subject, scene and style. Describe what moves, the camera and the sound, not the picture.",
+  WAN_SHARED_WORDING,
+].join("\n");
+
+const GEMINI_SHARED_WORDING = [
+  "Describe the scene, subject motion, camera movement, lighting, mood and the sound wanted, in plain sentences. Put spoken lines in quotation marks.",
+  "If the creator wants one take, add \"In a single continuous shot. No scene cuts.\" Timed beats may use \"[0-3s] ...\".",
+  "Put exclusions in the words as short sentences, such as \"No dialogue.\"",
+  "Keep any <IMAGE_REF_n>, <VIDEO_REF_n>, <FIRST_FRAME> or <LAST_FRAME> tag exactly; never add one.",
+].join("\n");
+
+const GEMINI_IMAGE_WORDING = [
+  "A start picture is attached as the first frame. Describe what happens from it rather than describing the picture again.",
+  GEMINI_SHARED_WORDING,
+].join("\n");
+
+const GEMINI_EDIT_WORDING = [
+  "The creator is editing an attached clip. Keep it to one short instruction for the change, then \"Keep everything else the same.\" Do not expand it into a scene description; detailed edit prompts cause unintended changes.",
+  "Put exclusions in the words as short sentences, such as \"No extra sound effects.\"",
+].join("\n");
+
+const GROK_EXTENSION_WORDING = [
+  "Write only what happens next, starting from the last frame of the attached clip: the next action, how the subject moves, and any camera move, in one or two concrete sentences.",
+  "Do not describe the existing scene again. Do not add sound, dialogue or exclusions; xAI documents no convention for them.",
+].join("\n");
+
 const MINUTE = 60_000;
 
 /** Vidra's house wording for Wan quality, kept editable on Wan 3. */
@@ -93,6 +136,7 @@ const wan3Text: ReplicateModelDefinition = {
   }),
   timeoutMs: 25 * MINUTE,
   pollIntervalMs: 4000,
+  wordingGuidance: WAN_TEXT_WORDING,
   input: (call) => wanInput(call),
 };
 
@@ -128,6 +172,7 @@ const wan3Image: ReplicateModelDefinition = {
   }),
   timeoutMs: 25 * MINUTE,
   pollIntervalMs: 4000,
+  wordingGuidance: WAN_IMAGE_WORDING,
   input: (call) => wanInput(call, requiredUrl(call, "start-frame")),
 };
 
@@ -163,6 +208,7 @@ const geminiText: ReplicateModelDefinition = {
   }),
   timeoutMs: 25 * MINUTE,
   pollIntervalMs: 4000,
+  wordingGuidance: GEMINI_SHARED_WORDING,
   input: (call) =>
     withOptional(
       {
@@ -196,6 +242,7 @@ const geminiImage: ReplicateModelDefinition = {
   }),
   timeoutMs: 25 * MINUTE,
   pollIntervalMs: 4000,
+  wordingGuidance: GEMINI_IMAGE_WORDING,
   input: (call) =>
     withOptional(
       {
@@ -232,6 +279,7 @@ const geminiEdit: ReplicateModelDefinition = {
   }),
   timeoutMs: 25 * MINUTE,
   pollIntervalMs: 4000,
+  wordingGuidance: GEMINI_EDIT_WORDING,
   input: (call) => ({
     prompt: call.sentInstructions,
     video: requiredUrl(call, "clip"),
@@ -269,6 +317,7 @@ const grokExtension: ReplicateModelDefinition = {
   }),
   timeoutMs: 18 * MINUTE,
   pollIntervalMs: 3000,
+  wordingGuidance: GROK_EXTENSION_WORDING,
   preflight: (call) => {
     const clip = call.inputs.clip?.[0]?.version;
     return clip?.metadata.state === "verified" &&

@@ -14,9 +14,12 @@ import { createOptimizeCompileHandler } from "./optimize/handlers/optimizeCompil
  */
 export function createOptimizeRoutes(services: OptimizeServices): Router {
   const router = express.Router();
-  const { promptOptimizationService } = services;
+  const { promptOptimizationService, wordingGuidance } = services;
 
-  const optimizeHandler = createOptimizeHandler(promptOptimizationService);
+  const optimizeHandler = createOptimizeHandler(
+    promptOptimizationService,
+    wordingGuidance,
+  );
   const optimizeCompileHandler = createOptimizeCompileHandler(
     promptOptimizationService,
   );

@@ -14,6 +14,11 @@ export interface ServiceConfig {
     timeout: number;
     model: string;
   };
+  anthropic: {
+    apiKey: string | undefined;
+    timeout: number;
+    model: string;
+  };
   gemini: {
     apiKey: string | undefined;
     timeout: number;

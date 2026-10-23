@@ -54,6 +54,12 @@ export interface ReplicateModelDefinition {
    * the profile as unavailable and preparation never accepts it.
    */
   unavailableReason?: string;
+  /**
+   * How this model's own provider says words should be written, as
+   * instructions for Improve wording. Omitted when the provider documents none,
+   * and Improve wording then works as it does without a model.
+   */
+  wordingGuidance?: string;
   /** A refusal proven before any provider call, so nothing is reserved or spent. */
   preflight?(call: ModelCall): string | undefined;
   input(

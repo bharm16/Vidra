@@ -4,7 +4,7 @@ import type { ApiResponse } from "@shared/types/api";
 import { formatValidationDetails } from "@utils/apiResponseHelpers";
 import { extractUserId } from "@utils/requestHelpers";
 import { normalizeGenerationParams } from "@routes/optimize/normalizeGenerationParams";
-import type { PromptOptimizationServiceContract } from "../types";
+import type { OptimizeServices, PromptOptimizationServiceContract } from "../types";
 import { promptSchema } from "@config/schemas/promptSchemas";
 // Response wire format defined in shared/schemas/optimization.schemas.ts —
 // client validates against OptimizeResponseSchema at the fetch boundary.
@@ -15,7 +15,10 @@ import {
 } from "./requestNormalization";
 
 export const createOptimizeHandler =
-  (promptOptimizationService: PromptOptimizationServiceContract) =>
+  (
+    promptOptimizationService: PromptOptimizationServiceContract,
+    wordingGuidance?: OptimizeServices["wordingGuidance"],
+  ) =>
   async (req: Request, res: Response): Promise<Response | void> => {
     const startTime = Date.now();
     const requestId = req.id || "unknown";
@@ -52,7 +55,9 @@ export const createOptimizeHandler =
       lockedSpans,
       startImage,
       sourcePrompt,
+      profileId,
     } = parsed.data;
+    const modelGuidance = profileId ? wordingGuidance?.(profileId) : undefined;
     const normalizedTargetModel = normalizeTargetModel(targetModel);
     const normalizedContext = normalizeContext(context);
     const normalizedLockedSpans = normalizeLockedSpans(lockedSpans);
@@ -100,6 +105,8 @@ export const createOptimizeHandler =
       skipCache: !!skipCache,
       lockedSpanCount: normalizedLockedSpans.length,
       hasStartImage: typeof startImage === "string" && startImage.length > 0,
+      profileId,
+      hasModelGuidance: modelGuidance !== undefined,
     });
 
     const requestAbortController = new AbortController();
@@ -142,6 +149,7 @@ export const createOptimizeHandler =
         ...(typeof sourcePrompt === "string" && sourcePrompt.length > 0
           ? { sourcePrompt }
           : {}),
+        ...(modelGuidance ? { modelGuidance } : {}),
         signal: requestAbortController.signal,
       };
       const result = await promptOptimizationService.optimize(optimizeRequest);
