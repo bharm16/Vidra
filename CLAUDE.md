@@ -46,7 +46,7 @@ Before **every commit**, all three gates must pass:
 
 Assertions come from contracts; repair source unless the referenced contract has genuinely retired.
 
-Before handoff, also run `npm run build`, and `npm run test:e2e` after UI changes. Emulator and native-media suites (`npm run test:integration`) run in CI. Run `npm run eval:golden-set` after span-labeling prompt or model changes.
+Before handoff, also run `npm run build`, and `npm run test:e2e` after UI changes. Emulator and native-media suites (`npm run test:integration`) run in CI. Run `npm run eval:golden-set` after span-labeling prompt or model changes. Run `npm run eval:improve-wording` (pin a candidate with `--provider`, `--model`, `--effort`) before changing Improve wording's model, effort or a profile's `wordingGuidance`.
 
 ## Runtime
 
