@@ -32,6 +32,7 @@ export default mergeConfig(
             include: [
               "server/src/**/*.{test,spec}.{ts,js}",
               "shared/**/*.{test,spec}.{ts,js}",
+              "packages/**/tests/**/*.{test,spec}.{ts,js}",
               "tests/unit/**/*.{test,spec}.ts",
               // One glob instead of enumerated directories: a new
               // scripts/**/__tests__ dir must not be silently unrun.
@@ -56,6 +57,7 @@ export default mergeConfig(
             setupFiles: ["./config/test/vitest.setup.client.js"],
             include: [
               "client/src/**/*.{test,spec}.{ts,tsx,js,jsx}",
+              "packages/**/tests/**/*.{test,spec}.{tsx,jsx}",
               "tests/unit/**/*.{test,spec}.{tsx,jsx}",
             ],
             // A jsdom interaction test that takes ~1-3s on an idle machine takes

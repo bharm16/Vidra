@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# The commit gate: the same three checks CLAUDE.md mandates, overlapped instead
+# The commit gate: the same four checks CLAUDE.md mandates, overlapped instead
 # of chained. The unit suite is the long pole (~2-3 min); the type check and
 # lint are independent of it, so they finish inside its first seconds.
 #
@@ -21,10 +21,11 @@ cd "$ROOT_DIR"
 LOG_DIR="$(mktemp -d)"
 trap 'rm -rf "$LOG_DIR"' EXIT
 
-NAMES=(typecheck lint unit)
+NAMES=(typecheck lint boundaries unit)
 CMDS=(
   "npm run -s typecheck"
   "npm run -s lint"
+  "npm run -s lint:boundaries"
   "npm run -s test:unit"
 )
 PIDS=()

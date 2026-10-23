@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@promptstudio/system/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@promptstudio/system/dropdown-menu";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { useVersionSharing } from "./hooks/useVersionSharing";
 import type { OwnedSharesPort } from "./api/sharingApi";

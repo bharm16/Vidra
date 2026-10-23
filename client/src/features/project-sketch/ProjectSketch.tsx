@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
-import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/popover";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { useProjectSketchPreview } from "./hooks/useProjectSketchPreview";
 import { useProjectSketchCapture } from "./hooks/useProjectSketchCapture";

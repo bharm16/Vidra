@@ -1,4 +1,4 @@
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import type { ReactElement } from "react";
 import select from "../assets/select.svg";
 import brush from "../assets/brush.svg";

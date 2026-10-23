@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "
 import { Link, useLocation } from "react-router-dom";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { FreshButton } from "@/components/fresh/FreshButton";
-import { Dialog, DialogClose, DialogContent, DialogTitle } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@promptstudio/system/dialog";
 import { SiteCta, SiteNavLink } from "./components/SiteCta";
 import "./site.css";
 

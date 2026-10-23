@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import type { CreationDraft } from "@shared/schemas/workflow/draft.schemas";
 import type { Conversation } from "@shared/schemas/workflow/project.schemas";
-import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/popover";
 import { FreshButton } from "@/components/fresh/FreshButton";
 import { getAuthRepository } from "@/repositories/index";
 import { useConversationDrafts } from "../hooks/useConversationDrafts";

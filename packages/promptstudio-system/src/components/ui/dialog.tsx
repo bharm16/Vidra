@@ -2,7 +2,7 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import closeIcon from "./dialog-close.svg";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 
 /** Radix types forceMount as the literal `true`, so it is spread only when set. */
 const mounting = (forceMount: true | undefined): { forceMount?: true } => (forceMount ? { forceMount } : {});

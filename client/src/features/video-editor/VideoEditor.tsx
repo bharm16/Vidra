@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@promptstudio/system/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/components/ui/popover";
+import { Button } from "@promptstudio/system/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@promptstudio/system/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/popover";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
 import { ImportControl } from "@/features/project-imports/components/ImportControl";
 import type { ProjectImportsController } from "@/features/project-imports/hooks/useProjectImports";

@@ -1,5 +1,5 @@
 import { forwardRef, type ReactElement } from "react";
-import { Button, type ButtonProps } from "@promptstudio/system/components/ui/button";
+import { Button, type ButtonProps } from "@promptstudio/system/button";
 import "./fresh.css";
 
 export interface FreshButtonProps extends Omit<ButtonProps, "variant"> {

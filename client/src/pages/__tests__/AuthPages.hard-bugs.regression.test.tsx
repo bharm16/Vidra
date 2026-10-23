@@ -39,7 +39,7 @@ vi.mock("@components/Toast", () => ({
   useToast: () => toastMock,
 }));
 
-vi.mock("@promptstudio/system/components/ui/button", () => ({
+vi.mock("@promptstudio/system/button", () => ({
   Button: ({
     asChild,
     children,

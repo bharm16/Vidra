@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 import type { IconProps as PhosphorIconProps } from "@phosphor-icons/react";
 
 export type IconSize = "xs" | "sm" | "md" | "lg" | "xl";

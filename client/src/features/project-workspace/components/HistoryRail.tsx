@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { actionEntry } from "@shared/workflow/actionRegistry";
 import { MediaThumbnail } from "./MediaThumbnail";
 import { slotProgress } from "./RequestResults";

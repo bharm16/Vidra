@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import type { ConversationListing, ConversationMediaCount } from "@shared/schemas/workflow/project.schemas";
 import "./project-management.css";
 

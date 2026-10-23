@@ -1,4 +1,4 @@
-import { useToast } from "@promptstudio/system/hooks/use-toast";
+import { useToast } from "../../hooks/use-toast";
 import {
   Toast,
   ToastClose,
@@ -6,7 +6,7 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@promptstudio/system/components/ui/toast";
+} from "./toast";
 
 export function Toaster() {
   const { toasts } = useToast();

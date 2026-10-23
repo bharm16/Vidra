@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { FreshRail, type FreshDestination } from "@/components/fresh/FreshRail";
 import { FreshButton } from "@/components/fresh/FreshButton";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
 import { useProjectBrowser, type ProjectEntry } from "./hooks/useProjectBrowser";
 import "./project-management.css";
 

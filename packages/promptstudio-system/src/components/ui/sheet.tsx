@@ -3,9 +3,9 @@
 import * as React from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "./icons";
+import { X } from "../../../icons";
 
-import { cn } from "@promptstudio/system/lib/utils";
+import { cn } from "../../lib/utils";
 
 /** Radix types forceMount as the literal `true`, so it is spread only when set. */
 const mounting = (forceMount: true | undefined): { forceMount?: true } => (forceMount ? { forceMount } : {});

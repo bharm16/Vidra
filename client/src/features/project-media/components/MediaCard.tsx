@@ -1,6 +1,6 @@
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/dropdown-menu";
 import { FreshIconButton } from "@/components/fresh/FreshButton";
 import { Waveform } from "@/components/fresh/Waveform";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";

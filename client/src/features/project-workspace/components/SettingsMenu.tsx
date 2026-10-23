@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/components/ui/popover";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@promptstudio/system/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/popover";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@promptstudio/system/sheet";
 import { MENU_FOLD, MENU_GROW, SHEET_FOLD, SHEET_GROW } from "@/components/motion/surface";
 import { useSurfacePresence } from "@/components/motion/useSurfacePresence";
 

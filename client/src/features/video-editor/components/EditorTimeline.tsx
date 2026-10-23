@@ -1,4 +1,4 @@
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { VideoComposition } from "@shared/schemas/workflow/video-edit.schemas";

@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { cn } from "@promptstudio/system/lib/utils";
-import { useFieldError } from "@promptstudio/system/hooks/use-field-error";
+import { cn } from "../../lib/utils";
+import { useFieldError } from "../../hooks/use-field-error";
 
 export interface InputProps extends React.ComponentProps<"input"> {
   error?: boolean;

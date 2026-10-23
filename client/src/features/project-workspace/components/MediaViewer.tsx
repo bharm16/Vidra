@@ -1,8 +1,8 @@
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
-import { Dialog, DialogContent, DialogTitle } from "@promptstudio/system/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle } from "@promptstudio/system/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@promptstudio/system/popover";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { AreaMaskFilter } from "@/features/project-sketch/components/AreaMaskFilter";
 import { Waveform, useAudioPeaks } from "@/components/fresh/Waveform";

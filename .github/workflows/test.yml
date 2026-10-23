@@ -69,6 +69,9 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Enforce package entry points and reject dependency cycles
+        run: npm run lint:boundaries
+
   integration-firestore:
     runs-on: ubuntu-latest
     needs: [unit-tests]

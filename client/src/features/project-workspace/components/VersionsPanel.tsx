@@ -1,9 +1,9 @@
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
-import { Dialog, DialogContent, DialogTitle } from "@promptstudio/system/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@promptstudio/system/dialog";
 import { MediaThumbnail } from "./MediaThumbnail";
 import { versionTree } from "../state/versionTree";
 import "./viewer-fidelity.css";

@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
-import { Button } from "@promptstudio/system/components/ui/button";
-import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@promptstudio/system/components/ui/popover";
+import { Button } from "@promptstudio/system/button";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@promptstudio/system/popover";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { EditCommand, VideoComposition, VideoItem, VideoPreset, VideoText } from "@shared/schemas/workflow/video-edit.schemas";
 import { reanchorText, withVideoPreset } from "@shared/video-edit/composition";

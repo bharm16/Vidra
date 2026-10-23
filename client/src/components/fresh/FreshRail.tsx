@@ -1,5 +1,5 @@
 import { Fragment, type ReactElement } from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
+import { Button } from "@promptstudio/system/button";
 import { FreshButton, FreshIconButton, type FreshIconName } from "./FreshButton";
 
 export type FreshDestination = "home" | "projects" | "create" | "media" | "video" | "sketch" | "upscale" | "reframe" | "captions" | "help" | "account";
