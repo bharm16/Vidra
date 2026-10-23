@@ -238,7 +238,7 @@ export function applyCorsMiddleware(app: Application): void {
 export function applyBodyParserMiddleware(app: Application): void {
   const generalJson = express.json({ limit: "2mb" });
   app.use((req, res, next): void => {
-    if (req.method === "POST" && /^\/api\/projects\/project_[A-Za-z0-9_-]+\/sketch\/captures\/?$/.test(req.path)) { next(); return; }
+    if (req.method === "POST" && /^\/api\/projects\/project_[A-Za-z0-9_-]+\/sketch\/(?:captures|area-masks)\/?$/.test(req.path)) { next(); return; }
     generalJson(req, res, next);
   });
   app.use(express.urlencoded({ limit: "2mb", extended: true }));

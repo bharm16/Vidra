@@ -78,9 +78,11 @@ it("lists a clip's verbs from the profiles that take clips, in Figma's order", (
   expect(verbsForResult(still, [picture], { variation: true }).map(verb => verb.label)).toEqual(["New variation", "Use as reference"]);
   const cutout = profile({ id: "cutout", label: "Cutout", action: "remove-background", endpoint: "controlled/cutout", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }], output: { kind: "image", maxCount: 1 }, parameters: {} });
   expect(verbsForResult(still, [picture, cutout], { variation: true }).map(verb => verb.label)).toEqual(["New variation", "Remove background", "Use as reference"]);
-  // An area model exists, but a painted area cannot reach it yet: the verb is shown greyed.
+  // Edit a region shows, enabled, only while a qualified model takes an area beside the picture.
   const area = profile({ id: "area", label: "Area editor", action: "edit-image", endpoint: "controlled/area", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }, { role: "mask", kinds: ["image"], minCount: 0, maxCount: 1 }], output: { kind: "image", maxCount: 1 }, parameters: {} });
-  expect(verbsForResult(still, [picture, area], { variation: false }).find(verb => verb.label === "Edit a region")).toMatchObject({ kind: "region", disabled: true });
+  const region = verbsForResult(still, [picture, area], { variation: false }).find(verb => verb.label === "Edit a region");
+  expect(region).toMatchObject({ kind: "region" }); expect(region?.disabled).toBeUndefined();
+  expect(verbsForResult(still, [picture, { ...area, availability: "unavailable", unavailableReason: "Not configured." }], { variation: false }).map(verb => verb.label)).not.toContain("Edit a region");
 });
 
 it("shows each result's verbs as buttons in the feed and opens the composer bound to it", () => {

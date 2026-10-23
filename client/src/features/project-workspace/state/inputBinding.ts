@@ -119,13 +119,16 @@ export function applyDraftInputSource(
     source.state === "resolved"
       ? { state: "resolved", role, versionId: source.versionId }
       : { state: "importing", role, importId: source.importId };
-  const inputs = bindDraftInput(
+  const bound = bindDraftInput(
     content.inputs,
     nextInput,
     rule?.maxCount ?? (role === "reference" ? 16 : 1),
     replacing,
   );
-  return inputs === content.inputs ? content : settleModel({ ...content, inputs }, profiles);
+  if (bound === content.inputs) return content;
+  // A painted area is tied to the exact picture it was drawn on; another picture drops it rather than reusing its pixels.
+  const inputs = role === "primary" ? bound.filter(input => input.role !== "mask") : bound;
+  return settleModel({ ...content, inputs }, profiles);
 }
 
 const OFFERED_ROLES = ["primary", "start-frame", "end-frame", "reference", "clip", "audio"] as const satisfies readonly DraftInput["role"][];

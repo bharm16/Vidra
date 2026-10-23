@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { injectAuthUser } from "./helpers/auth";
+import { TEST_USER, injectAuthUser } from "./helpers/auth";
 import { CONVERSATION_ID, PROJECT_ID, mockWorkspace } from "./helpers/workspace";
 
 /**
@@ -90,9 +90,99 @@ test("a result's verb binds it into the request being written, keeping the words
   await expect(words).toHaveValue("A brass lamp turns on.");
 });
 
-test("Edit a region stays greyed while a painted area cannot reach a model", async ({ page }) => {
+test("Edit a region: a painted area joins the request as its mask input, and Make sends primary + mask", async ({ page }) => {
   await open(page);
-  await expect(page.getByRole("article", { name: "The same desk at dawn." }).getByRole("button", { name: "Edit a region" })).toBeDisabled();
+  const masks: Array<Record<string, unknown>> = [];
+  const patches: Array<{ inputs?: Array<{ role: string; versionId?: string }>; settings?: { profileId: string } }> = [];
+  let prepared: { inputs: Array<{ role: string; versionId?: string }> } | undefined;
+  let submitted = false;
+  await page.route("**/api/**", async route => {
+    const url = new URL(route.request().url());
+    const method = route.request().method();
+    if (method === "PATCH" && url.pathname.startsWith(`/api/projects/${PROJECT_ID}/drafts/`)) patches.push((route.request().postDataJSON() as { content: (typeof patches)[number] }).content);
+    if (method === "POST" && url.pathname === `/api/projects/${PROJECT_ID}/sketch/area-masks`) {
+      const body = route.request().postDataJSON() as { versionId: string; width: number; height: number; dataUri: string };
+      masks.push(body);
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: { schemaVersion: "vidra-workflow/v2", id: "version_mask_e2e", ownerId: TEST_USER.uid, projectId: PROJECT_ID, kind: "image", label: "Selected area", origin: { kind: "area-mask", versionId: body.versionId }, sourceInputs: [], object: { identity: "unknown", assetId: "mask", storagePath: `users/${TEST_USER.uid}/mask.png` }, metadata: { state: "verified", width: body.width, height: body.height, durationSeconds: 0, audio: "absent", probeVersion: "e2e" }, association: "linked", hidden: true, createdAt: "2026-10-22T05:00:00.000Z" } }) });
+    }
+    if (method === "POST" && url.pathname === "/api/creation-requests/prepare") {
+      const content = patches.at(-1);
+      prepared = { inputs: content?.inputs ?? [] };
+      // The check ends at the server boundary: the snapshot the server would accept is the saved draft's inputs.
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: { state: "blocked", draftId: (route.request().postDataJSON() as { draftId: string }).draftId, draftRevision: patches.length + 1, reasons: [{ code: "settings_invalid", message: "Stopped before any provider call." }] } }) });
+    }
+    if (method === "POST" && url.pathname === "/api/creation-requests") submitted = true;
+    return route.fallback();
+  });
+  await page.getByRole("article", { name: "The same desk at dawn." }).getByRole("button", { name: "Edit a region" }).click();
+  const focus = page.getByRole("dialog", { name: "Focus" });
+  const canvas = focus.getByRole("img", { name: "Paint area on the exact source picture" });
+  await expect(canvas).toBeVisible();
+  const done = focus.getByRole("button", { name: "Done" });
+  await expect(done).toBeDisabled();
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("The area canvas has no box");
+  await page.mouse.move(box.x + box.width * .3, box.y + box.height * .4);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * .6, box.y + box.height * .5, { steps: 6 });
+  await page.mouse.up();
+  await done.click();
+  await expect(focus).toHaveCount(0);
+  expect(masks).toHaveLength(1);
+  expect(masks[0]).toMatchObject({ versionId: "version_third", width: 1600, height: 900, transform: "identity" });
+  expect(String(masks[0]?.dataUri)).toMatch(/^data:image\/png;base64,/);
+  await expect(page.getByRole("img", { name: "Selected area" })).toBeAttached();
+  await page.getByRole("textbox", { name: "Current request words" }).fill("Turn the lamp brass.");
+  await page.getByRole("button", { name: "Edit image" }).click();
+  await expect.poll(() => prepared?.inputs).toEqual([{ role: "primary", state: "resolved", versionId: "version_third" }, { role: "mask", state: "resolved", versionId: "version_mask_e2e" }]);
+  expect(patches.at(-1)?.settings?.profileId).toBe("e2e-edit");
+  expect(submitted).toBe(false);
+});
+
+test("Done with nothing painted removes the area from the request", async ({ page }) => {
+  await open(page);
+  await page.route("**/api/**", async route => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === "POST" && url.pathname === `/api/projects/${PROJECT_ID}/sketch/area-masks`) {
+      const body = route.request().postDataJSON() as { versionId: string; width: number; height: number };
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: { schemaVersion: "vidra-workflow/v2", id: "version_mask_e2e", ownerId: TEST_USER.uid, projectId: PROJECT_ID, kind: "image", label: "Selected area", origin: { kind: "area-mask", versionId: body.versionId }, sourceInputs: [], object: { identity: "unknown", assetId: "mask", storagePath: `users/${TEST_USER.uid}/mask.png` }, metadata: { state: "verified", width: body.width, height: body.height, durationSeconds: 0, audio: "absent", probeVersion: "e2e" }, association: "linked", hidden: true, createdAt: "2026-10-22T05:00:00.000Z" } }) });
+    }
+    return route.fallback();
+  });
+  const region = page.getByRole("article", { name: "The same desk at dawn." }).getByRole("button", { name: "Edit a region" });
+  const paint = async (): Promise<void> => {
+    const canvas = page.getByRole("dialog", { name: "Focus" }).getByRole("img", { name: "Paint area on the exact source picture" });
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error("The area canvas has no box");
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width * .6, box.y + box.height * .6, { steps: 4 }); await page.mouse.up();
+  };
+  await region.click();
+  await paint();
+  await page.getByRole("dialog", { name: "Focus" }).getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("img", { name: "Selected area" })).toBeAttached();
+  await region.click();
+  const focus = page.getByRole("dialog", { name: "Focus" });
+  await focus.getByRole("button", { name: "Clear" }).click();
+  await focus.getByRole("button", { name: "Done" }).click();
+  await expect(focus).toHaveCount(0);
+  await expect(page.getByRole("img", { name: "Selected area" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit image" })).toBeVisible();
+});
+
+test("on a phone, the area editor closes back to the picture", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await injectAuthUser(page);
+  await page.route("**/e2e-media/**", route => route.fulfill({ status: 200, contentType: "image/svg+xml", body: "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='9'><rect width='16' height='9' fill='#d3a44e'/></svg>" }));
+  await mockWorkspace(page, { profiles, requests: [{ id: "request_second", action: "make-image", instructions: "The same desk at dawn.", profileId: "e2e-picture", parameters: { aspectRatio: "16:9" }, results: [{ versionId: "version_third" }] }], media: [{ id: "version_third", kind: "image", label: "Desk · v3", requestId: "request_second", slotId: "slot_0_0", url: "http://127.0.0.1:58175/e2e-media/version_third.svg", width: 1600, height: 900 }] });
+  await page.goto(`/app/project/${PROJECT_ID}?conversation=${CONVERSATION_ID}`);
+  await page.getByRole("button", { name: "View Desk · v3" }).click();
+  await page.getByRole("button", { name: "Use" }).click();
+  await page.getByRole("button", { name: "Edit a region" }).click();
+  const editor = page.getByRole("region", { name: "Paint an area" });
+  await expect(editor.getByRole("button", { name: "Clear" })).toBeVisible();
+  await editor.getByRole("button", { name: "Close area editor" }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Media viewer" })).toBeVisible();
 });
 
 test("Back closes Focus and stays in the conversation", async ({ page }) => {

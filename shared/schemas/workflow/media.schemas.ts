@@ -30,6 +30,8 @@ export const MediaOriginSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("sketch-capture"), captureId: z.string().min(1).max(160) }),
   z.strictObject({ kind: z.literal("sketch"), requestId: RequestIdSchema, captureId: z.string().min(1) }),
   z.strictObject({ kind: z.literal("copy"), versionId: VersionIdSchema, projectId: ProjectIdSchema }),
+  /** A painted area tied to the exact picture it was drawn on; it never appears as a picture of its own. */
+  z.strictObject({ kind: z.literal("area-mask"), versionId: VersionIdSchema }),
   z.strictObject({ kind: z.literal("legacy"), system: z.enum(["session", "studio"]), recordId: z.string().min(1), mediaId: z.string().min(1), history: z.literal("unknown") }),
 ]);
 export const MediaVersionSchema = z.strictObject({

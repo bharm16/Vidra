@@ -90,8 +90,8 @@ export interface ProjectWorkspaceController {
   bindImport(draftId: string, importId: string, kind?: "image" | "video" | "audio", role?: DraftInput["role"], replacing?: DraftInput): void;
   useMedia(version: MediaVersion): void;
   editMedia(version: MediaVersion): Promise<void>;
-  /** A result's verb: the result joins the working request in the verb's role, keeping its words. */
-  bindResult(action: CreationAction, version: MediaVersion, role?: DraftInput["role"]): Promise<void>;
+  /** A result's verb: the result joins the working request in the verb's role, keeping its words. A painted area stays only for Edit a region on the same picture. */
+  bindResult(action: CreationAction, version: MediaVersion, role?: DraftInput["role"], options?: { keepArea?: boolean }): Promise<void>;
   undo(): void;
   redo(): void;
   copyConflict(draftId: string): Promise<void>;
@@ -516,14 +516,17 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   }, [edit, profiles]);
 
   /** Working words and settings stay (Rule 8): the result joins the open draft; only a missing draft starts a new one. */
-  const bindResult = useCallback(async (action: CreationAction, version: MediaVersion, role: DraftInput["role"] = actionEntry(action).verb?.role ?? "primary"): Promise<void> => {
+  const bindResult = useCallback(async (action: CreationAction, version: MediaVersion, role: DraftInput["role"] = actionEntry(action).verb?.role ?? "primary", options: { keepArea?: boolean } = {}): Promise<void> => {
     if (!project || !conversation || version.ownerId !== ownerId || version.projectId !== projectId) return;
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (buffer && ["open", "parked"].includes(buffer.record.status)) {
       if (buffer.content.settings.profileId !== "unselected" && action !== buffer.content.action) rememberedSettings.current[buffer.content.action] = buffer.content.settings;
       const draftKey = buffer.record.id;
-      const moved = inputsWithResult([...buffer.content.inputs, ...(parkedRef.current[draftKey] ?? [])], action, version.id, role, profiles, mediaRef.current, viewRef.current.requests);
+      const current = [...buffer.content.inputs, ...(parkedRef.current[draftKey] ?? [])];
+      // An area belongs to its exact picture: any other verb, or another picture, makes a whole-picture request.
+      const keepArea = options.keepArea === true && current.some(input => input.role === "primary" && input.state === "resolved" && input.versionId === version.id);
+      const moved = inputsWithResult(keepArea ? current : current.filter(input => input.role !== "mask"), action, version.id, role, profiles, mediaRef.current, viewRef.current.requests);
       setParked(current => ({ ...current, [draftKey]: moved.parked }));
       const next = { ...buffer.content, action, inputs: moved.inputs };
       const settings = action === buffer.content.action ? buffer.content.settings : settingsForOutput(next, action, profiles, rememberedSettings.current[action], mediaRef.current);

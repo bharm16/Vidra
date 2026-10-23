@@ -195,3 +195,15 @@ it("does not attach a named input when no model for the output takes it", () => 
   const content = drafted(wordsPicture);
   expect(applyDraftInputSource(content, [wordsPicture], picture, "reference")).toBe(content);
 });
+
+it("binds a painted area beside its picture, moving to the model that takes it, and drops it when the picture changes", () => {
+  const editor = CapabilityProfileSchema.parse({ ...wordsPicture, id: "picture-editor", label: "Editor", action: "edit-image", mode: "image-edit", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }], output: { kind: "image", maxCount: 1 } });
+  const areaEditor = CapabilityProfileSchema.parse({ ...editor, id: "area-editor", label: "Area editor", inputs: [...editor.inputs, { role: "mask", kinds: ["image"], minCount: 0, maxCount: 1 }] });
+  const profiles = [editor, areaEditor];
+  const source = DraftInputSchema.parse({ state: "resolved", role: "primary", versionId: "version_picture" });
+  const masked = applyDraftInputSource(drafted(editor, [source]), profiles, { state: "resolved", versionId: VersionIdSchema.parse("version_mask_one"), kind: "image" }, "mask");
+  expect(masked).toMatchObject({ settings: { profileId: areaEditor.id }, inputs: [source, { role: "mask", versionId: "version_mask_one" }] });
+  // The area belongs to the exact picture it was painted on: another picture makes a whole-picture request.
+  const replaced = applyDraftInputSource(masked, profiles, { state: "resolved", versionId: VersionIdSchema.parse("version_other"), kind: "image" }, "primary", source);
+  expect(replaced.inputs).toEqual([{ state: "resolved", role: "primary", versionId: "version_other" }]);
+});
