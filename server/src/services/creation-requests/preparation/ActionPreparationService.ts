@@ -15,6 +15,7 @@ import { WorkflowError } from "@services/projects/WorkflowError";
 import { requireWritableConversation } from "@services/projects/projectAccess";
 import { sha256Hex } from "@utils/hash";
 import { ImportRecordSchema } from "@shared/schemas/workflow/import.schemas";
+import { areaMaskMismatch } from "./areaMaskInputs";
 
 export interface WorkflowProfileCatalog { get(id: string): CapabilityProfile | undefined; }
 export interface WorkflowInputReader { get(ownerId: string, projectId: string, versionId: string, transaction?: Transaction): Promise<MediaVersion | undefined>; }
@@ -93,6 +94,7 @@ export class ActionPreparationService {
       if (count < rule.minCount && !draft.inputs.some(input => input.role === rule.role && input.state === "pending")) block("input_missing", `Choose ${rule.minCount} ${rule.role} input${rule.minCount === 1 ? "" : "s"}.`, rule.role);
       if (count > rule.maxCount) block("input_incompatible", `This operation supports at most ${rule.maxCount} ${rule.role} inputs.`, rule.role);
     }
+    if (areaMaskMismatch(inputs, media)) block("input_incompatible", "This area belongs to a different picture or size. Redraw it on this exact version.", "mask");
     const { parameters, reasons: settingReasons } = validateProfileParameters(profile, draft.settings, inputs, media);
     reasons.push(...settingReasons);
     let materializedContext: Awaited<ReturnType<CreationContextService["materializeInTransaction"]>> | undefined;

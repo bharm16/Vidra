@@ -320,6 +320,10 @@
 .ps-area-stage {
   width: 100%;
 }
+.ps-area-heading {
+  display: flex;
+  justify-content: flex-end;
+}
 .ps-area-filter {
   position: absolute;
   pointer-events: none;
@@ -542,7 +546,10 @@
     display: none;
   }
   .ps-area-drawing-tools .ps-area-clear {
-    display: none;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: center;
+    min-height: 44px;
   }
   .ps-area-toolbar > .vf-button {
     width: 100%;

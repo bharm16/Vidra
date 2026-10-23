@@ -2,16 +2,48 @@ import type { Firestore } from "firebase-admin/firestore";
 import { createHash } from "node:crypto";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { OwnerIdSchema, ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
-import { ProjectSketchCaptureCommandSchema, ProjectSketchCaptureRecordSchema, type ProjectSketchCaptureRecord } from "@shared/schemas/workflow/sketch.schemas";
+import { ProjectAreaMaskSchema, ProjectSketchCaptureCommandSchema, ProjectSketchCaptureRecordSchema, type ProjectSketchCaptureRecord } from "@shared/schemas/workflow/sketch.schemas";
 import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import type { ProjectStore } from "@services/projects/ProjectStore";
 import { requireWritableProject } from "@services/projects/projectAccess";
 import { WorkflowError } from "@services/projects/WorkflowError";
 import { sketchPictureMetadata, verifySketchPicture, type ProjectSketchStorage } from "./ProjectSketchStorage";
+import { verifyAreaMask } from "./areaMask";
 
 /** Project-native acceptance: no session, request, input assignment or preview regeneration. */
 export class ProjectSketchService {
-  constructor(private readonly database: Firestore, private readonly projects: ProjectStore, private readonly storage: ProjectSketchStorage, private readonly media: MediaVersionIndex) {}
+  constructor(private readonly database: Pick<Firestore, "collection" | "runTransaction">, private readonly projects: Pick<ProjectStore, "get" | "readOwned">, private readonly storage: ProjectSketchStorage, private readonly media: Pick<MediaVersionIndex, "get" | "publishInTransaction">) {}
+
+  /**
+   * Stores a painted area as a hidden media version tied to its exact picture, so a request can take it as its `mask` input.
+   * The same area on the same picture always resolves to the same version; it never lists as a picture of its own.
+   */
+  async acceptAreaMask(owner: string, project: string, input: unknown): Promise<MediaVersion> {
+    const ownerId = OwnerIdSchema.parse(owner);
+    const projectId = ProjectIdSchema.parse(project);
+    const command = ProjectAreaMaskSchema.parse(input);
+    // Authorization (inside media.get) precedes decoding any user-controlled picture bytes.
+    const picture = await verifyAreaMask(command, await this.media.get(ownerId, projectId, command.versionId));
+    const identity = createHash("sha256").update(JSON.stringify({ ownerId, projectId, source: command.versionId, mask: picture.sha256 })).digest("hex");
+    const object = await this.storage.put(`users/${ownerId}/previews/images/${projectId}-mask-${identity}.png`, picture, identity);
+    return this.database.runTransaction(async transaction => {
+      const currentProject = await this.projects.readOwned(transaction, ownerId, projectId);
+      requireWritableProject(currentProject);
+      return this.media.publishInTransaction(transaction, currentProject, {
+        id: `version_mask_${identity.slice(0, 40)}`,
+        ownerId,
+        projectId,
+        kind: "image",
+        label: "Selected area",
+        origin: { kind: "area-mask", versionId: command.versionId },
+        sourceInputs: [],
+        object,
+        metadata: sketchPictureMetadata(picture),
+        hidden: true,
+        createdAt: new Date().toISOString(),
+      }, { conflictMessage: "This area identity belongs to different bytes." });
+    });
+  }
 
   async accept(owner: string, project: string, input: unknown): Promise<MediaVersion> {
     const ownerId = OwnerIdSchema.parse(owner);
