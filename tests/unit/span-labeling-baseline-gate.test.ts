@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  averageReports,
+  baselineModelMismatch,
   buildBaseline,
   compareToBaseline,
   formatGateResult,
@@ -118,7 +120,7 @@ describe("compareToBaseline", () => {
             support: 50,
           },
           "camera.movement": {
-            f1: 0.7, // -0.10, exceeds default 0.05 per-category tolerance
+            f1: 0.65, // -0.15, exceeds 0.6/sqrt(30) = 0.11 for 30 spans
             precision: 0.68,
             recall: 0.72,
             support: 30,
@@ -141,7 +143,7 @@ describe("compareToBaseline", () => {
       expect(categoryRegression).toMatchObject({
         scope: "camera.movement",
         baseline: 0.8,
-        current: 0.7,
+        current: 0.65,
         support: 30,
       });
     });
@@ -264,5 +266,75 @@ describe("formatGateResult", () => {
     expect(output).toContain("support=30");
     expect(output).toContain("0.800");
     expect(output).toContain("0.700");
+  });
+});
+
+function report(f1: number, lighting: number, extra?: string): EvaluationReport {
+  return {
+    summary: { relaxedF1: f1, precision: f1, recall: f1, taxonomyAccuracy: f1 },
+    byCategory: {
+      "lighting.source": { f1: lighting, precision: lighting, recall: lighting, support: 21 },
+      ...(extra ? { [extra]: { f1: 0.5, precision: 0.5, recall: 0.5, support: 1 } } : {}),
+    },
+  };
+}
+
+describe("averageReports", () => {
+  it("averages summary and per-category metrics across runs", () => {
+    const averaged = averageReports([report(0.69, 0.615), report(0.7, 0.677), report(0.71, 0.646)]);
+
+    expect(averaged.summary.relaxedF1).toBeCloseTo(0.7);
+    expect(averaged.byCategory["lighting.source"]?.f1).toBeCloseTo(0.646);
+    expect(averaged.byCategory["lighting.source"]?.support).toBe(21);
+  });
+
+  it("averages a category over only the runs it appears in", () => {
+    const averaged = averageReports([report(0.7, 0.6, "audio.ambient"), report(0.7, 0.6)]);
+    expect(averaged.byCategory["audio.ambient"]?.f1).toBe(0.5);
+  });
+
+  it("refuses an empty list", () => {
+    expect(() => averageReports([])).toThrow();
+  });
+});
+
+describe("baselineModelMismatch", () => {
+  const baseline = buildBaseline(report(0.7, 0.6), { provider: "groq", model: "openai/gpt-oss-20b", runs: 3 });
+
+  it("records the model and run count it was blessed with", () => {
+    expect(baseline).toMatchObject({ provider: "groq", model: "openai/gpt-oss-20b", runs: 3 });
+  });
+
+  it("accepts the same model and rejects another", () => {
+    expect(baselineModelMismatch(baseline, "openai/gpt-oss-20b")).toBeUndefined();
+    expect(baselineModelMismatch(baseline, "llama-3.1-8b-instant")).toMatch(/blessed on openai\/gpt-oss-20b/);
+  });
+
+  it("can't judge a baseline that never recorded a model", () => {
+    const legacy = buildBaseline(report(0.7, 0.6), { provider: "groq" });
+    expect(baselineModelMismatch(legacy, "anything")).toBeUndefined();
+  });
+});
+
+describe("per-category tolerance scales with support", () => {
+  const baselineOf = (f1: number, support: number) =>
+    buildBaseline(
+      { summary: { relaxedF1: 0.7, precision: 0.7, recall: 0.7, taxonomyAccuracy: 0.85 }, byCategory: { "subject.wardrobe": { f1, precision: f1, recall: f1, support } } },
+      { provider: "groq", model: "m" },
+    );
+  const current = (f1: number, support: number): EvaluationReport => ({
+    summary: { relaxedF1: 0.7, precision: 0.7, recall: 0.7, taxonomyAccuracy: 0.85 },
+    byCategory: { "subject.wardrobe": { f1, precision: f1, recall: f1, support } },
+  });
+
+  it("lets a 7-span category move by noise but fails a collapse", () => {
+    expect(compareToBaseline(current(0.62, 7), baselineOf(0.73, 7)).passed).toBe(true);
+    expect(compareToBaseline(current(0.4, 7), baselineOf(0.73, 7)).passed).toBe(false);
+  });
+
+  it("keeps large categories near the 0.05 floor", () => {
+    const gate = compareToBaseline(current(0.83, 100), baselineOf(0.9, 100));
+    expect(gate.passed).toBe(false);
+    expect(gate.regressions[0]?.tolerance).toBeCloseTo(0.06);
   });
 });
