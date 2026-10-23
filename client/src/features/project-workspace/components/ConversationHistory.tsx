@@ -77,10 +77,10 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
   const { requests, media, selected, pending, onView, onRecover, access, onRetry, onApplyText, describeRequest, newlyReadyVersionId, onInspectRequest } = props;
   const viewport = useRef<HTMLDivElement>(null);
   const following = useRef(true);
-  const scrollGeometry = useRef<{ height: number; viewport: number; clip: boolean; atEnd: boolean }>();
+  const scrollGeometry = useRef<{ height: number; viewport: number; clip: boolean; atEnd: boolean; position: number }>();
   const followEnd = useCallback((node: HTMLElement): void => {
     node.scrollTop = node.scrollHeight;
-    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip: isMobileClip(node), atEnd: true };
+    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip: isMobileClip(node), atEnd: true, position: node.scrollTop };
   }, []);
   const last = requests.at(-1);
   const progressKey = `${last?.id ?? ""}:${last?.slots.map(slot => `${slot.outcome}:${slot.delivery}:${slot.versionId ?? ""}`).join(",") ?? ""}:${pending.length}`;
@@ -105,8 +105,11 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
     const resized = previous !== undefined && (previous.height !== node.scrollHeight || previous.viewport !== node.clientHeight);
     // Native resize clamping is not a deliberate return to the latest request.
     const remaining = node.scrollHeight - node.scrollTop - node.clientHeight;
-    if (!(resized && (clip || previous?.clip))) following.current = clip ? remaining <= 1 : remaining < 80;
-    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip, atEnd: remaining <= 1 && (!resized || previous.atEnd) };
+    // The scroll that following itself caused can arrive after more content (or a taller composer) changed the size;
+    // a history that has not moved is still resting at its end.
+    const unmoved = previous?.atEnd === true && node.scrollTop === previous.position;
+    if (!unmoved && !(resized && (clip || previous?.clip))) following.current = clip ? remaining <= 1 : remaining < 80;
+    scrollGeometry.current = { height: node.scrollHeight, viewport: node.clientHeight, clip, atEnd: unmoved || remaining <= 1 && (!resized || previous.atEnd), position: node.scrollTop };
   }} onKeyDown={event => {
     if (event.key === "End" && !event.altKey && !event.ctrlKey && !event.metaKey && isMobileClip(event.currentTarget)) { following.current = true; followEnd(event.currentTarget); }
   }}>

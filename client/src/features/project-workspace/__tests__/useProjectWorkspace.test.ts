@@ -665,3 +665,45 @@ it("a project home in the library reuses or starts a conversation filed in that 
   expect(ports.api.createConversation).toHaveBeenCalledWith(project.id, expect.stringMatching(/^conversation_/), "New conversation", "folder_spring");
   expect(started.result.current.conversation?.id).toBe("conversation_new_filed");
 });
+
+it("switching outputs and back restores the request it left: the start frame keeps its role and the model stays", async () => {
+  const video = CapabilityProfileSchema.parse({ ...profile, inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 4 }] });
+  const animate = CapabilityProfileSchema.parse({ ...profile, id: "controlled-animate", label: "Animate", action: "animate-image", mode: "image-to-video", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }] });
+  const music = CapabilityProfileSchema.parse({ ...profile, id: "controlled-music", label: "Music", action: "make-music", mode: "text-to-audio", output: { kind: "audio", maxCount: 1 }, inputs: [{ role: "reference", kinds: ["image"], minCount: 0, maxCount: 1 }] });
+  const picture = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_frame", ownerId: "creator", projectId: project.id, kind: "image", label: "Lantern", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "file", storagePath: "users/creator/previews/images/file.png" }, metadata: { state: "pending" }, association: "linked", createdAt: timestamp });
+  ports.api.profiles.mockResolvedValue([video, animate, music]); ports.api.media.mockResolvedValue([picture]);
+  const { result } = await loaded();
+  await waitFor(() => expect(result.current.media).toHaveLength(1));
+  const start = result.current.active;
+  if (!start) throw new Error("No active draft");
+  const setup = { ...start.content, action: "animate-image" as const, inputs: [{ state: "resolved" as const, role: "start-frame" as const, versionId: VersionIdSchema.parse(picture.id) }], settings: { profileId: animate.id, profileRevision: "1", parameters: {}, outputCount: 1 } };
+  act(() => result.current.edit(setup));
+  act(() => result.current.changeAction("make-music"));
+  expect(result.current.active?.content.inputs).toEqual([{ state: "resolved", role: "reference", versionId: picture.id }]);
+  act(() => result.current.changeAction("make-video"));
+  expect(result.current.active?.content).toMatchObject({ action: "animate-image", inputs: [{ state: "resolved", role: "start-frame", versionId: picture.id }], settings: { profileId: animate.id } });
+  expect(result.current.active?.content.instructions).toBe("Original direction");
+});
+
+it("a library home whose conversation is archived elsewhere moves to a working conversation instead of turning read only", async () => {
+  const fresh = ConversationSchema.parse({ ...conversation, id: "conversation_fresh" });
+  ports.api.listDrafts.mockResolvedValue([]);
+  const { result } = renderHook(() => useProjectWorkspace("creator", project.id, undefined, undefined, { library: true }));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.conversation?.id).toBe(conversation.id);
+  const archived = ConversationSchema.parse({ ...conversation, revision: 2, status: "archived" });
+  ports.api.listConversations.mockResolvedValue([archived]); ports.api.createConversation.mockResolvedValue(fresh);
+  act(() => result.current.observeConversation(archived));
+  await waitFor(() => expect(result.current.conversation?.id).toBe(fresh.id));
+  expect(result.current.conversation?.status).toBe("active");
+});
+
+it("a running request's status reads do not re-read the whole media list until a result lands", async () => {
+  const running = AcceptedRequestSchema.parse({ ...accepted({ submissionId: "submission_running", draftId: original.id, draftRevision: 1, reviewedHash: "a".repeat(64) }), slots: [{ id: "slot_running", ordinal: 1, outcome: "running", delivery: "none", usage: { mode: "free", reserved: 0, settled: 0 } }] });
+  ports.api.history.mockResolvedValue([running]); ports.api.requestStatus.mockResolvedValue(running);
+  const { result } = await loaded();
+  await waitFor(() => expect(ports.api.requestStatus).toHaveBeenCalled());
+  await waitFor(() => expect(result.current.view.requests[0]?.slots[0]?.outcome).toBe("running"));
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
+  expect(ports.api.media).toHaveBeenCalledTimes(1);
+});

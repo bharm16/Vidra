@@ -157,6 +157,7 @@
   margin: var(--vf-space-40) auto var(--vf-space-64);
 }
 .vf-public-share-media {
+  position: relative;
   display: flex;
   width: 100%;
   min-height: 160px;
@@ -577,5 +578,25 @@
     width: 132px;
     min-width: 132px;
     margin-top: 0;
+  }
+}
+.vf-public-share-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.vf-public-share-loading > img {
+  animation: vf-public-share-spin 1s linear infinite;
+}
+@keyframes vf-public-share-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vf-public-share-loading > img {
+    animation: none;
   }
 }

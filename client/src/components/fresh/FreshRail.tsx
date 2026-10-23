@@ -18,7 +18,7 @@ const TOOLS: Array<{ key: FreshTool; label: string; icon: FreshIconName }> = [
   { key: "captions", label: "Captions", icon: "captions" },
 ];
 
-export function FreshRail({ active, onNavigate, onRequest, onProjectOptions, mobile = false, mobilePresentation = "icons", tools = false }: {
+export function FreshRail({ active, onNavigate, onRequest, onProjectOptions, mobile = false, mobilePresentation = "icons", tools = false, requestPage = true }: {
   active: Exclude<FreshDestination, "home" | "help">;
   onNavigate(destination: FreshDestination): void;
   onRequest?(): void;
@@ -27,11 +27,13 @@ export function FreshRail({ active, onNavigate, onRequest, onProjectOptions, mob
   mobilePresentation?: "icons" | "labels";
   /** Shows the rail tools after Sketch; their active state follows the composer. */
   tools?: boolean;
+  /** "New request" is the page only where a new request is written (the home); inside a conversation it stays highlighted but is an action. */
+  requestPage?: boolean;
 }): ReactElement {
   return <nav className="vf-rail vf-fresh-rail" data-mobile-nav={mobile || undefined} data-mobile-presentation={mobilePresentation} aria-label="Workspace navigation">
     {mobile && mobilePresentation === "labels" ? <div className="vf-mobile-label-navigation">{([{ destination: "create", label: "Chat" }, { destination: "media", label: "Media" }, { destination: "video", label: "Edits" }, { destination: "sketch", label: "Sketch" }] as const).map(item => <FreshButton key={item.destination} tone={active === item.destination ? "secondary" : "quiet"} aria-current={active === item.destination ? "page" : undefined} onClick={() => item.destination === "create" && onRequest ? onRequest() : onNavigate(item.destination)}>{item.label}</FreshButton>)}</div> : null}
     <Button variant="ghost" className="vf-brand !h-auto" aria-label="Vidra home" onClick={() => onNavigate("home")}>V</Button>
-    {ITEMS.map(item => <Fragment key={item.key}><FreshIconButton className={mobile && item.key === "create" ? "vf-nav-create-desktop" : undefined} icon={item.icon} label={item.label} title={item.label} aria-current={active === item.key ? "page" : undefined} data-destination={item.key} onClick={() => onNavigate(item.key)} onContextMenu={event => { if (item.key === "projects" && onProjectOptions) { event.preventDefault(); event.currentTarget.focus(); onProjectOptions(); } }} onKeyDown={event => { if (item.key === "projects" && onProjectOptions && event.shiftKey && event.key === "F10") { event.preventDefault(); onProjectOptions(); } }} />{mobile && item.key === "create" ? <FreshIconButton className="vf-nav-create-mobile" icon="conversation" label="Request" title="Request" aria-current={active === "create" ? "page" : undefined} data-destination="create" onClick={() => onRequest ? onRequest() : onNavigate("create")} /> : null}</Fragment>)}
+    {ITEMS.map(item => <Fragment key={item.key}><FreshIconButton className={mobile && item.key === "create" ? "vf-nav-create-desktop" : undefined} icon={item.icon} label={item.label} title={item.label} aria-current={active === item.key && (item.key !== "create" || requestPage) ? "page" : undefined} data-current={active === item.key || undefined} data-destination={item.key} onClick={() => onNavigate(item.key)} onContextMenu={event => { if (item.key === "projects" && onProjectOptions) { event.preventDefault(); event.currentTarget.focus(); onProjectOptions(); } }} onKeyDown={event => { if (item.key === "projects" && onProjectOptions && event.shiftKey && event.key === "F10") { event.preventDefault(); onProjectOptions(); } }} />{mobile && item.key === "create" ? <FreshIconButton className="vf-nav-create-mobile" icon="conversation" label="Request" title="Request" aria-current={active === "create" ? "page" : undefined} data-destination="create" onClick={() => onRequest ? onRequest() : onNavigate("create")} /> : null}</Fragment>)}
     {tools ? TOOLS.map(item => <FreshIconButton key={item.key} className="vf-rail-tool" icon={item.icon} label={item.label} title={item.label} aria-pressed={active === item.key} data-destination={item.key} onClick={() => onNavigate(item.key)} />) : null}
     <div className="vf-flex" />
     <FreshIconButton icon="help" label="Help" title="Help" data-destination="help" onClick={() => onNavigate("help")} />

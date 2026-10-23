@@ -139,6 +139,10 @@ export function CapabilitySettings({ profiles, content, media, disabled, onProfi
         const values = fixed.flatMap(({ found }) => found?.[1].policy === "fixed" ? [found[1].value] : []);
         const first = fixed.find(({ found }) => found?.[1].policy === "fixed");
         if (first?.found && values.length === fixed.length && values.every(value => value === values[0])) return <ReadonlyChip key={item.chip} label={roleLabel(item.chip)} value={valueLabel(first.candidate, first.found[0], values[0] ?? "")} icon={icon} />;
+        // A setting every candidate takes from the input (Edit's shape follows its picture) reads as that fact, not greyed.
+        const follows = fixed.flatMap(({ found }) => found?.[1].policy === "derived" && found[1].from !== "frame-duration" ? [found[1]] : found?.[1].policy === "fixed" && found[1].value === "match_input_image" ? [{ policy: "derived" as const, from: "input-aspect" as const }] : []);
+        const followed = follows[0];
+        if (followed && follows.length === fixed.length) return <ReadonlyChip key={item.chip} label={roleLabel(item.chip)} value={derivedParameter(followed, content, media)} icon={icon} />;
         return <UnavailableChip key={item.chip} label={roleLabel(item.chip)} icon={icon} />;
       }
       const named = autoCandidates(profiles, content, media).find(candidate => candidate.parameters[name]?.policy === "editable");

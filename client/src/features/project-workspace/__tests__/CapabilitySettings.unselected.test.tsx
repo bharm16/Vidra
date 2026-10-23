@@ -56,6 +56,13 @@ it("greys a core chip no candidate can set, with no reason text", () => {
   }
 });
 
+it("reads a shape every candidate takes from its picture as that fact, not a greyed chip", () => {
+  const follows = presented({ ...candidate, parameters: { ...candidate.parameters, aspectRatio: { policy: "derived", from: "input-aspect" } } });
+  render(<CapabilitySettings profiles={[follows]} content={initial} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()} />);
+  expect(screen.getByLabelText("Shape: From input").tagName).toBe("SPAN");
+  expect(screen.queryByRole("button", { name: "Shape" })).not.toBeInTheDocument();
+});
+
 it("reads a value every candidate fixes as a fact on its chip (Lyria's 30s)", () => {
   const fixed = presented({ ...candidate, parameters: { ...candidate.parameters, durationSeconds: { policy: "fixed", value: 30 } } });
   render(<CapabilitySettings profiles={[fixed]} content={initial} media={[]} disabled={false} onProfile={vi.fn()} onChange={vi.fn()} />);

@@ -76,6 +76,21 @@
 .vf-import-danger {
   color: #ffaaa3;
 }
+.vf-import-filename {
+  margin: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vf-import-preview:has(> .vf-icon) {
+  display: grid;
+  place-items: center;
+}
+.vf-import-preview > .vf-icon {
+  opacity: 0.6;
+}
 .vf-import-reason {
   margin: 0;
   color: var(--vf-secondary);

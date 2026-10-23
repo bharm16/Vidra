@@ -364,7 +364,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   const offeredRoles = offeredInputRoles(buffer.content, controller.profiles);
   const maskInput = source ? buffer.content.inputs.find(input => input.role === "mask") : undefined;
   const savedOnDevice = offline && buffer.checkpointSequence === buffer.sequence;
-  const wordsHint = waitingForImage && source ? "Waiting for the selected image" : controller.conversation?.status === "archived" ? "Your work and history are kept" : savedOnDevice ? "Offline · saved on this device" : undefined;
+  const wordsHint = waitingForImage && source ? "Waiting for the selected image" : controller.conversation?.status === "archived" ? "Your work and history are kept" : savedOnDevice ? "Offline · saved on this device" : buffer.content.instructions.length >= MAX_DRAFT_WORDS ? `Words stop at ${MAX_DRAFT_WORDS.toLocaleString("en-US")} characters` : undefined;
   const submit = async (): Promise<void> => { if (!onSubmit || making) return; setMaking(true); setSubmitError(undefined); try { await onSubmit(); } catch (failure) { setSubmitError(failure instanceof Error ? failure.message : "This request could not start. Your words are retained."); } finally { setMaking(false); } };
 
 

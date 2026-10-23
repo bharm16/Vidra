@@ -4,6 +4,18 @@ import { CreationDraftSchema, type CreationDraft } from "@shared/schemas/workflo
 import type { Conversation } from "@shared/schemas/workflow/project.schemas";
 import { getAuthRepository } from "@/repositories/index";
 import { WorkflowApi } from "@/features/project-workspace/api/workflowApi";
+import { canonicalJson } from "@shared/workflow/canonicalJson";
+
+/** Requests a person wrote: an empty one is a composer's scratch, and the same setup saved twice is listed once (newest). */
+export function writtenDrafts(rows: CreationDraft[]): CreationDraft[] {
+  const seen = new Set<string>();
+  return rows.filter(record => record.status === "open" || record.status === "parked").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).filter(record => {
+    if (!record.instructions.trim() && !record.inputs.length) return false;
+    const key = canonicalJson({ action: record.action, instructions: record.instructions.trim(), inputs: record.inputs, settings: record.settings });
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+}
 
 interface DraftList { scope: string; rows: CreationDraft[]; loading: boolean; error: string | undefined; }
 export interface ConversationDraftsController { drafts: CreationDraft[]; loading: boolean; error: string | undefined; retry(): void; }
@@ -27,7 +39,7 @@ export function useConversationDrafts(ownerId: string, projectId: string, conver
         if (abort.signal.aborted || currentScope.current !== scope) return;
         if (getAuthRepository().getCurrentUser()?.uid !== ownerId) throw new Error("The account changed while these requests were loading.");
         const rows = z.array(CreationDraftSchema.refine(record => record.ownerId === ownerId && record.projectId === projectId && record.conversationId === conversation.id, "This request belongs to another account or conversation.")).parse(response);
-        setState({ scope, rows: rows.filter(record => record.status === "open" || record.status === "parked").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), loading: false, error: undefined });
+        setState({ scope, rows: writtenDrafts(rows), loading: false, error: undefined });
       } catch (failure) { if (!abort.signal.aborted && currentScope.current === scope) setState({ scope, rows: [], loading: false, error: failure instanceof Error ? failure.message : "These requests could not load. Try again." }); }
     })();
     return () => abort.abort();

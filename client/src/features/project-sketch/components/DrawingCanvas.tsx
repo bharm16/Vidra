@@ -3,7 +3,8 @@ import { SNAPSHOT_INTERVAL_MS } from "@/features/realtime-sketch/config/constant
 
 export type DrawingTool = "select" | "brush" | "eraser" | "rectangle" | "ellipse";
 interface Point { x: number; y: number; }
-interface Stroke { tool: DrawingTool; ink: string; size: number; points: Point[]; }
+/** "clear" is an undoable step that wipes everything drawn (and an imported picture) before it. */
+interface Stroke { tool: DrawingTool | "clear"; ink: string; size: number; points: Point[]; }
 export interface DrawingCanvasHandle { undo(): void; redo(): void; clear(): void; importPicture(dataUri: string): void; }
 export interface DrawingCanvasProps {
   tool: DrawingTool; ink: string; brushSize: number; initialDataUri?: string;
@@ -27,7 +28,8 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     const element = canvas.current; if (!element) return;
     const start = performance.now();
     latestSnapshot.current(element.toDataURL(mask ? "image/png" : "image/jpeg", .85), Math.round(performance.now() - start));
-    let painted = strokes.current.some(stroke => stroke.tool !== "eraser") || Boolean(base.current);
+    const cleared = strokes.current.map(stroke => stroke.tool).lastIndexOf("clear");
+    let painted = strokes.current.slice(cleared + 1).some(stroke => stroke.tool !== "eraser") || (cleared < 0 && Boolean(base.current));
     if (mask) { const pixels = element.getContext("2d")?.getImageData(0, 0, element.width, element.height).data; painted = pixels ? pixels.some((value, index) => index % 4 === 3 && value > 0) : false; }
     history.current?.(strokes.current.length > 0, redo.current.length > 0, painted);
   }, [mask]);
@@ -37,6 +39,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     if (!mask) { context.fillStyle = background; context.fillRect(0, 0, element.width, element.height); }
     if (base.current) context.drawImage(base.current, 0, 0, element.width, element.height);
     for (const stroke of strokes.current) {
+      if (stroke.tool === "clear") { context.clearRect(0, 0, element.width, element.height); if (!mask) { context.fillStyle = background; context.fillRect(0, 0, element.width, element.height); } continue; }
       context.globalCompositeOperation = mask && stroke.tool === "eraser" ? "destination-out" : "source-over";
       context.strokeStyle = stroke.tool === "eraser" && !mask ? background : stroke.ink;
       context.fillStyle = context.strokeStyle;
@@ -58,7 +61,11 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
   useImperativeHandle(ref, () => ({
     undo(): void { const previous = strokes.current.pop(); if (previous) redo.current.push(previous); redraw(); snapshot(); },
     redo(): void { const next = redo.current.pop(); if (next) strokes.current.push(next); redraw(); snapshot(); },
-    clear(): void { strokes.current = []; redo.current = []; base.current = undefined; redraw(); snapshot(); },
+    clear(): void {
+      const last = strokes.current.at(-1);
+      if ((!last && !base.current) || last?.tool === "clear") return;
+      strokes.current.push({ tool: "clear", ink: "", size: 0, points: [] }); redo.current = []; redraw(); snapshot();
+    },
     importPicture,
   }), [redraw, snapshot, importPicture]);
   const point = (event: PointerEvent<HTMLCanvasElement>): Point => { const rect = event.currentTarget.getBoundingClientRect(); return { x: Math.max(0, Math.min(width, (event.clientX - rect.left) * width / Math.max(rect.width, 1))), y: Math.max(0, Math.min(height, (event.clientY - rect.top) * height / Math.max(rect.height, 1))) }; };

@@ -189,8 +189,11 @@ export function derivedParameter(policy: Extract<ParameterPolicy, { policy: "der
   if (!width || !height) return "From input";
   const gcd = (a: number, b: number): number => b ? gcd(b, a % b) : a;
   const divisor = gcd(width, height);
-  return `${width / divisor}:${height / divisor}`;
+  const ratio = `${width / divisor}:${height / divisor}`;
+  // A picture's exact ratio (1248×720 is 26:15) means nothing to a reader; only the familiar shapes are named.
+  return READABLE_RATIOS.has(ratio) ? ratio : "Same as picture";
 }
+const READABLE_RATIOS = new Set(["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9", "9:21", "2:1", "1:2"]);
 
 /** Incompatibilities stay visible instead of silently rewriting the saved setup. */
 export function capabilityProblems(profile: CapabilityProfile, content: DraftContent): string[] {

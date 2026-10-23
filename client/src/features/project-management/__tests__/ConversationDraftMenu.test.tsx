@@ -71,3 +71,10 @@ it("does not select cached work after the signed-in account changes", async () =
   fireEvent.click(row);
   expect(onOpenDraft).not.toHaveBeenCalled();
 });
+
+it("lists only requests a person wrote: no empty scratch drafts, and one row for the same setup saved twice", async () => {
+  const { writtenDrafts } = await import("../hooks/useConversationDrafts");
+  const empty = CreationDraftSchema.parse({ ...draft, id: "draft_empty", instructions: "  " });
+  const older = CreationDraftSchema.parse({ ...draft, id: "draft_older", updatedAt: "2026-01-01T00:00:00.000Z" });
+  expect(writtenDrafts([empty, older, draft]).map(record => record.id)).toEqual([draft.id]);
+});
