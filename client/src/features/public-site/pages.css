@@ -90,7 +90,11 @@
   border-bottom: 1px solid var(--vf-border);
 }
 .vf-site .vf-site-tool-name {
-  font-size: clamp(56px, calc((100cqw - 2 * var(--vf-site-margin)) * 0.1471), 200px);
+  font-size: clamp(
+    56px,
+    calc((100cqw - 2 * var(--vf-site-margin)) * 0.1471),
+    200px
+  );
   line-height: 0.8;
   letter-spacing: -0.04em;
 }
@@ -190,7 +194,11 @@
 
 /* ---------- Product: four chapters on one page ---------- */
 .vf-site-product {
-  --vf-site-mega: clamp(96px, calc((100cqw - 2 * var(--vf-site-margin)) * 0.2353), 320px);
+  --vf-site-mega: clamp(
+    96px,
+    calc((100cqw - 2 * var(--vf-site-margin)) * 0.2353),
+    320px
+  );
 }
 .vf-site-chapter {
   scroll-margin-top: var(--vf-space-24);
@@ -250,7 +258,8 @@
   flex: 1 1 0;
   aspect-ratio: 16 / 9;
   border-radius: var(--vf-radius-media);
-  background: url("/public-site/road.webp") calc(var(--vf-frame) * 20%) 60% / auto 133.33% no-repeat;
+  background: url("/public-site/road.webp") calc(var(--vf-frame) * 20%) 60% /
+    auto 133.33% no-repeat;
 }
 .vf-site-chapter[data-chapter="editor"] .vf-site-chapter-head {
   flex-direction: row-reverse;
@@ -338,7 +347,11 @@
   bottom: 0;
   left: 49.86%;
   height: 50%;
-  background: linear-gradient(to bottom, rgb(11 11 11 / 0%), rgb(11 11 11 / 60%));
+  background: linear-gradient(
+    to bottom,
+    rgb(11 11 11 / 0%),
+    rgb(11 11 11 / 60%)
+  );
   content: "";
   pointer-events: none;
 }
@@ -378,7 +391,9 @@
 }
 .vf-site .vf-site-numeral {
   flex: none;
-  font-size: clamp(200px, calc((100cqw - 2 * var(--vf-site-margin)) * 0.4412), 600px);
+  /* Browsers also space after the last glyph; Figma does not, so give that space back. */
+  margin-inline-end: 0.06em;
+  font-size: clamp(200px, calc(100cqw * 0.4412), 600px);
   line-height: 0.8;
   letter-spacing: -0.06em;
 }
@@ -522,6 +537,13 @@
     align-items: flex-start;
     gap: var(--vf-space-20);
   }
+  /* Site mega · Mobile is 96/81. */
+  .vf-site .vf-site-mega {
+    line-height: 0.844;
+  }
+  .vf-site-chapter[data-chapter="video"] .vf-site-chapter-head {
+    margin-top: calc(var(--vf-site-mega) * -0.4167);
+  }
   .vf-site-chapter[data-chapter="images"] {
     padding-top: var(--vf-space-48);
   }
@@ -618,6 +640,9 @@
   .vf-site-pricing-details {
     gap: var(--vf-space-24);
     padding-top: 0;
+  }
+  .vf-site-faq {
+    padding-top: var(--vf-space-8);
   }
   .vf-site .vf-site-pricing-note {
     font-size: 32px;

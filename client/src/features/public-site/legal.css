@@ -87,11 +87,17 @@
 }
 .vf-legal article ul {
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 25px;
   list-style: none;
 }
+.vf-legal article li {
+  position: relative;
+}
+/* A hanging bullet keeps wrapped lines aligned with the text. */
 .vf-legal article li::before {
-  content: "• ";
+  position: absolute;
+  left: -13px;
+  content: "•";
 }
 .vf-legal article li span {
   font-weight: 400;
@@ -118,7 +124,6 @@
     display: inline-flex !important;
     align-self: flex-start;
     width: 92px;
-    min-height: 36px;
     margin-bottom: var(--vf-space-4);
   }
   .vf-legal-back[data-tone="quiet"]:not(:disabled) {
