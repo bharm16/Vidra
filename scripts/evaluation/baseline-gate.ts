@@ -31,6 +31,10 @@ export interface Baseline {
   blessedAt: string;
   /** Provider this baseline applies to (e.g., "groq", "openai"). */
   provider: string;
+  /** Model the baseline was measured on. Scores from another model don't compare. */
+  model?: string;
+  /** How many runs were averaged into it. */
+  runs?: number;
   /** Optional commit SHA for traceability. */
   commit?: string;
   summary: EvaluationReport["summary"];
@@ -44,11 +48,18 @@ export interface GateOptions {
    */
   overallF1Tolerance?: number;
   /**
-   * Maximum allowed F1 drop (absolute) for any single category.
-   * Categories with low support amplify noise, so we use a stricter
-   * gate on overall + a looser gate per category. Default: 0.05.
+   * Smallest allowed F1 drop (absolute) for any single category. Default: 0.05.
    */
   perCategoryF1Tolerance?: number;
+  /**
+   * A category's tolerance grows as its support shrinks:
+   * max(perCategoryF1Tolerance, perCategoryNoise / sqrt(support)). Run-to-run
+   * F1 noise follows ~c/sqrt(support); on gpt-oss-20b c reached 0.25
+   * (2026-10-23, 6 runs), and 0.6 is about 3 standard deviations of the gap
+   * between two 3-run averages (the eval now averages 5). A 7-span category then allows 0.23, a 50-span one
+   * 0.08, and a broken category still fails. Default: 0.6.
+   */
+  perCategoryNoise?: number;
   /**
    * Categories with support < this threshold are skipped to avoid noise
    * from rare labels. Default: 5.
@@ -85,6 +96,7 @@ export interface GateResult {
 const DEFAULTS: Required<GateOptions> = {
   overallF1Tolerance: 0.02,
   perCategoryF1Tolerance: 0.05,
+  perCategoryNoise: 0.6,
   minSupportForGate: 5,
   taxonomyAccuracyTolerance: 0.03,
 };
@@ -166,14 +178,18 @@ export function compareToBaseline(
     if (baselineMetrics.support < opts.minSupportForGate) continue;
 
     const delta = baselineMetrics.f1 - currentMetrics.f1;
-    if (delta > opts.perCategoryF1Tolerance) {
+    const tolerance = Math.max(
+      opts.perCategoryF1Tolerance,
+      opts.perCategoryNoise / Math.sqrt(baselineMetrics.support),
+    );
+    if (delta > tolerance) {
       regressions.push({
         kind: "category_f1",
         scope: category,
         baseline: baselineMetrics.f1,
         current: currentMetrics.f1,
         delta,
-        tolerance: opts.perCategoryF1Tolerance,
+        tolerance,
         support: baselineMetrics.support,
       });
     }
@@ -207,7 +223,7 @@ export function formatGateResult(result: GateResult): string {
       const supportStr =
         r.support !== undefined ? ` (support=${r.support})` : "";
       lines.push(
-        `  • ${r.kind} [${r.scope}]${supportStr}: ${baselineStr} → ${currentStr} (${deltaStr}, tolerance=${r.tolerance})`,
+        `  • ${r.kind} [${r.scope}]${supportStr}: ${baselineStr} → ${currentStr} (${deltaStr}, tolerance=${r.tolerance.toFixed(3)})`,
       );
     }
   }
@@ -235,13 +251,66 @@ export function formatGateResult(result: GateResult): string {
  */
 export function buildBaseline(
   report: EvaluationReport,
-  meta: { provider: string; commit?: string },
+  meta: { provider: string; model?: string; runs?: number; commit?: string },
 ): Baseline {
   return {
     blessedAt: new Date().toISOString(),
     provider: meta.provider,
+    ...(meta.model !== undefined && { model: meta.model }),
+    ...(meta.runs !== undefined && { runs: meta.runs }),
     ...(meta.commit !== undefined && { commit: meta.commit }),
     summary: report.summary,
     byCategory: report.byCategory,
   };
+}
+
+/**
+ * The mean of several runs' reports. One LLM run is one noisy sample: on the
+ * 67-prompt golden set a ~20-span category moves by ~0.06 F1 between identical
+ * runs, more than the per-category tolerance. Averaging N runs narrows that by
+ * about sqrt(N). A category missing from a run (no gold and no prediction
+ * there) is averaged over the runs it appears in.
+ */
+export function averageReports(reports: EvaluationReport[]): EvaluationReport {
+  if (reports.length === 0) throw new Error("averageReports needs at least one report");
+  const mean = (values: number[]): number => values.reduce((sum, value) => sum + value, 0) / values.length;
+  const categories = new Set(reports.flatMap((report) => Object.keys(report.byCategory)));
+  const byCategory: Record<string, CategoryMetrics> = {};
+  for (const category of categories) {
+    const present = reports.flatMap((report) => (report.byCategory[category] ? [report.byCategory[category]] : []));
+    byCategory[category] = {
+      f1: mean(present.map((metrics) => metrics.f1)),
+      precision: mean(present.map((metrics) => metrics.precision)),
+      recall: mean(present.map((metrics) => metrics.recall)),
+      support: Math.max(...present.map((metrics) => metrics.support)),
+    };
+  }
+  return {
+    summary: {
+      relaxedF1: mean(reports.map((report) => report.summary.relaxedF1)),
+      precision: mean(reports.map((report) => report.summary.precision)),
+      recall: mean(reports.map((report) => report.summary.recall)),
+      taxonomyAccuracy: mean(reports.map((report) => report.summary.taxonomyAccuracy)),
+    },
+    byCategory,
+  };
+}
+
+/**
+ * Why this baseline can't judge a run on `model` averaged over `runs`, or
+ * undefined when it can. Scores from another model don't compare, and the
+ * tolerances assume both sides average the same number of runs. A baseline
+ * that records neither is accepted with a warning by the caller.
+ */
+export function baselineMismatch(
+  baseline: Baseline,
+  run: { model: string; runs: number },
+): string | undefined {
+  if (baseline.model !== undefined && baseline.model !== run.model) {
+    return `Baseline was blessed on ${baseline.model}, but this run uses ${run.model}. Scores from different models don't compare: re-bless with --bless after reviewing the change.`;
+  }
+  if (baseline.runs !== undefined && baseline.runs !== run.runs) {
+    return `Baseline averages ${baseline.runs} runs, but this run averages ${run.runs}. The tolerances assume equal averaging: run with --runs ${baseline.runs}.`;
+  }
+  return undefined;
 }

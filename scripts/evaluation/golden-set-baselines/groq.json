@@ -1,30 +1,32 @@
 {
-  "blessedAt": "2026-05-09T04:36:18.493Z",
+  "blessedAt": "2026-10-23T16:11:23.154Z",
   "provider": "groq",
+  "model": "openai/gpt-oss-20b",
+  "runs": 5,
   "summary": {
-    "relaxedF1": 0.7275405007363771,
-    "precision": 0.7507598784194529,
-    "recall": 0.7057142857142857,
-    "taxonomyAccuracy": 0.9111111111111111
+    "relaxedF1": 0.6947542360116008,
+    "precision": 0.6969617476332545,
+    "recall": 0.6925714285714285,
+    "taxonomyAccuracy": 0.8358010381911883
   },
   "byCategory": {
     "camera.movement": {
-      "f1": 0.5,
-      "precision": 0.4117647058823529,
-      "recall": 0.6363636363636364,
+      "f1": 0.4633484162895928,
+      "precision": 0.4027586206896552,
+      "recall": 0.5454545454545454,
       "support": 22
     },
     "subject.identity": {
-      "f1": 0.8823529411764706,
-      "precision": 0.9574468085106383,
-      "recall": 0.8181818181818182,
+      "f1": 0.9473461470640098,
+      "precision": 0.9805429864253392,
+      "recall": 0.9163636363636364,
       "support": 55
     },
     "action.movement": {
-      "f1": 0.7333333333333333,
-      "precision": 0.6666666666666666,
-      "recall": 0.8148148148148148,
-      "support": 27
+      "f1": 0.4090845588929374,
+      "precision": 0.31045943304007817,
+      "recall": 0.6,
+      "support": 16
     },
     "style.aesthetic": {
       "f1": 0,
@@ -33,56 +35,62 @@
       "support": 2
     },
     "lighting.quality": {
-      "f1": 0.6557377049180327,
-      "precision": 0.7692307692307693,
-      "recall": 0.5714285714285714,
+      "f1": 0.6188194038573933,
+      "precision": 0.7641304347826086,
+      "recall": 0.5199999999999999,
       "support": 35
     },
     "lighting.timeOfDay": {
-      "f1": 0.7368421052631579,
-      "precision": 0.875,
+      "f1": 0.7777777777777778,
+      "precision": 1,
       "recall": 0.6363636363636364,
       "support": 11
     },
     "shot.type": {
-      "f1": 0.8387096774193549,
-      "precision": 0.8125,
-      "recall": 0.8666666666666667,
-      "support": 15
+      "f1": 0.7434482758620691,
+      "precision": 0.6254901960784314,
+      "recall": 0.9166666666666666,
+      "support": 12
     },
     "subject.appearance": {
-      "f1": 0.9318181818181819,
-      "precision": 0.9111111111111111,
-      "recall": 0.9534883720930233,
+      "f1": 0.9278311201906707,
+      "precision": 0.8994963511152225,
+      "recall": 0.9581395348837208,
       "support": 43
     },
     "action.state": {
-      "f1": 0.48,
-      "precision": 0.6,
-      "recall": 0.4,
+      "f1": 0.5487179487179488,
+      "precision": 0.6409090909090909,
+      "recall": 0.48,
       "support": 15
     },
     "environment.location": {
-      "f1": 0.7945205479452055,
-      "precision": 0.9354838709677419,
-      "recall": 0.6904761904761905,
+      "f1": 0.8718738052071385,
+      "precision": 0.9455189255189256,
+      "recall": 0.8095238095238096,
       "support": 42
     },
     "lighting.source": {
-      "f1": 0.7169811320754716,
-      "precision": 0.7307692307692307,
-      "recall": 0.7037037037037037,
+      "f1": 0.6542948717948718,
+      "precision": 0.5647463252726411,
+      "recall": 0.7777777777777778,
       "support": 27
     },
+    "action.gesture": {
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
+      "support": 11
+    },
     "environment.context": {
-      "f1": 0.1739130434782609,
-      "precision": 0.13333333333333333,
-      "recall": 0.25,
+      "f1": 0.2788819875776397,
+      "precision": 0.2144871794871795,
+      "recall": 0.4,
       "support": 8
     },
     "lighting.colorTemp": {
-      "f1": 0.6153846153846154,
-      "precision": 0.8,
+      "f1": 0.6564102564102564,
+      "precision": 0.96,
       "recall": 0.5,
       "support": 8
     },
@@ -93,10 +101,16 @@
       "support": 2
     },
     "environment.weather": {
-      "f1": 0.7499999999999999,
-      "precision": 1,
-      "recall": 0.6,
+      "f1": 0.5833333333333333,
+      "precision": 0.7499999999999999,
+      "recall": 0.48,
       "support": 5
+    },
+    "camera.angle": {
+      "f1": 0.2,
+      "precision": 0.4,
+      "recall": 0.13333333333333333,
+      "support": 3
     },
     "subject.wardrobe": {
       "f1": 0.7272727272727273,
@@ -129,21 +143,21 @@
       "support": 4
     },
     "style.filmStock": {
-      "f1": 1,
+      "f1": 0.8,
       "precision": 1,
-      "recall": 1,
+      "recall": 0.6666666666666666,
       "support": 3
     },
     "camera.lens": {
-      "f1": 0.4,
-      "precision": 1,
+      "f1": 0.28571428571428575,
+      "precision": 0.3333333333333333,
       "recall": 0.25,
       "support": 4
     },
     "style.colorGrade": {
-      "f1": 0,
-      "precision": 0,
-      "recall": 0,
+      "f1": 0.64,
+      "precision": 0.5,
+      "recall": 0.9,
       "support": 2
     },
     "technical.resolution": {
@@ -159,9 +173,9 @@
       "support": 1
     },
     "audio.ambient": {
-      "f1": 0.5714285714285715,
-      "precision": 0.5,
-      "recall": 0.6666666666666666,
+      "f1": 0,
+      "precision": 0,
+      "recall": 0,
       "support": 3
     }
   }

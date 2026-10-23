@@ -20,6 +20,7 @@
  *   tsx scripts/evaluation/golden-set-relaxed-f1.ts --provider openai
  *   tsx scripts/evaluation/golden-set-relaxed-f1.ts --fixtures core,lighting
  *   tsx scripts/evaluation/golden-set-relaxed-f1.ts --concurrency 5
+ *   tsx scripts/evaluation/golden-set-relaxed-f1.ts --runs 5
  *
  * Exit codes:
  *   0 = passed (or bless succeeded)
@@ -38,6 +39,8 @@ import { labelSpans } from "../../server/src/llm/span-labeling/SpanLabelingServi
 import { warmupNlpServices } from "../../server/src/llm/span-labeling/nlp/NlpSpanService.js";
 import { RelaxedF1Evaluator } from "../../server/src/llm/span-labeling/evaluation/RelaxedF1Evaluator.js";
 import {
+  averageReports,
+  baselineMismatch,
   buildBaseline,
   compareToBaseline,
   formatGateResult,
@@ -45,6 +48,7 @@ import {
   type EvaluationReport,
 } from "./baseline-gate.js";
 import { createBaselineStore } from "./baseline-store.js";
+import { withTransientRetry } from "./transientRetry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -60,9 +64,8 @@ const RESULTS_PATH = join(__dirname, "golden-set-results-latest.json");
 
 const baselineStore = createBaselineStore<Baseline>(BASELINES_DIR);
 
-// Abort if more than this fraction of prompts fail — F1 numbers from a partial
-// run can't be trusted as a baseline or compared against one.
-const MAX_ERROR_RATE = 0.2;
+// Any prompt that still fails after transient retries aborts the run: a
+// dropped prompt changes the denominator, so its F1 can't be compared.
 
 interface GoldenSpan {
   text: string;
@@ -88,6 +91,7 @@ interface CliOptions {
   provider: "groq" | "openai" | "auto";
   fixtures: string[] | null;
   concurrency: number;
+  runs: number;
   commit: string | undefined;
 }
 
@@ -97,6 +101,7 @@ function parseArgs(argv: string[]): CliOptions {
     provider: "auto",
     fixtures: null,
     concurrency: 5,
+    runs: 5,
     commit: process.env.GIT_COMMIT,
   };
 
@@ -116,11 +121,16 @@ function parseArgs(argv: string[]): CliOptions {
       if (!Number.isFinite(opts.concurrency) || opts.concurrency < 1) {
         throw new Error("--concurrency must be a positive integer");
       }
+    } else if (arg === "--runs") {
+      opts.runs = Number(argv[++i] ?? "5");
+      if (!Number.isInteger(opts.runs) || opts.runs < 1) {
+        throw new Error("--runs must be a positive integer");
+      }
     } else if (arg === "--commit") {
       opts.commit = argv[++i];
     } else if (arg === "--help" || arg === "-h") {
       console.log(
-        "Usage: golden-set-relaxed-f1.ts [--bless] [--provider groq|openai|auto] [--fixtures core,lighting] [--concurrency N]",
+        "Usage: golden-set-relaxed-f1.ts [--bless] [--provider groq|openai|auto] [--fixtures core,lighting] [--concurrency N] [--runs N]",
       );
       process.exit(0);
     } else {
@@ -181,9 +191,11 @@ async function runLabeling(
       batch.map(async (prompt, batchIndex) => {
         const idx = batchStart + batchIndex;
         try {
-          const response = await labelSpans(
-            { text: prompt.text, maxSpans: 50, minConfidence: 0.5 },
-            aiService,
+          const response = await withTransientRetry(() =>
+            labelSpans(
+              { text: prompt.text, maxSpans: 50, minConfidence: 0.5 },
+              aiService,
+            ),
           );
           const predicted: GoldenSpan[] = (response.spans || []).map((s) => ({
             text: s.text ?? "",
@@ -264,27 +276,49 @@ async function main(): Promise<number> {
   console.log(`  provider: ${provider}`);
   console.log(`  model: ${model}`);
 
+  console.log(`  runs: ${opts.runs} (averaged)`);
+
+  const baseline = opts.bless ? null : baselineStore.read(provider);
+  if (!opts.bless) {
+    if (!baseline) {
+      console.error(
+        `\n❌ No baseline at ${baselineStore.path(provider)}. Run with --bless first to establish one.`,
+      );
+      return 2;
+    }
+    const mismatch = baselineMismatch(baseline, { model, runs: opts.runs });
+    if (mismatch) {
+      console.error(`\n❌ ${mismatch}`);
+      return 2;
+    }
+    if (baseline.model === undefined) {
+      console.warn(`\n⚠ Baseline records no model; it may come from another one. Re-bless to record ${model}.`);
+    }
+  }
+
   console.log("\nWarming up NLP services...");
   await warmupNlpServices();
 
-  console.log("Running span labeling...");
-  const results = await runLabeling(allPrompts, service, opts.concurrency);
-
-  const errorCount = results.filter((r) => r.error !== null).length;
-  const errorRate = errorCount / results.length;
-  console.log(
-    `\n  errors: ${errorCount}/${results.length} (${(errorRate * 100).toFixed(1)}%)`,
-  );
-
-  if (errorRate > MAX_ERROR_RATE) {
-    console.error(
-      `\n❌ Error rate ${(errorRate * 100).toFixed(1)}% exceeds threshold ${(MAX_ERROR_RATE * 100).toFixed(0)}%. Aborting — partial F1 numbers can't be trusted.`,
-    );
-    return 2;
-  }
-
   const evaluator = new RelaxedF1Evaluator();
-  const report = toEvaluationReport(results, evaluator);
+  const reports: EvaluationReport[] = [];
+  const runResults: PromptResult[][] = [];
+  for (let run = 1; run <= opts.runs; run++) {
+    console.log(`Running span labeling (run ${run}/${opts.runs})...`);
+    const results = await runLabeling(allPrompts, service, opts.concurrency);
+    runResults.push(results);
+    const failed = results.filter((r) => r.error !== null);
+    if (failed.length > 0) {
+      console.error(
+        `\n❌ ${failed.length}/${results.length} prompts failed after retries (first: ${failed[0]?.error}). Aborting — a partial run can't be compared.`,
+      );
+      return 2;
+    }
+    reports.push(toEvaluationReport(results, evaluator));
+    console.log(
+      `  run ${run}: F1 ${reports[run - 1]?.summary.relaxedF1.toFixed(3)}, taxonomy accuracy ${reports[run - 1]?.summary.taxonomyAccuracy.toFixed(3)}`,
+    );
+  }
+  const report = averageReports(reports);
 
   console.log("\nReport:");
   console.log(`  overall F1:        ${report.summary.relaxedF1.toFixed(3)}`);
@@ -304,21 +338,27 @@ async function main(): Promise<number> {
         provider,
         model,
         commit: opts.commit ?? null,
+        runs: opts.runs,
         report,
+        runReports: reports,
         // Full per-prompt records including predicted and ground-truth
         // spans. Required for confusion-matrix and per-prompt diagnostics
         // (`scripts/evaluation/diagnose-failures.ts`). The file is tracked
         // in git (~110KB for 67 prompts) so cross-PR baseline drift shows
         // up in `git diff` — accept the per-run timestamp churn as the
         // cost of that observability.
-        perPrompt: results.map((r) => ({
-          promptId: r.promptId,
-          predictedCount: r.predicted.length,
-          groundTruthCount: r.groundTruth.length,
-          predicted: r.predicted,
-          groundTruth: r.groundTruth,
-          error: r.error,
-        })),
+        // Every run, tagged, so a regression from any averaged run can be traced.
+        perPrompt: runResults.flatMap((results, index) =>
+          results.map((r) => ({
+            run: index + 1,
+            promptId: r.promptId,
+            predictedCount: r.predicted.length,
+            groundTruthCount: r.groundTruth.length,
+            predicted: r.predicted,
+            groundTruth: r.groundTruth,
+            error: r.error,
+          })),
+        ),
       },
       null,
       2,
@@ -328,23 +368,18 @@ async function main(): Promise<number> {
   console.log(`  results: ${RESULTS_PATH}`);
 
   if (opts.bless) {
-    const baseline = buildBaseline(report, {
+    const blessed = buildBaseline(report, {
       provider,
+      model,
+      runs: opts.runs,
       ...(opts.commit !== undefined && { commit: opts.commit }),
     });
-    baselineStore.write(baseline.provider, baseline);
+    baselineStore.write(blessed.provider, blessed);
     console.log(`\n✅ Baseline blessed: ${baselineStore.path(provider)}`);
     return 0;
   }
 
-  const baseline = baselineStore.read(provider);
-  if (!baseline) {
-    console.error(
-      `\n❌ No baseline at ${baselineStore.path(provider)}. Run with --bless first to establish one.`,
-    );
-    return 2;
-  }
-
+  if (!baseline) return 2;
   const gate = compareToBaseline(report, baseline);
   console.log("\n" + formatGateResult(gate));
 
