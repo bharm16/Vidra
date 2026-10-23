@@ -101,6 +101,21 @@ describe("labelSpans at the port seam", () => {
     expect(result.meta?.version).toBeTruthy();
   });
 
+  it("uses two-pass extraction when the router runs a mini model", async () => {
+    const port = makePort(
+      [
+        "Reasoning: a bureaucrat subject under fluorescent light.",
+        spanPayload([{ text: "fluorescent hum", role: "lighting.source" }]),
+      ],
+      "gpt-4o-mini",
+    );
+
+    const result = await labelSpans({ text: LLM_ONLY_TEXT }, port);
+
+    expect(port.calls.length).toBe(2);
+    expect(result.spans.map((span) => span.text)).toContain("fluorescent hum");
+  });
+
   it("flags adversarial input before any LLM call is made", async () => {
     const port = makePort([spanPayload([])]);
 
