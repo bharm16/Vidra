@@ -23,10 +23,10 @@ export function PrivacyPolicyPage(): ReactElement {
               <section>
                 <SectionHeading id="overview">Overview</SectionHeading>
                 <p>
-                  This Privacy Policy explains how {companyName}<br />
-                  (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)<br />
-                  collects, uses, and shares information when you use<br />
-                  {productName} (the &ldquo;Service&rdquo;).<br />
+                  This Privacy Policy explains how {companyName}{" "}
+                  (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)
+                  collects, uses, and shares information when you use{" "}
+                  {productName} (the &ldquo;Service&rdquo;).
                   Questions? Contact us at{" "}
                   <a
                     className="font-medium hover:underline"
@@ -35,7 +35,7 @@ export function PrivacyPolicyPage(): ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  <br />.
+                  .
                 </p>
               </section>
 
@@ -79,9 +79,9 @@ export function PrivacyPolicyPage(): ReactElement {
                   </li>
                 </ul>
                 <p>
-                  AI processing.<br />
+                  AI processing.
                   When you use AI features, we send inputs to the relevant AI
-                  <br />provider to process your request and return results.
+                  provider to process your request and return results.
                 </p>
               </section>
 
@@ -101,7 +101,7 @@ export function PrivacyPolicyPage(): ReactElement {
                 <p>
                   We share information with service providers (hosting,
                   analytics, error monitoring, payment processing) and AI
-                  <br />providers you use through the Service. We may share to comply
+                  providers you use through the Service. We may share to comply
                   with law, protect rights/safety, or in connection with a
                   business transfer. We do not sell personal information.
                 </p>
@@ -170,7 +170,7 @@ export function PrivacyPolicyPage(): ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  <br />.
+                  .
                 </p>
               </section>
   </LegalPageLayout>;

@@ -1,11 +1,13 @@
 import { useEffect, useId, useState, type ReactElement } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { FreshButton } from "@/components/fresh/FreshButton";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { Textarea } from "@promptstudio/system/components/ui/textarea";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/components/ui/dropdown-menu";
-import { SiteLink, SiteShell } from "@/features/public-site/SiteShell";
+import { SiteShell } from "@/features/public-site/SiteShell";
+import { SiteCtaButton } from "@/features/public-site/components/SiteCta";
+import { Still } from "@/features/public-site/components/Still";
 import { SUPPORT_TOPICS, openSupportDraft, supportAddress, supportDraft, supportDraftSchema, supportTopic, type SupportTopic } from "@/features/public-site/support";
 import "./contact-support.css";
 
@@ -40,8 +42,6 @@ export function ContactSupportPage(): ReactElement {
   const draft = supportDraft(topic, email, message);
   const address = supportAddress();
   const ready = Boolean(message.trim()) && topic !== "data" && topic !== "deletion";
-  const title = topic === "security" ? "Report a security issue" : topic === "feedback" ? "Product feedback" : topic === "data" ? "Request help with your account data" : topic === "deletion" ? "Account deletion request" : "How can we help?";
-  const mobileTitle = topic === "feedback" ? "Share feedback" : topic === "data" ? "Request your account data" : topic === "deletion" ? "Request account deletion" : ready && topic === "support" ? "Contact support" : title;
   const chooseTopic = (value: SupportTopic): void => { setTopic(value); setMessageEdited(true); setTopicOpen(false); setDesktopTopicsOpen(false); setHandoff("idle"); setErrors({}); };
   const changeEmail = (value: string): void => {
     setEmail(value); setErrors(current => {
@@ -68,9 +68,10 @@ export function ContactSupportPage(): ReactElement {
     }
   };
   const topicLabel = SUPPORT_TOPICS.find(option => option.value === topic)?.accessible ?? "Support request";
-  return <SiteShell footer={false}><main className="vf-support" data-ready={ready || undefined} data-topic={topic} data-topics-open={desktopTopicsOpen || undefined}>
-    <h1><span className="vf-support-desktop">{title}</span><span className="vf-support-mobile">{mobileTitle}</span></h1>
-    <div className="vf-support-columns"><form aria-label="Contact support form" action={draft.url} noValidate onSubmit={event => {
+  return <SiteShell><main className="vf-support" data-ready={ready || undefined} data-topic={topic} data-topics-open={desktopTopicsOpen || undefined}>
+    <Still name="phone" className="vf-support-still" eager />
+    <div className="vf-support-talk"><h1 className="vf-site-title">Talk to us.</h1><div className="vf-support-contact"><div className="vf-support-address"><p>{address}</p><SiteCtaButton onClick={() => void copyAddress()}>{copy === "address" ? "Copied" : "Copy"}</SiteCtaButton></div><div aria-live="polite">{copy === "failed" ? <p className="vf-support-error" role="alert">Could not copy. Select the address and copy it manually.</p> : null}</div></div>
+    <form aria-label="Contact support form" action={draft.url} noValidate onSubmit={event => {
       event.preventDefault();
       const result = supportDraftSchema.safeParse({ email, message });
       if (!result.success) {
@@ -88,9 +89,7 @@ export function ContactSupportPage(): ReactElement {
       <label className="vf-support-message-label" htmlFor={id + "-message"}>Message</label><Textarea id={id + "-message"} className="vf-support-message" data-untouched-template={(topic === "data" || topic === "deletion") && !messageEdited || undefined} value={message} maxLength={8000} onChange={event => changeMessage(event.target.value)} placeholder="What happened, and what were you trying to do?" aria-invalid={Boolean(errors.message)} aria-describedby={errors.message ? id + "-message-error" : undefined} />
       {errors.message ? <p className="vf-support-error" role="alert" id={id + "-message-error"}>{errors.message}</p> : null}
       <FreshButton className="vf-support-submit" tone="primary" type="submit" disabled={mobileLayout && Boolean(errors.email || errors.message)}>Continue in email</FreshButton>
-      <div className="vf-support-mobile-address"><p>{address}</p><FreshButton type="button" tone="quiet" onClick={() => void copyAddress()}>{copy === "address" ? "Copied" : "Copy email address"}</FreshButton>{copy === "failed" ? <p className="vf-support-error" role="alert">Could not copy. Select the address and copy it manually.</p> : null}</div>
-    </form><aside aria-label="Support information"><h2>Find an answer</h2><SiteLink to="/docs/start">Get started</SiteLink><SiteLink to="/docs/recovery">Recover interrupted work</SiteLink><SiteLink to="/docs/sharing">Share and download your work</SiteLink><p className="vf-support-label">Email</p><p className="vf-support-address">{address}</p><FreshButton onClick={() => void copyAddress()}>{copy === "address" ? "Copied" : "Copy email address"}</FreshButton><div aria-live="polite">{copy === "failed" ? <p className="vf-support-error" role="alert">Could not copy. Select the address and copy it manually.</p> : null}</div></aside></div>
-    <footer className="vf-support-legal"><Link to="/privacy-policy">Privacy policy</Link><Link to="/terms-of-service">Terms of service</Link></footer>
+    </form></div>
     <Dialog open={topicOpen} onOpenChange={setTopicOpen}><DialogContent hideClose overlayClassName="vf-support-topic-overlay" className="vf vf-support-topic-sheet"><DialogTitle>Support topic</DialogTitle><DialogDescription className="sr-only">Choose what you need help with.</DialogDescription>{SUPPORT_TOPICS.slice(0, 3).map(option => <FreshButton key={option.value} type="button" tone="quiet" onClick={() => chooseTopic(option.value)}>{option.accessible}</FreshButton>)}<DialogClose><img src="/design-assets/fidelity-public-close.svg" alt="" /><span className="sr-only">Close</span></DialogClose></DialogContent></Dialog>
     <Dialog open={handoff !== "idle"} onOpenChange={open => { if (!open) setHandoff("idle"); }}><DialogContent hideClose overlayClassName={"vf-support-overlay" + (handoff === "prepared" ? " is-prepared" : handoff === "manual" ? " is-manual" : "")} className="vf vf-support-handoff" data-state-kind={handoff}>
       <DialogTitle><span className="vf-support-desktop">{handoff === "prepared" ? "Continue in your email app" : handoff === "manual" ? "Copy the address manually" : "Email app did not open?"}</span><span className="vf-support-mobile">{handoff === "prepared" ? "Continue in email" : handoff === "copied" ? "Email address copied" : handoff === "manual" ? "Copy the address manually" : "No email app opened"}</span></DialogTitle>

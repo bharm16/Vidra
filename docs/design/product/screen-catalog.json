@@ -16,21 +16,8 @@
       "nodeId": "959:87947",
       "name": "W01 · Landing page",
       "width": 1440,
-      "height": 2388,
+      "height": 4114,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947"
-    },
-    {
-      "key": "W02",
-      "title": "Product navigation open",
-      "kind": "landing",
-      "route": "/",
-      "state": "menu",
-      "status": "designed-awaiting-review",
-      "nodeId": "959:88089",
-      "name": "W02 · Product navigation open",
-      "width": 1440,
-      "height": 2388,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88089"
     },
     {
       "key": "W03",
@@ -42,60 +29,21 @@
       "nodeId": "959:88269",
       "name": "W03 · Landing page for a returning creator",
       "width": 1440,
-      "height": 2388,
+      "height": 4114,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88269"
     },
     {
       "key": "W04",
-      "title": "Image creation product page",
+      "title": "Product page",
       "kind": "feature",
-      "route": "/product/images",
-      "state": "images",
+      "route": "/product",
+      "state": "chapters",
       "status": "designed-awaiting-review",
       "nodeId": "959:88411",
-      "name": "W04 · Image creation product page",
+      "name": "W04 · Product page",
       "width": 1440,
-      "height": 1958,
+      "height": 4853,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411"
-    },
-    {
-      "key": "W05",
-      "title": "Video generation product page",
-      "kind": "feature",
-      "route": "/product/video",
-      "state": "video",
-      "status": "designed-awaiting-review",
-      "nodeId": "959:88495",
-      "name": "W05 · Video generation product page",
-      "width": 1440,
-      "height": 1958,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495"
-    },
-    {
-      "key": "W06",
-      "title": "Video editing product page",
-      "kind": "feature",
-      "route": "/product/editor",
-      "state": "editor",
-      "status": "designed-awaiting-review",
-      "nodeId": "959:88576",
-      "name": "W06 · Video editing product page",
-      "width": 1440,
-      "height": 2026,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576"
-    },
-    {
-      "key": "W07",
-      "title": "Sketch product page",
-      "kind": "feature",
-      "route": "/product/sketch",
-      "state": "sketch",
-      "status": "designed-awaiting-review",
-      "nodeId": "959:88732",
-      "name": "W07 · Sketch product page",
-      "width": 1440,
-      "height": 1958,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732"
     },
     {
       "key": "W08",
@@ -107,21 +55,8 @@
       "nodeId": "959:88816",
       "name": "W08 · Pricing during free testing",
       "width": 1440,
-      "height": 1454,
+      "height": 1480,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88816"
-    },
-    {
-      "key": "W09",
-      "title": "Pricing questions expanded",
-      "kind": "pricing",
-      "route": "/pricing",
-      "state": "questions",
-      "status": "designed-awaiting-review",
-      "nodeId": "959:88920",
-      "name": "W09 · Pricing questions expanded",
-      "width": 1440,
-      "height": 1798,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88920"
     },
     {
       "key": "W10",
@@ -133,7 +68,7 @@
       "nodeId": "959:89028",
       "name": "W10 · Privacy policy",
       "width": 1440,
-      "height": 3078,
+      "height": 2885,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89028"
     },
     {
@@ -146,7 +81,7 @@
       "nodeId": "959:89112",
       "name": "W11 · Terms of service",
       "width": 1440,
-      "height": 2952,
+      "height": 2749,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89112"
     },
     {
@@ -384,7 +319,7 @@
       "nodeId": "963:91185",
       "name": "H01 · Documentation home",
       "width": 1440,
-      "height": 1480,
+      "height": 1784,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185"
     },
     {
@@ -397,7 +332,7 @@
       "nodeId": "963:89912",
       "name": "H02 · Get started",
       "width": 1440,
-      "height": 1522,
+      "height": 1826,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-89912"
     },
     {
@@ -410,7 +345,7 @@
       "nodeId": "963:90023",
       "name": "H03 · Create and edit images",
       "width": 1440,
-      "height": 1496,
+      "height": 1800,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90023"
     },
     {
@@ -423,7 +358,7 @@
       "nodeId": "963:90134",
       "name": "H04 · Generate a video clip",
       "width": 1440,
-      "height": 1574,
+      "height": 1878,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90134"
     },
     {
@@ -436,7 +371,7 @@
       "nodeId": "963:90245",
       "name": "H05 · Assemble and export a video",
       "width": 1440,
-      "height": 1548,
+      "height": 1852,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245"
     },
     {
@@ -449,7 +384,7 @@
       "nodeId": "963:90401",
       "name": "H06 · Import and organize media",
       "width": 1440,
-      "height": 1522,
+      "height": 1826,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90401"
     },
     {
@@ -462,7 +397,7 @@
       "nodeId": "963:90512",
       "name": "H07 · Conversations, drafts and versions",
       "width": 1440,
-      "height": 1548,
+      "height": 1852,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512"
     },
     {
@@ -475,7 +410,7 @@
       "nodeId": "963:90630",
       "name": "H08 · Draw with Sketch",
       "width": 1440,
-      "height": 1522,
+      "height": 1826,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90630"
     },
     {
@@ -488,7 +423,7 @@
       "nodeId": "963:90741",
       "name": "H09 · Choose models and settings",
       "width": 1440,
-      "height": 1548,
+      "height": 1852,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90741"
     },
     {
@@ -501,7 +436,7 @@
       "nodeId": "963:90852",
       "name": "H10 · Share and download your work",
       "width": 1440,
-      "height": 1522,
+      "height": 1826,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90852"
     },
     {
@@ -514,7 +449,7 @@
       "nodeId": "963:90963",
       "name": "H11 · Recover interrupted work",
       "width": 1440,
-      "height": 1574,
+      "height": 1878,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90963"
     },
     {
@@ -527,7 +462,7 @@
       "nodeId": "963:91074",
       "name": "H12 · Understand your testing allowance",
       "width": 1440,
-      "height": 1496,
+      "height": 1800,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91074"
     },
     {
@@ -540,7 +475,7 @@
       "nodeId": "963:91320",
       "name": "H13 · Search documentation",
       "width": 1440,
-      "height": 1480,
+      "height": 1784,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91320"
     },
     {
@@ -553,7 +488,7 @@
       "nodeId": "963:91471",
       "name": "H14 · Documentation search results",
       "width": 1440,
-      "height": 1480,
+      "height": 1784,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91471"
     },
     {
@@ -566,7 +501,7 @@
       "nodeId": "963:91630",
       "name": "H15 · Documentation search has no matches",
       "width": 1440,
-      "height": 1480,
+      "height": 1784,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91630"
     },
     {
@@ -579,7 +514,7 @@
       "nodeId": "963:91783",
       "name": "H16 · Documentation search unavailable",
       "width": 1440,
-      "height": 1480,
+      "height": 1784,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91783"
     },
     {
@@ -787,7 +722,7 @@
       "nodeId": "965:92848",
       "name": "S01 · Contact support",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848"
     },
     {
@@ -800,7 +735,7 @@
       "nodeId": "965:92901",
       "name": "S02 · Support details ready",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92901"
     },
     {
@@ -813,7 +748,7 @@
       "nodeId": "965:92954",
       "name": "S03 · Support form validation",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92954"
     },
     {
@@ -826,7 +761,7 @@
       "nodeId": "965:93014",
       "name": "S04 · Choose a support topic",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93014"
     },
     {
@@ -839,7 +774,7 @@
       "nodeId": "965:93074",
       "name": "S05 · Continue in your email app",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93074"
     },
     {
@@ -852,7 +787,7 @@
       "nodeId": "965:93136",
       "name": "S06 · No email app available",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93136"
     },
     {
@@ -865,7 +800,7 @@
       "nodeId": "965:93198",
       "name": "S07 · Support address copied",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93198"
     },
     {
@@ -878,7 +813,7 @@
       "nodeId": "965:93251",
       "name": "S08 · Clipboard permission failed",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93251"
     },
     {
@@ -891,7 +826,7 @@
       "nodeId": "965:93305",
       "name": "S09 · Security report",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93305"
     },
     {
@@ -904,7 +839,7 @@
       "nodeId": "965:93359",
       "name": "S10 · Request account data or deletion",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93359"
     },
     {
@@ -1022,7 +957,7 @@
       "nodeId": "966:93576",
       "name": "N01 · Mobile Landing page",
       "width": 390,
-      "height": 2352,
+      "height": 2393,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93576"
     },
     {
@@ -1041,59 +976,17 @@
     },
     {
       "key": "N03",
-      "title": "Mobile Image product page",
+      "title": "Mobile Product page",
       "kind": "mobile",
       "route": "responsive",
       "state": "W04",
       "status": "designed-awaiting-review",
       "sourceScreen": "W04",
       "nodeId": "966:93768",
-      "name": "N03 · Mobile Image product page",
+      "name": "N03 · Mobile Product page",
       "width": 390,
-      "height": 1404,
+      "height": 2842,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93768"
-    },
-    {
-      "key": "N04",
-      "title": "Mobile Video product page",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "W05",
-      "status": "designed-awaiting-review",
-      "sourceScreen": "W05",
-      "nodeId": "966:93799",
-      "name": "N04 · Mobile Video product page",
-      "width": 390,
-      "height": 1430,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93799"
-    },
-    {
-      "key": "N05",
-      "title": "Mobile Editor product page",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "W06",
-      "status": "designed-awaiting-review",
-      "sourceScreen": "W06",
-      "nodeId": "966:93830",
-      "name": "N05 · Mobile Editor product page",
-      "width": 390,
-      "height": 1452,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93830"
-    },
-    {
-      "key": "N06",
-      "title": "Mobile Sketch product page",
-      "kind": "mobile",
-      "route": "responsive",
-      "state": "W07",
-      "status": "designed-awaiting-review",
-      "sourceScreen": "W07",
-      "nodeId": "966:93861",
-      "name": "N06 · Mobile Sketch product page",
-      "width": 390,
-      "height": 1456,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93861"
     },
     {
       "key": "N07",
@@ -1106,7 +999,7 @@
       "nodeId": "966:93892",
       "name": "N07 · Mobile Pricing",
       "width": 390,
-      "height": 1186,
+      "height": 1128,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=966-93892"
     },
     {
@@ -1246,7 +1139,7 @@
       "nodeId": "968:93826",
       "name": "N18 · Mobile Docs home",
       "width": 390,
-      "height": 1651,
+      "height": 1755,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93826"
     },
     {
@@ -1260,7 +1153,7 @@
       "nodeId": "968:93867",
       "name": "N19 · Mobile Documentation article",
       "width": 390,
-      "height": 1898,
+      "height": 2002,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-93867"
     },
     {
@@ -1372,7 +1265,7 @@
       "nodeId": "968:94139",
       "name": "N28 · Mobile Contact support",
       "width": 390,
-      "height": 865,
+      "height": 1472,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94139"
     },
     {
@@ -1400,7 +1293,7 @@
       "nodeId": "968:94206",
       "name": "N30 · Mobile Privacy policy",
       "width": 390,
-      "height": 3434,
+      "height": 3260,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94206"
     },
     {
@@ -1414,7 +1307,7 @@
       "nodeId": "968:94254",
       "name": "N31 · Mobile Terms of service",
       "width": 390,
-      "height": 3184,
+      "height": 2924,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94254"
     },
     {
@@ -1497,7 +1390,7 @@
       "nodeId": "971:94418",
       "name": "H19 · Improve words without generating media",
       "width": 1440,
-      "height": 1544,
+      "height": 1848,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418"
     },
     {
@@ -1510,7 +1403,7 @@
       "nodeId": "971:94529",
       "name": "H20 · Select an area to edit",
       "width": 1440,
-      "height": 1496,
+      "height": 1800,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529"
     },
     {
@@ -1620,7 +1513,7 @@
       "nodeId": "970:94310",
       "name": "N54 · Mobile Get started guide",
       "width": 390,
-      "height": 1798,
+      "height": 1902,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94310"
     },
     {
@@ -1634,7 +1527,7 @@
       "nodeId": "970:94349",
       "name": "N55 · Mobile Image guide",
       "width": 390,
-      "height": 1794,
+      "height": 1898,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94349"
     },
     {
@@ -1648,7 +1541,7 @@
       "nodeId": "970:94388",
       "name": "N56 · Mobile Video guide",
       "width": 390,
-      "height": 1872,
+      "height": 1976,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94388"
     },
     {
@@ -1662,7 +1555,7 @@
       "nodeId": "970:94427",
       "name": "N57 · Mobile Import guide",
       "width": 390,
-      "height": 1872,
+      "height": 1976,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94427"
     },
     {
@@ -1676,7 +1569,7 @@
       "nodeId": "970:94466",
       "name": "N58 · Mobile History guide",
       "width": 390,
-      "height": 1998,
+      "height": 2102,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94466"
     },
     {
@@ -1690,7 +1583,7 @@
       "nodeId": "970:94505",
       "name": "N59 · Mobile Sketch guide",
       "width": 390,
-      "height": 1798,
+      "height": 1902,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94505"
     },
     {
@@ -1704,7 +1597,7 @@
       "nodeId": "970:94544",
       "name": "N60 · Mobile Model guide",
       "width": 390,
-      "height": 1872,
+      "height": 1976,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94544"
     },
     {
@@ -1718,7 +1611,7 @@
       "nodeId": "970:94583",
       "name": "N61 · Mobile Sharing guide",
       "width": 390,
-      "height": 1894,
+      "height": 1998,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94583"
     },
     {
@@ -1732,7 +1625,7 @@
       "nodeId": "970:94622",
       "name": "N62 · Mobile Recovery guide",
       "width": 390,
-      "height": 1924,
+      "height": 2028,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94622"
     },
     {
@@ -1746,7 +1639,7 @@
       "nodeId": "970:94661",
       "name": "N63 · Mobile Allowance guide",
       "width": 390,
-      "height": 1846,
+      "height": 1950,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94661"
     },
     {
@@ -1760,7 +1653,7 @@
       "nodeId": "970:94700",
       "name": "N64 · Mobile Wording guide",
       "width": 390,
-      "height": 1764,
+      "height": 1868,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94700"
     },
     {
@@ -1774,7 +1667,7 @@
       "nodeId": "970:94739",
       "name": "N65 · Mobile Region guide",
       "width": 390,
-      "height": 1742,
+      "height": 1846,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=970-94739"
     },
     {
@@ -1807,7 +1700,7 @@
       "key": "X12",
       "title": "First project browser",
       "kind": "system",
-      "route": "/app",
+      "route": "/app/projects",
       "state": "empty_projects",
       "status": "designed-awaiting-review",
       "nodeId": "971:95026",
@@ -1833,7 +1726,7 @@
       "key": "X14",
       "title": "Project search has no matches",
       "kind": "system",
-      "route": "/app",
+      "route": "/app/projects",
       "state": "projects_no_results",
       "status": "designed-awaiting-review",
       "nodeId": "971:95182",
@@ -1846,7 +1739,7 @@
       "key": "X15",
       "title": "Project browser loading",
       "kind": "system",
-      "route": "/app",
+      "route": "/app/projects",
       "state": "projects_loading",
       "status": "designed-awaiting-review",
       "nodeId": "971:95259",
@@ -1865,7 +1758,7 @@
       "nodeId": "980:95180",
       "name": "S11 · Product feedback",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95180"
     },
     {
@@ -1878,7 +1771,7 @@
       "nodeId": "980:95234",
       "name": "S12 · Account deletion request",
       "width": 1440,
-      "height": 1040,
+      "height": 1600,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95234"
     },
     {
@@ -1949,9 +1842,9 @@
   "indexId": "976:95137",
   "indexUrl": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=976-95137",
   "summary": {
-    "screens": 200,
-    "desktop": 133,
-    "mobile": 67,
+    "screens": 192,
+    "desktop": 128,
+    "mobile": 64,
     "workspaceScreensElsewhere": 209,
     "sharedComponentFamilies": 96,
     "iconMasters": 55,
@@ -2387,22 +2280,12 @@
       "status": "designed-awaiting-review"
     },
     {
-      "key": "N152",
-      "title": "Mobile pricing questions expanded",
-      "nodeId": "1019:98516",
-      "name": "N152 · Mobile pricing questions expanded",
-      "width": 390,
-      "height": 1376,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1019-98516",
-      "status": "designed-awaiting-review"
-    },
-    {
       "key": "N153",
       "title": "Mobile landing while signed in",
       "nodeId": "1019:98732",
       "name": "N153 · Mobile landing while signed in",
       "width": 390,
-      "height": 2352,
+      "height": 2393,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1019-98732",
       "status": "designed-awaiting-review"
     }
@@ -2476,16 +2359,6 @@
       "width": 390,
       "height": 844,
       "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=976-95086",
-      "status": "designed-awaiting-review"
-    },
-    {
-      "key": "O08",
-      "title": "Product navigation overlay",
-      "nodeId": "976:95097",
-      "name": "O08 · Product navigation overlay",
-      "width": 1440,
-      "height": 960,
-      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=976-95097",
       "status": "designed-awaiting-review"
     },
     {
@@ -3076,6 +2949,35 @@
     "surfaces": {
       "N154": "N07 with only 'What happens when I reach the limit?' open: 'New generation waits until allowance is available. Your saved media, editing and downloads remain available.' The answer now lives on N152.",
       "N155": "N07 with only 'Where can I check my usage?' open: 'Open Account, then Usage to see your available allowance and recent requests.' The answer now lives on N152."
+    }
+  },
+  "screenRemoval20261023": {
+    "status": "applied",
+    "record": "Public site v4 Figma rollout on pages 14–16, 2026-10-23; implemented in bharm16/Vidra#244",
+    "policy": "The October 23 public site v4 replaced the four per-tool product pages with one Product page, W04 (desktop) and N03 (mobile) at /product. Its Images, Video, Editor and Sketch chapters are what the earlier /product/:tool links now open. The header links straight to Product, Pricing and Docs, so there is no product menu to draw, and pricing questions open in place on W08 and N07, so there is no separate expanded-questions screen. W01, W03, W04, W08, W10, W11, S01–S12, N01, N03, N07, N28, N30, N31 and N153 were rebuilt in place on the v4 layouts and keep their node ids; the documentation and mobile guide screens grew with the new shared footer. Do not redraw the per-tool pages, the product menu or an expanded-questions screen.",
+    "retiredScreens": [
+      "W02",
+      "W05",
+      "W06",
+      "W07",
+      "W09",
+      "O08",
+      "N04",
+      "N05",
+      "N06",
+      "N152"
+    ],
+    "surfaces": {
+      "W02": "Landing page with the Product menu open on Images, Video, Editor and Sketch. The v4 header links straight to the Product page.",
+      "W05": "Video generation product page at /product/video. Its story is now the Video chapter of W04.",
+      "W06": "Video editing product page at /product/editor. Its story is now the Editor chapter of W04.",
+      "W07": "Sketch product page at /product/sketch. Its story is now the Sketch chapter of W04.",
+      "W09": "Pricing with its questions expanded. Questions now open in place on W08.",
+      "O08": "Product navigation overlay holding W02's menu.",
+      "N04": "Mobile Video product page. Its story is now the Video chapter of N03.",
+      "N05": "Mobile Editor product page. Its story is now the Editor chapter of N03.",
+      "N06": "Mobile Sketch product page. Its story is now the Sketch chapter of N03.",
+      "N152": "Mobile pricing with every answer open. Questions now open in place on N07."
     }
   }
 }
