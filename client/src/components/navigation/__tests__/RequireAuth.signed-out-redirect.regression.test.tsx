@@ -40,10 +40,10 @@ const renderGuarded = (initialPath: string): ReturnType<typeof render> =>
       <Routes>
         <Route path="/signin" element={<SignInProbe />} />
         <Route
-          path="/studio"
+          path="/account"
           element={
             <RequireAuth>
-              <div data-testid="studio-page" />
+              <div data-testid="account-page" />
             </RequireAuth>
           }
         />
@@ -56,31 +56,31 @@ describe("regression: signed-out visits to account-scoped routes land on sign-in
     authState.user = null;
     authState.resolved = true;
 
-    renderGuarded("/studio?tab=recent");
+    renderGuarded("/account?tab=recent");
 
     expect(screen.getByTestId("signin").textContent).toBe(
-      `?redirect=${encodeURIComponent("/studio?tab=recent")}`,
+      `?redirect=${encodeURIComponent("/account?tab=recent")}`,
     );
-    expect(screen.queryByTestId("studio-page")).toBeNull();
+    expect(screen.queryByTestId("account-page")).toBeNull();
   });
 
   it("nothing renders (and no redirect fires) before the initial auth state lands", () => {
     authState.user = null;
     authState.resolved = false;
 
-    renderGuarded("/studio");
+    renderGuarded("/account");
 
     expect(screen.queryByTestId("signin")).toBeNull();
-    expect(screen.queryByTestId("studio-page")).toBeNull();
+    expect(screen.queryByTestId("account-page")).toBeNull();
   });
 
   it("a signed-in visitor renders the surface", () => {
     authState.user = { uid: "user-1" } as User;
     authState.resolved = true;
 
-    renderGuarded("/studio");
+    renderGuarded("/account");
 
-    expect(screen.getByTestId("studio-page")).toBeInTheDocument();
+    expect(screen.getByTestId("account-page")).toBeInTheDocument();
     expect(screen.queryByTestId("signin")).toBeNull();
   });
 });

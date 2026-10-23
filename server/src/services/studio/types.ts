@@ -1,85 +1,27 @@
 /**
- * Studio-local types (Milestone 1).
- *
- * Server-local on purpose: the client needs none of these until the picker
- * ships (M2), at which point the slug/capability unions move to shared/.
- * Plan: docs/superpowers/plans/2026-07-24-the-studio-conversational-image-workspace.md
+ * Shapes of stored Studio records. Studio retired into /app (ADR-0027); these
+ * types read what it persisted and are never written by new turns.
  */
 
 import type { StudioProjectOrigin } from "@shared/schemas/studio.schemas";
 
-export const STUDIO_MODEL_SLUGS = [
-  "recraft-v4.1",
-  "recraft-v4.1-svg",
-  "recraft-v4.1-pro",
-  "recraft-v4.1-pro-svg",
-  "nano-banana-2",
-  "nano-banana-2-lite",
-  "nano-banana-pro",
-  "gpt-image-2",
-  "nano-banana-2.1",
-  "gpt-image-2.5-sunburst",
-] as const;
+/** The model slugs a stored turn or image may name. */
+export type StudioModelSlug =
+  | "recraft-v4.1"
+  | "recraft-v4.1-svg"
+  | "recraft-v4.1-pro"
+  | "recraft-v4.1-pro-svg"
+  | "nano-banana-2"
+  | "nano-banana-2-lite"
+  | "nano-banana-pro"
+  | "gpt-image-2"
+  | "nano-banana-2.1"
+  | "gpt-image-2.5-sunburst";
 
-export type StudioModelSlug = (typeof STUDIO_MODEL_SLUGS)[number];
+/** What a stored decision asked of a model; "edit" required image input. */
+export type StudioCapability = "design" | "svg" | "general" | "edit";
 
-/**
- * What an operation needs from a model. "design"/"svg"/"general" are
- * generate-capabilities (the LLM's routing hint); "edit" requires image input.
- */
-export const STUDIO_CAPABILITIES = [
-  "design",
-  "svg",
-  "general",
-  "edit",
-] as const;
-
-export type StudioCapability = (typeof STUDIO_CAPABILITIES)[number];
-
-export const STUDIO_UTILITY_OPERATIONS = [
-  "remove_background",
-  "vectorize",
-] as const;
-
-export type StudioUtilityOperation = (typeof STUDIO_UTILITY_OPERATIONS)[number];
-
-export interface StudioModelEntry {
-  slug: StudioModelSlug;
-  displayName: string;
-  replicateId: string;
-  capabilities: readonly StudioCapability[];
-  /**
-   * Estimated cost per call in cents, used for the atomic daily spend
-   * reservation. Overestimates are safe (they reserve more); entries marked
-   * costVerified: false MUST be confirmed against Replicate before launch
-   * (M1 exit gate).
-   */
-  costCentsPerCall: number;
-  costVerified: boolean;
-  /** From the reference picker; drives the UI hint and the timeout budget. */
-  latencyHintSeconds: number;
-  /**
-   * Aspect ratios we allow through to this model. Requests outside the list
-   * fall back to defaultAspectRatio (validate-and-fallback, never an
-   * upstream 400).
-   */
-  aspectRatios: readonly string[];
-  defaultAspectRatio: string;
-  /**
-   * Extra input fields pinned on every call for by-property-priced models
-   * (resolution / quality tiers), so costCentsPerCall is a known constant
-   * (plan: "Model roster"). Verified against live Replicate pricing.
-   */
-  pinnedInput?: Readonly<Record<string, unknown>> | undefined;
-}
-
-export interface StudioUtilityEntry {
-  operation: StudioUtilityOperation;
-  replicateId: string;
-  costCentsPerCall: number;
-  costVerified: boolean;
-  latencyHintSeconds: number;
-}
+export type StudioUtilityOperation = "remove_background" | "vectorize";
 
 /**
  * A user-uploaded reference image (S-12), registered on the project after

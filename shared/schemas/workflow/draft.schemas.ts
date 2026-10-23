@@ -7,7 +7,8 @@ import {
 } from "./identity.schemas";
 
 export const CreationActionSchema = z.enum([
-  "make-image", "edit-image", "upscale-image", "make-video", "animate-image",
+  "make-image", "edit-image", "upscale-image", "remove-background", "vectorize-image",
+  "make-video", "animate-image",
   "edit-video", "extend-video", "upscale-video", "reframe-video",
   "make-voiceover", "make-music", "transcribe",
   "ask", "expand-description", "improve-words",

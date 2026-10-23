@@ -35,11 +35,15 @@ describe("catalog presentation", () => {
       return profile && wordsPolicy(profile.action, profile);
     };
     expect([words("topaz-image-upscale"), words("elevenlabs-scribe-v2"), words("luma-reframe-video"), words("elevenlabs-v3"), words("lyria-3")]).toEqual(["none", "none", "optional", "script", "required"]);
+    expect([words("recraft-remove-background"), words("recraft-vectorize"), words("recraft-v4.1")]).toEqual(["none", "none", "required"]);
   });
 
   it("offers verbs on a result only where a qualified profile takes its kind", () => {
     expect(resultVerbs("audio", profiles).map(verb => verb.label)).toEqual(["Make captions"]);
-    expect(resultVerbs("image", profiles).map(verb => verb.label)).toEqual(["Edit", "Upscale", "Animate"]);
+    // Vectorize waits for SVG storage: its only profile is unavailable, so no picture offers it yet.
+    expect(resultVerbs("image", profiles).map(verb => verb.label)).toEqual(["Edit", "Upscale", "Remove background", "Animate"]);
+    const withVectorStorage = profiles.map(profile => profile.id === "recraft-vectorize" ? { ...profile, availability: "qualified" as const } : profile);
+    expect(resultVerbs("image", withVectorStorage).map(verb => verb.label)).toContain("Vectorize");
     expect(resultVerbs("video", profiles).map(verb => verb.label)).toEqual(["Edit", "Extend", "Upscale", "Reframe", "Make captions"]);
     const withoutAnimate = profiles.map(profile => profile.action === "animate-image" ? { ...profile, availability: "unavailable" as const } : profile);
     expect(resultVerbs("image", withoutAnimate).map(verb => verb.label)).not.toContain("Animate");

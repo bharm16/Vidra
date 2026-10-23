@@ -14,7 +14,7 @@ const ORDER: Record<"image" | "video" | "audio", readonly string[]> = {
   audio: ["Add to video", "Make captions"],
 };
 
-/** The verbs a result shows, in Figma's order; profile-backed verbs appear only while a qualified profile takes the result. */
+/** The verbs a result shows; profile-backed verbs appear only while a qualified profile takes the result. */
 export function verbsForResult(version: Pick<MediaVersion, "kind">, profiles: readonly CapabilityProfile[], options: { variation: boolean }): ResultVerb[] {
   const kind = version.kind === "export" ? "video" : version.kind;
   const verbs: ResultVerb[] = resultVerbs(kind, profiles).map(verb => ({ kind: "action", label: verb.label, action: verb.action, role: verb.role }));
@@ -25,6 +25,8 @@ export function verbsForResult(version: Pick<MediaVersion, "kind">, profiles: re
   }
   if (kind === "video") verbs.push({ kind: "frame", label: "Use a frame" });
   if (kind === "video" || kind === "audio") verbs.push({ kind: "add-to-video", label: "Add to video" });
+  // Figma's order for the verbs it names; a verb a new action adds comes just before the last one, so it appears with no client change.
   const order = ORDER[kind];
-  return verbs.filter(verb => order.includes(verb.label)).sort((a, b) => order.indexOf(a.label) - order.indexOf(b.label));
+  const rank = (label: string): number => { const index = order.indexOf(label); return index < 0 ? order.length - 1.5 : index; };
+  return verbs.sort((a, b) => rank(a.label) - rank(b.label));
 }

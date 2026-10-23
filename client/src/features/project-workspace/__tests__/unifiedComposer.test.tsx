@@ -64,6 +64,8 @@ it("lists a clip's verbs from the profiles that take clips, in Figma's order", (
   const edit = profile({ id: "edit", label: "Editor", action: "edit-video", endpoint: "controlled/edit", inputs: [{ role: "clip", kinds: ["video"], minCount: 1, maxCount: 1 }], output: { kind: "video", maxCount: 1 }, parameters: {} });
   expect(verbsForResult(clip, [edit, upscale, captions], { variation: true }).map(verb => verb.label)).toEqual(["Edit", "Upscale", "Make captions", "Use a frame", "Add to video"]);
   expect(verbsForResult(still, [picture], { variation: true }).map(verb => verb.label)).toEqual(["New variation", "Use as reference"]);
+  const cutout = profile({ id: "cutout", label: "Cutout", action: "remove-background", endpoint: "controlled/cutout", inputs: [{ role: "primary", kinds: ["image"], minCount: 1, maxCount: 1 }], output: { kind: "image", maxCount: 1 }, parameters: {} });
+  expect(verbsForResult(still, [picture, cutout], { variation: true }).map(verb => verb.label)).toEqual(["New variation", "Remove background", "Use as reference"]);
 });
 
 it("shows each result's verbs as buttons in the feed and opens the composer bound to it", () => {

@@ -125,6 +125,13 @@ describe("App routes", () => {
 
   it("keeps new exact-version sharing separate from saved legacy links", async () => { window.history.pushState({}, "", "/share/media/123"); renderApp(); expect(await screen.findByText("WorkflowSharePage")).toBeInTheDocument(); });
   it("opens project authoring at /app", async () => { window.history.pushState({}, "", "/app"); renderApp(); expect(await screen.findByText("ProjectWorkspace")).toBeInTheDocument(); });
+  it.each(["/studio", "/studio/new", "/studio/project-1", "/live-editor"])("replaces the retired %s with /app", async (path) => {
+    window.history.pushState({}, "", path);
+    renderApp();
+    expect(await screen.findByText("ProjectWorkspace")).toBeInTheDocument();
+    expect(routers.at(-1)?.state.location.pathname).toBe("/app");
+    expect(routers.at(-1)?.state.historyAction).toBe("REPLACE");
+  });
 
   describe("core behavior", () => {
     it("renders the retained public landing on the root route", async () => {

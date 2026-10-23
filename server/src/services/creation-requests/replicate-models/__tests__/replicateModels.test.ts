@@ -435,6 +435,102 @@ describe("native Replicate model definitions", () => {
     });
   });
 
+  it("sends Recraft a ratio or an exact size, never both", async () => {
+    const recraft = definition("recraft-v4.1");
+    expect(await recraft.input(call(recraft), tools)).toEqual({
+      prompt: "Project instructions:\nWarm light\n\nA red boat at dawn",
+      aspect_ratio: "1:1",
+    });
+    expect(
+      await recraft.input(
+        call(recraft, { parameters: { aspectRatio: "1536x768" } }),
+        tools,
+      ),
+    ).toEqual({
+      prompt: "Project instructions:\nWarm light\n\nA red boat at dawn",
+      size: "1536x768",
+    });
+    const pro = definition("recraft-v4.1-pro");
+    const proShapes = pro.profile.parameters.aspectRatio;
+    expect(proShapes?.policy === "editable" && proShapes.domain).toMatchObject({
+      values: expect.arrayContaining(["6:10", "2048x2048", "1536x2688"]),
+    });
+  });
+
+  it("maps Studio's Nano Banana tiers and GPT Image 2 with every documented setting", async () => {
+    const lite = definition("nano-banana-2-lite-edit");
+    expect(
+      await lite.input(
+        call(lite, {
+          inputs: {
+            primary: [{ url: "https://media.test/picture" }],
+            reference: [{ url: "https://media.test/ref" }],
+          },
+        }),
+        tools,
+      ),
+    ).toEqual({
+      prompt: "Project instructions:\nWarm light\n\nA red boat at dawn",
+      aspect_ratio: "match_input_image",
+      output_format: "jpg",
+      image_input: ["https://media.test/picture", "https://media.test/ref"],
+    });
+    const pro = definition("nano-banana-pro");
+    expect(pro.preflight?.(call(pro, { parameters: { aspectRatio: "match_input_image" } }))).toMatch(/Choose a picture/);
+    expect(
+      await pro.input(
+        call(pro, { parameters: { resolution: "4K", allowFallbackModel: true } }),
+        tools,
+      ),
+    ).toEqual({
+      prompt: "Project instructions:\nWarm light\n\nA red boat at dawn",
+      aspect_ratio: "1:1",
+      resolution: "4K",
+      output_format: "jpg",
+      safety_filter_level: "block_only_high",
+      allow_fallback_model: true,
+    });
+    const nano = definition("nano-banana-2");
+    expect(await nano.input(call(nano, { parameters: { googleSearch: true } }), tools)).toMatchObject({
+      resolution: "1K",
+      google_search: true,
+      image_search: false,
+    });
+    const gpt = definition("gpt-image-2-edit");
+    expect(
+      await gpt.input(
+        call(gpt, { inputs: { primary: [{ url: "https://media.test/picture" }] } }),
+        tools,
+      ),
+    ).toEqual({
+      prompt: "Project instructions:\nWarm light\n\nA red boat at dawn",
+      aspect_ratio: "auto",
+      number_of_images: 1,
+      quality: "auto",
+      background: "auto",
+      output_compression: 90,
+      output_format: "webp",
+      moderation: "auto",
+      input_images: ["https://media.test/picture"],
+    });
+  });
+
+  it("sends background removal and vectorize one picture, refusing sizes Recraft rejects before spend", async () => {
+    for (const id of ["recraft-remove-background", "recraft-vectorize"]) {
+      const utility = definition(id);
+      const picture = { primary: [{ url: "https://media.test/picture" }] };
+      expect(
+        await utility.input(call(utility, { inputs: picture }), tools),
+      ).toEqual({ image: "https://media.test/picture" });
+      expect(utility.preflight?.(call(utility, { parameters: { sourceSize: "1024:768" } }))).toBeUndefined();
+      expect(utility.preflight?.(call(utility, { parameters: { sourceSize: "200:800" } }))).toMatch(/too small/);
+      expect(utility.preflight?.(call(utility, { parameters: { sourceSize: "4096:4096" } }))).toMatch(/too large/);
+      expect(utility.preflight?.(call(utility))).toMatch(/size must be checked/);
+    }
+    expect(definition("recraft-vectorize").unavailableReason).toMatch(/SVG/);
+    expect(definition("recraft-remove-background").unavailableReason).toBeUndefined();
+  });
+
   it("speaks the exact script, makes music from words and pictures, and transcribes to captions", async () => {
     const voice = definition("elevenlabs-v3");
     expect(

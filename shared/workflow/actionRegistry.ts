@@ -18,6 +18,8 @@ export type ComposerPlace =
   | { kind: "output"; output: ComposerOutput }
   | { kind: "tool"; tool: ComposerTool }
   | { kind: "words" }
+  /** Reached only from a result's button; no switch or rail tool opens it. */
+  | { kind: "result" }
   | { kind: "none" };
 /** One chip in an action's fixed core row (Rule 6). */
 export type CoreChip = "model" | ParameterRole | "count";
@@ -51,6 +53,7 @@ const CLIP_CHIPS = ["model", "shape", "duration", "resolution", "sound", "count"
 const video = { kind: "output", output: "video" } as const;
 const image = { kind: "output", output: "image" } as const;
 const words = { kind: "words" } as const;
+const result = { kind: "result" } as const;
 const none = { kind: "none" } as const;
 
 /** Every catalog action. Adding an action is one entry here plus its profiles. */
@@ -58,6 +61,8 @@ export const ACTION_REGISTRY: Readonly<Record<CreationAction, ActionEntry>> = {
   "make-image": { label: "Make image", resultNoun: "image", running: "Making your image", group: "picture", place: image, words: "required", placeholder: "What would you like to make?", coreChips: PICTURE_CHIPS },
   "edit-image": { label: "Edit image", resultNoun: "image", running: "Editing your image", group: "picture", place: image, words: "required", placeholder: "Describe a change…", coreChips: PICTURE_CHIPS, verb: { label: "Edit", role: "primary" }, changesSource: true },
   "upscale-image": { label: "Upscale image", resultNoun: "image", running: "Upscaling your image", group: "picture", place: { kind: "tool", tool: "upscale" }, words: "none", coreChips: ["model", "scale"], verb: { label: "Upscale", role: "primary" }, changesSource: true },
+  "remove-background": { label: "Remove background", resultNoun: "image", running: "Removing the background", group: "picture", place: result, words: "none", coreChips: ["model"], verb: { label: "Remove background", role: "primary" }, changesSource: true },
+  "vectorize-image": { label: "Vectorize", resultNoun: "image", running: "Vectorizing your image", group: "picture", place: result, words: "none", coreChips: ["model"], verb: { label: "Vectorize", role: "primary" }, changesSource: true },
   "make-video": { label: "Make video", resultNoun: "clip", running: "Making your video", group: "clip", place: video, words: "required", placeholder: "Describe your video…", coreChips: CLIP_CHIPS },
   "animate-image": { label: "Make video", resultNoun: "clip", running: "Making your video", group: "clip", place: video, words: "required", placeholder: "Describe your video…", coreChips: CLIP_CHIPS, verb: { label: "Animate", role: "start-frame" } },
   "edit-video": { label: "Edit clip", resultNoun: "clip", running: "Editing your clip", group: "clip", place: video, words: "required", placeholder: "Describe a change…", coreChips: CLIP_CHIPS, verb: { label: "Edit", role: "clip" }, changesSource: true },

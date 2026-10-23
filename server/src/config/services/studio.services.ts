@@ -1,9 +1,5 @@
-import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
-import { StudioModelRegistry } from "@services/studio/StudioModelRegistry";
-import { StudioPolicyEngine } from "@services/studio/StudioPolicyEngine";
-import { ReplicateStudioImageRunner } from "@services/studio/providers/ReplicateStudioImageRunner";
 import { FirestoreStudioProjectStore } from "@services/studio/storage/FirestoreStudioProjectStore";
 import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
 import {
@@ -23,44 +19,27 @@ export function registerStudioServices(container: DIContainer): void {
     [],
   );
 
+  // Studio records stay readable after Studio retired into /app (ADR-0027).
   container.register(
     "studioService",
     (
       config: ServiceConfig,
       storageService: StudioImageStorage | null,
-      aiService: AIExecutionPort | null,
       studioProjectStore: StudioProjectStore,
     ) => {
-      const apiToken = config.replicate.apiToken;
-      if (!apiToken) {
-        logger.warn("REPLICATE_API_TOKEN not provided, studio disabled");
-        return null;
-      }
       if (!storageService) {
-        logger.warn("Storage service unavailable, studio disabled");
-        return null;
-      }
-      if (!aiService) {
-        logger.warn("aiService unavailable, studio disabled");
+        logger.warn("Storage service unavailable, studio records disabled");
         return null;
       }
 
       return new StudioService({
         store: studioProjectStore,
-        registry: new StudioModelRegistry(),
-        runner: new ReplicateStudioImageRunner({ apiToken }),
         storage: storageService,
-        policy: new StudioPolicyEngine({ ai: aiService }),
-        // Boot-validated (env.ts studioSchema) and centrally parsed
-        // (core.services config) — $5/user/day default.
+        // Recovering an interrupted turn releases cents against the same
+        // daily cap (env.ts studioSchema) the workflow spend guard consumes.
         dailyCapCents: config.studio.dailyCapCents,
       });
     },
-    [
-      "config",
-      "storageService",
-      "aiService",
-      "studioProjectStore",
-    ],
+    ["config", "storageService", "studioProjectStore"],
   );
 }

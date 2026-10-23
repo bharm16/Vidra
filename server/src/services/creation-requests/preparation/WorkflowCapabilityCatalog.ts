@@ -108,11 +108,12 @@ export function workflowRuntimeProfiles(runtime?: WorkflowRuntimeAvailability): 
       aspectRatio: { policy: "fixed", value: "match_input_image" }, outputFormat: { policy: "fixed", value: "webp" }, outputQuality: { policy: "fixed", value: 80 }, speedMode: { policy: "fixed", value: "Juiced" },
     }, presentation: { words: "required", parameters: { aspectRatio: { label: "Shape", role: "shape", values: { match_input_image: "Same as picture" } } } } },
   ];
-  profiles.push(...REPLICATE_MODEL_DEFINITIONS.map(definition => ({ ...definition.profile, ...baseAvailability })));
+  // A model whose output Vidra cannot keep is listed but never offered, whatever the runtime.
+  profiles.push(...REPLICATE_MODEL_DEFINITIONS.map(definition => ({ ...definition.profile, ...(definition.unavailableReason ? { availability: "unavailable", unavailableReason: definition.unavailableReason } : baseAvailability) })));
   for (const [action, label] of [["ask", "Ask"], ["expand-description", "Expand description"], ["improve-words", "Improve words"]] as const) profiles.push({ ...common, id: `text-${action}`, label, action, provider: runtime?.textProvider ?? "configured-text", endpoint: runtime?.textModel ?? "studio_turn", mode: "text-assistance", inputs: [], output: { kind: "text", maxCount: 1 }, ...baseAvailability, generatedAudio: "unsupported", parameters: {}, presentation: { words: "required", parameters: {} } });
   return profiles.map(input => {
     const profile = CapabilityProfileSchema.parse(input);
-    if (!runtime) return profile;
+    if (!runtime || profile.availability === "unavailable") return profile;
     const runtimeWithoutSpend: WorkflowRuntimeAvailability = {
       imageProviders: runtime.imageProviders,
       videoAvailable: runtime.videoAvailable.bind(runtime),

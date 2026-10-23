@@ -69,7 +69,7 @@ function nanoInput(
     { image_input: pictures },
   );
 }
-const matchNeedsPicture = (call: ModelCall): string | undefined =>
+export const matchNeedsPicture = (call: ModelCall): string | undefined =>
   call.parameters.aspectRatio === "match_input_image" &&
   !call.inputs.reference?.length &&
   !call.inputs.primary?.length

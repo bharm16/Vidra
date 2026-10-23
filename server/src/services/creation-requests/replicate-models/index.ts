@@ -1,5 +1,6 @@
 import { PICTURE_MODEL_DEFINITIONS } from "./pictureModels";
 import { SOUND_MODEL_DEFINITIONS } from "./soundModels";
+import { STUDIO_PICTURE_MODEL_DEFINITIONS } from "./studioPictureModels";
 import type { ReplicateModelDefinition } from "./types";
 import { VIDEO_MODEL_DEFINITIONS } from "./videoModels";
 
@@ -11,6 +12,7 @@ export const REPLICATE_MODEL_DEFINITIONS: readonly ReplicateModelDefinition[] =
   [
     ...VIDEO_MODEL_DEFINITIONS,
     ...PICTURE_MODEL_DEFINITIONS,
+    ...STUDIO_PICTURE_MODEL_DEFINITIONS,
     ...SOUND_MODEL_DEFINITIONS,
   ];
 

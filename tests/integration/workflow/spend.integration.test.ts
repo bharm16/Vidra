@@ -4,6 +4,7 @@ import type { CapabilityProfile } from "@shared/schemas/workflow/capability.sche
 import { ProjectStore } from "@services/projects/ProjectStore";
 import { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import { WorkflowCapabilityCatalog, workflowRuntimeProfiles } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
+import { REPLICATE_MODEL_DEFINITIONS } from "@services/creation-requests/replicate-models";
 import { WorkflowOutboxSchema } from "@services/admission/idempotency/workflowReceipts";
 import { WorkflowExecutionStore } from "@services/creation-requests/execution/WorkflowExecutionStore";
 import { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
@@ -73,7 +74,8 @@ it("video uses its maximum-settings ceiling before any native call", async () =>
 });
 
 it("missing, expired or changed mappings fail closed, including unqualified text costs", () => {
-  expect(catalog.list().filter(profile => profile.mode !== "text-assistance").every(profile => profile.availability === "qualified")).toBe(true);
+  const unstorable = new Set(REPLICATE_MODEL_DEFINITIONS.flatMap(definition => definition.unavailableReason ? [definition.profile.id] : []));
+  expect(catalog.list().filter(profile => profile.mode !== "text-assistance" && !unstorable.has(profile.id)).every(profile => profile.availability === "qualified")).toBe(true);
   expect(catalog.list().filter(profile => profile.mode === "text-assistance").every(profile => profile.availability === "unavailable")).toBe(true);
   const profile = catalog.get("wan-2.5-i2v")!;
   expect(guard.qualified({ ...profile, parameters: { ...profile.parameters, durationSeconds: { policy: "editable", domain: { kind: "enum", values: [5, 10, 30] }, defaultValue: 5 } } })).toBe(false);

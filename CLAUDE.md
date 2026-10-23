@@ -14,7 +14,7 @@ Use current source, tests and `CONTEXT.md` for implementation scope. ADRs preser
 
 ## Current scope and behavior
 
-Authoring, span labeling, suggestions, optimization, supplied reference admission, free pictures/clips, Studio and Sketch remain active. Generic sessions, words/take ancestry, authentication, durable media grants, receipts, leases and attachment recovery support the loop.
+Authoring, span labeling, suggestions, optimization, supplied reference admission, free pictures/clips and Sketch in `/app` remain active. Studio and the standalone Live editor retired into `/app` ([ADR-0027](docs/adr/0027-studio-and-the-live-editor-retire-into-app.md)); Studio records stay readable. Generic sessions, words/take ancestry, authentication, durable media grants, receipts, leases and attachment recovery support the loop.
 
 Named asset/trigger libraries, depth/convergence, continuity generation, storyboards/character preprocessing, recommendation, coherence/observation endpoints, paid intake and broad replay workers are retired. Historical session/camera/model fields remain readable. `video-generation/refunds/` preserves the existing ledger and failed-refund recovery for previously charged jobs. Free intake reserves zero credits; a charged job without a refunder fails closed.
 
@@ -22,7 +22,7 @@ Named asset/trigger libraries, depth/convergence, continuity generation, storybo
 - Repeatedly used panels persist across context changes; opening an unrelated panel does not close them.
 - Dispatch snapshots visible words, inputs, model, settings and destination. A retry after a lost response reuses its authoritative receipt and original take identity.
 - Durable completion precedes attachment. Attachment repair reuses stored media/destination without regeneration or refunds.
-- Preserve Studio/Sketch spending bounds. Free testing does not authorize paid offerings, provider spend or schedules.
+- Preserve the Studio daily spend cap and ledger that bound every native request, and the Sketch bounds. Free testing does not authorize paid offerings, provider spend or schedules.
 
 The URL prefix `/api/preview` remains compatible with saved media. Say picture, clip or take for artifacts. Draft/render is a model tier, not lifecycle. Generation offers come from `shared/videoModels.ts`; historical ids and prompt compilation have separate contracts.
 
