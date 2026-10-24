@@ -1,8 +1,9 @@
+import { z } from "zod";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
 import type { CacheService } from "@services/cache/CacheService";
-import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
+import { StructuredOutputEnforcer, createStructuredOutputCodec } from "@utils/StructuredOutputEnforcer";
 import { TemperatureOptimizer } from "@utils/TemperatureOptimizer";
 import { privateCacheKey } from "../utils/privateCacheKey";
 
@@ -28,6 +29,9 @@ export interface SceneChangeResult {
   reasoning: string;
   suggestedUpdates: Record<string, string>;
 }
+
+const SceneChangeSchema = z.object({ isSceneChange: z.boolean(), confidence: z.enum(["high", "medium", "low"]), reasoning: z.string(), suggestedUpdates: z.record(z.string(), z.string()) });
+const SceneChangeCodec = createStructuredOutputCodec(SceneChangeSchema);
 
 /**
  * Service for detecting scene changes in video prompts
@@ -75,25 +79,15 @@ export class SceneChangeDetectionService {
     const cached = cacheKey
       ? await this.cacheService.get<SceneChangeResult>(cacheKey, "scene-detection")
       : null;
-    if (cached) {
+    const decodedCache = SceneChangeSchema.safeParse(cached);
+    if (decodedCache.success) {
       this.log.debug("Cache hit.", {
         operation,
         duration: Math.round(performance.now() - startTime),
-        isSceneChange: cached.isSceneChange,
+        isSceneChange: decodedCache.data.isSceneChange,
       });
-      return cached;
+      return decodedCache.data;
     }
-
-    // Define schema for validation
-    const schema: { type: "object" | "array"; required?: string[] } = {
-      type: "object" as const,
-      required: [
-        "isSceneChange",
-        "confidence",
-        "reasoning",
-        "suggestedUpdates",
-      ],
-    };
 
     // Get optimal temperature for scene detection
     const temperature = TemperatureOptimizer.getOptimalTemperature(
@@ -105,18 +99,18 @@ export class SceneChangeDetectionService {
     );
 
     // Call AI service with structured output enforcement
-    const result = (await StructuredOutputEnforcer.enforceJSON(
+    const result = await StructuredOutputEnforcer.enforceJSON(
       this.ai,
       systemPrompt,
       {
         operation: "video_scene_change_detection",
-        schema,
+        codec: SceneChangeCodec,
         isArray: false, // Expecting object
         maxTokens: 2048,
         maxRetries: 2,
         temperature,
       },
-    )) as SceneChangeResult;
+    );
 
     // Cache the result
     if (cacheKey) {

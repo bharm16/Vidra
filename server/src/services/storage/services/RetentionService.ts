@@ -2,6 +2,9 @@ import { Storage } from "@google-cloud/storage";
 import { STORAGE_CONFIG } from "../config/storageConfig";
 import { validatePathOwnership, getTypeFromPath } from "../utils/pathUtils";
 import { createForbiddenError } from "../utils/httpError";
+import { z } from "zod";
+
+export const StorageListLimitSchema = z.number().int().min(1).max(200);
 
 export class RetentionService {
   private readonly storage: Storage;
@@ -69,7 +72,8 @@ export class RetentionService {
       pageToken?: string | null;
     } = {},
   ): Promise<{ items: unknown[]; nextCursor: string | null }> {
-    const { type, limit = 50, pageToken } = options;
+    const { type, pageToken } = options;
+    const limit = StorageListLimitSchema.parse(options.limit ?? 50);
 
     let prefix = `users/${userId}/`;
     if (type === "preview-image") prefix += "previews/images/";
@@ -80,7 +84,7 @@ export class RetentionService {
     const query = pageToken
       ? { prefix, maxResults: limit, pageToken }
       : { prefix, maxResults: limit };
-    const [files, , nextQuery] = await this.bucket.getFiles(query);
+    const [files, nextQuery] = await this.bucket.getFiles({ ...query, autoPaginate: false });
 
     const items = await Promise.all(
       files.map(async (file) => {
@@ -96,13 +100,7 @@ export class RetentionService {
       }),
     );
 
-    const nextCursor =
-      typeof nextQuery === "object" &&
-      nextQuery !== null &&
-      "pageToken" in nextQuery &&
-      typeof (nextQuery as { pageToken?: unknown }).pageToken === "string"
-        ? (nextQuery as { pageToken: string }).pageToken
-        : null;
+    const nextCursor = nextQuery && "pageToken" in nextQuery && typeof nextQuery.pageToken === "string" ? nextQuery.pageToken : null;
 
     return {
       items,

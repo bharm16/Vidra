@@ -1,14 +1,7 @@
+import type { ExecuteParams } from "@services/ai-model/AIModelService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ShotInterpreterService } from "../ShotInterpreterService";
-
-const mockEnforceJSON = vi.hoisted(() => vi.fn());
-
-vi.mock("@utils/StructuredOutputEnforcer", () => ({
-  StructuredOutputEnforcer: {
-    enforceJSON: mockEnforceJSON,
-  },
-}));
 
 vi.mock("@infrastructure/Logger", () => ({
   logger: {
@@ -28,17 +21,20 @@ vi.mock("@infrastructure/Logger", () => ({
 interface CapturedEnforceCall {
   aiService: unknown;
   systemPrompt: string;
-  options: Record<string, unknown>;
+  options: ExecuteParams;
 }
+
+let capturedExecution: AIExecutionPort["execute"] | undefined;
 
 const createService = (): {
   service: ShotInterpreterService;
   aiService: AIExecutionPort;
 } => {
   const aiService = {
-    execute: vi.fn(),
+    execute: vi.fn(async (..._args: unknown[]) => ({ text: JSON.stringify({ shot_type: "action_shot", core_intent: "placeholder" }), metadata: {} })),
   } as unknown as AIExecutionPort;
 
+  capturedExecution = aiService.execute;
   return {
     service: new ShotInterpreterService(aiService),
     aiService,
@@ -46,25 +42,19 @@ const createService = (): {
 };
 
 const getLastEnforceCall = (): CapturedEnforceCall => {
-  const call = mockEnforceJSON.mock.calls.at(-1);
+  const call = vi.mocked(capturedExecution!).mock.calls.at(-1);
   if (!call) {
     throw new Error("enforceJSON was not called");
   }
   return {
-    aiService: call[0],
-    systemPrompt: call[1] as string,
-    options: call[2] as Record<string, unknown>,
+    aiService: undefined,
+    systemPrompt: call[1].systemPrompt,
+    options: call[1],
   };
 };
 
 describe("ShotInterpreterService prompt-injection resistance", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnforceJSON.mockResolvedValue({
-      shot_type: "action_shot",
-      core_intent: "placeholder",
-    });
-  });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("does not concatenate the raw user prompt into the system message", async () => {
     const injectionPayload =

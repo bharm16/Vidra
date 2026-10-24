@@ -36,6 +36,14 @@ Sketch retention flushes until the confirmed device snapshot is still current, s
 
 One injected native-media runtime admits expensive work per API process: one active task and at most eight waiting tasks, each with a 30-second admission deadline. Export/preview decoding, frame derivation, import verification and generated-output verification share it; the image installs procps and monitor errors fail closed; native child RSS is capped at 256 MiB against the checked-in 512 MiB deployment. Preview quota pruning through publication stays serialized by its owner. Native draining starts before HTTP closure waits for active requests, rejects waiting work, and confirms active closure after its grace window. Feature receipts and recovery remain with their owning modules. Native integration fixtures validate supported rendering under these limits; they do not establish production load capacity.
 
+## Structured results, edit targets and entry intents
+
+Structured text operations carry a runtime codec with their provider wire schema. The enforcer decodes before returning or caching; schema types, nested items and optional sibling metadata remain one contract. Sparse/open schemas use non-strict provider mode, while complete closed schemas qualify for strict mode. Provider normalization distinguishes schema keywords from property names and literal data. JSON repair changes delimiters and trailing commas outside strings only.
+
+Project name edits own a discriminated folder/legacy-project target, its refresh revision and scoped completion. A folder conflict never refreshes the library revision. Caption admission waits for timeline prerequisites, retains one edit operation for retry and admits completion only for the same owner/project/edit/request selection. The existing editor journal owns uncertain saves and reopening; an already placed caption request is acknowledged without another command. Storage compatibility listings keep GCS continuation inside their adapter and bound page sizes to 1–200.
+
+The recovery wrapper uses a fresh emulator import and expected-count/sample acceptance; rejected or unconfirmed work never reports a successful restore. See [data recovery acceptance](../operations/DR_RUNBOOK.md).
+
 ## Audit coverage
 
 | Finding | Owning implementation | Behavioral evidence |
@@ -58,5 +66,10 @@ One injected native-media runtime admits expensive work per API process: one act
 | F16 | Versioned span observation | Authoritative merged completion and explicit failure, with legacy line compatibility. |
 | F17 | Provider and observer lifetimes | Generator close aborts its producer; provider deadlines include body consumption. |
 | F18 | Injected native-media admission and drain | Shared capacity, bounded waiting, cancellation and closure; existing immutable render/preview contracts remain covered. |
+| F19 | Structured-output codecs and provider schema adapters | Invalid nested values cannot cross the typed result or enter the scene cache; wire schema reaches the provider; string repair preserves content. |
+| F20 | Project target editing | Folder conflict refresh uses the folder revision; late operations cannot publish into a reopened selection. |
+| F21 | Storage compatibility listing | Cloud pages retain continuation and owner/type prefix; invalid page sizes are refused. |
+| F22 | Caption admission and existing editor journal | Empty timelines wait; retry uses one operation; changed/unmounted selections reject late acknowledgement. |
+| F23 | Emulator restore and acceptance verifier | Transport errors, malformed/empty/wrong data and unconfirmed process success fail; expected counts and sampled identities are required. |
 
 These checks establish local behavior with controlled providers and persistence emulators. They do not establish live provider quality or authorize new spending.

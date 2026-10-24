@@ -1,3 +1,4 @@
+import { VideoPromptStructuredResponseSchema } from "./videoPromptTypes";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import OptimizationConfig from "@config/OptimizationConfig";
@@ -7,7 +8,7 @@ import {
   generateUniversalVideoPromptWithLockedSpans,
   VIDEO_FEW_SHOT_EXAMPLES,
 } from "./videoPromptOptimizationTemplate";
-import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
+import { StructuredOutputEnforcer, createStructuredOutputCodec } from "@utils/StructuredOutputEnforcer";
 import { hashString } from "@utils/hash";
 import { getVideoTemplateBuilder } from "./video-templates/index";
 import { getVideoOptimizationSchema } from "@utils/provider/SchemaFactory";
@@ -247,36 +248,12 @@ export class VideoStrategy implements OptimizationStrategy {
             sourcePrompt ?? null,
           );
 
-    // Simpler schema for non-strict fallback
-    const looseSchema = {
-      type: "object" as const,
-      required: [
-        "_creative_strategy",
-        "shot_framing",
-        "camera_angle",
-        "camera_move",
-        "subject",
-        "subject_details",
-        "action",
-        "setting",
-        "time",
-        "lighting",
-        "style",
-        "technical_specs",
-      ],
-      // camera_lens is intentionally NOT in required — slot is optional
-      // (Sub-project C, 2026-05-22-optimize-camera-lens-slot-design.md).
-      // StructuredOutputEnforcer accepts extra fields the LLM emits, so the
-      // field is preserved on roundtrip without needing an explicit
-      // properties declaration here.
-    };
-
-    const parsedResponse = (await StructuredOutputEnforcer.enforceJSON(
+    const parsedResponse = await StructuredOutputEnforcer.enforceJSON(
       this.ai,
       systemPrompt,
       {
         operation: "optimize_standard",
-        schema: looseSchema,
+        codec: createStructuredOutputCodec(VideoPromptStructuredResponseSchema.required({ _creative_strategy: true, shot_framing: true, camera_angle: true, camera_move: true, subject: true, subject_details: true, action: true, setting: true, time: true, lighting: true, style: true, technical_specs: true }).transform((value): VideoPromptStructuredResponse => value as VideoPromptStructuredResponse)),
         isArray: false,
         maxRetries: 2,
         maxTokens: config.maxTokens,
@@ -284,7 +261,7 @@ export class VideoStrategy implements OptimizationStrategy {
         timeout: config.timeout,
         ...(signal ? { signal } : {}),
       },
-    )) as VideoPromptStructuredResponse;
+    );
 
     const normalizedSlots = normalizeSlots(parsedResponse);
     const lint = mergeLintResults(

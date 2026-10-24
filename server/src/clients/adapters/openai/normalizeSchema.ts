@@ -8,6 +8,7 @@ import {
 interface NormalizedOpenAiSchema {
   name: string;
   schema: JsonRecord;
+  strict: boolean;
 }
 
 // OpenAI structured-output delta: strip wrapper metadata at every node and
@@ -34,10 +35,11 @@ export function normalizeOpenAiSchema(
     toSchemaName((schemaBody as Record<string, unknown>).name) ??
     OPENAI_FALLBACK_SCHEMA_NAME;
 
+  const strict = schemaInput.strict !== false;
   const normalizedBody = walkSchema(schemaBody, {
     drop: SCHEMA_METADATA_KEYS,
     onObjectNode: (node) => {
-      node.additionalProperties = false;
+      if (strict) node.additionalProperties = false;
     },
   });
   if (!isRecord(normalizedBody)) {
@@ -46,6 +48,7 @@ export function normalizeOpenAiSchema(
 
   return {
     name: schemaName,
+    strict,
     schema: normalizedBody as JsonRecord,
   };
 }

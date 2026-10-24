@@ -1,6 +1,6 @@
 import { logger } from "@infrastructure/Logger";
 import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
-import { resolveEnhancementProfile } from "../providers/enhancementProfiles.js";
+import { enhancementOutputCodec } from "../providers/enhancementProfiles.js";
 import {
   CUSTOM_POLICY_CATEGORY_ID,
   SlotPolicyRegistry,
@@ -276,74 +276,8 @@ export class EnhancementV2Engine {
     // paragraph above exists to prevent.
     const provider =
       this.dependencies.aiService.resolveExecution(operation).provider;
-    const profile = resolveEnhancementProfile(provider);
-    const schema =
-      schemaName === "custom"
-        ? profile.customSuggestionSchema()
-        : profile.enhancementSchema(context.isPlaceholder);
-
-    // Custom-request path: Sub-project B2 extended this to capture
-    // scene_summary alongside the unwrapped suggestions. Mirrors the
-    // enhancement path's captureSiblings pattern below.
-    if (schemaName === "custom") {
-      const customCaptured = (await StructuredOutputEnforcer.enforceJSON<
-        Suggestion[]
-      >(this.dependencies.aiService, prompt, {
-        operation,
-        schema: schema as {
-          type: "object" | "array";
-          required?: string[];
-          items?: { required?: string[] };
-        } | null,
-        isArray: true,
-        maxRetries: 1,
-        temperature,
-        captureSiblings: true,
-        provider,
-      })) as unknown as {
-        value: Suggestion[];
-        siblings: Record<string, unknown>;
-      };
-
-      const customRawSceneSummary = customCaptured.siblings?.scene_summary;
-      const customSceneSummary =
-        typeof customRawSceneSummary === "string" &&
-        customRawSceneSummary.trim().length > 0
-          ? customRawSceneSummary
-          : null;
-
-      return {
-        suggestions: Array.isArray(customCaptured.value)
-          ? customCaptured.value.map((suggestion) => ({
-              ...suggestion,
-              category: suggestion.category || policy.categoryId,
-            }))
-          : [],
-        sceneSummary: customSceneSummary,
-      };
-    }
-
-    // Enhancement path: capture scene_summary alongside the unwrapped suggestions.
-    const captured = (await StructuredOutputEnforcer.enforceJSON<Suggestion[]>(
-      this.dependencies.aiService,
-      prompt,
-      {
-        operation,
-        schema: schema as {
-          type: "object" | "array";
-          required?: string[];
-          items?: { required?: string[] };
-        } | null,
-        isArray: true,
-        maxRetries: 1,
-        temperature,
-        captureSiblings: true,
-        provider,
-      },
-    )) as unknown as {
-      value: Suggestion[];
-      siblings: Record<string, unknown>;
-    };
+    const codec = enhancementOutputCodec(provider, context.isPlaceholder, schemaName === "custom");
+    const captured = await StructuredOutputEnforcer.enforceJSON(this.dependencies.aiService, prompt, { operation, codec, maxRetries: 1, temperature, provider });
 
     const rawSceneSummary = captured.siblings?.scene_summary;
     const sceneSummary =
@@ -358,12 +292,10 @@ export class EnhancementV2Engine {
       );
     }
 
-    const suggestions = Array.isArray(captured.value)
-      ? captured.value.map((suggestion) => ({
+    const suggestions = captured.value.map((suggestion) => ({
           ...suggestion,
           category: suggestion.category || policy.categoryId,
-        }))
-      : [];
+        }));
 
     return { suggestions, sceneSummary };
   }

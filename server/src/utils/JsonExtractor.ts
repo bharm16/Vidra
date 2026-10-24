@@ -30,8 +30,8 @@ export function extractResponseText(response: AIResponse): string {
 export function cleanJSONResponse(text: string, isArray: boolean): string {
   // Add more aggressive cleaning before parsing
   let cleanedResponse = text
-    .replace(/```json\n?/gi, "") // Case-insensitive markdown removal
-    .replace(/```\n?/gi, "") // Case-insensitive markdown removal
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/, "")
     .trim();
 
   // Remove common preambles
@@ -67,28 +67,26 @@ export function cleanJSONResponse(text: string, isArray: boolean): string {
   return cleanedResponse;
 }
 
-/**
- * Repair common LLM-emitted JSON malformations. F1 fix (2026-05-22):
- * Gemini's responseSchema enforcement is validation-based (not grammar-
- * constrained), so the model occasionally emits trailing commas or smart
- * quotes that JSON.parse rejects. Called only when the first parse fails,
- * so well-formed JSON is unaffected.
- *
- * Repairs handled:
- *   - Smart double quotes (U+201C/U+201D) → straight `"`
- *   - Smart single quotes (U+2018/U+2019) → straight `'`
- *   - Trailing commas before `]` or `}` (the dominant Gemini failure mode)
- *
- * Caveat: trailing-comma removal uses a syntactic regex, not a string-
- * aware tokenizer. If a JSON string value literally contains `,]` or `,}`,
- * the repair would mangle it. In practice our schemas don't have such
- * values, and the re-parse step below catches any structural corruption.
- */
+/** Repair delimiters and trailing commas only outside JSON string values. */
 export function repairJSON(text: string): string {
-  // Smart quotes → straight quotes.
-  let repaired = text.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
-  // Trailing commas: `, ]` → `]` and `, }` → `}`.
-  repaired = repaired.replace(/,(\s*[\]}])/g, "$1");
+  let repaired = "";
+  let closingQuote: string | undefined;
+  let escaped = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index]!;
+    if (closingQuote) {
+      if (escaped) { repaired += character; escaped = false; }
+      else if (character === "\\") { repaired += character; escaped = true; }
+      else if (character === closingQuote) { repaired += '"'; closingQuote = undefined; }
+      else repaired += character;
+    } else if (character === '"' || character === "“") {
+      closingQuote = character === "“" ? "”" : '"'; repaired += '"';
+    } else if (character === ",") {
+      let next = index + 1;
+      while (next < text.length && /\s/.test(text[next]!)) next += 1;
+      if (text[next] !== "]" && text[next] !== "}") repaired += character;
+    } else repaired += character;
+  }
   return repaired;
 }
 

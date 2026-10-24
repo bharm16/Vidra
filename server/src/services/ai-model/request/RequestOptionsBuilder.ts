@@ -48,7 +48,7 @@ export function buildRequestOptions(
       operation,
       params,
       hasStructuredOutput: jsonMode || !!responseFormat,
-      hasStrictSchema: !!params.schema && capabilities.strictJsonSchema,
+      hasStrictSchema: !!params.schema && params.schema.strict !== false && capabilities.strictJsonSchema,
     });
 
     if (developerMessage) {

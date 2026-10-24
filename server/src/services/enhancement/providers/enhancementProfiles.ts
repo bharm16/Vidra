@@ -20,6 +20,9 @@
  * A profile module each would be four files saying "strict" or "loose".
  */
 
+import { z } from "zod";
+import { createStructuredOutputCodec, type StructuredOutputCodec } from "@utils/StructuredOutputEnforcer";
+import type { Suggestion } from "../services/types";
 import type { ProviderType } from "@utils/provider/ProviderDetector";
 import type { JSONSchema } from "@utils/provider/schemas/types";
 
@@ -246,4 +249,15 @@ export function resolveEnhancementProfile(
   provider: ProviderType,
 ): EnhancementProviderProfile {
   return ENHANCEMENT_PROVIDER_PROFILES[provider];
+}
+
+/** Wire shape and decoded result are selected together for the executing profile. */
+export function enhancementOutputCodec(provider: ProviderType, isPlaceholder: boolean, custom: boolean): StructuredOutputCodec<{ value: Suggestion[]; siblings: Record<string, unknown> }> {
+  const profile = resolveEnhancementProfile(provider);
+  const text = z.string();
+  const category = profile.strictSchema && !custom ? z.enum(SUGGESTION_CATEGORIES) : text;
+  const suggestion = z.object({ text, category: isPlaceholder && !custom ? category : category.optional(), explanation: custom ? text.optional() : text, confidence: z.number().optional(), slot: text.optional(), visual_focus: text.optional() }).passthrough().transform(({ text: phrase, category: group, explanation, confidence, ...extra }): Suggestion => ({ ...extra, text: phrase, ...(group !== undefined ? { category: group } : {}), ...(explanation !== undefined ? { explanation } : {}), ...(confidence !== undefined ? { confidence } : {}) }));
+  const summary = custom && profile.strictSchema ? text.nullable() : profile.strictSchema ? text : text.optional();
+  const parser = z.object({ suggestions: z.array(suggestion), scene_summary: summary }).passthrough().transform(({ suggestions, ...siblings }) => ({ value: suggestions, siblings }));
+  return createStructuredOutputCodec(parser, custom ? profile.customSuggestionSchema() : profile.enhancementSchema(isPlaceholder));
 }

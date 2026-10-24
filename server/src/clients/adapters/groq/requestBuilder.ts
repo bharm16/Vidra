@@ -141,7 +141,7 @@ export function buildGroqPayload({
       type: "json_schema",
       json_schema: {
         name: normalized.name,
-        ...(capabilities?.strictSchema ? { strict: true } : {}),
+        ...(capabilities?.strictSchema ? { strict: normalized.strict } : {}),
         schema: normalized.schema,
       },
     };
