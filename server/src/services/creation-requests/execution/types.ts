@@ -5,7 +5,7 @@ import { OwnerIdSchema, ProjectIdSchema, RequestIdSchema, SlotIdSchema, Timestam
 import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/request.schemas";
 
 export const NativeOutputSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("provider-media"), mediaKind: z.enum(["image", "video", "audio"]), sourceUrl: z.url(), model: z.string().min(1), provider: z.string().min(1) }),
+  z.strictObject({ kind: z.literal("provider-media"), mediaKind: z.enum(["image", "video", "audio"]), sourceUrl: z.url(), predictionId: z.string().min(1).max(160).optional(), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("image"), storagePath: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("video"), assetId: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("audio"), storagePath: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
@@ -31,8 +31,9 @@ export interface WorkflowNativeExecutor {
   /** Sees each verified output before it is published; a rejection retries delivery, never the invocation. */
   checkOutput?(attempt: ExecutionAttempt, verified: VerifiedOutput): Promise<void>;
 }
+export interface DeliveryContext { signal: AbortSignal; deadlineAt: string; }
 export interface WorkflowOutputStorage {
-  materialize(attempt: ExecutionAttempt, output: NativeOutput): Promise<VerifiedOutput>;
+  materialize(attempt: ExecutionAttempt, output: NativeOutput, context: DeliveryContext): Promise<VerifiedOutput>;
 }
 
 export interface WorkflowSpendGuard {

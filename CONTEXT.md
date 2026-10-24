@@ -122,7 +122,8 @@ The server routes only the `/session` workspace used were retired with it: `/api
 
 | Responsibility                    | Source                                                                  |
 | --------------------------------- | ----------------------------------------------------------------------- |
-| Claims/replay receipts            | `server/src/services/admission/idempotency/`                            |
+| Native preparation/acceptance/recovery | `server/src/services/creation-requests/lifecycle.ts` and its private admission implementation |
+| Shared operation identities / legacy receipts | `server/src/services/admission/idempotency/` |
 | Picture admission                 | `server/src/services/admission/`                                        |
 | Video completion/attachment       | `server/src/services/video-generation/runtime/`                         |
 | Legacy charged-job refunds        | `server/src/services/video-generation/refunds/`                         |

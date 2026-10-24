@@ -1,5 +1,4 @@
-import { resolveImageInput } from "@services/video-generation/providers/imagePreprocessing";
-import { logger } from "@infrastructure/Logger";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 import { z } from "zod";
 import { stripPreviewSections } from "@services/image-generation/promptSanitization";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
@@ -21,6 +20,7 @@ export interface NativeWorkflowExecutorDeps {
   ai: AIExecutionPort | null;
   imageProviders: ReadonlySet<string>;
   spendGuard?: WorkflowSpendGuard;
+  prepareVideoInput?(url: string, signal: AbortSignal): Promise<string | Blob>;
   inputAccess(ownerId: string, projectId: string, versionId: string): Promise<string>;
   /** Exact native Replicate models; null when Replicate is unconfigured or replaying. */
   models?: ReplicateModelServices | null;
@@ -51,6 +51,7 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
   }
 
   async execute(request: AcceptedRequest, slot: RequestSlot, profile: CapabilityProfile, sentInstructions: string): Promise<NativeOutput> {
+    try { assertNoLegacyApiKeyData(request.ownerId); } catch { throw new WorkflowPreflightError("This action owner is unavailable."); }
     if (!this.available(profile) || request.snapshot.action !== profile.action) throw new WorkflowPreflightError("This exact adapter is unavailable");
     const spendGuard = this.deps.spendGuard;
     if (!spendGuard) throw new WorkflowPreflightError("This action is unavailable during bounded free testing.");
@@ -82,13 +83,13 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
         });
       }
       if (binding.kind === "video" && typeof providerInput.image === "string") {
-        try { providerInput.image = await resolveImageInput(providerInput.image, logger, "startImage", {}, AbortSignal.timeout(120000)); }
+        try { if (!this.deps.prepareVideoInput) throw new Error("Start-frame preparation is unavailable"); providerInput.image = await this.deps.prepareVideoInput(providerInput.image, AbortSignal.timeout(120000)); }
         catch { throw new WorkflowPreflightError("The selected start frame could not be prepared."); }
       }
       await reserve();
       const result = await this.deps.models.runner.run({ model: profile.endpoint, input: providerInput, userId: request.ownerId, timeoutMs: profile.recovery.deadlineSeconds * 1000, pollIntervalMs: 1000 });
-      const sourceUrl = Array.isArray(result) ? result[0] : result;
-      return NativeOutputSchema.parse({ kind: "provider-media", mediaKind: binding.kind, sourceUrl, model: profile.endpoint, provider: profile.provider });
+      const sourceUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+      return NativeOutputSchema.parse({ kind: "provider-media", mediaKind: binding.kind, sourceUrl, predictionId: result.predictionId, model: profile.endpoint, provider: profile.provider });
     }
     if (binding.kind === "text" && this.deps.ai) {
       const instruction = binding.action === "ask" ? "Answer the creator's question using only the supplied conversation context. Do not claim that you made or changed media." : binding.action === "expand-description" ? "Expand the creator's description into clear visual instructions. Return only the proposed description. Do not make media or claim the draft was changed." : "Improve the creator's wording while preserving their intent. Return only the proposed wording. Do not make media or claim the draft was changed.";

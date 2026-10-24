@@ -2,13 +2,18 @@ import type { Firestore } from "firebase-admin/firestore";
 import { SubmissionCommandSchema, type AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { PreparedAction } from "@shared/schemas/workflow/preparation.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import type { ActionPreparationService } from "./preparation/ActionPreparationService";
+import { ActionPreparationService, type ActionPreparationDependencies } from "./preparation/ActionPreparationService";
 import type { WorkflowExecutionService } from "./execution/WorkflowExecutionService";
 import { acceptWorkflowRequest, readWorkflowRequest } from "./admission/workflowReceipts";
 
 /** Owns atomic preparation/acceptance and dispatch. Transport callers never handle transactions or outbox ordering. */
 export class CreationRequestLifecycle {
-  constructor(private readonly database: Firestore, private readonly preparation: ActionPreparationService, private readonly execution: WorkflowExecutionService) {}
+  static create(dependencies: ActionPreparationDependencies, execution: WorkflowExecutionService): CreationRequestLifecycle {
+    return new CreationRequestLifecycle(dependencies.database, new ActionPreparationService(dependencies), execution);
+  }
+  private constructor(private readonly database: Firestore, private readonly preparation: ActionPreparationService, private readonly execution: WorkflowExecutionService) {}
+  initialize(): Promise<void> { return this.execution.initialize(); }
+  drain(signal?: AbortSignal): Promise<void> { return this.execution.drain(signal); }
   prepare(ownerId: string, projectId: string, draftId: string): Promise<PreparedAction> { return this.preparation.prepare(ownerId, projectId, draftId); }
   async accept(ownerId: string, projectId: string, input: unknown): Promise<AcceptedRequest> {
     const command = SubmissionCommandSchema.parse(input);

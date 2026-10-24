@@ -61,7 +61,7 @@ export async function executeReplicateModel(
         throw new Error(`${endpoint} has no text formatter`);
       return NativeOutputSchema.parse({
         kind: "text",
-        text: definition.text(result, call),
+        text: definition.text(result.output, call),
         ...produced,
       });
     }
@@ -69,7 +69,7 @@ export async function executeReplicateModel(
     case "audio":
     case "video":
       // The lifecycle checkpoints this evidence before any download or upload.
-      return NativeOutputSchema.parse({ kind: "provider-media", mediaKind: definition.profile.output.kind, sourceUrl: resultUrl(result), ...produced });
+      return NativeOutputSchema.parse({ kind: "provider-media", mediaKind: definition.profile.output.kind, sourceUrl: resultUrl(result.output), predictionId: result.predictionId, ...produced });
     case "file":
       throw new Error(`${endpoint} declares an unsupported file output`);
   }

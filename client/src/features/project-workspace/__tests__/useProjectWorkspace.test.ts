@@ -5,41 +5,27 @@ import { VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { ProjectSchema, ConversationSchema } from "@shared/schemas/workflow/project.schemas";
 import { CreationDraftSchema, type CreationDraft, type DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
-import { AcceptedRequestSchema, type AcceptedRequest, type SubmissionCommand } from "@shared/schemas/workflow/request.schemas";
+import { AcceptedRequestSchema, SubmissionCommandSchema, type AcceptedRequest, type SubmissionCommand } from "@shared/schemas/workflow/request.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { PreparedActionSchema } from "@shared/schemas/workflow/preparation.schemas";
 import type { ApiErrorCode } from "@shared/types/api";
 import { WorkflowApiError } from "../api/workflowApi";
 import { draftContent } from "../state/draftBuffer";
-import { useProjectWorkspace } from "../hooks/useProjectWorkspace";
+import { useProjectWorkspace as useWorkspace, type ProjectWorkspaceOptions } from "../hooks/useProjectWorkspace";
 
 const ports = vi.hoisted(() => ({
   areaMask: vi.fn(),
+  frame: vi.fn(),
   api: {
     getProject: vi.fn(), getConversation: vi.fn(), listConversations: vi.fn(), listDrafts: vi.fn(), history: vi.fn(), profiles: vi.fn(), media: vi.fn(),
     requestStatus: vi.fn(), cancelRequest: vi.fn(), reconcileRequest: vi.fn(), createConversation: vi.fn(), saveDraft: vi.fn(), createDraft: vi.fn(), draftStatus: vi.fn(), prepare: vi.fn(), submit: vi.fn(), recover: vi.fn(), access: vi.fn(),
   },
-  device: { save: vi.fn(), get: vi.fn(), list: vi.fn(), submissions: vi.fn(), saveSubmission: vi.fn() },
+  device: { remove: vi.fn(async () => undefined), save: vi.fn(), get: vi.fn(), list: vi.fn(), submissions: vi.fn(), saveSubmission: vi.fn() },
 }));
-vi.mock("../api/workflowApi", () => ({
-  WorkflowApi: class {
-    getProject = ports.api.getProject; getConversation = ports.api.getConversation; listConversations = ports.api.listConversations; listDrafts = ports.api.listDrafts;
-    history = ports.api.history; profiles = ports.api.profiles; media = ports.api.media;
-    requestStatus = ports.api.requestStatus; cancelRequest = ports.api.cancelRequest; reconcileRequest = ports.api.reconcileRequest; createConversation = ports.api.createConversation;
-    saveDraft = ports.api.saveDraft; createDraft = ports.api.createDraft; draftStatus = ports.api.draftStatus;
-    prepare = ports.api.prepare; submit = ports.api.submit; recover = ports.api.recover; access = ports.api.access;
-  },
-  WorkflowApiError: class extends Error {
-    constructor(message: string, readonly status: number, readonly code?: string) { super(message); }
-  },
-}));
-vi.mock("@/features/project-sketch/api/projectSketchApi", () => ({ acceptAreaMask: ports.areaMask }));
-vi.mock("@/repositories/workflow/DraftCheckpointStore", () => ({
-  DraftCheckpointStore: class {
-    save = ports.device.save; get = ports.device.get; list = ports.device.list;
-    submissions = ports.device.submissions; saveSubmission = ports.device.saveSubmission;
-  },
-}));
+const adapters = { server: ports.api, device: ports.device, saveAreaMask: ports.areaMask, frames: { frame: ports.frame } };
+function useProjectWorkspace(ownerId: string, projectId: string, conversationId?: string, draftId?: string, options: ProjectWorkspaceOptions = {}): ReturnType<typeof useWorkspace> {
+  return useWorkspace(ownerId, projectId, conversationId, draftId, { ...options, adapters });
+}
 
 const context = { origin: "empty", requestIds: [], projectInstructionsRevision: 1 };
 const destination = { projectId: "project_hook", conversationId: "conversation_hook" };
@@ -51,6 +37,11 @@ const original = CreationDraftSchema.parse({ schemaVersion: "vidra-workflow/v2",
 
 function accepted(command: { submissionId: string; draftId: string; draftRevision: number; reviewedHash: string }, content: DraftContent = draftContent(original)) {
   return AcceptedRequestSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "request_accepted", ownerId: "creator", projectId: project.id, conversationId: conversation.id, submissionId: command.submissionId, executionDraftId: command.draftId, executionDraftRevision: command.draftRevision, acceptanceSequence: 1, snapshotHash: command.reviewedHash, snapshot: content, materializedContext: { projectInstructions: "", entries: [] }, slots: Array.from({ length: content.settings.outputCount }, (_, index) => ({ id: `slot_${index + 1}`, ordinal: index + 1, outcome: "queued", delivery: "none", usage: { mode: "free", reserved: 0, settled: 0 } })), acceptedAt: timestamp });
+}
+
+function capturedCommand(pending: { submissionId: string }): SubmissionCommand {
+  const command = ports.api.submit.mock.calls.map(call => SubmissionCommandSchema.parse(call[1])).find(value => value.submissionId === pending.submissionId);
+  if (!command) throw new Error("No captured server command for this submission"); return command;
 }
 
 beforeEach(() => {
@@ -82,8 +73,8 @@ it("PE-W03 recovered acceptance opens an empty video follow-up and preserves the
   await act(async () => { await result.current.submit(); });
   const pending = result.current.submissions[0];
   if (!pending) throw new Error("The lost response must retain its captured submission");
-  ports.api.recover.mockResolvedValue(accepted(pending.command));
-  await act(async () => { await result.current.recover(pending); });
+  ports.api.recover.mockResolvedValue(accepted(capturedCommand(pending)));
+  await act(async () => { await result.current.recover(pending.submissionId); });
   expect(result.current.active?.record.id).not.toBe(original.id);
   expect(result.current.active?.content.instructions).toBe("");
   expect(result.current.active?.content.inputs).toEqual([]);
@@ -117,14 +108,14 @@ it("J02 a missing receipt offers an explicit resend of the same captured identit
   const pending = result.current.submissions[0];
   if (!pending) throw new Error("The uncertain submission must keep its original envelope");
   ports.api.recover.mockResolvedValue(undefined);
-  await act(async () => { await result.current.recover(pending); });
-  expect(result.current.resendableSubmissions).toEqual([pending.submissionId]);
+  await act(async () => { await result.current.recover(pending.submissionId); });
+  expect(result.current.submissions.filter(row => row.canResend).map(row => row.submissionId)).toEqual([pending.submissionId]);
   expect(ports.api.submit).toHaveBeenCalledTimes(1);
   expect(result.current.active?.record.status).toBe("submitted");
-  ports.api.submit.mockResolvedValueOnce(accepted(pending.command));
-  await act(async () => { await result.current.resend(pending); });
+  ports.api.submit.mockResolvedValueOnce(accepted(capturedCommand(pending)));
+  await act(async () => { await result.current.resend(pending.submissionId); });
   expect(result.current.view.requests[0]?.submissionId).toBe(pending.submissionId);
-  expect(ports.api.submit.mock.calls[1]?.[1]).toEqual(pending.command);
+  expect(ports.api.submit.mock.calls[1]?.[1]).toEqual(capturedCommand(pending));
   expect(result.current.submissions).toEqual([]);
 });
 
@@ -459,7 +450,9 @@ it("opens the exact parked request from a past conversation rather than its firs
   expect(result.current.conversation?.id).toBe(second.id);
   expect(result.current.active?.record.id).toBe(selected.id);
   expect(result.current.active?.content.instructions).toBe(selected.instructions);
-  expect(result.current.view.drafts[original.id]?.content.instructions).toBe(original.instructions);
+  await act(async () => { await result.current.openConversationDraft(original); });
+  await waitFor(() => expect(result.current.active?.record.id).toBe(original.id));
+  expect(result.current.active?.content.instructions).toBe(original.instructions);
   expect(result.current.view.viewedVersionId).toBe("version_inspecting");
 });
 
@@ -748,4 +741,18 @@ it("keeps an arriving area save out of independently edited words while retainin
   expect(result.current.active?.content.instructions).toBe("An independent edit");
   expect(result.current.active?.content.inputs).toEqual(editable.inputs);
   expect(result.current.media.some(version => version.id === mask.id)).toBe(true);
+});
+
+it("retains a captured frame without attaching it over independently edited words", async () => {
+  const source = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_clip", ownerId: "creator", projectId: project.id, kind: "video", label: "Clip", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "clip", storagePath: "users/creator/previews/videos/clip" }, metadata: { state: "pending" }, association: "linked", createdAt: timestamp });
+  let finish!: (version: ReturnType<typeof MediaVersionSchema.parse>) => void;
+  ports.frame.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const { result } = await loaded(); let capture!: Promise<unknown>;
+  act(() => { capture = result.current.captureFrame(source, 1); });
+  await waitFor(() => expect(ports.frame).toHaveBeenCalled());
+  act(() => result.current.edit({ ...draftContent(original), instructions: "Independent words" }));
+  const version = MediaVersionSchema.parse({ ...source, id: "version_frame", kind: "image", origin: { kind: "frame", versionId: source.id, timestampSeconds: 1 } });
+  await act(async () => { finish(version); await capture; });
+  expect(result.current.active?.content.instructions).toBe("Independent words"); expect(result.current.active?.content.inputs).toEqual([]);
+  expect(result.current.media.some(row => row.id === version.id)).toBe(true);
 });

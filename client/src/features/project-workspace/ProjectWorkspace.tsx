@@ -94,7 +94,6 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   // Painted pixels by mask version, so reopening Edit a region shows the area bound into the request.
   const [masks, setMasks] = useState<Record<string, ProjectAreaMask>>({});
   // A whole-picture verb drops a bound area; the composer says so, and Undo brings it back while nothing else changed.
-  const [areaDropped, setAreaDropped] = useState<{ draftId: string; from: number; sequence?: number }>();
   // Focus is the large player on demand (Rule 2); the feed stays mounted under it, so closing keeps its scroll.
   const [focusOpen, setFocusOpen] = useState(false);
   // The rail marks the request it jumped to until another result is viewed.
@@ -112,7 +111,6 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   // The output the composer returns to when a rail tool is closed.
   const lastOutput = useRef<CreationAction>("make-video");
   const inspectedRequests = useRef(new Set<string>());
-  const frameIntents = useRef(new Map<string, string>());
   const active = controller.active;
   // A painted area is a hidden input of its request, never a picture in Media, the picker or the editor.
   const listedMedia = useMemo(() => controller.media.filter(version => version.origin.kind !== "area-mask"), [controller.media]);
@@ -122,13 +120,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     return primary?.state === "resolved" && mask?.state === "resolved" ? { sourceId: primary.versionId, maskId: mask.versionId, painted: masks[mask.versionId] } : undefined;
   })();
   if (active && composerOutput(active.content.action)) lastOutput.current = active.content.action;
-  const activeHasArea = Boolean(active?.content.inputs.some(input => input.role === "mask"));
-  useEffect(() => {
-    // Only the verb's own edit (the next one) counts; anything else retires the note.
-    if (!areaDropped || areaDropped.sequence !== undefined || active?.record.id !== areaDropped.draftId || active.sequence === areaDropped.from) return;
-    setAreaDropped(active.sequence === areaDropped.from + 1 && !activeHasArea ? { ...areaDropped, sequence: active.sequence } : undefined);
-  }, [active, activeHasArea, areaDropped]);
-  const areaDroppedNotice = areaDropped && active && areaDropped.draftId === active.record.id && areaDropped.sequence === active.sequence && !activeHasArea ? <div className="vf-notice" role="status"><p>Painted area removed</p><FreshButton tone="quiet" onClick={() => { setAreaDropped(undefined); controllerRef.current.undo(); }}>Undo</FreshButton></div> : null;
+  const areaDroppedNotice = controller.areaDropped ? <div className="vf-notice" role="status"><p>Painted area removed</p><FreshButton tone="quiet" onClick={() => controllerRef.current.undo()}>Undo</FreshButton></div> : null;
   const entryWorkingCopy = workspaceEntryMatches(entryBinding, active?.record);
   const actionError = actionFailure?.conversationId === controller.conversation?.id && actionFailure?.draftId === active?.record.id ? actionFailure?.message : undefined;
   const currentResultFeedback = resultFeedback?.conversationId === controller.conversation?.id && resultFeedback?.draftId === active?.record.id ? resultFeedback : undefined;
@@ -329,28 +321,15 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const reuse = (version: MediaVersion): void => { if (version.origin.kind !== "generated") return; const requestId = version.origin.requestId; const request = controller.view.requests.find(candidate => candidate.id === requestId); if (request) void perform(() => reuseRequest(request)); };
   const change = (version: MediaVersion, patch: { label?: string; hidden?: boolean; favorite?: boolean }): void => { void perform(async () => { const updated = await mediaActions.change(version.id, patch); if (scopeAlive.current) controller.updateMedia(updated); }); };
   const makePreferred = (version: MediaVersion): void => { void perform(async () => { const rows = await mediaActions.preferred(version.id); if (scopeAlive.current) rows.forEach(controller.updateMedia); }); };
-  const captureFrame = (version: MediaVersion, timestamp: number): void => {
-    const target = controller.active;
-    const conversationId = controller.conversation?.id;
-    void perform(async () => {
-      const key = `${version.id}:${timestamp}`; const id = frameIntents.current.get(key) ?? `version_${crypto.randomUUID()}`; frameIntents.current.set(key, id);
-      const captured = await mediaActions.frame(version.id, id, timestamp);
-      if (!scopeAlive.current) return;
-      controller.updateMedia(captured);
-      const current = controllerRef.current.active;
-      if (target && current?.record.id === target.record.id && controllerRef.current.conversation?.id === conversationId) {
-        if (current.sequence === target.sequence) controllerRef.current.applyMediaInput(captured);
-        if (conversationId) setResultFeedback({ conversationId, draftId: target.record.id, versionId: captured.id, kind: "frame" });
-      }
-    });
-  };
+  const captureFrame = (version: MediaVersion, timestamp: number): void => { void perform(async () => {
+    const captured = await controllerRef.current.captureFrame(version, timestamp);
+    if (captured?.target && scopeAlive.current) setResultFeedback({ ...captured.target, versionId: captured.version.id, kind: "frame" });
+  }); };
   const download = (version: MediaVersion): void => { void perform(async () => { const grant = await mediaActions.download(version.id); if (!scopeAlive.current) return; const link = document.createElement("a"); link.href = grant.url; link.download = mediaDownloadName(version); link.rel = "noreferrer"; link.click(); }); };
   const newDraft = async (action: CreationAction): Promise<void> => { consumeCreationTicket(entryTicket?.entryId ?? entryBinding?.entryId ?? navigationEntry?.entryId); setEntryTicket(undefined); setEntryBinding(binding => binding?.kind === "created" ? undefined : binding); await controller.newDraft(action); if (scopeAlive.current) { showView(); setPanel("none"); setPane("conversation"); setViewerOrigin("conversation"); } };
-  const noteDroppedArea = (): void => { const current = controllerRef.current.active; if (current?.content.inputs.some(input => input.role === "mask")) setAreaDropped({ draftId: current.record.id, from: current.sequence }); };
-  const edit = (version: MediaVersion): void => { noteDroppedArea(); void perform(async () => { await controller.editMedia(version); if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); } }); };
+  const edit = (version: MediaVersion): void => { void perform(async () => { await controller.editMedia(version); if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); } }); };
   /** A change to existing media binds the media into the working request in the role its action uses (Rule 8); the words stay. */
   const startFromMedia = (action: CreationAction, version: MediaVersion, role?: DraftInput["role"]): void => {
-    noteDroppedArea();
     void perform(async () => {
       await controller.bindResult(action, version, role);
       if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); setFocusOpen(false); }
@@ -444,7 +423,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
 
   // Once something is made from the library home, that conversation is where its results live.
   const homeConversationId = controller.conversation?.id;
-  const homeHasWork = homeConversationId !== undefined && (controller.view.requests.some(request => request.conversationId === homeConversationId) || controller.submissions.some(submission => controller.view.drafts[submission.command.draftId]?.record.conversationId === homeConversationId));
+  const homeHasWork = controller.conversationHasWork;
   // The conversation open when home was entered is the one being left, not one started here.
   const leftConversationId = useRef<string | undefined>(undefined);
   useEffect(() => { if (!libraryHome) leftConversationId.current = homeConversationId; }, [libraryHome, homeConversationId]);
@@ -553,7 +532,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const options = panel === "options" && controller.project ? <ProjectManagementPanel ownerId={ownerId} project={controller.project} folder={openFolder.folder} onFolderChange={folder => { openFolder.observe(folder); if (folder.status === "trashed") void navigateSafely("/app/projects"); }} conversations={managedConversations}onProjectChange={controller.observeProject} onConversationChange={controller.observeConversation} onOpenConversation={id => { void showConversation(id); }} onOpenDraft={record => { void perform(async () => { await controller.openConversationDraft(record); const current = controllerRef.current; if (current.conversation?.id === record.conversationId) { const next = new URLSearchParams(search); next.set("conversation", record.conversationId); setSearch(next, { replace: true }); markReopenedConversation(record.conversationId, record.id); } setPanel("none"); }); }} onClose={() => setPanel("none")} /> : null;
   const workspaceDialog = <Dialog open={panel !== "none" && panel !== "options" && panel !== "area"} onOpenChange={open => { if (!open) keepEditing(); }}><DialogContent overlayClassName={panel === "leave" ? "vf-leave-backdrop" : ""} className={`vf vf-dialog${panel === "leave" ? " vf-leave-dialog" : ""}`} aria-describedby={panel === "leave" || panel === "area" ? "workspace-panel-description" : undefined}><DialogTitle>{panel === "recovery" ? "Recover your work" : panel === "rename" ? "Rename media" : panel === "area" ? "Paint an area" : "Keep this draft before leaving"}</DialogTitle>{panel === "leave" || panel === "area" ? <DialogDescription id="workspace-panel-description">{panel === "leave" ? <><span className="vf-leave-desktop-copy">Neither this device nor the server has saved your latest changes. Retry saving or export a copy before leaving.</span><span className="vf-leave-mobile-copy">Your latest changes are not saved on this device or the server. Retry saving or export a copy before leaving.</span></> : "Choose an area on this exact picture."}</DialogDescription> : null}
 
-      {panel === "recovery" ? <div className="vf-draft-list">{controller.deviceCopies.length ? <h3>Device recovery copies</h3> : null}{controller.deviceCopies.map((copy, index) => <FreshButton key={`${copy.draftId}:${index}`} onClick={() => { void perform(async () => { await controller.recoverDeviceCopy(copy); setPanel("none"); }); }}>{copy.content.instructions || "Empty request"} · {new Date(copy.updatedAt).toLocaleTimeString()}</FreshButton>)}</div> : null}
+      {panel === "recovery" ? <div className="vf-draft-list">{controller.deviceCopies.length ? <h3>Device recovery copies</h3> : null}{controller.deviceCopies.map((copy, index) => <FreshButton key={`${copy.draftId}:${index}`} onClick={() => { void perform(async () => { if (await controller.recoverDeviceCopy(copy.draftId)) setPanel("none"); }); }}>{copy.instructions || "Empty request"} · {new Date(copy.updatedAt).toLocaleTimeString()}</FreshButton>)}</div> : null}
       {panel === "rename" && rename ? <form onSubmit={event => { event.preventDefault(); void perform(async () => { const updated = await mediaActions.change(rename.version.id, { label: rename.label }); if (scopeAlive.current) { controller.updateMedia(updated); setPanel("none"); } }); }}><label htmlFor="media-rename">Name</label><input id="media-rename" className="vf-field" value={rename.label} maxLength={300} onChange={event => setRename({ ...rename, label: event.target.value })} /><FreshButton type="submit" tone="primary" disabled={!rename.label.trim()}>Save name</FreshButton></form> : null}
 
       {panel === "leave" ? <div className="vf-leave-actions"><FreshButton tone="primary" onClick={() => { void perform(retryLeaving); }}>Retry saving</FreshButton><FreshButton onClick={exportDraft}>Export draft</FreshButton><FreshButton tone="quiet" onClick={() => { if (blockerRef.current.state === "blocked") blockerRef.current.proceed(); }}>Discard and leave</FreshButton><FreshButton className="vf-leave-keep" tone="quiet" onClick={keepEditing}>Keep editing</FreshButton></div> : null}

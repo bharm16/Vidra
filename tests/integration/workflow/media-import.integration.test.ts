@@ -3,7 +3,7 @@ import request from "supertest";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { CreationContextService } from "@services/creation-context/CreationContextService";
-import { ActionPreparationService } from "@services/creation-requests/preparation";
+import { createTestLifecycle } from "../helpers/workflow/lifecycle";
 import { ProjectStore } from "@services/projects/ProjectStore";
 import { ConversationStore } from "@services/projects/ConversationStore";
 import { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
@@ -58,7 +58,7 @@ it("cancelling before the start response records a tombstone that blocks a delay
 
 it("pending imports resolve only at preparation, while cancelled late files remain unavailable in both drafts", async () => {
  const profile = CapabilityProfileSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "import-profile", revision: "1", label: "Controlled", action: "make-video", provider: "controlled", endpoint: "controlled/video", mode: "image-to-video", availability: "qualified", inputs: [{ role: "start-frame", kinds: ["image"], minCount: 1, maxCount: 1 }], output: { kind: "video", maxCount: 1 }, maxContextCharacters: 32000, parameters: {}, recovery: { start: "supported", status: "supported", cancel: "supported", result: "supported", deadlineSeconds: 60 }, generatedAudio: "unsupported", pricing: { mode: "free", maximumCreditsPerSlot: 0 } });
- const preparation = new ActionPreparationService({ database, projects, conversations, drafts, contexts: new CreationContextService(database, projects), profiles: { get: () => profile }, media });
+ const preparation = createTestLifecycle({ database, projects, conversations, drafts, contexts: new CreationContextService(database, projects), profiles: { get: () => profile }, media });
  await service.begin("creator", "project_import", command("prepared"));
  const content = { action: "make-video", instructions: "Use only the chosen picture", inputs: [{ state: "importing", role: "start-frame", importId: "import_prepared" }], settings: { profileId: profile.id, profileRevision: profile.revision, parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination: { projectId: "project_import", conversationId: "conversation_upload" } };
  const draft = await drafts.create("creator", "project_import", "conversation_upload", { id: "draft_import_prepared", content });

@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 import { randomUUID } from "node:crypto";
 import { FieldPath } from "firebase-admin/firestore";
 import type { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
@@ -10,6 +12,9 @@ import type { MediaVersionIndex } from "@services/media-history/MediaVersionInde
 import { WorkflowError } from "@services/projects/WorkflowError";
 import { ExecutionAttemptSchema, NativeOutputSchema, VerifiedOutputSchema, instructionsFor, type ExecutionAttempt, type NativeOutput, type VerifiedOutput } from "./types";
 
+const ProviderEvidenceSchema = z.strictObject({ token: z.string().min(1), snapshotHash: z.string().regex(/^[a-f0-9]{64}$/), output: NativeOutputSchema }).refine(record => record.output.kind === "provider-media", "Provider evidence must describe the confirmed remote result");
+type StoredAttempt = Omit<ExecutionAttempt, "output"> & { output?: Exclude<NativeOutput, { kind: "provider-media" }> };
+
 /** One permanent attempt per accepted output slot. A lost lease never permits another provider call. */
 export class WorkflowExecutionStore {
   constructor(private readonly database: Firestore, private readonly media: MediaVersionIndex, private readonly now: () => string = () => new Date().toISOString()) {}
@@ -17,7 +22,26 @@ export class WorkflowExecutionStore {
   private ref(id: string): DocumentReference { return this.database.collection("creation_requests").doc(RequestIdSchema.parse(id)); }
   private attemptRef(id: string, slotId: string): DocumentReference { return this.ref(id).collection("execution_attempts").doc(slotId); }
 
+  private evidenceRef(id: string, slotId: string): DocumentReference { return this.attemptRef(id, slotId).collection("provider_evidence").doc("confirmed"); }
+  /** The parent record stays readable by previous releases; richer provider evidence is additive. */
+  private storedAttempt(attempt: ExecutionAttempt): StoredAttempt {
+    const { output, ...record } = attempt;
+    return output && output.kind !== "provider-media" ? { ...record, output } : record;
+  }
+  private withEvidence(attempt: ExecutionAttempt, data: unknown): ExecutionAttempt {
+    if (data === undefined) return attempt;
+    const evidence = ProviderEvidenceSchema.parse(data);
+    if (evidence.token !== attempt.token || evidence.snapshotHash !== attempt.snapshotHash || (attempt.output && JSON.stringify(attempt.output) !== JSON.stringify(evidence.output))) throw new WorkflowError("submission_conflict", "This provider evidence belongs to a different execution.");
+    return { ...attempt, output: evidence.output };
+  }
+  private async readAttempt(transaction: Transaction, id: string, slotId: string): Promise<ExecutionAttempt> {
+    const row = await transaction.get(this.attemptRef(id, slotId));
+    const evidence = await transaction.get(this.evidenceRef(id, slotId));
+    return this.withEvidence(ExecutionAttemptSchema.parse(row.data()), evidence.exists ? evidence.data() : undefined);
+  }
+
   async get(owner: string, id: string, transaction?: Transaction): Promise<AcceptedRequest> {
+    assertNoLegacyApiKeyData(owner);
     const ownerId = OwnerIdSchema.parse(owner);
     const ref = this.ref(id);
     const row = transaction ? await transaction.get(ref) : await ref.get();
@@ -59,11 +83,13 @@ export class WorkflowExecutionStore {
   async attempts(owner: string, id: string): Promise<ExecutionAttempt[]> {
     const request = await this.get(owner, id);
     const rows = await this.ref(id).collection("execution_attempts").get();
-    return rows.docs.map(row => {
+    const attempts = rows.docs.map(row => {
       const attempt = ExecutionAttemptSchema.parse(row.data());
       if (attempt.ownerId !== owner || attempt.requestId !== id || attempt.snapshotHash !== request.snapshotHash || !request.slots.some(slot => slot.id === attempt.slotId)) throw new WorkflowError("access_denied", "This execution is unavailable.");
       return attempt;
     });
+    const evidence = attempts.length ? await this.database.getAll(...attempts.map(attempt => this.evidenceRef(id, attempt.slotId))) : [];
+    return attempts.map((attempt, index) => this.withEvidence(attempt, evidence[index]?.exists ? evidence[index]?.data() : undefined));
   }
 
   async produced(attempt: ExecutionAttempt, input: NativeOutput): Promise<void> {
@@ -71,14 +97,15 @@ export class WorkflowExecutionStore {
     await this.database.runTransaction(async transaction => {
       const request = await this.get(attempt.ownerId, attempt.requestId, transaction);
       const ref = this.attemptRef(attempt.requestId, attempt.slotId);
-      const row = await transaction.get(ref);
-      const current = ExecutionAttemptSchema.parse(row.data());
+      const current = await this.readAttempt(transaction, attempt.requestId, attempt.slotId);
       this.fence(attempt, current, request);
       if (current.output) {
         if (JSON.stringify(current.output) !== JSON.stringify(output)) throw new WorkflowError("submission_conflict", "This output already has a different stored result.");
         return;
       }
-      transaction.set(ref, ExecutionAttemptSchema.parse({ ...current, state: "produced", output }));
+      const produced = ExecutionAttemptSchema.parse({ ...current, state: "produced", output });
+      if (output.kind === "provider-media") transaction.create(this.evidenceRef(attempt.requestId, attempt.slotId), ProviderEvidenceSchema.parse({ token: current.token, snapshotHash: current.snapshotHash, output }));
+      transaction.set(ref, this.storedAttempt(produced));
       transaction.set(this.ref(request.id), this.replaceSlot(request, attempt.slotId, { outcome: "completed", delivery: output.kind === "text" ? "none" : "storing" }));
     });
   }
@@ -87,8 +114,7 @@ export class WorkflowExecutionStore {
     return this.database.runTransaction(async transaction => {
       const request = await this.get(attempt.ownerId, attempt.requestId, transaction);
       const ref = this.attemptRef(request.id, attempt.slotId);
-      const row = await transaction.get(ref);
-      const current = ExecutionAttemptSchema.parse(row.data());
+      const current = await this.readAttempt(transaction, attempt.requestId, attempt.slotId);
       this.fence(attempt, current, request);
       if (current.state === "published") return request;
       if (!current.output) throw new WorkflowError("read_only", "This output has not completed yet.");
@@ -119,7 +145,8 @@ export class WorkflowExecutionStore {
       }
       const next = this.replaceSlot(request, current.slotId, patch, true);
       transaction.set(this.ref(request.id), next);
-      transaction.set(ref, ExecutionAttemptSchema.parse({ ...current, state: "published" }));
+      if (current.output.kind === "provider-media") transaction.set(this.evidenceRef(request.id, current.slotId), ProviderEvidenceSchema.parse({ token: current.token, snapshotHash: current.snapshotHash, output: current.output }));
+      transaction.set(ref, this.storedAttempt(ExecutionAttemptSchema.parse({ ...current, state: "published" })));
       return next;
     });
   }
@@ -128,12 +155,11 @@ export class WorkflowExecutionStore {
     await this.database.runTransaction(async transaction => {
       const request = await this.get(attempt.ownerId, attempt.requestId, transaction);
       const ref = this.attemptRef(request.id, attempt.slotId);
-      const row = await transaction.get(ref);
-      const current = ExecutionAttemptSchema.parse(row.data());
+      const current = await this.readAttempt(transaction, attempt.requestId, attempt.slotId);
       this.fence(attempt, current, request);
       if (current.state === "published" || (current.output && kind !== "delivery")) return;
       const error = kind === "preflight" ? { code: "not_started", message: preflightMessage ?? "This action could not start. Your request is retained; choose an available model and try again." } : kind === "delivery" ? { code: "delivery_pending", message: "Your result was made, but could not finish saving. Retry saving this result." } : { code: "outcome_unknown", message: "The provider's outcome could not be confirmed. This request will not be submitted again automatically." };
-      transaction.set(ref, { ...current, state: current.output ? "produced" : kind === "preflight" ? "failed" : "needs-attention" });
+      transaction.set(ref, this.storedAttempt({ ...current, state: current.output ? "produced" : kind === "preflight" ? "failed" : "needs-attention" }));
       transaction.set(this.ref(request.id), this.replaceSlot(request, current.slotId, { outcome: current.output ? "completed" : kind === "preflight" ? "failed" : "needs-attention", delivery: current.output ? "storage-failed" : "none", error }));
     });
   }

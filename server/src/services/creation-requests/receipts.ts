@@ -1,3 +1,2 @@
-/** Named entry point for the creation lifecycle module. Subfolders are private. */
-export { WorkflowOutboxSchema, acceptWorkflowRequest, commitVideoExportReceiptInTransaction, readWorkflowRequest, recoverVideoExportReceiptInTransaction, workflowExecutionDraftKey, workflowReceiptId } from "./admission/workflowReceipts";
-export type { WorkflowAdmissionInput } from "./admission/workflowReceipts";
+/** Persistence records are readable; command admission is available only through the lifecycle. */
+export { WorkflowOutboxSchema } from "./admission/workflowReceipts";

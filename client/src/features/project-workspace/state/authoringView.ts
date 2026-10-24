@@ -1,3 +1,4 @@
+import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { CreationDraft, DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import type { DraftBuffer } from "./draftBuffer";
 
@@ -12,4 +13,17 @@ export function authoringDraft(buffer: DraftBuffer, errors: { device?: string | 
   const onDevice = buffer.checkpointSequence === buffer.sequence;
   const onServer = buffer.acknowledgedSequence === buffer.sequence;
   return { record: buffer.record, content: buffer.content, sequence: buffer.sequence, retention: { safe: onDevice || onServer, onDevice, onServer, deviceError: errors.device, serverError: errors.server } };
+}
+
+export interface PendingSubmission {
+  submissionId: string;
+  draftId: string;
+  draftRevision: number;
+  canResend: boolean;
+}
+export interface RetainedDeviceCopy { draftId: string; instructions: string; updatedAt: string; }
+
+export interface CapturedFrame {
+  version: MediaVersion;
+  target?: { conversationId: string; draftId: string };
 }

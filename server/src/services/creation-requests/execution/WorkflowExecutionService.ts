@@ -1,3 +1,4 @@
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { logger } from "@infrastructure/Logger";
@@ -9,6 +10,8 @@ export class WorkflowExecutionService {
   private readonly pending = new Map<string, Promise<void>>();
   private readonly queue: Array<() => void> = [];
   private active = 0;
+  private stopping = false;
+  private readonly shutdown = new AbortController();
   private readonly log = logger.child({ service: "WorkflowExecutionService" });
 
   constructor(private readonly store: WorkflowExecutionStore, private readonly executor: WorkflowNativeExecutor, private readonly storage: WorkflowOutputStorage, private readonly concurrency = 2, private readonly now: () => number = Date.now) {
@@ -17,7 +20,7 @@ export class WorkflowExecutionService {
 
   async start(ownerId: string, requestId: string): Promise<AcceptedRequest> {
     const request = await this.store.get(ownerId, requestId);
-    if (!this.pending.has(requestId)) {
+    if (!this.stopping && !this.pending.has(requestId)) {
       const completion = this.runBounded(() => this.execute(ownerId, requestId)).catch(error => {
         this.log.error("Accepted workflow execution needs recovery", error instanceof Error ? error : new Error(String(error)), { requestId });
       }).finally(() => { this.pending.delete(requestId); });
@@ -31,7 +34,11 @@ export class WorkflowExecutionService {
     let after: string | undefined;
     for (;;) {
       const batch = await this.store.queued(20, after);
-      for (const item of batch) await this.start(item.ownerId, item.requestId);
+      for (const item of batch) {
+        try { assertNoLegacyApiKeyData(item.ownerId); }
+        catch { this.log.warn("Retired workflow identity needs operator review", { requestId: item.requestId }); continue; }
+        await this.start(item.ownerId, item.requestId);
+      }
       if (batch.length < 20) return;
       after = batch.at(-1)?.requestId;
     }
@@ -53,7 +60,12 @@ export class WorkflowExecutionService {
   async recovery(ownerId: string): Promise<MediaVersion[]> { return this.store.recoveries(ownerId); }
 
   /** Exposed for orderly shutdown and deterministic tests; does not initiate work. */
-  async drain(): Promise<void> { await Promise.all([...this.pending.values()]); }
+  async drain(signal?: AbortSignal): Promise<void> {
+    const abort = (): void => this.shutdown.abort(signal?.reason);
+    if (signal) { this.stopping = true; if (signal.aborted) abort(); else signal.addEventListener("abort", abort, { once: true }); }
+    try { await Promise.all([...this.pending.values()]); }
+    finally { signal?.removeEventListener("abort", abort); }
+  }
 
   private async observeDeadline(ownerId: string, requestId: string): Promise<void> {
     for (const attempt of await this.store.attempts(ownerId, requestId)) if (attempt.state === "running" && Date.parse(attempt.deadlineAt) <= this.now()) await this.store.fail(attempt, "unknown");
@@ -68,7 +80,9 @@ export class WorkflowExecutionService {
 
   private async execute(ownerId: string, requestId: string): Promise<void> {
     const request = await this.store.get(ownerId, requestId);
+    const handled = new Set<string>();
     for (const slot of request.slots) {
+      if (this.shutdown.signal.aborted) break;
       const claimed = await this.store.claim(ownerId, requestId, slot.id);
       const attempt = claimed.attempt;
       if (!attempt) continue;
@@ -76,22 +90,30 @@ export class WorkflowExecutionService {
         if (!this.executor.available(attempt.profile)) throw new WorkflowPreflightError("The captured adapter is unavailable");
         const output = await this.executor.execute(claimed.request, slot, attempt.profile, attempt.sentInstructions);
         await this.store.produced(attempt, output);
-        await this.deliver({ ...attempt, state: "produced", output });
+        handled.add(attempt.slotId);
+        await this.deliver({ ...attempt, state: "produced", output }, false);
       } catch (error) {
         await this.store.fail(attempt, error instanceof WorkflowPreflightError ? "preflight" : "unknown", error instanceof WorkflowPreflightError ? error.message : undefined);
       }
     }
     for (const attempt of await this.store.attempts(ownerId, requestId)) {
-      if (attempt.output && attempt.state !== "published") await this.deliver(attempt);
+      if (attempt.output && attempt.state !== "published" && !handled.has(attempt.slotId)) await this.deliver(attempt, true);
       else if (attempt.state === "running" && Date.parse(attempt.deadlineAt) <= this.now()) await this.store.fail(attempt, "unknown");
     }
     await this.store.finishOutbox(ownerId, requestId);
   }
 
-  private async deliver(attempt: ExecutionAttempt): Promise<void> {
+  private async deliver(attempt: ExecutionAttempt, recovery: boolean): Promise<void> {
     if (!attempt.output) return;
     try {
-      const verified = attempt.output.kind === "text" ? undefined : await this.storage.materialize(attempt, attempt.output);
+      // A new dispatch shares its captured deadline. An already produced result may be explicitly repaired
+      // later, under a fresh bounded delivery window; that window never permits provider invocation.
+      const deadline = recovery ? this.now() + 120000 : Math.min(Date.parse(attempt.deadlineAt), this.now() + 120000);
+      const remaining = deadline - this.now();
+      const budget = remaining <= 0 ? AbortSignal.abort(new Error("Delivery deadline elapsed")) : AbortSignal.timeout(remaining);
+      const context = { signal: AbortSignal.any([this.shutdown.signal, budget]), deadlineAt: new Date(deadline).toISOString() };
+      context.signal.throwIfAborted();
+      const verified = attempt.output.kind === "text" ? undefined : await this.storage.materialize(attempt, attempt.output, context);
       if (verified) await this.executor.checkOutput?.(attempt, verified);
       await this.store.publish(attempt, verified);
     } catch {

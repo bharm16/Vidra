@@ -43,7 +43,7 @@ The URL prefix `/api/preview` remains compatible with saved media. Say picture, 
 
 Preserve ADRs as project records. Cleanup must not delete or replace their history; describe current implementation status in `CONTEXT.md`.
 
-Read impacted modules/contracts first. Follow the `studio/` frontend pattern and the thin orchestrator/specialized services pattern in `prompt-optimization/`. Split by responsibility, not line count. Preserve independently owned work and credential/environment files.
+Read impacted modules/contracts first. Follow the workspace authoring/history/selection pattern and the thin orchestrator/specialized services pattern in `prompt-optimization/`. Split by responsibility, not line count. Preserve independently owned work and credential/environment files.
 
 Use explicit exported/async return types, `unknown` and guards instead of `any`, and Zod at input/persistence boundaries. Prefer `undefined` except for deliberate nullable wire fields. If a type fix needs to widen more than three interfaces, find the root cause. Keep dependency upgrades and test infrastructure changes separate from production changes.
 
@@ -74,6 +74,7 @@ For performance, establish a working baseline and measure one change at a time. 
 
 ## References
 
+- [Creation and workspace seams](docs/architecture/creation-workspace-seams.md).
 - [Service boundaries](docs/architecture/SERVICE_BOUNDARIES.md).
 - [Media lifecycle](docs/architecture/admission-media-lifecycle.md).
 - [Page 21 adoption](docs/design/page21-component-migration.md): current components/state journeys. Pages 22/23 do not authorize a new draft ownership model.

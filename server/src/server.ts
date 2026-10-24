@@ -1,5 +1,5 @@
 import type { VideoExportService } from "@services/video-export/VideoExportService";
-import type { WorkflowExecutionService } from "@services/creation-requests/execution";
+import type { CreationRequestLifecycle } from "@services/creation-requests/lifecycle";
 import type { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
 /**
  * Server Lifecycle Management
@@ -169,12 +169,12 @@ export function setupGracefulShutdown(
 
         // Each executor shares one shutdown grace window. Unknown attempts stay durable.
         const videoJobWorker = resolveOptional<VideoJobWorker | null>("videoJobWorker");
-        const workflow = resolveOptional<WorkflowExecutionService>("workflowExecutionService");
+        const workflow = resolveOptional<CreationRequestLifecycle>("workflowRequestLifecycle");
         const exports = resolveOptional<VideoExportService>("workflowVideoExportService");
         const workflowDrain = async (): Promise<void> => {
           if (!workflow) return;
           let timer: ReturnType<typeof setTimeout> | undefined;
-          try { await Promise.race([workflow.drain(), new Promise<void>(resolve => { timer = setTimeout(resolve, drainTimeoutMs); })]); }
+          try { await Promise.race([workflow.drain(AbortSignal.timeout(drainTimeoutMs)), new Promise<void>(resolve => { timer = setTimeout(resolve, drainTimeoutMs); })]); }
           finally { if (timer) clearTimeout(timer); }
         };
         const drained = await Promise.allSettled([videoJobWorker?.shutdown(drainTimeoutMs), workflowDrain(), exports?.drain(drainTimeoutMs)]);
