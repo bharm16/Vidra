@@ -756,3 +756,16 @@ it("retains a captured frame without attaching it over independently edited word
   expect(result.current.active?.content.instructions).toBe("Independent words"); expect(result.current.active?.content.inputs).toEqual([]);
   expect(result.current.media.some(row => row.id === version.id)).toBe(true);
 });
+
+it("polls a request beyond 200 history entries and admits its late media without replacing working words", async () => {
+  const versions = Array.from({ length: 200 }, (_, index) => MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: `version_large_${index}`, ownerId: "creator", projectId: project.id, kind: "image", label: `Picture ${index}`, origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: `picture_${index}`, storagePath: `users/creator/previews/images/${index}.png` }, metadata: { state: "pending" }, association: "linked", createdAt: timestamp }));
+  const rows = Array.from({ length: 201 }, (_, index) => AcceptedRequestSchema.parse({ ...accepted({ submissionId: `submission_large_${index}`, draftId: `draft_large_${index}`, draftRevision: 1, reviewedHash: "a".repeat(64) }), id: `request_large_${index}`, acceptanceSequence: index + 1, slots: [{ id: `slot_large_${index}`, ordinal: 1, outcome: index === 200 ? "running" : "completed", delivery: index === 200 ? "none" : "ready", ...(index === 200 ? {} : { versionId: versions[index]!.id }), usage: { mode: "free", reserved: 0, settled: 0 } }] }));
+  ports.api.history.mockResolvedValue(rows); ports.api.media.mockResolvedValue(versions); ports.api.requestStatus.mockResolvedValue(rows[200]);
+  const { result } = await loaded(); await waitFor(() => expect(ports.api.requestStatus).toHaveBeenCalled());
+  const late = MediaVersionSchema.parse({ ...versions[0], id: "version_large_late" });
+  const completed = AcceptedRequestSchema.parse({ ...rows[200], slots: [{ ...rows[200]!.slots[0], outcome: "completed", delivery: "ready", versionId: late.id }] });
+  ports.api.history.mockResolvedValue([...rows.slice(0, 200), completed]); ports.api.requestStatus.mockResolvedValue(completed); ports.api.media.mockResolvedValue([...versions, late]);
+  await waitFor(() => expect(result.current.media.some(row => row.id === late.id)).toBe(true), { timeout: 5000 });
+  expect(result.current.view.requests).toHaveLength(201); expect(result.current.view.requests.at(-1)?.slots[0]?.delivery).toBe("ready");
+  expect(result.current.active?.content.instructions).toBe("Original direction");
+});
