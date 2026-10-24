@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { OpenAICompatibleAdapter } from "@clients/adapters/OpenAICompatibleAdapter";
+import { GroqLlamaAdapter } from "@clients/adapters/GroqLlamaAdapter";
 import { GeminiAdapter } from "@clients/adapters/GeminiAdapter";
 import { StructuredOutputEnforcer, createStructuredOutputCodec } from "@utils/StructuredOutputEnforcer";
 
@@ -11,18 +12,19 @@ it.each(["openai", "gemini"] as const)("dispatches codec schemas through the %s 
   vi.stubGlobal("fetch", fetcher);
   const adapter = provider === "openai" ? new OpenAICompatibleAdapter({ apiKey: "test-only", baseURL: "https://test.invalid", defaultModel: "test-model" }) : new GeminiAdapter({ apiKey: "test-only", baseURL: "https://test.invalid", defaultModel: "test-model" });
   const codec = createStructuredOutputCodec(z.strictObject({ name: z.string(), strict: z.string() }));
-  const result = await StructuredOutputEnforcer.enforceJSON({ execute: async (_operation, options) => adapter.complete(options.systemPrompt, options) }, "Return fields", { operation: "enhance_suggestions", codec, provider, maxRetries: 0 });
+  const result = await StructuredOutputEnforcer.enforceJSON({ execute: async (_operation, options) => { if (!options.schema) throw new Error("Missing codec schema"); return adapter.complete(options.systemPrompt, { schema: options.schema, maxRetries: 0 }); } }, "Return fields", { operation: "enhance_suggestions", codec, provider, maxRetries: 0 });
   expect(result).toEqual(value);
   const payload = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
   const wireSchema = provider === "openai" ? payload.response_format.json_schema.schema : payload.generationConfig.responseSchema;
   expect(wireSchema.properties).toEqual({ name: { type: "string" }, strict: { type: "string" } });
   expect(wireSchema.name).toBeUndefined(); expect(wireSchema.strict).toBeUndefined();
 });
-it("uses non-strict provider schema mode for a partial object but still decodes its fields", async () => {
+it.each(["openai", "groq"] as const)("uses non-strict %s schema mode for a partial object but still decodes its fields", async provider => {
   const fetcher = vi.fn(async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => new Response(JSON.stringify({ choices: [{ message: { content: '{"name":"result"}' } }] }), { status: 200 }));
   vi.stubGlobal("fetch", fetcher);
-  const adapter = new OpenAICompatibleAdapter({ apiKey: "test-only", baseURL: "https://test.invalid", defaultModel: "test-model" });
+  const config = { apiKey: "test-only", baseURL: "https://test.invalid", defaultModel: "openai/gpt-oss-20b" };
+  const adapter = provider === "openai" ? new OpenAICompatibleAdapter(config) : new GroqLlamaAdapter(config);
   const codec = createStructuredOutputCodec(z.object({ name: z.string(), optional: z.string().optional() }));
-  await expect(StructuredOutputEnforcer.enforceJSON({ execute: async (_operation, options) => adapter.complete(options.systemPrompt, options) }, "Return fields", { operation: "enhance_suggestions", codec, provider: "openai", maxRetries: 0 })).resolves.toEqual({ name: "result" });
+  await expect(StructuredOutputEnforcer.enforceJSON({ execute: async (_operation, options) => { if (!options.schema) throw new Error("Missing codec schema"); return adapter.complete(options.systemPrompt, { schema: options.schema, maxRetries: 0 }); } }, "Return fields", { operation: "enhance_suggestions", codec, provider, maxRetries: 0 })).resolves.toEqual({ name: "result" });
   expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body)).response_format.json_schema.strict).toBe(false);
 });

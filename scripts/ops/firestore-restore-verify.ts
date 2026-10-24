@@ -8,7 +8,7 @@ const Expectations = z.strictObject({
   collections: z.array(z.strictObject({ path: resource.refine(value => value.split("/").length % 2 === 1), count: z.number().int().min(0) })).min(1),
   documents: z.array(z.strictObject({ path: resource.refine(value => value.split("/").length % 2 === 0), fields: z.record(z.string().min(1), z.unknown()).refine(value => Object.keys(value).length > 0) })).min(1),
 }).refine(value => value.collections.some(collection => collection.count > 0), "Acceptance must include a nonempty collection");
-const Document = z.object({ fields: z.record(z.string(), z.unknown()) });
+const Document = z.object({ name: z.string().min(1), fields: z.record(z.string(), z.unknown()).default({}) });
 const Page = z.object({ documents: z.array(Document).optional(), nextPageToken: z.string().optional() });
 function record(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value); }
 function decode(value: unknown): unknown {
@@ -52,6 +52,7 @@ async function main(): Promise<void> {
   if (process.env.FIRESTORE_EMULATOR_HOST !== host) throw new Error("The verifier is not attached to the selected emulator");
   const signal = AbortSignal.timeout(10 * 60_000);
   const documents = new URL(`/v1/projects/${encodeURIComponent(project)}/databases/(default)/documents/`, origin);
+  const documentPrefix = `projects/${project}/databases/(default)/documents/`;
   const get = async (path: string, token?: string, listing = false): Promise<unknown> => {
     const url = new URL(path.split("/").map(encodeURIComponent).join("/"), documents);
     if (listing) url.searchParams.set("pageSize", "1000");
@@ -63,8 +64,15 @@ async function main(): Promise<void> {
   for (const collection of expectations.collections) {
     let count = 0; let cursor: string | undefined;
     const seen = new Set<string>();
+    const names = new Set<string>();
+    const collectionPrefix = `${documentPrefix}${collection.path}/`;
     do {
-      const page = Page.parse(await get(collection.path, cursor, true)); count += page.documents?.length ?? 0;
+      const page = Page.parse(await get(collection.path, cursor, true));
+      for (const document of page.documents ?? []) {
+        if (!document.name.startsWith(collectionPrefix) || !document.name.slice(collectionPrefix.length) || document.name.slice(collectionPrefix.length).includes("/") || names.has(document.name)) throw new Error(`Invalid listed document identity for ${collection.path}`);
+        names.add(document.name);
+      }
+      count = names.size;
       if (count > collection.count) throw new Error(`Count mismatch for ${collection.path}`);
       cursor = page.nextPageToken;
       if (cursor && seen.has(cursor)) throw new Error("Restore acceptance cursor did not advance");
@@ -73,7 +81,9 @@ async function main(): Promise<void> {
     if (count !== collection.count) throw new Error(`Count mismatch for ${collection.path}: expected ${collection.count}, got ${count}`);
   }
   for (const sample of expectations.documents) {
-    const fields = decodeFields(Document.parse(await get(sample.path)).fields);
+    const document = Document.parse(await get(sample.path));
+    if (document.name !== `${documentPrefix}${sample.path}`) throw new Error(`Document identity mismatch: ${sample.path}`);
+    const fields = decodeFields(document.fields);
     for (const [field, expected] of Object.entries(sample.fields)) {
       const actual = field.split(".").reduce<unknown>((value, part) => record(value) ? value[part] : undefined, fields);
       if (!isDeepStrictEqual(actual, expected)) throw new Error(`Document acceptance mismatch: ${sample.path} / ${field}`);

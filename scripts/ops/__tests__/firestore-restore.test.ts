@@ -22,8 +22,8 @@ async function restoreCase(mode: string): Promise<{ status: number | null; stdou
   const server = createServer((req, res) => {
     if (mode === "http-error") { res.writeHead(503).end('{"error":"unavailable"}'); return; }
     if (mode === "malformed") { res.end("not json"); return; }
-    const document = { fields: { userId: { stringValue: mode === "wrong-fields" ? "other" : "creator" } } };
-    if (req.url?.split("?")[0]?.endsWith("/sessions")) res.end(JSON.stringify({ documents: mode === "empty" ? [] : [document] }));
+    const document = { name: `projects/${mode === "wrong-identity" ? "demo-other" : "demo-restore"}/databases/(default)/documents/sessions/one`, fields: { userId: { stringValue: mode === "wrong-fields" ? "other" : "creator" } } };
+    if (req.url?.split("?")[0]?.endsWith("/sessions")) res.end(JSON.stringify({ documents: mode === "empty" ? [] : mode === "with-empty-document" ? [document, { name: "projects/demo-restore/databases/(default)/documents/sessions/empty" }] : mode === "missing-identity" ? [{}] : [document] }));
     else if (req.url?.includes("pageSize")) { res.writeHead(400).end(); }
     else res.end(JSON.stringify(document));
   });
@@ -35,7 +35,7 @@ async function restoreCase(mode: string): Promise<{ status: number | null; stdou
     writeFileSync(path.join(directory, "bin/gsutil"), '#!/bin/bash\nfor destination; do :; done\nmkdir -p "$destination/backup"\ntouch "$destination/backup/backup.overall_export_metadata"\n', { mode: 0o700 });
     writeFileSync(path.join(directory, "bin/firebase"), '#!/bin/bash\nif [[ "$RESTORE_TEST_MODE" == "unconfirmed" ]]; then exit 0; fi\nFIRESTORE_EMULATOR_HOST="$VIDRA_RESTORE_HOST" "$VIDRA_RESTORE_TSX" "$VIDRA_RESTORE_VERIFIER"\n', { mode: 0o700 });
     const expected = path.join(directory, "expected.json");
-    writeFileSync(expected, JSON.stringify({ projectId: "demo-restore", collections: [{ path: "sessions", count: 1 }], documents: [{ path: "sessions/one", fields: { userId: "creator" } }] }));
+    writeFileSync(expected, JSON.stringify({ projectId: "demo-restore", collections: [{ path: "sessions", count: mode === "with-empty-document" ? 2 : 1 }], documents: [{ path: "sessions/one", fields: { userId: "creator" } }] }));
     return await new Promise((resolve, reject) => {
       const child = spawn("bash", ["scripts/ops/firestore-restore.sh", "--source", "gs://test-only/backup", "--target", "emulator", "--project", "demo-restore", "--expect", expected], { env: { ...process.env, PATH: `${directory}/bin:${process.env.PATH}`, RESTORE_TEST_MODE: mode, FIRESTORE_EMULATOR_HOST: `127.0.0.1:${address.port}` } });
       let stdout = ""; let stderr = "";
@@ -44,13 +44,13 @@ async function restoreCase(mode: string): Promise<{ status: number | null; stdou
     });
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); rmSync(directory, { recursive: true, force: true }); }
 }
-it.each(["http-error", "malformed", "empty", "wrong-fields", "unconfirmed"])("refuses unverified restore outcome %s", async mode => {
+it.each(["http-error", "malformed", "empty", "wrong-fields", "unconfirmed", "missing-identity", "wrong-identity"])("refuses unverified restore outcome %s", async mode => {
   const result = await restoreCase(mode);
   expect(result.status).not.toBe(0);
   expect(result.stdout).not.toContain("Emulator restore verified");
 });
-it("reports verification only after exact counts and sampled ownership match", async () => {
-  const result = await restoreCase("success");
+it.each(["success", "with-empty-document"])("verifies counts and sampled ownership for %s", async mode => {
+  const result = await restoreCase(mode);
   expect(result.stderr).toBe("");
   expect(result.status).toBe(0);
   expect(result.stdout).toContain("Emulator restore verified for demo-restore");
