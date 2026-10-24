@@ -7,17 +7,27 @@ export function runNative(executable: string, args: readonly string[], options: 
   return new Promise((resolve, reject) => {
     if (options.signal?.aborted) { reject(new RenderCancelledError()); return; }
     const child = spawn(executable, [...args], { shell: false, stdio: ["ignore", "pipe", "pipe"], ...(options.cwd ? { cwd: options.cwd } : {}) });
-    let stdout = ""; let stderr = ""; let timedOut = false; let killTimer: NodeJS.Timeout | undefined; let spawnError: Error | undefined; let memoryExceeded = false; let closed = false; let checkingMemory = false; let memoryMonitoringUnavailable = false;
+    let stdout = ""; let stderr = ""; let timedOut = false; let killTimer: NodeJS.Timeout | undefined; let spawnError: Error | undefined; let memoryExceeded = false; let closed = false; let checkingMemory = false; let memoryMonitoringUnavailable = false; let emptyMemorySamples = 0;
     const terminate = (): void => { child.kill("SIGTERM"); killTimer ??= setTimeout(() => { child.kill("SIGKILL"); }, 2000); killTimer.unref(); };
     const memory = setInterval(() => {
       if (closed || checkingMemory || !child.pid) return;
       checkingMemory = true;
-      execFile("ps", ["-o", "rss=", "-p", String(child.pid)], { timeout: 1000, maxBuffer: 4096, shell: false }, (error, result) => {
+      execFile("ps", ["-o", "stat=", "-o", "rss=", "-p", String(child.pid)], { timeout: 1000, maxBuffer: 4096, shell: false }, (error, result, diagnostics) => {
         checkingMemory = false;
         if (closed || child.exitCode !== null || child.signalCode !== null) return;
-        if (error) { memoryMonitoringUnavailable = true; terminate(); return; }
-        const rss = Number(result.trim()) * 1024;
+        if (error) {
+          // ps returns 1 with no output when the process vanished during sampling.
+          if (error.code === 1 && typeof result === "string" && typeof diagnostics === "string" && !result.trim() && !diagnostics.trim()) return;
+          memoryMonitoringUnavailable = true; terminate(); return;
+        }
+        const sample = /^\s*(\S+)\s+(\d+)\s*$/.exec(result);
+        // An exited/zombie process can have no RSS before Node emits close.
+        if (sample?.[1] && /^[ZXE]/.test(sample[1])) return;
+        const rss = sample?.[2] === undefined ? Number.NaN : Number(sample[2]) * 1024;
+        // State and RSS are not atomic: allow one zero sample while exit completes.
+        if (rss === 0 && emptyMemorySamples++ === 0) return;
         if (!Number.isFinite(rss) || rss <= 0) { memoryMonitoringUnavailable = true; terminate(); return; }
+        emptyMemorySamples = 0;
         if (rss > Math.min(options.maxRssBytes ?? 256 * 1024 * 1024, 256 * 1024 * 1024)) { memoryExceeded = true; terminate(); }
       });
     }, 250);
