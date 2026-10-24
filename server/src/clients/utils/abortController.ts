@@ -1,6 +1,7 @@
 export interface AbortControllerResult {
   controller: AbortController;
   timeoutId: NodeJS.Timeout;
+  cleanup(): void;
   abortedByTimeout: { value: boolean };
 }
 
@@ -15,15 +16,16 @@ export const createAbortController = (
     controller.abort();
   }, timeout);
 
+  const abort = (): void => controller.abort();
   if (externalSignal) {
     if (externalSignal.aborted) {
       controller.abort();
     } else {
-      externalSignal.addEventListener("abort", () => controller.abort(), {
+      externalSignal.addEventListener("abort", abort, {
         once: true,
       });
     }
   }
 
-  return { controller, timeoutId, abortedByTimeout };
+  return { controller, timeoutId, abortedByTimeout, cleanup: () => { clearTimeout(timeoutId); externalSignal?.removeEventListener("abort", abort); } };
 };

@@ -1,6 +1,9 @@
+import { canonicalJson } from "@shared/workflow/canonicalJson";
+import { sanitizeOptions, sanitizePolicy } from "./utils/policyUtils";
+import type { ResolvedExecution } from "@services/ai-model/types";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
-import type { LabelSpansResult, ValidationPolicy } from "./types";
+import type { LabelSpansParams, LabelSpansResult, ValidationPolicy } from "./types";
 
 /**
  * Cache TTL (seconds) for a labeled prompt.
@@ -19,35 +22,38 @@ export interface CachedSpanResult {
   source: "cache" | "computed" | "coalesced";
 }
 
-/**
- * Run `compute` behind `SpanLabelingCacheService.getOrCompute` with the shared
- * TTL heuristic and provider-keying, returning both the result and the cache
- * source. This is the one place that owns "how span labeling is cached": the
- * port adapter uses it and drops `source`; the blocking route coordinator uses
- * it and maps `source` onto its X-Cache headers.
- *
- * The provider is the router's pre-flight answer (the cache key must exist
- * before the value does); it is accurate unless a circuit trips mid-call, and
- * the post-compute paths that CAN key on the produced provider (the streaming
- * handler's backfill) do so themselves.
- */
+/** One identity for effective processing options and the selected execution. */
+export function spanCacheIdentity(request: LabelSpansParams, execution: ResolvedExecution): string {
+  return canonicalJson({ ownerId: request.ownerId, options: sanitizeOptions({ ...(request.maxSpans !== undefined ? { maxSpans: request.maxSpans } : {}), ...(request.minConfidence !== undefined ? { minConfidence: request.minConfidence } : {}), ...(request.templateVersion ? { templateVersion: request.templateVersion } : {}) }), policy: sanitizePolicy(request.policy ?? null), enableRepair: request.enableRepair === true, execution: { client: execution.client, provider: execution.provider, model: execution.model } });
+}
+
 export async function computeCachedSpans(params: {
   cache: SpanLabelingCacheService;
+  request?: LabelSpansParams;
   aiService: AIExecutionPort;
   text: string;
   policy: ValidationPolicy | null;
   templateVersion: string | null;
-  compute: () => Promise<LabelSpansResult>;
+  compute: (signal?: AbortSignal) => Promise<LabelSpansResult>;
 }): Promise<CachedSpanResult> {
-  const provider = params.aiService.resolveExecution("span_labeling").provider;
+  const execution = params.aiService.resolveExecution("span_labeling");
+  const provider = execution.provider;
+  const request = params.request ?? { text: params.text, ...(params.policy ? { policy: params.policy } : {}), ...(params.templateVersion ? { templateVersion: params.templateVersion } : {}) };
+
+  request.signal?.throwIfAborted();
+  if (!request.ownerId) return { result: await params.compute(), source: "computed" };
 
   const { value, source } = await params.cache.getOrCompute(
     params.text,
     params.policy,
     params.templateVersion,
     params.compute,
-    { ttl: spanCacheTtlSeconds(params.text.length), provider },
+    { ttl: spanCacheTtlSeconds(params.text.length), provider, ...(request.signal ? { signal: request.signal } : {}), identity: spanCacheIdentity(request, execution), shouldCache: value => value.meta.mixedExecutions !== true && (!value.meta.execution || spanCacheIdentity(request, value.meta.execution) === spanCacheIdentity(request, execution)) },
   );
 
-  return { result: value as LabelSpansResult, source };
+  request.signal?.throwIfAborted();
+  if (source !== "cache" && !request.signal?.aborted && value.meta.execution && spanCacheIdentity(request, value.meta.execution) !== spanCacheIdentity(request, execution)) {
+    await params.cache.set(params.text, params.policy, params.templateVersion, value, { ttl: spanCacheTtlSeconds(params.text.length), provider: value.meta.execution.provider, identity: spanCacheIdentity(request, value.meta.execution) });
+  }
+  return { result: value, source };
 }

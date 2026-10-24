@@ -14,10 +14,11 @@ export function runNative(executable: string, args: readonly string[], options: 
       checkingMemory = true;
       execFile("ps", ["-o", "rss=", "-p", String(child.pid)], { timeout: 1000, maxBuffer: 4096, shell: false }, (error, result) => {
         checkingMemory = false;
-        if (closed) return;
-        if (error) { if ("code" in error && (error.code === "ENOENT" || error.code === "EACCES")) { memoryMonitoringUnavailable = true; terminate(); } return; }
+        if (closed || child.exitCode !== null || child.signalCode !== null) return;
+        if (error) { memoryMonitoringUnavailable = true; terminate(); return; }
         const rss = Number(result.trim()) * 1024;
-        if (Number.isFinite(rss) && rss > (options.maxRssBytes ?? 2 * 1024 * 1024 * 1024)) { memoryExceeded = true; terminate(); }
+        if (!Number.isFinite(rss) || rss <= 0) { memoryMonitoringUnavailable = true; terminate(); return; }
+        if (rss > Math.min(options.maxRssBytes ?? 256 * 1024 * 1024, 256 * 1024 * 1024)) { memoryExceeded = true; terminate(); }
       });
     }, 250);
     memory.unref();

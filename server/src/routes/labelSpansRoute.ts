@@ -30,7 +30,7 @@ export function createLabelSpansRoute(
       } satisfies ApiResponse<never>);
     }
 
-    const { payload, text, policy, templateVersion } = parsed.data;
+    const { payload, text, policy, templateVersion, streamVersion } = parsed.data;
     const requestId = (req as Request & { id?: string }).id;
     const userId = extractUserId(req);
     const operation = "labelSpansStream";
@@ -44,6 +44,7 @@ export function createLabelSpansRoute(
 
     await handleLabelSpansStreamRequest({
       res,
+      ...(streamVersion ? { streamVersion } : {}),
       payload,
       aiService,
       requestId,
@@ -77,6 +78,9 @@ export function createLabelSpansRoute(
         templateVersion,
       } = parsed.data;
 
+      const cancellation = new AbortController();
+      res.on("close", () => cancellation.abort());
+      payload.signal = cancellation.signal;
       const startTime = performance.now();
       const operation = "labelSpans";
       const requestId = (req as Request & { id?: string }).id ?? "unknown";
@@ -120,6 +124,7 @@ export function createLabelSpansRoute(
           data: toPublicLabelSpansResult(result),
         } satisfies ApiResponse<PublicLabelSpansResult>);
       } catch (error) {
+        if (cancellation.signal.aborted || res.destroyed) return;
         logger.error("Operation failed.", error as Error, {
           operation,
           requestId,

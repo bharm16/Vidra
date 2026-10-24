@@ -39,7 +39,8 @@ WORKDIR /app
 # Install runtime dependencies:
 # - dumb-init: proper signal handling
 # - ffmpeg: provides ffmpeg + ffprobe for continuity frame extraction
-RUN apk add --no-cache dumb-init ffmpeg
+# - procps: ps -o rss= -p supports the native worker RSS monitor
+RUN apk add --no-cache dumb-init ffmpeg procps
 
 # Security: Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001

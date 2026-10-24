@@ -13,6 +13,35 @@ const settings = { prompt: "Current words differ", strength: .8, steps: 8, seed:
 const frame: LiveOutput = { imageUrl: "data:image/png;base64,YQ==", sketchDataUri: "data:image/png;base64,Yg==", requestId: "17", at: Date.parse("2026-10-17T00:00:00.000Z"), inputs: { prompt: "Words that made the displayed picture", strength: .875, steps: 8, seed: 42 } };
 beforeEach(() => { vi.clearAllMocks(); store.read.mockResolvedValue(undefined); store.save.mockResolvedValue(undefined); });
 describe("exact displayed-output acceptance", () => {
+  it("retains the latest drawing when closing before the debounce expires", async () => {
+    const { result, unmount } = renderHook(() => useProjectSketchCapture({ ownerId: "owner", projectId: "project_one", settings, onAccepted: vi.fn() }));
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    store.save.mockClear();
+    act(() => result.current.checkpoint(frame.sketchDataUri)); unmount();
+    await waitFor(() => expect(store.save).toHaveBeenCalledWith(expect.objectContaining({ drawingDataUri: frame.sketchDataUri })));
+  });
+
+  it("refuses a safe close when the latest drawing cannot be retained", async () => {
+    const { result } = renderHook(() => useProjectSketchCapture({ ownerId: "owner", projectId: "project_one", settings, onAccepted: vi.fn() }));
+    await waitFor(() => expect(result.current.loaded).toBe(true)); store.save.mockRejectedValue(new Error("Device full"));
+    await act(async () => { expect(await result.current.retainBeforeClose()).toBe(false); });
+    expect(result.current.localError).toContain("could not be saved");
+  });
+
+  it("waits for edits that arrive during a slow retention write", async () => {
+    const { result } = renderHook(() => useProjectSketchCapture({ ownerId: "owner", projectId: "project_one", settings, onAccepted: vi.fn() }));
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    let first!: () => void; let second!: () => void; let finished = false;
+    store.save.mockReset().mockResolvedValue(undefined).mockImplementationOnce(() => new Promise<undefined>(resolve => { first = () => resolve(undefined); })).mockImplementationOnce(() => new Promise<undefined>(resolve => { second = () => resolve(undefined); }));
+    let closing: Promise<boolean> = Promise.resolve(false);
+    act(() => { result.current.checkpoint(frame.sketchDataUri); closing = result.current.retainBeforeClose().then(retained => { finished = true; return retained; }); });
+    act(() => result.current.checkpoint(frame.imageUrl));
+    await act(async () => { first(); await Promise.resolve(); });
+    expect(finished).toBe(false);
+    expect(store.save).toHaveBeenLastCalledWith(expect.objectContaining({ drawingDataUri: frame.imageUrl }));
+    await act(async () => { second(); expect(await closing).toBe(true); });
+  });
+
   it("retries the original captured tuple after response loss and never changes it to the later frame or current settings", async () => {
     vi.mocked(acceptProjectSketch).mockRejectedValueOnce(new Error("response lost"));
     const accepted = vi.fn();

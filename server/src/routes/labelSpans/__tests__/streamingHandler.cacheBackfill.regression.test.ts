@@ -115,7 +115,9 @@ describe("stream cache backfill", () => {
     ];
 
     await handleLabelSpansStreamRequest({
+      userId: "creator",
       res: makeResponse(written),
+      streamVersion: 2,
       payload: { text: TEXT, templateVersion: "v2.3" },
       aiService: makeAiService(rawSpans),
       spanLabelingCache: makeCache(captured),
@@ -124,6 +126,9 @@ describe("stream cache backfill", () => {
       templateVersion: "v2.3",
     });
 
+    const completed = written.flatMap(line => line.trim().split("\n")).map(line => JSON.parse(line) as { type?: string; result?: { spans: Array<{ text: string }> } }).find(event => event.type === "complete");
+    expect(completed?.result?.spans.map(span => span.text)).toContain("recursive paperwork");
+    expect(completed?.result?.spans.map(span => span.text)).not.toContain("recursive");
     expect(captured.length).toBe(1);
     const entry = captured[0];
     expect(entry?.value.meta.version).toBe("v2.3");
@@ -146,6 +151,7 @@ describe("stream cache backfill", () => {
     res.destroyed = true;
 
     await handleLabelSpansStreamRequest({
+      userId: "creator",
       res,
       payload: { text: TEXT, templateVersion: "v2.3" },
       aiService: makeAiService([

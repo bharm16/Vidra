@@ -1,3 +1,4 @@
+import { NativeMediaRuntime } from "@services/native-media/NativeMediaRuntime";
 import { allDocuments } from "@services/firestore/WorkflowLists";
 import { randomUUID } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
@@ -18,8 +19,7 @@ import { StoredShareSchema, FrameOperationSchema, type StoredShare, type Workflo
 import { deriveNativeFrame } from "./NativeFrameDeriver";
 
 export class WorkflowManagementService {
-  private activeFrames = 0;
-  constructor(private readonly database: Firestore, private readonly projects: ProjectStore, private readonly conversations: ConversationStore, private readonly media: MediaVersionIndex, private readonly objects: WorkflowManagementStorage, private readonly now: () => string = () => new Date().toISOString()) {}
+  constructor(private readonly database: Firestore, private readonly projects: ProjectStore, private readonly conversations: ConversationStore, private readonly media: MediaVersionIndex, private readonly objects: WorkflowManagementStorage, private readonly now: () => string = () => new Date().toISOString(), private readonly runtime = new NativeMediaRuntime()) {}
 
   async conversation(owner: string, project: string, conversation: string, command: unknown): Promise<Conversation> { return this.conversations.change(owner, project, conversation, command); }
 
@@ -130,10 +130,7 @@ export class WorkflowManagementService {
     if (!stored) {
       if (!acquired.claimed) throw new WorkflowError("read_only", "This frame is already being made. Retry to recover the same picture.");
       try {
-        if (this.activeFrames >= 2) throw new WorkflowError("capability_unavailable", "Frame capture is busy. Try again shortly.");
-        this.activeFrames += 1;
-        try { stored = await deriveNativeFrame(this.objects, operation, source); }
-        finally { this.activeFrames -= 1; }
+        stored = await this.runtime.run(undefined, signal => deriveNativeFrame(this.objects, operation, source, signal));
       } catch (error) {
         await this.database.runTransaction(async transaction => {
           const ref = this.database.collection("creation_projects").doc(project).collection("frame_derivations").doc(command.id);

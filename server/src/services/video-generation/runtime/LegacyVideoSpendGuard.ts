@@ -80,6 +80,7 @@ export class LegacyVideoSpendGuard implements LegacyVideoDispatchSpendPort {
       if (current.status !== "processing" || current.workerId !== workerId || current.attempts !== job.attempts || !current.leaseExpiresAtMs || current.leaseExpiresAtMs <= this.now()) return null;
       if (job.attempts > (current.maxAttempts ?? 3)) throw new LegacyVideoSpendRefusedError("The bounded legacy dispatch attempts are exhausted.");
       if (dispatch.exists) return null;
+      if (current.attempts > 1) throw new LegacyVideoSpendRefusedError("This job has already consumed its generation attempt. Recover confirmed output or start a new request.");
       // Inspect unstripped persisted options: unknown fields cannot disappear into qualification.
       const persisted = z.object({ request: z.object({ options: z.unknown() }) }).parse(raw);
       let reviewed: ReturnType<typeof reviewedLegacyVideoDispatch>;

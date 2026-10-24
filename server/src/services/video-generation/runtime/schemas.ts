@@ -86,6 +86,8 @@ export const VideoJobAttachmentSchema = z.object({
   updatedAtMs: z.number(),
 });
 
+export const VideoJobProviderResultSchema = z.object({ providerVideoUrl: z.url(), assetId: z.string().min(1), contentType: z.string().min(1), inputMode: z.enum(["t2v", "i2v"]).optional() });
+
 export const VideoJobRecordSchema = z.object({
   /**
    * Forward-compatibility marker. Optional today (legacy records lack it),
@@ -110,6 +112,7 @@ export const VideoJobRecordSchema = z.object({
   updatedAtMs: z.number(),
   completedAtMs: z.number().optional(),
   result: VideoJobResultSchema.optional(),
+  providerResult: VideoJobProviderResultSchema.optional(),
   error: VideoJobErrorSchema.optional(),
   workerId: z.string().optional(),
   leaseExpiresAtMs: z.number().optional(),

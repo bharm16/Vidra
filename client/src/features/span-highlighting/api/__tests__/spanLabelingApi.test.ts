@@ -191,6 +191,7 @@ describe("SpanLabelingApi", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
+      headers: new Headers(),
         status: 200,
         body: {
           getReader: () => mockReader,

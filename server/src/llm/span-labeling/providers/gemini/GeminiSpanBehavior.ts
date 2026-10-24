@@ -118,12 +118,11 @@ export class GeminiSpanBehavior {
       }
     };
 
-    // Start streaming in background.
-    //
-    // This runs on "span_labeling", not a Gemini-pinned operation. This client
-    // is only constructed when the router already resolved the operation to
-    // Gemini, so pinning would only serve to defeat the failover that made the
-    // resolution correct in the first place.
+    const controller = new AbortController();
+    const signal = params.signal ? AbortSignal.any([controller.signal, params.signal]) : controller.signal;
+    const aborted = (): void => fail(new DOMException("Highlight request cancelled", "AbortError"));
+    signal.addEventListener("abort", aborted, { once: true });
+    signal.throwIfAborted();
     if (!aiService.stream) {
       throw new Error("AI service does not support streaming");
     }
@@ -131,6 +130,7 @@ export class GeminiSpanBehavior {
     aiService
       .stream("span_labeling", {
         systemPrompt,
+        signal,
         userMessage: text,
         maxTokens: 16384,
         temperature: 0.1,
@@ -139,6 +139,7 @@ export class GeminiSpanBehavior {
       .then(() => finish())
       .catch(fail);
 
+    try {
     let buffer = "";
 
     while (true) {
@@ -187,6 +188,7 @@ export class GeminiSpanBehavior {
         yield span;
       }
     }
+    } finally { signal.removeEventListener("abort", aborted); controller.abort(); }
   }
 
   parseResponseText(text: string): ReturnType<typeof parseJson> {

@@ -67,7 +67,7 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
   ): Promise<AIResponse> {
     const operation = "complete";
     const timeout = options.timeout || this.defaultTimeout;
-    const { controller, timeoutId, abortedByTimeout } = createAbortController(
+    const { controller, cleanup, abortedByTimeout } = createAbortController(
       timeout,
       options.signal,
     );
@@ -88,8 +88,6 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
           signal: controller.signal,
         },
       );
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -114,7 +112,6 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
 
       return result;
     } catch (error) {
-      clearTimeout(timeoutId);
       throw this._handleError(
         error,
         abortedByTimeout,
@@ -122,7 +119,7 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
         operation,
         performance.now(),
       );
-    }
+    } finally { cleanup(); }
   }
 
   async complete(
@@ -154,7 +151,7 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
     options: CompletionOptions & { onChunk: (chunk: string) => void },
   ): Promise<string> {
     const timeout = options.timeout || this.defaultTimeout;
-    const { controller, timeoutId, abortedByTimeout } = createAbortController(
+    const { controller, cleanup, abortedByTimeout } = createAbortController(
       timeout,
       options.signal,
     );
@@ -177,8 +174,6 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
         },
       );
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         const errorBody = await response.text();
         const isRetryable = response.status >= 500 || response.status === 429;
@@ -192,7 +187,6 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
       fullText = await this._processStream(response, options.onChunk);
       return fullText;
     } catch (error) {
-      clearTimeout(timeoutId);
 
       const errorObj = error as Error;
       if (errorObj.name === "AbortError") {
@@ -207,7 +201,7 @@ export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
       }
 
       throw errorObj;
-    }
+    } finally { cleanup(); }
   }
 
   async generateText(

@@ -9,9 +9,9 @@ import { WorkflowError } from "@services/projects/WorkflowError";
 import type { FrameOperation, StoredFrame, WorkflowManagementStorage } from "./types";
 
 /** Accurate decoded-frame extraction from one pinned local source; no provider or remote FFmpeg input. */
-export async function deriveNativeFrame(storage: WorkflowManagementStorage, operation: FrameOperation, source: MediaVersion): Promise<StoredFrame> {
+export async function deriveNativeFrame(storage: WorkflowManagementStorage, operation: FrameOperation, source: MediaVersion, cancellation?: AbortSignal): Promise<StoredFrame> {
   const directory = await mkdtemp(join(tmpdir(), "vidra-frame-"));
-  const signal = AbortSignal.timeout(90000);
+  const signal = AbortSignal.any([AbortSignal.timeout(90000), ...(cancellation ? [cancellation] : [])]);
   try {
     const input = join(directory, "source"); const output = join(directory, "frame.png");
     await storage.downloadSource(operation.ownerId, source, input, signal);
@@ -19,6 +19,6 @@ export async function deriveNativeFrame(storage: WorkflowManagementStorage, oper
     const picture = sharp(output, { limitInputPixels: 40_000_000, failOn: "warning" }); const metadata = await picture.metadata(); await picture.stats();
     if (!metadata.width || !metadata.height) throw new WorkflowError("input_unavailable", "This clip's frame could not be decoded. Choose an earlier frame.");
     const evidence = await hashLocalFile(output);
-    return storage.storeFrame(operation, output, { ...evidence, width: metadata.width, height: metadata.height });
+    return await storage.storeFrame(operation, output, { ...evidence, width: metadata.width, height: metadata.height }, signal);
   } finally { await rm(directory, { recursive: true, force: true }); }
 }

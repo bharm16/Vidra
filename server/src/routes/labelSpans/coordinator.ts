@@ -76,11 +76,12 @@ export function createLabelSpansCoordinator(
 
       const { result, source } = await computeCachedSpans({
         cache: spanLabelingCache,
+        request: { ...payload, ...(userId ? { ownerId: userId } : {}) },
         aiService,
         text,
         policy: cachePolicy,
         templateVersion: cacheTemplateVersion,
-        compute: () => labelSpans(payload, aiService),
+        compute: signal => labelSpans({ ...payload, ...(signal ? { signal } : {}) }, aiService),
       });
 
       const elapsed = Math.round(performance.now() - operationStart);

@@ -95,7 +95,9 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const [masks, setMasks] = useState<Record<string, ProjectAreaMask>>({});
   // A whole-picture verb drops a bound area; the composer says so, and Undo brings it back while nothing else changed.
   // Focus is the large player on demand (Rule 2); the feed stays mounted under it, so closing keeps its scroll.
-  const [focusOpen, setFocusOpen] = useState(false);
+  const [mobileFocusOpen, setMobileFocusOpen] = useState(false);
+  const focusOpen = isMobile ? mobileFocusOpen : Boolean(search.get("focus"));
+  const focusSearch = useRef(search); focusSearch.current = search;
   // The rail marks the request it jumped to until another result is viewed.
   const [jumpedRequestId, setJumpedRequestId] = useState<string>();
   useEffect(() => { setJumpedRequestId(undefined); }, [controller.view.viewedVersionId]);
@@ -124,7 +126,20 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const entryWorkingCopy = workspaceEntryMatches(entryBinding, active?.record);
   const actionError = actionFailure?.conversationId === controller.conversation?.id && actionFailure?.draftId === active?.record.id ? actionFailure?.message : undefined;
   const currentResultFeedback = resultFeedback?.conversationId === controller.conversation?.id && resultFeedback?.draftId === active?.record.id ? resultFeedback : undefined;
-  const selected = controller.media.find(version => version.id === controller.view.viewedVersionId);
+  const selected = controller.media.find(version => version.id === (!isMobile && search.get("focus") ? search.get("focus") : controller.view.viewedVersionId));
+  const setFocusOpen = (open: boolean, versionId?: string): void => {
+    if (isMobile) { setMobileFocusOpen(open); return; }
+    const latest = focusSearch.current;
+    if (!open && latest.get("focus") !== search.get("focus")) return;
+    const next = new URLSearchParams(latest);
+    if (open) { const id = versionId ?? selected?.id; if (!id) return; next.set("focus", id); next.delete("request"); }
+    else next.delete("focus");
+    if (next.toString() !== latest.toString()) setSearch(next, { replace: latest.has("focus"), preventScrollReset: true });
+  };
+  const viewMedia = (versionId: string): void => {
+    controllerRef.current.viewMedia(versionId);
+    if (focusOpen && !isMobile) setFocusOpen(true, versionId);
+  };
   const knownMediaLabels = useRef(new Map<string, string>());
   for (const version of controller.media) knownMediaLabels.current.set(version.id, version.label);
   const inspectedRequestId = inspectedRequest?.conversationId === controller.conversation?.id ? inspectedRequest?.requestId : undefined;
@@ -266,7 +281,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const showView = (next?: "media" | "video" | "sketch" | "conversations"): void => {
     // Changing view leaves the area editor; on a phone it otherwise covers every tab.
     setPanel(current => current === "area" ? "none" : current);
-    const query = new URLSearchParams(search); query.delete("intent");
+    const query = new URLSearchParams(search); query.delete("intent"); query.delete("focus"); setMobileFocusOpen(false);
     // The editor's parameters belong to the editor; they do not ride along to Media or the feed.
     if (next !== "video") for (const key of ["edit", "addVersion", "addLane", "addCaptions", "timeline"]) query.delete(key);
     if (next) query.set("view", next); else query.delete("view");
@@ -275,7 +290,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const showConversation = async (id: string): Promise<void> => {
     await controller.openConversation(id);
     const current = controllerRef.current;
-    if (current.canLeave()) { const next = new URLSearchParams(search); next.set("conversation", id); setSearch(next, { replace: true }); markReopenedConversation(id); }
+    if (current.canLeave()) { const next = new URLSearchParams(search); next.delete("focus"); next.set("conversation", id); setSearch(next, { replace: true }); markReopenedConversation(id); }
   };
   const navigateSafely = async (target: string): Promise<void> => {
     await controller.flush();
@@ -292,7 +307,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       const tool = COMPOSER_TOOLS.find(item => item.tool === target);
       const current = controllerRef.current.active;
       if (view) showView();
-      setFocusOpen(false);
+      else setFocusOpen(false);
       if (tool && current) controller.changeAction(composerTool(current.content.action) === target ? lastOutput.current : tool.action);
       return;
     }
@@ -332,11 +347,11 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const startFromMedia = (action: CreationAction, version: MediaVersion, role?: DraftInput["role"]): void => {
     void perform(async () => {
       await controller.bindResult(action, version, role);
-      if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); setFocusOpen(false); }
+      if (scopeAlive.current) { showView(); setPane("conversation"); setViewerOrigin("conversation"); }
     });
   };
   /** The reference joins the request being written, and the composer comes into view to show it. */
-  const attachReference = (version: MediaVersion): void => { controller.applyMediaInput(version, "reference"); if (libraryOpen || focusOpen) { showView(); setPane("conversation"); setViewerOrigin("conversation"); setFocusOpen(false); } };
+  const attachReference = (version: MediaVersion): void => { controller.applyMediaInput(version, "reference"); if (libraryOpen || focusOpen) { showView(); setPane("conversation"); setViewerOrigin("conversation"); } };
   const animate = (version: MediaVersion): void => startFromMedia("animate-image", version);
   const extend = (version: MediaVersion): void => startFromMedia("extend-video", version);
   const editRegion = (version: MediaVersion): void => {
@@ -347,7 +362,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       const bound = boundArea?.sourceId === version.id && !boundArea.painted ? boundArea : undefined;
       const painted = bound && version.metadata.state === "verified" ? await storedArea(bound.maskId, version).catch(() => undefined) : undefined;
       // The area editor shows the viewed picture, so Focus's rail and arrows start from it.
-      if (scopeAlive.current) { if (bound && painted) setMasks(current => ({ ...current, [bound.maskId]: painted })); controllerRef.current.viewMedia(version.id); setArea({ version, url: resource.url }); setPanel("area"); setPane("viewer"); setFocusOpen(true); }
+      if (scopeAlive.current) { if (bound && painted) setMasks(current => ({ ...current, [bound.maskId]: painted })); controllerRef.current.viewMedia(version.id); setArea({ version, url: resource.url }); setPanel("area"); setPane("viewer"); setFocusOpen(true, version.id); }
     });
   };
   const storedArea = (maskId: string, version: MediaVersion): Promise<ProjectAreaMask> => readProjectAreaMask(version, maskId, access);
@@ -356,15 +371,15 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     void perform(async () => {
       const version = await controllerRef.current.finishArea(source, mask);
       if (version && mask && scopeAlive.current) setMasks(current => ({ ...current, [version.id]: mask }));
-      if (scopeAlive.current) { setPanel("none"); setFocusOpen(false); showView(); setPane("conversation"); setViewerOrigin("conversation"); }
+      if (scopeAlive.current) { setPanel("none"); showView(); setPane("conversation"); setViewerOrigin("conversation"); }
     });
   };
   /** Placement is explicit (Rule 8): a clip or picture joins the video track, a voiceover take its lane, other audio the Music lane. */
   const addToVideo = (version: MediaVersion): void => {
-    setVersionsOpen(false); setInspectingVideo(false); setFocusOpen(false);
+    setVersionsOpen(false); setInspectingVideo(false);
     const origin = version.origin;
     const made = origin.kind === "generated" ? controller.view.requests.find(request => request.id === origin.requestId)?.snapshot.action : undefined;
-    const next = new URLSearchParams(search); next.delete("intent"); next.set("view", "video-workspace"); next.set("addVersion", version.id);
+    const next = new URLSearchParams(search); next.delete("intent"); next.delete("focus"); next.set("view", "video-workspace"); next.set("addVersion", version.id);
     if (version.kind === "audio") next.set("addLane", made === "make-voiceover" ? "voiceover" : "music"); else next.delete("addLane");
     setSearch(next, { replace: true });
   };
@@ -382,8 +397,8 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       else if (verb.kind === "add-to-video") addToVideo(version);
     } }));
   };
-  const captionsToVideo = (request: AcceptedRequest): void => { setFocusOpen(false); const next = new URLSearchParams(search); next.delete("intent"); next.set("view", "video-workspace"); next.set("addCaptions", request.id); setSearch(next, { replace: true }); };
-  const openFocus = (versionId: string): void => { setInspectedRequest(undefined); setViewerOrigin("conversation"); controller.viewMedia(versionId); setFocusOpen(true); };
+  const captionsToVideo = (request: AcceptedRequest): void => { const next = new URLSearchParams(search); next.delete("intent"); next.delete("focus"); next.set("view", "video-workspace"); next.set("addCaptions", request.id); setSearch(next, { replace: true }); };
+  const openFocus = (versionId: string): void => { setInspectedRequest(undefined); setViewerOrigin("conversation"); controllerRef.current.viewMedia(versionId); setFocusOpen(true, versionId); };
   /** A result's button: a profile verb opens the composer with the result bound; the rest act in place. */
   const runVerb = (verb: ResultVerb, version: MediaVersion, request: AcceptedRequest): void => {
     if (verb.kind === "action") startFromMedia(verb.action, version, verb.role);
@@ -441,7 +456,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     if (!request) { setActionError("This request is unavailable in the selected conversation."); return; }
     const versionId = request.slots.find(slot => slot.versionId && controller.media.some(version => version.id === slot.versionId))?.versionId;
     if (request.slots.length > 1) { setInspectedRequest({ conversationId: request.conversationId, requestId: request.id }); if (inlineVideo) setInspectingVideo(true); }
-    else if (versionId) { setInspectedRequest(undefined); controller.viewMedia(versionId); }
+    else if (versionId) { setInspectedRequest(undefined); controllerRef.current.viewMedia(versionId); }
     setPane("viewer");
     // A linked request is a deliberate jump: the feed stops following its end to show it.
     followingFeed.current = false;
@@ -450,38 +465,17 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
 
   // Focus lives in the URL: opening it adds a history entry, so Back closes it, and a reload reopens it on the same result.
   const focusParam = search.get("focus");
-  const focusUrl = useRef<{ param: string | null; open: boolean }>({ param: null, open: false });
   useEffect(() => {
-    if (isMobile) return;
-    const last = focusUrl.current;
-    if (focusParam !== last.param && focusOpen === last.open) {
-      if (!focusParam) { focusUrl.current = { param: null, open: false }; if (focusOpen) setFocusOpen(false); return; }
-      // A reload or Forward waits until its result has loaded; a result that never arrives is reported and leaves the URL.
-      if (!controller.media.some(version => version.id === focusParam)) {
-        if (controller.loading || controller.resourceErrors.some(problem => problem.startsWith("Media"))) return;
-        const next = new URLSearchParams(search); next.delete("focus"); setSearch(next, { replace: true });
-        focusUrl.current = { param: null, open: false };
-        setActionError("This result is unavailable in this project.");
-        return;
-      }
-      controller.viewMedia(focusParam); setFocusOpen(true); focusUrl.current = { param: focusParam, open: true };
-      return;
+    if (isMobile || !focusParam) return;
+    if (!controller.media.some(version => version.id === focusParam)) {
+      if (controller.loading || controller.resources.media.state === "error") return;
+      const next = new URLSearchParams(search); next.delete("focus"); setSearch(next, { replace: true });
+      setActionError("This result is unavailable in this project."); return;
     }
-    if (focusOpen && selected && focusParam !== selected.id) {
-      const next = new URLSearchParams(search); next.set("focus", selected.id); next.delete("request");
-      setSearch(next, { replace: focusParam !== null });
-      focusUrl.current = { param: selected.id, open: true };
-      return;
-    }
-    if (!focusOpen && focusParam) {
-      const next = new URLSearchParams(search); next.delete("focus");
-      setSearch(next, { replace: true });
-      focusUrl.current = { param: null, open: false };
-      return;
-    }
-    focusUrl.current = { param: focusParam, open: focusOpen };
+    if (controller.view.viewedVersionId !== focusParam) controller.viewMedia(focusParam);
+    // The URL owns desktop Focus; media refreshes never write navigation history.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusParam, focusOpen, selected?.id, controller.media, controller.loading, isMobile]);
+  }, [focusParam, controller.media, controller.loading, controller.view.viewedVersionId, isMobile]);
 
   const requestInput = (role: DraftInput["role"], replacing?: DraftInput): void => {
     const current = controllerRef.current.active;
@@ -516,16 +510,16 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const renderViewer = (timeline?: ReactNode, timelineControl?: ReactNode, inspectionActions?: ReactNode): ReactElement => {
     if (panel === "area" && area) return <div className="vf-area-viewer"><AreaEditPanel key={area.version.id} version={area.version} sourceUrl={area.url} {...(boundArea?.sourceId === area.version.id && boundArea.painted ? { initialMask: boundArea.painted } : {})} saved={boundArea?.sourceId === area.version.id} {...(isMobile ? { onClose: () => setPanel("none") } : {})} onDone={mask => finishArea(area.version, mask)} /></div>;
     const batch = inspectedRequestId ? controller.view.requests.find(request => request.id === inspectedRequestId) : !selected ? controller.view.requests.at(-1) : undefined;
-    if (batch && batch.slots.length > 1) return <RequestResults request={batch} media={controller.media} access={access} onView={id => { setInspectedRequest(undefined); controller.viewMedia(id); setPane("viewer"); }} onUseInput={controller.applyMediaInput} onRetry={(request, slot) => { void controller.retryRequest(request, slot); }} />;
+    if (batch && batch.slots.length > 1) return <RequestResults request={batch} media={controller.media} access={access} onView={id => { setInspectedRequest(undefined); viewMedia(id); setPane("viewer"); }} onUseInput={controller.applyMediaInput} onRetry={(request, slot) => { void controller.retryRequest(request, slot); }} />;
     const selectedOrigin = selected?.origin;
     const sourceRequest = selectedOrigin?.kind === "generated" ? controller.view.requests.find(request => request.id === selectedOrigin.requestId && request.ownerId === ownerId && request.projectId === projectId && request.slots.some(slot => slot.versionId === selected?.id)) : undefined;
     const feedbackVersion = currentResultFeedback ? controller.media.find(version => version.id === currentResultFeedback.versionId && version.ownerId === ownerId && version.projectId === projectId) : undefined;
     const feedbackBanner = currentResultFeedback && feedbackVersion ? <BackgroundResultNotice {...(currentResultFeedback.kind === "setup" ? { message: "Setup copied to a new draft." } : {})} onView={() => {
       const current = controllerRef.current;
       if (current.conversation?.id !== currentResultFeedback.conversationId || current.active?.record.id !== currentResultFeedback.draftId) return;
-      setInspectedRequest(undefined); setVersionsOpen(false); current.viewMedia(feedbackVersion.id); setPane("viewer"); setResultFeedback(undefined);
+      setInspectedRequest(undefined); setVersionsOpen(false); viewMedia(feedbackVersion.id); setPane("viewer"); setResultFeedback(undefined);
     }} /> : undefined;
-    return <MediaViewer {...(inspectionActions ? { inspectionActions, onBackToEdit: () => setInspectingVideo(false) } : {})} {...(sourceRequest && selected ? { renderRequestDetails: (onClose: () => void) => <RequestDetails request={sourceRequest} result={selected} media={controller.media} profile={controller.profiles.find(candidate => candidate.id === sourceRequest.snapshot.settings.profileId && candidate.revision === sourceRequest.snapshot.settings.profileRevision)} projectName={controller.project?.name ?? "Project"} conversationName={controller.conversations.find(row => row.id === sourceRequest.conversationId)?.name ?? "Conversation"} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} onReuse={request => { onClose(); void perform(() => reuseRequest(request)); }} onClose={onClose} /> } : {})} mobilePreview={Boolean(mobilePreviewKind)} onView={() => setPane("viewer")} onBack={() => { if (viewerOrigin === "media") showView("media"); else setPane("conversation"); }} banner={failedInput ? <WorkspaceNotice title="The image for this draft could not be made" message="Choose an input or reuse the original setup." actionLabel="Choose input" onAction={() => requestInput(failedInput.role, failedInput)} /> : controller.serviceUnavailable ? <WorkspaceNotice title="New requests are temporarily unavailable" message="The service is at capacity" actionLabel="Check again" onAction={controller.reload} /> : offline ? <WorkspaceNotice title="You are offline" message={active?.retention.onDevice ? "Changes are saved on this device" : "Keep your latest work before leaving"} actionLabel="View history" onAction={() => showView("conversations")} /> : controller.conversation?.status === "archived" ? <WorkspaceNotice title="This conversation is archived" message="Restore it to make changes." actionLabel="Restore" onAction={() => { const conversation = controller.conversation; if (conversation) void perform(async () => { const updated = await managementApi.changeConversation(projectId, conversation.id, { expectedRevision: conversation.revision, status: "active" }); if (scopeAlive.current) controller.observeConversation(updated); }); }} /> : feedbackBanner ? feedbackBanner : isMobile && newlyReadyVersionId && newlyReadyVersionId !== selected?.id ? <div className="vf-workspace-banner"><p>{controller.media.find(version => version.id === newlyReadyVersionId)?.label ?? "New version"} is ready.</p><FreshButton onClick={() => { setInspectedRequest(undefined); controller.viewMedia(newlyReadyVersionId); setPane("viewer"); }}>View result</FreshButton></div> : undefined} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} timeline={timeline} timelineControl={timelineControl} {...(selected && boundArea?.sourceId === selected.id && boundArea.painted ? { areaMask: { versionId: selected.id, dataUri: boundArea.painted.dataUri } } : {})} version={selected} access={access} onUseInput={controller.applyMediaInput} onUseFrame={captureFrame} onDownload={download} onReuseSetup={reuse} canReuseSetup={selected?.origin.kind === "generated" && controller.view.requests.some(request => request.id === (selected.origin.kind === "generated" ? selected.origin.requestId : ""))} onEdit={edit} onAnimate={animate} onEditRegion={editRegion} onExtend={extend} onAddToVideo={addToVideo} onMakeCaptions={version => startFromMedia("transcribe", version, "primary")} {...(selected ? { verbs: resultActions(selected) } : {})} onVersions={() => setVersionsOpen(true)} onPreferred={makePreferred} {...(preferred ? { preferredVersionId: preferred } : {})} onShare={version => { setSharePlacement("viewer"); setShareVersion(version); }} onHide={version => change(version, { hidden: !version.hidden })} onRename={version => { setRename({ version, label: version.label }); setPanel("rename"); }} onFavorite={version => change(version, { favorite: !version.favorite })} {...(selected?.favorite !== undefined ? { favorite: selected.favorite } : {})} onPictureTools={version => { void perform(async () => { const resource = await access(version.id); if (scopeAlive.current) { setArea({ version, url: resource.url }); setPanel("area"); } }); }} /> };
+    return <MediaViewer {...(inspectionActions ? { inspectionActions, onBackToEdit: () => setInspectingVideo(false) } : {})} {...(sourceRequest && selected ? { renderRequestDetails: (onClose: () => void) => <RequestDetails request={sourceRequest} result={selected} media={controller.media} profile={controller.profiles.find(candidate => candidate.id === sourceRequest.snapshot.settings.profileId && candidate.revision === sourceRequest.snapshot.settings.profileRevision)} projectName={controller.project?.name ?? "Project"} conversationName={controller.conversations.find(row => row.id === sourceRequest.conversationId)?.name ?? "Conversation"} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} onReuse={request => { onClose(); void perform(() => reuseRequest(request)); }} onClose={onClose} /> } : {})} mobilePreview={Boolean(mobilePreviewKind)} onView={() => setPane("viewer")} onBack={() => { if (viewerOrigin === "media") showView("media"); else setPane("conversation"); }} banner={failedInput ? <WorkspaceNotice title="The image for this draft could not be made" message="Choose an input or reuse the original setup." actionLabel="Choose input" onAction={() => requestInput(failedInput.role, failedInput)} /> : controller.serviceUnavailable ? <WorkspaceNotice title="New requests are temporarily unavailable" message="The service is at capacity" actionLabel="Check again" onAction={controller.reload} /> : offline ? <WorkspaceNotice title="You are offline" message={active?.retention.onDevice ? "Changes are saved on this device" : "Keep your latest work before leaving"} actionLabel="View history" onAction={() => showView("conversations")} /> : controller.conversation?.status === "archived" ? <WorkspaceNotice title="This conversation is archived" message="Restore it to make changes." actionLabel="Restore" onAction={() => { const conversation = controller.conversation; if (conversation) void perform(async () => { const updated = await managementApi.changeConversation(projectId, conversation.id, { expectedRevision: conversation.revision, status: "active" }); if (scopeAlive.current) controller.observeConversation(updated); }); }} /> : feedbackBanner ? feedbackBanner : isMobile && newlyReadyVersionId && newlyReadyVersionId !== selected?.id ? <div className="vf-workspace-banner"><p>{controller.media.find(version => version.id === newlyReadyVersionId)?.label ?? "New version"} is ready.</p><FreshButton onClick={() => { setInspectedRequest(undefined); viewMedia(newlyReadyVersionId); setPane("viewer"); }}>View result</FreshButton></div> : undefined} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} timeline={timeline} timelineControl={timelineControl} {...(selected && boundArea?.sourceId === selected.id && boundArea.painted ? { areaMask: { versionId: selected.id, dataUri: boundArea.painted.dataUri } } : {})} version={selected} access={access} onUseInput={controller.applyMediaInput} onUseFrame={captureFrame} onDownload={download} onReuseSetup={reuse} canReuseSetup={selected?.origin.kind === "generated" && controller.view.requests.some(request => request.id === (selected.origin.kind === "generated" ? selected.origin.requestId : ""))} onEdit={edit} onAnimate={animate} onEditRegion={editRegion} onExtend={extend} onAddToVideo={addToVideo} onMakeCaptions={version => startFromMedia("transcribe", version, "primary")} {...(selected ? { verbs: resultActions(selected) } : {})} onVersions={() => setVersionsOpen(true)} onPreferred={makePreferred} {...(preferred ? { preferredVersionId: preferred } : {})} onShare={version => { setSharePlacement("viewer"); setShareVersion(version); }} onHide={version => change(version, { hidden: !version.hidden })} onRename={version => { setRename({ version, label: version.label }); setPanel("rename"); }} onFavorite={version => change(version, { favorite: !version.favorite })} {...(selected?.favorite !== undefined ? { favorite: selected.favorite } : {})} onPictureTools={version => { void perform(async () => { const resource = await access(version.id); if (scopeAlive.current) { setArea({ version, url: resource.url }); setPanel("area"); } }); }} /> };
   const sharing = shareVersion ? <ShareVersionPanel ownerId={ownerId} projectId={projectId} version={shareVersion} placement={sharePlacement} onClose={() => setShareVersion(undefined)} /> : null;
   // A library's unused conversations are home's scratch space, hidden from its list; the dialog lists what home lists (plus the one open).
   const managedConversations = library ? controller.conversations.filter(conversation => conversation.acceptanceSequence > 0 || conversation.status === "archived" || (!libraryHome && conversation.id === controller.conversation?.id)) : controller.conversations;
@@ -539,7 +533,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       {actionError ? <p role="alert">{actionError}</p> : null}
     </DialogContent></Dialog>;
   if (!controller.project && !controller.loading && controller.loadFailureStatus !== undefined) return <SystemRoutePage state={controller.loadFailureStatus === 404 ? "not-found" : controller.loadFailureStatus === 401 || controller.loadFailureStatus === 403 ? "denied" : controller.loadFailureStatus === 503 ? "unavailable" : controller.loadFailureStatus === 0 && !navigator.onLine ? "offline" : "load-error"} onRetry={controller.reload} />;
-  if (projectHome) return <div className="vf vf-project-home-shell">{renderRail("projects")}<ConversationHome composer={renderComposer()} conversations={controller.conversations} onOpenConversation={id => { void perform(async () => { await controller.openConversation(id); if (controllerRef.current.canLeave()) { const next = new URLSearchParams(search); next.set("conversation", id); next.delete("view"); setSearch(next, { replace: true }); setPane("conversation"); markReopenedConversation(id); } }); }} />{options}{sharing}{workspaceDialog}</div>;
+  if (projectHome) return <div className="vf vf-project-home-shell">{renderRail("projects")}<ConversationHome composer={renderComposer()} conversations={controller.conversations} onOpenConversation={id => { void perform(async () => { await controller.openConversation(id); if (controllerRef.current.canLeave()) { const next = new URLSearchParams(search); next.delete("focus"); next.set("conversation", id); next.delete("view"); setSearch(next, { replace: true }); setPane("conversation"); markReopenedConversation(id); } }); }} />{options}{sharing}{workspaceDialog}</div>;
   if (sketchOpen) return <><ProjectSketch key={`${ownerId}:${projectId}`} ownerId={ownerId} projectId={projectId} projectName={controller.project?.name ?? "this project"} rail={renderRail("sketch")} onAccepted={controller.updateMedia} onClose={() => showView()} onUseAsInput={version => { controller.applyMediaInput(version); showView(); }} />{options}{sharing}{workspaceDialog}</>;
   if (editorOpen) return <div className="vf vf-editor-host" data-focus={focusEditor || undefined}>{renderRail("video")}<div className="vf-editor-body">{!focusEditor ? <header className="vf-editor-project-header"><FreshIconButton icon="folder" label="Project options" onClick={() => setPanel("options")} /><div className="vf-flex" /><FreshIconButton icon="more" label="More project options" onClick={() => setPanel("options")} /></header> : null}{renderEditor(focusEditor ? "focus" : "full")}</div>{options}{sharing}{workspaceDialog}</div>;
   if (libraryHome) {
@@ -550,7 +544,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     return <div className="vf vf-project-home-shell">{renderRail(folderId ? "projects" : "create")}<ConversationHome {...(title !== undefined ? { title } : {})} actions={<FreshIconButton icon="more" label={folderId ? "Project options" : "Conversation options"} onClick={() => setPanel("options")} />} composer={<>{homeNotice}{renderComposer()}</>} conversations={homeConversations} onOpenConversation={id => { void showConversation(id); }} />{options}{sharing}{workspaceDialog}</div>;
   }
   const useWords = (request: AcceptedRequest): void => { void perform(() => controllerRef.current.useWords(request)); };
-  const viewSources = (request: AcceptedRequest): void => { const ids = request.snapshot.inputs.flatMap(input => input.state === "resolved" && input.role !== "mask" ? [input.versionId] : []); if (ids.length === 1 && ids[0]) { setInspectedRequest(undefined); setViewerOrigin("conversation"); controller.viewMedia(ids[0]); setPane("viewer"); } else { setSourceVersionIds(ids); showView("media"); } };
+  const viewSources = (request: AcceptedRequest): void => { const ids = request.snapshot.inputs.flatMap(input => input.state === "resolved" && input.role !== "mask" ? [input.versionId] : []); if (ids.length === 1 && ids[0]) { setInspectedRequest(undefined); setViewerOrigin("conversation"); viewMedia(ids[0]); setPane("viewer"); } else { setSourceVersionIds(ids); showView("media"); } };
   const hideFromMedia = (request: AcceptedRequest): void => { void perform(async () => { for (const slot of request.slots) if (slot.versionId) { const updated = await mediaActions.change(slot.versionId, { hidden: true }); if (scopeAlive.current) controller.updateMedia(updated); } }); };
   /** A deliberate jump to one request leaves the end; reaching the end again resumes following. */
   const revealRequest = (requestId: string, behavior: ScrollBehavior): void => {
@@ -576,7 +570,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   // Focus carries its own copy of the rail; the one under it marks nothing, so one item is current.
   const historyRail = (current: string | undefined): ReactElement => <HistoryRail requests={controller.view.requests} media={controller.media} profiles={controller.profiles} selectedRequestId={current} access={access} onSelect={request => {
     const versionId = request.slots.find(slot => slot.versionId && controller.media.some(version => version.id === slot.versionId))?.versionId;
-    if (focusOpen && versionId) { controller.viewMedia(versionId); return; }
+    if (focusOpen && versionId) { viewMedia(versionId); return; }
     setJumpedRequestId(request.id);
     revealRequest(request.id, "smooth");
     // A linked request was a one-time jump; a reload must not jump back to it.
@@ -584,7 +578,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   }} />;
   const feedLayout = <div className="vf vf-workspace vf-feed-workspace" data-workspace-entry={entryWorkingCopy ? entryBinding?.kind : undefined} data-library={libraryOpen || undefined} data-focus={focusOpen || inlineVideo || undefined} data-versions={versionsOpen || undefined} style={{ "--vf-composer-height": `${composerHeight}px` } as CSSProperties}>
     {renderRail(libraryOpen ? "media" : "create")}
-    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} selectedVersionId={selected?.id} {...(selected && !readOnly ? { actionBar: <>{resultActions(selected).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" disabled={verb.disabled} onClick={() => verb.run(0)}>{verb.label}</FreshButton>)}<span className="vf-action-bar-divider" aria-hidden="true" /><FreshIconButton icon="download" label="Download original" onClick={() => download(selected)} /></> } : {})} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setFocusOpen(true); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resources.media.message} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : <>
+    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} selectedVersionId={selected?.id} {...(selected && !readOnly ? { actionBar: <>{resultActions(selected).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" disabled={verb.disabled} onClick={() => verb.run(0)}>{verb.label}</FreshButton>)}<span className="vf-action-bar-divider" aria-hidden="true" /><FreshIconButton icon="download" label="Download original" onClick={() => download(selected)} /></> } : {})} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controllerRef.current.viewMedia(version.id); setFocusOpen(true, version.id); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resources.media.message} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : <>
       {historyRail(focusOpen ? undefined : selectedRequestId)}
       <main ref={feedStage} className="vf-feed-stage" aria-label={controller.conversation?.name ?? "Conversation"} onScroll={event => {
         const node = event.currentTarget; const previous = feedGeometry.current;
@@ -596,20 +590,21 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
         <div className="vf-feed-column">
           {/* A conversation with nothing made yet still says which one it is. */}
           {!controller.loading && controller.conversation && !controller.view.requests.length && !controller.submissions.length ? <h1 className="vf-feed-empty">{controller.conversation.name}</h1> : null}
-          <GenerationFeed requests={controller.view.requests} media={controller.media} profiles={controller.profiles} pending={controller.submissions} viewedVersionId={controller.view.viewedVersionId} access={access} readOnly={readOnly} onOpen={openFocus} onVerb={runVerb} onDownload={download} onRetry={(request, slot) => { void controller.retryRequest(request, slot); }} onRecover={submission => { void controller.recover(submission); }} onApplyText={(request, text) => { void perform(() => controller.applyText(request, text)); }} onCaptionsToVideo={captionsToVideo} onReuseSetup={request => { void perform(() => reuseRequest(request)); }} onNewVariation={request => { void perform(() => reuseRequest(request, true)); }} onUseWords={useWords} onViewSources={viewSources} onViewVersions={request => { const id = request.slots.find(slot => slot.versionId === selected?.id)?.versionId ?? request.slots.find(slot => slot.versionId)?.versionId; if (id) { setInspectedRequest(undefined); controller.viewMedia(id); setVersionsOpen(true); } }} onHideFromMedia={hideFromMedia} />
+          <GenerationFeed requests={controller.view.requests} media={controller.media} profiles={controller.profiles} pending={controller.submissions} viewedVersionId={controller.view.viewedVersionId} access={access} readOnly={readOnly} onOpen={openFocus} onVerb={runVerb} onDownload={download} onRetry={(request, slot) => { void controller.retryRequest(request, slot); }} onRecover={submission => { void controller.recover(submission); }} onApplyText={(request, text) => { void perform(() => controller.applyText(request, text)); }} onCaptionsToVideo={captionsToVideo} onReuseSetup={request => { void perform(() => reuseRequest(request)); }} onNewVariation={request => { void perform(() => reuseRequest(request, true)); }} onUseWords={useWords} onViewSources={viewSources} onViewVersions={request => { const id = request.slots.find(slot => slot.versionId === selected?.id)?.versionId ?? request.slots.find(slot => slot.versionId)?.versionId; if (id) { setInspectedRequest(undefined); viewMedia(id); setVersionsOpen(true); } }} onHideFromMedia={hideFromMedia} />
         </div>
       </main>
       {/* Notices sit on the composer, where the creator is looking, never at the top of a feed that opens at its end. */}
       <div ref={composerDock} className="vf-feed-composer"><div className="vf-feed-notices">{statusNotices}</div>{active?.record.status === "submitted" ? <FreshButton className="vf-new-draft" onClick={() => { void perform(() => controller.newDraft(active.content.action)); }}>New draft</FreshButton> : null}{renderComposer()}</div>
     </>}
-    {versionsOpen ? <VersionsPanel versions={controller.media} selectedVersionId={selected?.id} {...(preferred ? { preferredVersionId: preferred } : {})} requests={controller.view.requests} access={access} readOnly={readOnly} canVary={version => version.origin.kind === "generated" && controller.view.requests.some(request => request.id === (version.origin.kind === "generated" ? version.origin.requestId : ""))} onView={id => { setInspectedRequest(undefined); controller.viewMedia(id); }} onClose={() => setVersionsOpen(false)} onPreferred={makePreferred} onVariation={version => { if (version.origin.kind === "generated") { const requestId = version.origin.requestId; const request = controller.view.requests.find(row => row.id === requestId); if (request) void perform(() => reuseRequest(request, true)); } }} onEdit={edit} /> : null}
+    {versionsOpen ? <VersionsPanel versions={controller.media} selectedVersionId={selected?.id} {...(preferred ? { preferredVersionId: preferred } : {})} requests={controller.view.requests} access={access} readOnly={readOnly} canVary={version => version.origin.kind === "generated" && controller.view.requests.some(request => request.id === (version.origin.kind === "generated" ? version.origin.requestId : ""))} onView={id => { setInspectedRequest(undefined); viewMedia(id); }} onClose={() => setVersionsOpen(false)} onPreferred={makePreferred} onVariation={version => { if (version.origin.kind === "generated") { const requestId = version.origin.requestId; const request = controller.view.requests.find(row => row.id === requestId); if (request) void perform(() => reuseRequest(request, true)); } }} onEdit={edit} /> : null}
     {(focusOpen && (selected || panel === "area")) || inlineVideo ? <FocusView rail={inlineVideo || viewerOrigin === "media" ? null : historyRail(selectedRequestId)} viewedId={selected?.id} onClose={() => {
-      if (inlineVideo) showView(); if (panel === "area") setPanel("none"); setFocusOpen(false);
+      if (panel === "area") setPanel("none");
       if (viewerOrigin === "media") { showView("media"); return; }
+      if (inlineVideo) showView(); else setFocusOpen(false);
       // The feed returns to the result Focus ended on, which the history rail already highlights.
       const target = focusRequest?.id;
       if (target) requestAnimationFrame(() => revealRequest(target, "auto"));
-    }} {...(!inlineVideo && focusIndex > 0 ? { onPrevious: () => controller.viewMedia(feedVersions[focusIndex - 1] ?? "") } : {})} {...(!inlineVideo && focusIndex >= 0 && focusIndex < feedVersions.length - 1 ? { onNext: () => controller.viewMedia(feedVersions[focusIndex + 1] ?? "") } : {})}>{inlineVideo ? <div className="vf-inline-editor">{renderEditor("embedded")}</div> : <>{renderViewer()}{focusRequest && panel !== "area" ? <div className="vf-focus-caption"><p>{focusRequest.snapshot.instructions || selected?.label}</p><p>{requestHistoryDescription(focusRequest, controller.profiles)}</p></div> : null}</>}</FocusView> : null}
+    }} {...(!inlineVideo && focusIndex > 0 ? { onPrevious: () => viewMedia(feedVersions[focusIndex - 1] ?? "") } : {})} {...(!inlineVideo && focusIndex >= 0 && focusIndex < feedVersions.length - 1 ? { onNext: () => viewMedia(feedVersions[focusIndex + 1] ?? "") } : {})}>{inlineVideo ? <div className="vf-inline-editor">{renderEditor("embedded")}</div> : <>{renderViewer()}{focusRequest && panel !== "area" ? <div className="vf-focus-caption"><p>{focusRequest.snapshot.instructions || selected?.label}</p><p>{requestHistoryDescription(focusRequest, controller.profiles)}</p></div> : null}</>}</FocusView> : null}
     {options}{sharing}
     {savedImport ? <SavedImportSheet ownerId={ownerId} projectId={projectId} projectName={controller.project?.name ?? "this project"} version={savedImport} access={access} readOnly={readOnly || !active || !["open", "parked"].includes(active.record.status)} onClose={() => { const next = new URLSearchParams(search); next.delete("savedImport"); setSearch(next, { replace: true }); }} onUseInput={version => { controller.applyMediaInput(version); const next = new URLSearchParams(search); next.delete("savedImport"); next.delete("view"); setSearch(next, { replace: true }); }} /> : null}
     {workspaceDialog}
@@ -617,7 +612,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   if (!isMobile) return feedLayout;
   return <div className="vf vf-workspace" data-workspace-entry={entryWorkingCopy ? entryBinding?.kind : undefined} data-mobile-pane={pane} data-library={libraryOpen || undefined} data-area={panel === "area" || undefined} data-mobile-preview={mobilePreviewKind} data-versions={versionsOpen || undefined} data-empty={!libraryOpen && !inlineVideo && !controller.view.requests.length && !controller.submissions.length && !selected || undefined}>
     {renderRail(libraryOpen || selected && (viewerOrigin === "media" || isMobile && pane === "viewer") ? "media" : "create")}
-    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setPane("viewer"); showView(); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resources.media.message} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : null}
+    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); viewMedia(version.id); setPane("viewer"); showView(); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resources.media.message} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : null}
     <header className="vf-project-bar"><FreshIconButton icon="folder" label="Project options" onClick={() => setPanel("options")} /><div className="vf-flex" />{controller.view.requests.length || selected ? <FreshIconButton icon="more" label="More project options" onClick={() => setPanel("options")} /> : null}</header>
     <aside className="vf-conversation">
       {controller.loading ? <p className="vf-notice" role="status">Opening saved work…</p> : null}
@@ -626,11 +621,11 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       {controller.resourceErrors.length ? <div className="vf-notice" role="status">{controller.resourceErrors.map(problem => <p key={problem}>{problem}</p>)}<FreshButton onClick={controller.reload}>Retry loading missing work</FreshButton></div> : null}
       {controller.deviceCopies.length ? <FreshButton tone="quiet" onClick={() => setPanel("recovery")}>Review {controller.deviceCopies.length} retained device {controller.deviceCopies.length === 1 ? "copy" : "copies"}</FreshButton> : null}
       {areaDroppedNotice}
-      <ConversationHistory readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} onInspectRequest={request => { setInspectedRequest({ conversationId: request.conversationId, requestId: request.id }); if (inlineVideo) setInspectingVideo(true); setVersionsOpen(false); setPane("viewer"); }} requests={controller.view.requests} media={controller.media} selected={controller.view.viewedVersionId} pending={controller.submissions} access={access} onView={id => { setInspectedRequest(undefined); setViewerOrigin("conversation"); controller.viewMedia(id); setPane("viewer"); if (inlineVideo) setInspectingVideo(true); }} onRecover={submission => { void controller.recover(submission); }} onRetry={(request, slot) => { void controller.retryRequest(request, slot); }} onReuseSetup={request => { void perform(() => reuseRequest(request)); }} onApplyText={(request, text) => { void perform(() => controller.applyText(request, text)); }} {...(newlyReadyVersionId ? { newlyReadyVersionId } : {})} onNewVariation={request => { void perform(() => reuseRequest(request, true)); }} onUseWords={useWords} onViewSources={viewSources} onViewVersions={request => { const id = request.slots.find(slot => slot.versionId === selected?.id)?.versionId ?? request.slots.find(slot => slot.versionId)?.versionId; if (id) { setInspectedRequest(undefined); controller.viewMedia(id); setVersionsOpen(true); setPane("viewer"); } }} onHideFromMedia={hideFromMedia} {...(!isMobile ? { describeRequest: (request: AcceptedRequest) => requestHistoryDescription(request, controller.profiles) } : {})} />
+      <ConversationHistory readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} onInspectRequest={request => { setInspectedRequest({ conversationId: request.conversationId, requestId: request.id }); if (inlineVideo) setInspectingVideo(true); setVersionsOpen(false); setPane("viewer"); }} requests={controller.view.requests} media={controller.media} selected={controller.view.viewedVersionId} pending={controller.submissions} access={access} onView={id => { setInspectedRequest(undefined); setViewerOrigin("conversation"); viewMedia(id); setPane("viewer"); if (inlineVideo) setInspectingVideo(true); }} onRecover={submission => { void controller.recover(submission); }} onRetry={(request, slot) => { void controller.retryRequest(request, slot); }} onReuseSetup={request => { void perform(() => reuseRequest(request)); }} onApplyText={(request, text) => { void perform(() => controller.applyText(request, text)); }} {...(newlyReadyVersionId ? { newlyReadyVersionId } : {})} onNewVariation={request => { void perform(() => reuseRequest(request, true)); }} onUseWords={useWords} onViewSources={viewSources} onViewVersions={request => { const id = request.slots.find(slot => slot.versionId === selected?.id)?.versionId ?? request.slots.find(slot => slot.versionId)?.versionId; if (id) { setInspectedRequest(undefined); viewMedia(id); setVersionsOpen(true); setPane("viewer"); } }} onHideFromMedia={hideFromMedia} {...(!isMobile ? { describeRequest: (request: AcceptedRequest) => requestHistoryDescription(request, controller.profiles) } : {})} />
       {active?.record.status === "submitted" ? <FreshButton className="vf-new-draft" onClick={() => { void perform(() => controller.newDraft(active.content.action)); }}>New draft</FreshButton> : null}
       {renderComposer()}
     </aside>
-    {versionsOpen ? <VersionsPanel versions={controller.media} selectedVersionId={selected?.id} {...(preferred ? { preferredVersionId: preferred } : {})} requests={controller.view.requests} access={access} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} canVary={version => version.origin.kind === "generated" && controller.view.requests.some(request => request.id === (version.origin.kind === "generated" ? version.origin.requestId : ""))} onView={id => { setInspectedRequest(undefined); controller.viewMedia(id); }} onClose={() => setVersionsOpen(false)} onPreferred={makePreferred} onVariation={version => { if (version.origin.kind === "generated") { const requestId = version.origin.requestId; const request = controller.view.requests.find(row => row.id === requestId); if (request) void perform(() => reuseRequest(request, true)); } }} onEdit={edit} /> : null}
+    {versionsOpen ? <VersionsPanel versions={controller.media} selectedVersionId={selected?.id} {...(preferred ? { preferredVersionId: preferred } : {})} requests={controller.view.requests} access={access} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} canVary={version => version.origin.kind === "generated" && controller.view.requests.some(request => request.id === (version.origin.kind === "generated" ? version.origin.requestId : ""))} onView={id => { setInspectedRequest(undefined); viewMedia(id); }} onClose={() => setVersionsOpen(false)} onPreferred={makePreferred} onVariation={version => { if (version.origin.kind === "generated") { const requestId = version.origin.requestId; const request = controller.view.requests.find(row => row.id === requestId); if (request) void perform(() => reuseRequest(request, true)); } }} onEdit={edit} /> : null}
     {inlineVideo ? <div className="vf-inline-editor">{renderEditor("embedded")}</div> : renderViewer()}
 
     {options}{sharing}

@@ -185,6 +185,19 @@ test("on a phone, the area editor closes back to the picture", async ({ page }) 
   await expect(page.getByRole("region", { name: "Media viewer" })).toBeVisible();
 });
 
+test("a reference chosen in Media Focus returns to the composer", async ({ page }) => {
+  await open(page);
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Project media", exact: true }).click();
+  await page.getByRole("main", { name: "Project Media library" }).getByRole("button", { name: "Open Desk · v3", exact: true }).click();
+  const focus = page.getByRole("dialog", { name: "Focus" });
+  await focus.getByRole("button", { name: "Use", exact: true }).click();
+  await focus.getByRole("button", { name: "Use as reference", exact: true }).click();
+  await expect(focus).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Current request words" })).toBeVisible();
+  expect(new URL(page.url()).searchParams.has("view")).toBe(false);
+  expect(new URL(page.url()).searchParams.has("focus")).toBe(false);
+});
+
 test("Back closes Focus and stays in the conversation", async ({ page }) => {
   await open(page);
   const conversation = page.url();

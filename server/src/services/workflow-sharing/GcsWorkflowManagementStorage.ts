@@ -50,10 +50,10 @@ export class GcsWorkflowManagementStorage implements WorkflowManagementStorage {
     return StoredFrameSchema.parse({ object: { identity: "verified", assetId: operation.id, storagePath: path, generation: row.generation, sha256: row.metadata.sha256, bytes: z.number().int().positive().max(10 * 1024 * 1024).parse(Number(row.size)) }, metadata: { state: "verified", width: Number(row.metadata.width), height: Number(row.metadata.height), durationSeconds: 0, audio: "absent", probeVersion: "vidra-frame/png-v1" } });
   }
 
-  async storeFrame(operation: FrameOperation, path: string, evidence: { sha256: string; bytes: number; width: number; height: number }): Promise<StoredFrame> {
+  async storeFrame(operation: FrameOperation, path: string, evidence: { sha256: string; bytes: number; width: number; height: number }, signal?: AbortSignal): Promise<StoredFrame> {
     z.number().int().positive().max(10 * 1024 * 1024).parse(evidence.bytes);
     try {
-      await pipeline(createReadStream(path), this.bucket.file(this.framePath(operation)).createWriteStream({ resumable: false, validation: "crc32c", preconditionOpts: { ifGenerationMatch: 0 }, metadata: { contentType: "image/png", metadata: { framePayloadHash: operation.payloadHash, sha256: evidence.sha256, width: String(evidence.width), height: String(evidence.height) } } }), { signal: AbortSignal.timeout(60000) });
+      await pipeline(createReadStream(path), this.bucket.file(this.framePath(operation)).createWriteStream({ resumable: false, validation: "crc32c", preconditionOpts: { ifGenerationMatch: 0 }, metadata: { contentType: "image/png", metadata: { framePayloadHash: operation.payloadHash, sha256: evidence.sha256, width: String(evidence.width), height: String(evidence.height) } } }), { signal: AbortSignal.any([AbortSignal.timeout(60000), ...(signal ? [signal] : [])]) });
     } catch (error) { if (errorCode(error) !== 412) throw error; }
     const stored = await this.existingFrame(operation);
     if (!stored || stored.object.identity !== "verified" || stored.object.sha256 !== evidence.sha256 || stored.object.bytes !== evidence.bytes) throw new WorkflowError("submission_conflict", "This stored frame does not match the decoded pixels.");

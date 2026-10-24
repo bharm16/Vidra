@@ -1,3 +1,4 @@
+import { NativeMediaRuntime } from "@services/native-media/NativeMediaRuntime";
 import { access, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { tmpdir } from "node:os";
@@ -38,9 +39,10 @@ async function binaryPath(name: string): Promise<string> {
   throw new Error(`The required ${name} renderer executable is unavailable.`);
 }
 export class NativeVideoRenderer implements VideoRenderer {
-  constructor(private readonly storage: ExportStorage, private readonly ffmpeg = "ffmpeg", private readonly ffprobe = "ffprobe") {}
-  fingerprint(): Promise<string> {
-    return (async (): Promise<string> => { const hash = createHash("sha256"); hash.update(RENDER_ALGORITHM_REVISION); for (const name of [this.ffmpeg, this.ffprobe]) { const binary = await binaryPath(name); hash.update((await hashLocalFile(binary)).sha256); hash.update((await runNative(binary, ["-version"], { timeoutMs: 10_000 })).stdout); } hash.update(await fontFingerprint()); hash.update(JSON.stringify(sharp.versions)); hash.update(JSON.stringify({ platform: process.platform, pangoCairoBackend: process.env.PANGOCAIRO_BACKEND ?? "platform-default" })); return `${RENDER_ALGORITHM_REVISION}:${hash.digest("hex")}`; })();
+  constructor(private readonly storage: ExportStorage, private readonly ffmpeg = "ffmpeg", private readonly ffprobe = "ffprobe", private readonly runtime = new NativeMediaRuntime()) {}
+  fingerprint(): Promise<string> { return this.runtime.run(undefined, signal => this.fingerprintInternal(signal)); }
+  private fingerprintInternal(signal?: AbortSignal): Promise<string> {
+    return (async (): Promise<string> => { const hash = createHash("sha256"); hash.update(RENDER_ALGORITHM_REVISION); for (const name of [this.ffmpeg, this.ffprobe]) { const binary = await binaryPath(name); hash.update((await hashLocalFile(binary)).sha256); hash.update((await runNative(binary, ["-version"], { timeoutMs: 10_000, ...(signal ? { signal } : {}) })).stdout); } hash.update(await fontFingerprint()); hash.update(JSON.stringify(sharp.versions)); hash.update(JSON.stringify({ platform: process.platform, pangoCairoBackend: process.env.PANGOCAIRO_BACKEND ?? "platform-default" })); return `${RENDER_ALGORITHM_REVISION}:${hash.digest("hex")}`; })();
   }
   async validateText(composition: VideoComposition): Promise<void> {
     const issues: CaptionPolicyError["issues"] = [];
@@ -54,9 +56,10 @@ export class NativeVideoRenderer implements VideoRenderer {
     const result = await runNative(this.ffprobe, ["-v", "error", "-protocol_whitelist", "file,pipe", "-format_whitelist", "mov,matroska,webm,png_pipe,jpeg_pipe,webp_pipe,mp3,wav,ogg,flac,aac", ...(countFrames ? ["-count_frames"] : []), "-show_streams", "-show_format", "-of", "json", path], { signal, timeoutMs: 30_000 }); return ProbeSchema.parse(JSON.parse(result.stdout));
   }
   /** Same CFR normalization as the final render; original storage bytes never change. */
-  async normalize(ownerId: string, source: MediaVersion, signal: AbortSignal): Promise<NormalizedVideo> {
+  normalize(ownerId: string, source: MediaVersion, signal: AbortSignal): Promise<NormalizedVideo> { return this.runtime.run(signal, active => this.normalizeInternal(ownerId, source, active)); }
+  private async normalizeInternal(ownerId: string, source: MediaVersion, signal: AbortSignal): Promise<NormalizedVideo> {
     if (source.ownerId !== ownerId || source.object.identity !== "verified" || source.metadata.state !== "verified" || (source.kind !== "video" && source.kind !== "export") || source.object.bytes > VIDEO_EDIT_LIMITS.maxSourceBytes) throw new Error(`Source ${source.id} cannot be normalized for video editing.`);
-    await this.fingerprint();
+    await this.fingerprintInternal(signal);
     const executionSignal = AbortSignal.any([signal, AbortSignal.timeout(300_000)]);
     const directory = await mkdtemp(join(tmpdir(), "vidra-preview-")); let complete = false;
     try {
@@ -76,13 +79,14 @@ export class NativeVideoRenderer implements VideoRenderer {
     } catch (error) { if (executionSignal.aborted && !signal.aborted) throw new Error("The preview exceeded its bounded execution deadline."); throw error; }
     finally { if (!complete) await rm(directory, { recursive: true, force: true }); }
   }
-  async render(record: VideoExport, signal: AbortSignal, progress: (value: number) => void): Promise<RenderedVideo> {
+  render(record: VideoExport, signal: AbortSignal, progress: (value: number) => void): Promise<RenderedVideo> { return this.runtime.run(signal, active => this.renderInternal(record, active, progress)); }
+  private async renderInternal(record: VideoExport, signal: AbortSignal, progress: (value: number) => void): Promise<RenderedVideo> {
     if (createHash("sha256").update(canonicalJson(record.composition)).digest("hex") !== record.compositionHash) throw new Error("The accepted render manifest no longer matches its captured composition hash.");
     for (const item of record.composition.items) {
       const source = record.sources.find(candidate => candidate.id === item.versionId);
       if (item.kind === "clip" && source?.metadata.state === "verified" && source.metadata.audio === "present") validateSourceAudioTiming(item);
     }
-    if (await this.fingerprint() !== record.renderer) throw new Error("The exact renderer implementation for this accepted export is unavailable.");
+    if (await this.fingerprintInternal(signal) !== record.renderer) throw new Error("The exact renderer implementation for this accepted export is unavailable.");
     const executionSignal = AbortSignal.any([signal, AbortSignal.timeout(300_000)]);
     const directory = await mkdtemp(join(tmpdir(), "vidra-export-")); let complete = false;
     try {
