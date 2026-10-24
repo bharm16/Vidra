@@ -76,6 +76,7 @@ export function parseVideoJobRecord(
   if (typeof parsed.completedAtMs === "number") {
     base.completedAtMs = parsed.completedAtMs;
   }
+  if (parsed.providerResult) { const { inputMode, ...evidence } = parsed.providerResult; base.providerResult = { ...evidence, ...(inputMode ? { inputMode } : {}) }; }
   if (normalizedResult) {
     base.result = normalizedResult;
   }

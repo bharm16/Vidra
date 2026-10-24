@@ -18,7 +18,7 @@ export interface WorkflowManagementStorage {
   downloadAccess(ownerId: string, version: MediaVersion): Promise<{ url: string; expiresAt: string }>;
   downloadSource(ownerId: string, source: MediaVersion, target: string, signal: AbortSignal): Promise<void>;
   existingFrame(operation: FrameOperation): Promise<StoredFrame | undefined>;
-  storeFrame(operation: FrameOperation, path: string, evidence: { sha256: string; bytes: number; width: number; height: number }): Promise<StoredFrame>;
+  storeFrame(operation: FrameOperation, path: string, evidence: { sha256: string; bytes: number; width: number; height: number }, signal?: AbortSignal): Promise<StoredFrame>;
 }
 
 export class UnsatisfiableRangeError extends Error { constructor(readonly bytes: number) { super("This byte range is unavailable."); } }

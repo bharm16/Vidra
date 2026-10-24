@@ -8,6 +8,7 @@ import { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
 import { ExecutionAttemptSchema, WorkflowPreflightError } from "@services/creation-requests/execution";
 import { LegacyVideoSpendGuard, LegacyVideoSpendRefusedError, reviewedLegacyVideoDispatch } from "../LegacyVideoSpendGuard";
 import { processVideoJob, type JobProcessingStore } from "../processVideoJob";
+import { parseVideoJobRecord } from "../parseVideoJobRecord";
 import { VideoJobHandler } from "../VideoJobHandler";
 import type { VideoJobRecord } from "../types";
 
@@ -68,7 +69,7 @@ function setup(cap = 500, at = AT) {
   const seed = (value: VideoJobRecord): void => { const { id, ...record } = value; database.set(`video_jobs/${id}`, record); };
   return { database, authority, guard, seed, used: (): number => Number(database.rows.get(`studio_usage/creator_${DAY}`)?.reservedCents ?? 0) };
 }
-const store = (): JobProcessingStore => ({ renewLease: vi.fn(async () => true), markCompleted: vi.fn(async () => true), markFailed: vi.fn(async () => true), requeueForRetry: vi.fn(async () => true), enqueueDeadLetter: vi.fn(async () => undefined) });
+const store = (): JobProcessingStore => ({ renewLease: vi.fn(async () => true), markCompleted: vi.fn(async () => true), markFailed: vi.fn(async () => true), requeueForRetry: vi.fn(async () => true), enqueueDeadLetter: vi.fn(async () => undefined), setProviderResult: vi.fn(async () => true) });
 function processing(guard: LegacyVideoSpendGuard) {
   const generateVideo = vi.fn(async () => ({ assetId: "asset", videoUrl: "https://media.test/video", contentType: "video/mp4" }));
   const jobStore = store();
@@ -77,6 +78,34 @@ function processing(guard: LegacyVideoSpendGuard) {
 }
 
 describe("legacy native provider spending", () => {
+  it("repairs confirmed output after a storage failure without another dispatch reservation", async () => {
+    const h = setup(); const first = job(); h.seed(first); const p = processing(h.guard);
+    let evidence: unknown;
+    p.jobStore.setProviderResult = vi.fn(async (_id, _worker, value) => { evidence = value; return true; });
+    p.deps.storageService.saveFromUrl.mockRejectedValueOnce(new Error("Storage offline"));
+    await processVideoJob(first, p.deps);
+    const reclaimed = parseVideoJobRecord(first.id, { ...first, attempts: 2, providerResult: evidence }, 3);
+    h.seed(reclaimed); await processVideoJob(reclaimed, p.deps);
+    expect(p.generateVideo).toHaveBeenCalledTimes(1); expect(h.used()).toBe(20);
+    expect(p.jobStore.markCompleted).toHaveBeenCalledWith(first.id, expect.objectContaining({ assetId: "asset", storagePath: "users/creator/generations/video.mp4" }));
+  });
+
+  it("refuses to regenerate when a consumed attempt has no recoverable output", async () => {
+    const h = setup(); const first = job(); h.seed(first); const p = processing(h.guard);
+    p.jobStore.setProviderResult = vi.fn(async () => false);
+    await processVideoJob(first, p.deps);
+    const retry = job({ attempts: 2 }); h.seed(retry); await processVideoJob(retry, p.deps);
+    expect(p.generateVideo).toHaveBeenCalledTimes(1); expect(h.used()).toBe(20);
+    expect(p.deps.storageService.saveFromUrl).not.toHaveBeenCalled();
+  });
+
+  it("delivers confirmed historical model output without new-dispatch qualification", async () => {
+    const h = setup(); const value = job({ request: { prompt: "Historical words", options: { model: "retired-model" } }, providerResult: { providerVideoUrl: "https://media.test/video", assetId: "historical", contentType: "video/mp4" } });
+    const p = processing(h.guard); await processVideoJob(value, p.deps);
+    expect(p.generateVideo).not.toHaveBeenCalled(); expect(h.used()).toBe(0);
+    expect(p.jobStore.markCompleted).toHaveBeenCalledWith(value.id, expect.objectContaining({ assetId: "historical" }));
+  });
+
   it("consumes reviewed cents once before dispatch while customer credits stay zero", async () => {
     const h = setup(); const value = job(); h.seed(value); const p = processing(h.guard);
     await Promise.all([processVideoJob(value, p.deps), processVideoJob(value, p.deps)]);
@@ -108,11 +137,11 @@ describe("legacy native provider spending", () => {
     expect(h.used()).toBeLessThanOrEqual(500);
   });
 
-  it("worker retries require a new durable reservation and the next retry cannot exceed the cap", async () => {
+  it("explicit new jobs require reservations and cannot exceed the cap", async () => {
     const h = setup(40); const first = job(); h.seed(first); const p = processing(h.guard);
     const handler = new VideoJobHandler(p.deps.jobStore as never, p.deps.videoGenerationService as never, { refundCredits: vi.fn(async () => true) }, p.deps.storageService as never, { providerSpendGuard: h.guard });
     const context = { workerId: "worker-one", leaseMs: 90_000, signal: new AbortController().signal, heartbeat: p.deps.heartbeat };
-    for (let attempt = 1; attempt <= 3; attempt += 1) { const current = job({ attempts: attempt }); h.seed(current); await handler.process(current, context); }
+    for (let attempt = 1; attempt <= 3; attempt += 1) { const current = job({ id: `explicit-${attempt}` }); h.seed(current); await handler.process(current, context); }
     expect(p.generateVideo).toHaveBeenCalledTimes(2); expect(h.used()).toBe(40);
   });
 

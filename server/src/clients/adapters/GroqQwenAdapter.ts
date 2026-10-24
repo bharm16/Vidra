@@ -206,7 +206,7 @@ export class GroqQwenAdapter implements LLMAdapter<QwenCompletionOptions> {
     options: QwenCompletionOptions,
   ): Promise<AIResponse> {
     const timeout = options.timeout || this.defaultTimeout;
-    const { controller, timeoutId, abortedByTimeout } = createAbortController(
+    const { controller, cleanup, abortedByTimeout } = createAbortController(
       timeout,
       options.signal,
     );
@@ -323,8 +323,6 @@ export class GroqQwenAdapter implements LLMAdapter<QwenCompletionOptions> {
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         const errorBody = await response.text();
         const isRetryable = response.status >= 500 || response.status === 429;
@@ -338,7 +336,6 @@ export class GroqQwenAdapter implements LLMAdapter<QwenCompletionOptions> {
       const data = (await response.json()) as GroqResponseData;
       return this._normalizeResponse(data, options);
     } catch (error) {
-      clearTimeout(timeoutId);
 
       const errorObj = error as Error;
       if (errorObj.name === "AbortError") {
@@ -349,7 +346,7 @@ export class GroqQwenAdapter implements LLMAdapter<QwenCompletionOptions> {
       }
 
       throw errorObj;
-    }
+    } finally { cleanup(); }
   }
 
   /**

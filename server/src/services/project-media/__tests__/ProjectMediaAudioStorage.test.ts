@@ -7,7 +7,7 @@ import { ImportCommandSchema } from "@shared/schemas/workflow/import.schemas";
 import { verifyImportFile } from "../ProjectMediaStorage";
 
 const native = vi.hoisted(() => ({ execute: vi.fn() }));
-vi.mock("node:child_process", () => { const execFile = vi.fn(); Object.defineProperty(execFile, Symbol.for("nodejs.util.promisify.custom"), { value: native.execute }); return { execFile }; });
+vi.mock("@services/video-export/NativeProcess", () => ({ runNative: native.execute }));
 const directories: string[] = [];
 const wave = Buffer.from("524946462800000057415645666d7420100000000100010080bb00000077010002001000646174610400000000000000", "hex");
 const m4a = Buffer.from("00000018667479704d344120000000004d3441206d703432", "hex");
@@ -20,7 +20,7 @@ afterEach(async () => { await Promise.all(directories.splice(0).map(path => rm(p
 it("proves audio bytes and decoded duration without inventing visual dimensions", async () => {
   expect(await verifyImportFile(await file(wave), command(wave))).toMatchObject({ sha256: command(wave).sha256, metadata: { state: "verified", contentType: "audio/wav", audio: "present", durationSeconds: 1, probeVersion: "ffmpeg-audio-v1" } });
   const result = await verifyImportFile(await file(wave), command(wave)); expect(result.metadata).not.toHaveProperty("width"); expect(result.metadata).not.toHaveProperty("height");
-  expect(native.execute).toHaveBeenCalledWith("ffmpeg", expect.arrayContaining(["-protocol_whitelist", "file,pipe", "-map", "0:a:0"]), expect.objectContaining({ timeout: 60000 }));
+  expect(native.execute).toHaveBeenCalledWith("ffmpeg", expect.arrayContaining(["-protocol_whitelist", "file,pipe", "-map", "0:a:0"]), expect.objectContaining({ timeoutMs: 60000 }));
 });
 it("rejects a familiar audio filename containing unrelated bytes before native probing", async () => { const bytes = Buffer.from("This is not an audio file"); await expect(verifyImportFile(await file(bytes), command(bytes))).rejects.toMatchObject({ code: "invalid_settings" }); expect(native.execute).not.toHaveBeenCalled(); });
 it("does not publish a claimed format when the actual audio container disagrees", async () => { await expect(verifyImportFile(await file(wave), command(wave, "audio/mpeg"))).rejects.toMatchObject({ code: "invalid_settings", message: expect.stringContaining("contents don't match") }); expect(native.execute).not.toHaveBeenCalled(); });

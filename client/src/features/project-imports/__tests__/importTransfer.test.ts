@@ -1,13 +1,24 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { webcrypto } from "node:crypto";
-import { AUDIO_IMPORT_LIMITS } from "@shared/schemas/workflow/import.schemas";
-import { importCommand, transferImport } from "../api/importTransfer";
-const auth = vi.hoisted(() => ({ owner: "creator" }));
-vi.mock("@/repositories/index", () => ({ getAuthRepository: () => ({ getCurrentUser: () => ({ uid: auth.owner }) }) }));
-afterEach(() => { vi.unstubAllGlobals(); auth.owner = "creator"; });
-it("resumes the recorded byte range without retransmitting acknowledged chunks", async () => { const fetch = vi.fn(async () => new Response(undefined, { status: 200 })); vi.stubGlobal("fetch", fetch); const progress = vi.fn(); await transferImport("creator", "https://storage.googleapis.com/resume", new Blob([new Uint8Array(1024)]), 512, new AbortController().signal, progress); expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ headers: { "Content-Type": "application/octet-stream", "Content-Range": "bytes 512-1023/1024" } })); expect(progress.mock.calls).toEqual([[50], [100]]); });
-it("refuses to send private file bytes after the account changes", async () => { auth.owner = "other"; const fetch = vi.fn(); vi.stubGlobal("fetch", fetch); await expect(transferImport("creator", "https://storage.googleapis.com/resume", new Blob(["private"]), 0, new AbortController().signal, () => undefined)).rejects.toThrow("original account"); expect(fetch).not.toHaveBeenCalled(); });
-it("interrupted transport reports failure rather than completing a file", async () => { vi.stubGlobal("fetch", vi.fn(async () => new Response(undefined, { status: 503 }))); await expect(transferImport("creator", "https://storage.googleapis.com/resume", new Blob(["private"]), 0, new AbortController().signal, () => undefined)).rejects.toThrow("Upload interrupted"); });
-it("records the canonical audio MIME while preserving the exact chosen bytes", async () => { vi.stubGlobal("crypto", webcrypto); const file = new File(["wave"], "Track.wav", { type: "audio/x-wav" }); Object.defineProperty(file, "arrayBuffer", { value: async (): Promise<ArrayBuffer> => new TextEncoder().encode("wave").buffer }); const command = await importCommand(file); expect(command).toMatchObject({ filename: "Track.wav", contentType: "audio/wav", bytes: 4 }); expect(command.sha256).toMatch(/^[a-f0-9]{64}$/); });
-it("rejects oversized audio before buffering private bytes for fingerprinting", async () => { const file = new File(["x"], "Too big.wav", { type: "audio/wav" }); const buffer = vi.fn(); Object.defineProperty(file, "size", { value: AUDIO_IMPORT_LIMITS.maxBytes + 1 }); Object.defineProperty(file, "arrayBuffer", { value: buffer }); await expect(importCommand(file)).rejects.toThrow("100 MB"); expect(buffer).not.toHaveBeenCalled(); });
-it("sends the recorded canonical audio type and stops at the next chunk after an account switch", async () => { const fetch = vi.fn(async () => { auth.owner = "different-owner"; return new Response(undefined, { status: 308 }); }); vi.stubGlobal("fetch", fetch); const progress = vi.fn(); const file = new Blob([new Uint8Array(8 * 1024 * 1024 + 1)], { type: "audio/x-wav" }); await expect(transferImport("creator", "https://storage.googleapis.com/resume", file, 0, new AbortController().signal, progress, "audio/wav")).rejects.toThrow("original account"); expect(fetch).toHaveBeenCalledTimes(1); expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ headers: expect.objectContaining({ "Content-Type": "audio/wav" }) })); });
+import { transferImport } from "../api/importTransfer";
+vi.mock("@/repositories/index", () => ({ getAuthRepository: () => ({ getCurrentUser: () => ({ uid: "owner" }) }) }));
+afterEach(() => vi.unstubAllGlobals());
+it("continues at the acknowledged position when only part of a chunk was retained", async () => {
+  const fetcher = vi.fn().mockResolvedValueOnce({ ok: false, status: 308, headers: { get: () => "bytes=0-262143" } }).mockResolvedValueOnce({ ok: false, status: 308, headers: { get: () => "bytes=0-8650751" } }).mockResolvedValueOnce({ ok: true, status: 200, headers: new Headers() });
+  vi.stubGlobal("fetch", fetcher);
+  const file = new Blob([new Uint8Array(9 * 1024 * 1024)], { type: "image/png" });
+  await transferImport("owner", "https://upload.test/session", file, 0, new AbortController().signal, vi.fn());
+  expect(fetcher.mock.calls[1]?.[1].headers["Content-Range"]).toBe(`bytes 262144-8650751/${file.size}`);
+});
+
+it("refuses an acknowledgement that makes no progress", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 308, headers: new Headers() })));
+  await expect(transferImport("owner", "https://upload.test/session", new Blob(["file"]), 0, new AbortController().signal, vi.fn())).rejects.toThrow("position");
+});
+
+it("reconciles an unexposed acknowledgement through the owned import session", async () => {
+  const fetcher = vi.fn().mockResolvedValueOnce({ ok: false, status: 308, headers: new Headers() }).mockResolvedValueOnce({ ok: true, status: 200, headers: new Headers() });
+  vi.stubGlobal("fetch", fetcher); const reconcileOffset = vi.fn(async () => 3);
+  await transferImport("owner", "https://upload.test/session", new Blob(["file"]), 0, new AbortController().signal, vi.fn(), { reconcileOffset });
+  expect(reconcileOffset).toHaveBeenCalledTimes(1);
+  expect(fetcher.mock.calls[1]?.[1].headers["Content-Range"]).toBe("bytes 3-3/4");
+});

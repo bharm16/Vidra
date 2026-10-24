@@ -10,7 +10,7 @@ import {
   buildTextPattern,
   buildTextPrefix,
 } from "./spanLabeling/key";
-import { runSingleFlight } from "./singleFlight";
+import { observeFlight, type ObservedFlight } from "./ObservedFlights";
 
 /**
  * SpanLabelingCacheService - Server-side caching for span labeling results
@@ -42,7 +42,7 @@ export class SpanLabelingCacheService {
     sets: number;
     errors: number;
   };
-  private readonly inflight = new Map<string, Promise<unknown>>();
+  private readonly inflight = new Map<string, ObservedFlight>();
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(options: SpanLabelingCacheServiceOptions = {}) {
@@ -76,9 +76,10 @@ export class SpanLabelingCacheService {
     policy: SpanLabelingPolicy | null,
     templateVersion: string | null,
     provider: string | null = null,
+    identity = "",
   ): Promise<unknown | null> {
     const startTime = Date.now();
-    const cacheKey = generateCacheKey(text, policy, templateVersion, provider);
+    const cacheKey = generateCacheKey(text, policy, templateVersion, provider, identity);
 
     try {
       const cacheEntry = this.memoryCache.get(cacheKey);
@@ -121,13 +122,14 @@ export class SpanLabelingCacheService {
     policy: SpanLabelingPolicy | null,
     templateVersion: string | null,
     result: unknown,
-    options: { ttl?: number; provider?: string | null } = {},
+    options: { ttl?: number; provider?: string | null; identity?: string } = {},
   ): Promise<boolean> {
     const cacheKey = generateCacheKey(
       text,
       policy,
       templateVersion,
       options.provider ?? null,
+      options.identity ?? "",
     );
     const ttl = options.ttl || this.defaultTTL;
 
@@ -155,8 +157,8 @@ export class SpanLabelingCacheService {
     text: string,
     policy: SpanLabelingPolicy | null,
     templateVersion: string | null,
-    compute: () => Promise<T>,
-    options: { ttl?: number; provider?: string | null } = {},
+    compute: (signal?: AbortSignal) => Promise<T>,
+    options: { ttl?: number; provider?: string | null; identity?: string; signal?: AbortSignal; shouldCache?: (value: T) => boolean } = {},
   ): Promise<{ value: T; source: "cache" | "computed" | "coalesced" }> {
     const provider = options.provider ?? null;
     const cached = (await this.get(
@@ -164,6 +166,7 @@ export class SpanLabelingCacheService {
       policy,
       templateVersion,
       provider,
+      options.identity ?? "",
     )) as T | null;
     if (cached !== null) {
       return { value: cached, source: "cache" };
@@ -174,13 +177,16 @@ export class SpanLabelingCacheService {
       policy,
       templateVersion,
       provider,
+      options.identity ?? "",
     );
 
-    return runSingleFlight(this.inflight, inflightKey, async () => {
-      const computed = await compute();
-      await this.set(text, policy, templateVersion, computed, options);
+    const computeAndStore = async (signal: AbortSignal): Promise<T> => {
+      const computed = await compute(signal);
+      signal.throwIfAborted();
+      if (options.shouldCache?.(computed) !== false) await this.set(text, policy, templateVersion, computed, options);
       return computed;
-    });
+    };
+    return observeFlight(this.inflight, inflightKey, options.signal ?? new AbortController().signal, computeAndStore);
   }
 
   /**

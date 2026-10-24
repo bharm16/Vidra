@@ -21,6 +21,7 @@ export interface ModelResponse {
  * Subclasses configure these via hooks
  */
 export interface ProviderRequestOptions {
+  signal?: AbortSignal;
   enableBookending: boolean;
   useFewShot: boolean;
   useSeedFromConfig: boolean;
@@ -51,6 +52,7 @@ export async function callModel({
 }): Promise<ModelResponse> {
   const requestOptions: ExecuteParams = {
     systemPrompt,
+    ...(providerOptions.signal ? { signal: providerOptions.signal } : {}),
     userMessage: userPayload,
     maxTokens,
     jsonMode: !schema,

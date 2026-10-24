@@ -1,3 +1,4 @@
+import type { ResolvedExecution } from "@services/ai-model/types";
 import { SubstringPositionCache } from "./cache/SubstringPositionCache";
 import SpanLabelingConfig from "./config/SpanLabelingConfig";
 import { sanitizePolicy, sanitizeOptions } from "./utils/policyUtils";
@@ -47,10 +48,11 @@ import type {
 function withExecutionProvenance(
   result: LabelSpansResult,
   provider: ProviderType,
+  execution?: ResolvedExecution,
 ): LabelSpansResult {
   return {
     ...result,
-    meta: { ...result.meta, provider },
+    meta: { ...result.meta, provider, ...(execution ? { execution } : {}) },
   };
 }
 
@@ -62,6 +64,7 @@ export async function labelSpans(
   params: LabelSpansParams,
   aiService: AIExecutionPort,
 ): Promise<LabelSpansResult> {
+  params?.signal?.throwIfAborted();
   if (!params || typeof params.text !== "string" || !params.text.trim()) {
     throw new Error("text is required");
   }
@@ -123,6 +126,8 @@ async function labelSpansSingle(
   params: LabelSpansParams,
   aiService: AIExecutionPort,
 ): Promise<LabelSpansResult> {
+  if (aiService.withExecution) return aiService.withExecution("span_labeling", selected => labelSpansSingle(params, selected));
+  params?.signal?.throwIfAborted();
   if (!params || typeof params.text !== "string" || !params.text.trim()) {
     throw new Error("text is required");
   }
@@ -158,7 +163,7 @@ async function labelSpansSingle(
 
     if (nlpResult) {
       // NLP fast-path succeeded
-      return withExecutionProvenance(nlpResult, executedBy.provider);
+      return withExecutionProvenance(nlpResult, executedBy.provider, executedBy);
     }
 
     // Fall back to LLM-based extraction with repair loop.
@@ -170,11 +175,12 @@ async function labelSpansSingle(
       options: sanitizedOptions,
       enableRepair: params.enableRepair === true,
       aiService,
+      ...(params.signal ? { signal: params.signal } : {}),
       cache,
       nlpSpansAttempted: 0, // Could track NLP attempt count if needed
     });
 
-    return withExecutionProvenance(result, executedBy.provider);
+    return withExecutionProvenance(result, executedBy.provider, executedBy);
   } catch (error) {
     // Re-throw errors to let caller handle them
     throw error;
@@ -185,7 +191,7 @@ async function labelSpansSingle(
 interface ChunkResult {
   spans?: SpanLike[];
   chunkOffset: number;
-  meta: { version: string; notes: string; [key: string]: unknown } | null;
+  meta: LLMMeta | null;
   isAdversarial: boolean;
 }
 
@@ -286,19 +292,9 @@ async function labelSpansChunked(
         isAdversarial: result.isAdversarial === true,
       };
     } catch (error) {
-      const err = error as Error;
-      logger.error("Error processing chunk", err as Error, {
-        operation: "labelSpansChunked",
-        chunkOffset: chunk.startOffset,
-        provider,
-      });
-      // Return empty spans for failed chunks to avoid blocking entire request
-      return {
-        spans: [],
-        chunkOffset: chunk.startOffset,
-        meta: null,
-        isAdversarial: false,
-      };
+      // A partial labeling pass is not an authoritative result.
+      params.signal?.throwIfAborted();
+      throw error;
     }
   };
 
@@ -352,13 +348,18 @@ async function labelSpansChunked(
     mergedSpans = [];
   }
 
+  const executions = chunkResults.flatMap(result => result.meta?.execution ? [result.meta.execution] : []);
+  const actual = executions[0];
+  const mixedExecutions = executions.some(execution => execution.provider !== actual?.provider || execution.model !== actual?.model || execution.client !== actual?.client);
   const combinedMeta = {
     version: params.templateVersion || "v1",
     notes: `Processed ${chunks.length} chunks, ${mergedSpans.length} total spans${isAdversarial ? " | adversarial input flagged" : ""}`,
     chunked: true,
     chunkCount: chunks.length,
     totalWords: wordCount,
-    provider,
+    provider: mixedExecutions ? "unknown" as const : actual?.provider ?? provider,
+    ...(actual && !mixedExecutions ? { execution: actual } : {}),
+    mixedExecutions,
   };
 
   const cache = new SubstringPositionCache();
@@ -422,6 +423,8 @@ export async function* labelSpansStream(
   params: LabelSpansParams,
   aiService: AIExecutionPort,
 ): AsyncGenerator<SpanLike, SpanStreamFinalization, unknown> {
+  if (aiService.bindExecution) return yield* labelSpansStream(params, aiService.bindExecution("span_labeling"));
+  params?.signal?.throwIfAborted();
   if (!params || typeof params.text !== "string" || !params.text.trim()) {
     throw new Error("text is required");
   }
@@ -451,6 +454,7 @@ export async function* labelSpansStream(
         version: templateVersion,
         notes: "adversarial input flagged",
         provider: executedBy.provider,
+      execution: executedBy,
       },
     };
   }
@@ -503,6 +507,7 @@ export async function* labelSpansStream(
     options: sanitizedOptions,
     enableRepair: params.enableRepair === true,
     aiService,
+    ...(params.signal ? { signal: params.signal } : {}),
     cache,
     nlpSpansAttempted: 0,
   };
@@ -536,6 +541,7 @@ export async function* labelSpansStream(
       version: sanitizedOptions.templateVersion ?? templateVersion,
       notes: finalized.notes.filter(Boolean).join(" | "),
       provider: executedBy.provider,
+      execution: executedBy,
     },
   };
 }

@@ -29,7 +29,7 @@ export function ProjectSketch({ ownerId, projectId, projectName = "this project"
   const displayed = preview.state.liveOutput ?? undefined;
   const picture = displayed?.imageUrl ?? capture.pending?.outputDataUri;
   const shownStatus = !displayed && picture && preview.status === "off" ? "paused" : preview.status;
-  const close = (): void => { preview.pause(); onClose(); };
+  const close = (): void => { preview.pause(); void capture.retainBeforeClose().then(retained => { if (retained) onClose(); }); };
   const save = (): void => { setPanelOpen(true); void capture.save(displayed); };
   const controls = <div className="ps-tools" role="toolbar" aria-label="Sketch tools">
     <SketchToolButton name="select" label="Select" selected={tool === "select"} onClick={() => setTool("select")} />

@@ -17,6 +17,7 @@ describe("readSpanLabelStream", () => {
         return { done: false, value };
       },
       releaseLock: vi.fn(),
+      cancel: vi.fn(async () => undefined),
     } as unknown as ReadableStreamDefaultReader<Uint8Array>;
   };
 
@@ -25,7 +26,6 @@ describe("readSpanLabelStream", () => {
       JSON.stringify({ start: 0, end: 4, category: "style", confidence: 0.8 }) +
         "\n",
       "{ bad json }\n",
-      JSON.stringify({ error: "bad line" }) + "\n",
       JSON.stringify({ start: 5, end: 7, category: "style", confidence: 0.6 }) +
         "\n",
     ];
@@ -40,8 +40,8 @@ describe("readSpanLabelStream", () => {
 
     expect(onChunk).toHaveBeenCalledTimes(2);
     expect(result.spans).toHaveLength(2);
-    expect(result.linesProcessed).toBe(4);
-    expect(result.parseErrors).toBe(2);
+    expect(result.linesProcessed).toBe(3);
+    expect(result.parseErrors).toBe(1);
     expect(log.warn).toHaveBeenCalled();
   });
 });

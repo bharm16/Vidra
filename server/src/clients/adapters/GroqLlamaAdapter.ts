@@ -212,7 +212,7 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
     attempt: number = 0,
   ): Promise<AIResponse> {
     const timeout = options.timeout || this.defaultTimeout;
-    const { controller, timeoutId, abortedByTimeout } = createAbortController(
+    const { controller, cleanup, abortedByTimeout } = createAbortController(
       timeout,
       options.signal,
     );
@@ -261,8 +261,6 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         const errorBody = await response.text();
         const isRetryable = response.status >= 500 || response.status === 429;
@@ -276,7 +274,6 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
       const data = (await response.json()) as GroqResponseData;
       return normalizeResponse(data, options);
     } catch (error) {
-      clearTimeout(timeoutId);
 
       const errorObj = error as Error;
       if (errorObj.name === "AbortError") {
@@ -287,7 +284,7 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
       }
 
       throw errorObj;
-    }
+    } finally { cleanup(); }
   }
 
   /**
@@ -298,7 +295,7 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
     options: LlamaCompletionOptions & { onChunk: (chunk: string) => void },
   ): Promise<string> {
     const timeout = options.timeout || this.defaultTimeout;
-    const { controller, timeoutId, abortedByTimeout } = createAbortController(
+    const { controller, cleanup, abortedByTimeout } = createAbortController(
       timeout,
       options.signal,
     );
@@ -334,8 +331,6 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -394,7 +389,6 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
 
       return fullText;
     } catch (error) {
-      clearTimeout(timeoutId);
 
       const errorObj = error as Error;
       if (errorObj.name === "AbortError") {
@@ -407,6 +401,6 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
       }
 
       throw errorObj;
-    }
+    } finally { cleanup(); }
   }
 }

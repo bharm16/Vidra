@@ -117,6 +117,7 @@ describe("span cache key provider", () => {
     } as unknown as SpanLabelingCacheService;
 
     await handleLabelSpansStreamRequest({
+      userId: "creator",
       payload: { text: TEXT, templateVersion: "v1" },
       text: TEXT,
       policy: null,
@@ -158,6 +159,7 @@ describe("span cache key provider", () => {
       policy: null,
       templateVersion: "v1",
       requestId: "req-blocking",
+      userId: "creator",
       startTimeMs: Date.now(),
     });
 

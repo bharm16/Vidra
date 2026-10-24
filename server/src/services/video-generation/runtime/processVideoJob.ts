@@ -212,6 +212,11 @@ export async function processVideoJob(
       throw new Error("Storage service unavailable for required durable write");
     }
 
+    let result: VideoGenerationResult;
+    if (job.providerResult) {
+      const { providerVideoUrl, ...confirmed } = job.providerResult;
+      result = { ...confirmed, videoUrl: providerVideoUrl };
+    } else {
     if (
       job.request.options?.model &&
       !isReleaseGenerationModelSupported(job.request.options.model)
@@ -221,42 +226,18 @@ export async function processVideoJob(
         "generation",
       );
     }
-    let result: VideoGenerationResult;
-    try {
-      if (!deps.providerSpendGuard) throw new LegacyVideoSpendRefusedError("Legacy video spending authority is unavailable.");
-      const dispatch = await deps.providerSpendGuard.authorize(job, workerId);
-      if (!dispatch) return;
-      result = await videoGenerationService.generateVideo(
-        job.request.prompt,
-        dispatch.options as Record<string, unknown>,
-        signal,
-      );
-    } catch (error) {
-      if (signal?.aborted) {
-        throw withStage(
-          new Error("Job aborted: lease heartbeat lost during generation"),
-          "generation",
-        );
-      }
-      throw withStage(error, "generation");
-    }
-
-    // ── Persist provider result (crash-recovery checkpoint) ────
-    if (jobStore.setProviderResult) {
+      if (!jobStore.setProviderResult) throw new LegacyVideoSpendRefusedError("Durable provider-result checkpointing is unavailable.");
       try {
-        await jobStore.setProviderResult(job.id, workerId, {
-          providerVideoUrl: result.videoUrl,
-          assetId: result.assetId,
-          contentType: result.contentType,
-          ...(result.inputMode ? { inputMode: result.inputMode } : {}),
-        });
-      } catch (error) {
-        log.warn(`${logPrefix} failed to persist provider result (non-fatal)`, {
-          jobId: job.id,
-          workerId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+        if (!deps.providerSpendGuard) throw new LegacyVideoSpendRefusedError("Legacy video spending authority is unavailable.");
+        const dispatch = await deps.providerSpendGuard.authorize(job, workerId);
+        if (!dispatch) return;
+        result = await videoGenerationService.generateVideo(job.request.prompt, dispatch.options as Record<string, unknown>, signal);
+      } catch (error) { throw withStage(error, "generation"); }
+      const checkpointed = await jobStore.setProviderResult(job.id, workerId, {
+        providerVideoUrl: result.videoUrl, assetId: result.assetId, contentType: result.contentType,
+        ...(result.inputMode ? { inputMode: result.inputMode } : {}),
+      }).catch(() => false);
+      if (checkpointed !== true) throw withStage(new Error("Confirmed provider output could not be checkpointed; this job must not regenerate."), "persistence");
     }
 
     // ── Store to durable storage ───────────────────────────────
@@ -274,6 +255,8 @@ export async function processVideoJob(
         {
           model: job.request.options?.model,
           creditsUsed: job.creditsReserved,
+          legacyVideoJobId: job.id,
+          legacyVideoAssetId: result.assetId,
         },
       );
     } catch (error) {

@@ -1,3 +1,4 @@
+import type { AIExecutionPort } from "./ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import {
   ModelConfig,
@@ -174,6 +175,45 @@ export class AIModelService {
     return { client, provider, model, viaFallback };
   }
 
+  bindExecution(operation: OperationName): AIExecutionPort {
+    const { config, circuitFallback } = this._planRoute(operation);
+    return this.executionPort(operation, circuitFallback ? { ...config, ...circuitFallback } : config, circuitFallback !== null);
+  }
+
+  private executionPort(operation: OperationName, chosen: ModelConfigEntry, viaFallback: boolean, onFailure: () => void = () => undefined): AIExecutionPort {
+    const execution = this._describeExecution(operation, chosen.client, chosen.model, viaFallback);
+    return {
+        resolveExecution: () => execution,
+        getOperationConfig: () => chosen,
+        execute: async (_operation, params) => {
+          if (_operation !== operation) throw new Error("A prepared execution cannot run a different operation");
+          try { const response = await this._executeSelected(chosen.client, operation, params.systemPrompt, params, chosen, { model: chosen.model, timeout: params.timeout ?? chosen.timeout }); return { ...response, executedBy: execution }; }
+          catch (error) { onFailure(); throw error; }
+        },
+        stream: async (_operation, params) => {
+          if (_operation !== operation) throw new Error("A prepared execution cannot run a different operation");
+          return this.streamOnRoute(operation, params, chosen);
+        },
+    };
+  }
+
+  async withExecution<T>(operation: OperationName, run: (selected: AIExecutionPort) => Promise<T>): Promise<T> {
+    if (!this.hasAnyClient) throw new LLMUnavailableError("No AI providers configured");
+    const { plan, config, circuitFallback } = this._planRoute(operation);
+    const first = circuitFallback ? { ...config, ...circuitFallback } : config;
+    let providerFailed = false;
+    const attempt = async (chosen: ModelConfigEntry, viaFallback: boolean): Promise<T> => {
+      return run(this.executionPort(operation, chosen, viaFallback, () => { providerFailed = true; }));
+    };
+    try { return await attempt(first, circuitFallback !== null); }
+    catch (error) {
+      const refused = typeof error === "object" && error !== null && "isRetryable" in error && error.isRetryable === false;
+      if (!providerFailed || circuitFallback || !plan.fallback || refused || this._isClientAbortError(error)) throw error;
+      providerFailed = false;
+      return attempt({ ...config, ...plan.fallback }, true);
+    }
+  }
+
   /**
    * Execute an AI operation with automatic routing and fallback.
    *
@@ -203,7 +243,7 @@ export class AIModelService {
         fallback: circuitFallback.client,
       });
 
-      return await this._executeFallback(
+      return await this._executeSelected(
         circuitFallback.client,
         operation,
         params.systemPrompt,
@@ -229,7 +269,7 @@ export class AIModelService {
           fallback: plan.fallback.client,
         });
 
-        return await this._executeFallback(
+        return await this._executeSelected(
           plan.fallback.client,
           operation,
           params.systemPrompt,
@@ -343,7 +383,7 @@ export class AIModelService {
           operation,
           fallbackTo: plan.fallback.client,
         });
-        return await this._executeFallback(
+        return await this._executeSelected(
           plan.fallback.client,
           operation,
           params.systemPrompt,
@@ -380,10 +420,12 @@ export class AIModelService {
       );
     }
 
-    const plan = this.planResolver.resolve(operation);
-    const config = plan.primaryConfig;
-    const client = this.clientResolver.getClient(config);
+    const { config, circuitFallback } = this._planRoute(operation);
+    return this.streamOnRoute(operation, params, circuitFallback ? { ...config, ...circuitFallback } : config);
+  }
 
+  private async streamOnRoute(operation: OperationName, params: StreamParams, config: ModelConfigEntry): Promise<string> {
+    const client = this.clientResolver.getClient(config);
     if (typeof client.streamComplete !== "function") {
       throw new Error(
         `Client '${config.client}' does not support streaming. ` +
@@ -428,11 +470,13 @@ export class AIModelService {
       // non-streaming concerns. The streaming wire is eval-gated (span labeling),
       // so options pass through unchanged; unifying the pipelines would force a
       // baseline re-bless and is intentionally deferred.
+      this.providerCircuit?.markDispatched(config.client);
       const text = await client.streamComplete(
         params.systemPrompt as string,
         streamOptions,
       );
 
+      this.providerCircuit?.recordSuccess(config.client);
       logger.debug("AI streaming completed", {
         operation,
         client: config.client,
@@ -441,6 +485,7 @@ export class AIModelService {
 
       return text;
     } catch (error: unknown) {
+      this._settleCircuitOutcome(config.client, error, this._isClientAbortError(error));
       const err = error as { message: string };
 
       logger.error(
@@ -465,7 +510,7 @@ export class AIModelService {
    *
    * @private
    */
-  private async _executeFallback(
+  private async _executeSelected(
     fallbackClient: string,
     operation: OperationName,
     systemPrompt: string,
@@ -473,7 +518,7 @@ export class AIModelService {
     primaryConfig: ModelConfigEntry,
     fallbackConfig?: { model: string; timeout: number },
   ): Promise<RoutedAIResponse> {
-    logger.info("Attempting fallback to alternative client", {
+    logger.info("Dispatching selected text provider", {
       operation,
       fallbackClient,
       fallbackModel: fallbackConfig?.model,
@@ -509,7 +554,7 @@ export class AIModelService {
         response.text = response.content[0]?.text || "";
       }
 
-      logger.info("Fallback succeeded", {
+      logger.info("Selected text provider completed", {
         operation,
         fallbackClient,
         model: fallbackConfig?.model || "client-default",
@@ -536,7 +581,7 @@ export class AIModelService {
       }
 
       logger.error(
-        "Fallback also failed",
+        "Selected text provider failed",
         fallbackError instanceof Error ? fallbackError : undefined,
         {
           operation,
@@ -676,8 +721,8 @@ export class AIModelService {
     if (!this.hasAnyClient) {
       return false;
     }
-    const plan = this.planResolver.resolve(operation);
-    const client = this.clientResolver.getClient(plan.primaryConfig);
+    const { config, circuitFallback } = this._planRoute(operation);
+    const client = this.clientResolver.getClient(circuitFallback ? { ...config, ...circuitFallback } : config);
     return (
       typeof (
         client as {

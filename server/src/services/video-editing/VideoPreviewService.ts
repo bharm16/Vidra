@@ -15,7 +15,7 @@ export interface EditorPreviewAccess { url: string; expiresAt: string; frames: n
 /** Bounded derived cache; only exact owned immutable sources are normalized. */
 export class VideoPreviewService {
   private readonly preparing = new Map<string, Promise<z.infer<typeof PreviewSchema>>>();
-  private queue: Promise<unknown> = Promise.resolve();
+  private publicationQueue: Promise<unknown> = Promise.resolve();
   constructor(private readonly database: Firestore, private readonly projects: ProjectStore, private readonly media: MediaVersionIndex, private readonly storage: ExportStorage, private readonly renderer: NativeVideoRenderer) {}
   async access(ownerId: string, project: string, version: string): Promise<EditorPreviewAccess> {
     const projectId = ProjectIdSchema.parse(project); const versionId = VersionIdSchema.parse(version);
@@ -29,7 +29,8 @@ export class VideoPreviewService {
     if (!preview) {
       let task = this.preparing.get(key);
       if (!task) {
-        task = this.queue.then(async () => {
+        if (this.preparing.size >= 8) throw new WorkflowError("capability_unavailable", "Editor preview processing is busy. Try again shortly.");
+        task = this.publicationQueue.then(async () => {
           await this.prune(ownerId, projectId, 32, 1024 * 1024 * 1024 - 268435456);
           let rendered;
           try { rendered = await this.renderer.normalize(ownerId, source, new AbortController().signal); }
@@ -43,7 +44,7 @@ export class VideoPreviewService {
             return created;
           } finally { await rm(rendered.directory, { recursive: true, force: true }); }
         }).finally(() => { this.preparing.delete(key); });
-        this.preparing.set(key, task); this.queue = task.catch(() => undefined);
+        this.preparing.set(key, task); this.publicationQueue = task.catch(() => undefined);
       }
       preview = await task;
     }

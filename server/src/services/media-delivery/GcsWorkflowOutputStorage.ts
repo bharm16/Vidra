@@ -1,3 +1,4 @@
+import { NativeMediaRuntime } from "@services/native-media/NativeMediaRuntime";
 import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 import type { Bucket, FileMetadata } from "@google-cloud/storage";
 import { createHash } from "node:crypto";
@@ -21,7 +22,7 @@ function code(error: unknown): unknown { return typeof error === "object" && err
 
 /** Publishes owned bytes under deterministic slot paths; a 412 reconciles, never overwrites. */
 export class GcsWorkflowOutputStorage implements WorkflowOutputStorage {
-  constructor(private readonly bucket: Bucket, private readonly videos: Pick<VideoGenerationService, "getVideoContent"> | null, private readonly network: PublicNetworkDependencies = {}) {}
+  constructor(private readonly bucket: Bucket, private readonly videos: Pick<VideoGenerationService, "getVideoContent"> | null, private readonly network: PublicNetworkDependencies = {}, private readonly runtime = new NativeMediaRuntime()) {}
 
   async materialize(attempt: ExecutionAttempt, output: NativeOutput, context: DeliveryContext): Promise<VerifiedOutput> {
     assertNoLegacyApiKeyData(attempt.ownerId);
@@ -78,7 +79,7 @@ export class GcsWorkflowOutputStorage implements WorkflowOutputStorage {
       let received = 0;
       await pipeline(this.bucket.file(path, { generation }).createReadStream({ validation: "crc32c" }), new Transform({ transform(chunk: Buffer, _encoding, callback): void { received += chunk.length; hash.update(chunk); callback(received > bytes ? new Error("Stored output size changed") : null, chunk); } }), createWriteStream(file), { signal: context.signal });
       const command = GeneratedOutputCommandSchema.parse({ id: `import_${attempt.slotId.slice(5)}`, filename, contentType: metadata.contentType, bytes, sha256: hash.digest("hex") });
-      const verified = await verifyImportFile(file, command, GeneratedOutputCommandSchema);
+      const verified = await this.runtime.run(context.signal, signal => verifyImportFile(file, command, GeneratedOutputCommandSchema, signal));
       return VerifiedOutputSchema.parse({ object: { identity: "verified", assetId: attempt.slotId, storagePath: path, generation, sha256: verified.sha256, bytes: verified.bytes }, metadata: verified.metadata });
     } finally { await rm(directory, { recursive: true, force: true }); }
   }

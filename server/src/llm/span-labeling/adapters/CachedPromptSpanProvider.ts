@@ -38,11 +38,12 @@ export class CachedPromptSpanProvider implements PromptSpanProvider {
 
     const { result } = await computeCachedSpans({
       cache: this.cache,
+      request: params,
       aiService: this.aiService,
       text: prompt,
       policy: options.policy ?? null,
       templateVersion: options.templateVersion ?? null,
-      compute: () => labelSpans(params, this.aiService),
+      compute: signal => labelSpans({ ...params, ...(signal ? { signal } : {}) }, this.aiService),
     });
 
     return result;

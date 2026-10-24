@@ -1,4 +1,6 @@
 import { Storage, type File } from "@google-cloud/storage";
+import { sha256Hex } from "@utils/hash";
+import { ownerSegment } from "@services/owned-media";
 import { pipeline } from "node:stream/promises";
 import {
   openRemoteMedia,
@@ -68,6 +70,23 @@ export class UploadService {
       throw new Error(`Invalid storage type: ${type}`);
     }
 
+    const deliveryKey = type === "generation" && typeof metadata.legacyVideoJobId === "string" && typeof metadata.legacyVideoAssetId === "string"
+      ? sha256Hex(JSON.stringify([userId, metadata.legacyVideoJobId, metadata.legacyVideoAssetId, sourceUrl])) : undefined;
+    const deliveryPath = deliveryKey ? `users/${ownerSegment(userId)}/generations/legacy-${deliveryKey}.mp4` : undefined;
+    const existingDelivery = async (): Promise<{ storagePath: string; sizeBytes: number; contentType: string; createdAt: string } | undefined> => {
+      if (!deliveryPath) return undefined;
+      try {
+        const [row] = await this.bucket.file(deliveryPath).getMetadata();
+        if (row.metadata?.legacyVideoDeliveryKey !== deliveryKey || !row.contentType || !isAllowedContentType(type, row.contentType) || !(Number(row.size) > 0)) throw new Error("The legacy delivery destination belongs to different output.");
+        return { storagePath: deliveryPath, sizeBytes: Number(row.size), contentType: row.contentType, createdAt: row.timeCreated ?? new Date().toISOString() };
+      } catch (error) {
+        if (typeof error === "object" && error !== null && "code" in error && error.code === 404) return undefined;
+        throw error;
+      }
+    };
+    const recovered = await existingDelivery();
+    if (recovered) return recovered;
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
     let remote: RemoteMediaStream | undefined;
@@ -87,7 +106,7 @@ export class UploadService {
       const { contentType, contentLength } = remote;
 
       const extension = resolveExtension(contentType);
-      const path = generateStoragePath(userId, type, extension);
+      const path = deliveryPath ?? generateStoragePath(userId, type, extension);
       const file = this.bucket.file(path);
       destination = file;
 
@@ -102,6 +121,7 @@ export class UploadService {
           contentType,
           metadata: {
             ...metadata,
+            ...(deliveryKey ? { legacyVideoDeliveryKey: deliveryKey } : {}),
             userId,
             type,
             sourceUrl: remote.sourceUrl.slice(0, 200),
@@ -130,8 +150,9 @@ export class UploadService {
       const code = typeof error === "object" && error !== null && "code" in error
         ? error.code
         : undefined;
+      if (deliveryPath && (code === 412 || code === "412")) { const stored = await existingDelivery(); if (stored) return stored; }
       // A create-only collision belongs to an earlier write; never delete it.
-      if (writeStarted && !writeCompleted && destination && code !== 412 && code !== "412") {
+      if (!deliveryPath && writeStarted && !writeCompleted && destination && code !== 412 && code !== "412") {
         try {
           await destination.delete({ ignoreNotFound: true });
         } catch (cleanupError) {

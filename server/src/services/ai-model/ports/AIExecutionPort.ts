@@ -1,7 +1,7 @@
 import type {
   ExecuteParams,
   StreamParams,
-} from "@services/ai-model/AIModelService";
+} from "@services/ai-model/types";
 import type {
   ModelConfigEntry,
   ResolvedExecution,
@@ -10,6 +10,9 @@ import type {
 import type { OperationName } from "@config/modelConfig";
 
 export interface AIExecutionPort {
+  /** Run provider-specific shaping and consumption against one selected route per attempt. */
+  bindExecution?(operation: OperationName): AIExecutionPort;
+  withExecution?<T>(operation: OperationName, run: (selected: AIExecutionPort) => Promise<T>): Promise<T>;
   execute(
     operation: OperationName,
     options: ExecuteParams,

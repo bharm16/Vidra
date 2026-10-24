@@ -18,6 +18,7 @@ import { SubstringPositionCache } from "../cache/SubstringPositionCache";
  * Parameters for LLM span extraction
  */
 export interface LlmSpanParams {
+  signal?: AbortSignal;
   text: string;
   policy: ValidationPolicy;
   options: ProcessingOptions;

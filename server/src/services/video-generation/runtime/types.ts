@@ -44,6 +44,13 @@ export interface VideoJobError {
   attempt?: number;
 }
 
+export interface VideoJobProviderResult {
+  providerVideoUrl: string;
+  assetId: string;
+  contentType: string;
+  inputMode?: "t2v" | "i2v";
+}
+
 export interface VideoJobRecord {
   id: string;
   /**
@@ -82,6 +89,7 @@ export interface VideoJobRecord {
   updatedAtMs: number;
   completedAtMs?: number;
   result?: VideoGenerationResult;
+  providerResult?: VideoJobProviderResult;
   error?: VideoJobError;
   workerId?: string;
   leaseExpiresAtMs?: number;

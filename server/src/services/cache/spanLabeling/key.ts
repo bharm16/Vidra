@@ -3,13 +3,14 @@ import type { SpanLabelingPolicy } from "../types";
 
 // Bump this to invalidate old cached span results when the NLP/LLM pipeline changes.
 // v4: Fixed role to category transformation for Gemini provider (2024-12-28)
-const SPAN_LABELING_CACHE_KEY_VERSION = "4";
+const SPAN_LABELING_CACHE_KEY_VERSION = "5";
 
 export function generateCacheKey(
   text: string,
   policy: SpanLabelingPolicy | null,
   templateVersion: string | null,
   provider: string | null = null,
+  identity = "",
 ): string {
   const textHash = buildTextHash(text);
 
@@ -18,9 +19,10 @@ export function generateCacheKey(
     policy: policy || {},
     templateVersion: templateVersion || "v1",
     provider: provider || "unknown",
+    identity,
   });
 
-  const policyHash = sha256Hex(policyString, 8);
+  const policyHash = sha256Hex(policyString, 32);
 
   return `span:${textHash}:${policyHash}`;
 }

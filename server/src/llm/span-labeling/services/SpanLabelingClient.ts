@@ -133,6 +133,7 @@ export class SpanLabelingClient implements ILlmClient {
     const spanSchema = this.profile.jsonSchema;
     const baseProviderOptions = this.profile.requestOptions;
     const providerOptions: ProviderRequestOptions = {
+      ...(params.signal ? { signal: params.signal } : {}),
       developerMessage: baseProviderOptions.developerMessage,
       enableBookending: baseProviderOptions.enableBookending,
       useFewShot: baseProviderOptions.useFewShot,

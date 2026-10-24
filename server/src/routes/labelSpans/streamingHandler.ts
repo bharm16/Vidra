@@ -2,7 +2,7 @@ import type { Response } from "express";
 import { logger } from "@infrastructure/Logger";
 import { labelSpansStream } from "@llm/span-labeling/SpanLabelingService";
 import type { SpanStreamFinalization } from "@llm/span-labeling/SpanLabelingService";
-import { spanCacheTtlSeconds } from "@llm/span-labeling/spanCache";
+import { spanCacheTtlSeconds, spanCacheIdentity } from "@llm/span-labeling/spanCache";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type {
@@ -14,6 +14,7 @@ import { toPublicSpan } from "./transform";
 
 interface StreamHandlerInput {
   res: Response;
+  streamVersion?: 2;
   payload: LabelSpansParams;
   aiService: AIModelService;
   requestId?: string;
@@ -32,6 +33,7 @@ interface StreamHandlerInput {
 
 export async function handleLabelSpansStreamRequest({
   res,
+  streamVersion,
   payload,
   aiService,
   requestId,
@@ -42,10 +44,13 @@ export async function handleLabelSpansStreamRequest({
   templateVersion = null,
 }: StreamHandlerInput): Promise<void> {
   const operation = "labelSpansStream";
+  payload = { ...payload, ...(userId ? { ownerId: userId } : {}) };
   let clientClosed = false;
+  const cancellation = new AbortController();
 
   res.on("close", () => {
     clientClosed = true;
+    cancellation.abort();
   });
 
   res.setHeader("Content-Type", "application/x-ndjson");
@@ -55,6 +60,7 @@ export async function handleLabelSpansStreamRequest({
   // client immediately. Without this, an upstream nginx will accumulate the
   // stream and forward it as a single chunk, defeating the streaming UX.
   res.setHeader("X-Accel-Buffering", "no");
+  if (streamVersion === 2) res.setHeader("X-Span-Stream-Version", "2");
   res.flushHeaders?.();
 
   // Spans put on the wire. Used only for degraded-error reporting — the cache
@@ -66,7 +72,7 @@ export async function handleLabelSpansStreamRequest({
   let finalization: SpanStreamFinalization | null = null;
   let streamCompleted = false;
 
-  const stream = labelSpansStream(payload, aiService);
+  const stream = labelSpansStream({ ...payload, signal: cancellation.signal }, aiService);
   let drained = false;
 
   try {
@@ -81,7 +87,7 @@ export async function handleLabelSpansStreamRequest({
         break;
       }
       collectedSpans.push(next.value);
-      res.write(JSON.stringify(toPublicSpan(next.value)) + "\n");
+      res.write(JSON.stringify(streamVersion === 2 ? { type: "span", span: toPublicSpan(next.value) } : toPublicSpan(next.value)) + "\n");
     }
 
     // Stream exhausted normally — mark as completed for cache backfill.
@@ -90,9 +96,11 @@ export async function handleLabelSpansStreamRequest({
     }
 
     if (!res.writableEnded && !res.destroyed) {
+      if (streamVersion === 2 && finalization) res.write(JSON.stringify({ type: "complete", result: { spans: finalization.spans.map(toPublicSpan), meta: finalization.meta } }) + "\n");
       res.end();
     }
   } catch (error) {
+    if (clientClosed || res.writableEnded || res.destroyed) return;
     logger.error("Operation failed.", error as Error, {
       operation,
       requestId,
@@ -104,6 +112,7 @@ export async function handleLabelSpansStreamRequest({
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     const errorPayload = {
+      ...(streamVersion === 2 ? { type: "error" } : {}),
       error: "Streaming failed",
       message: errorMessage,
       degraded: collectedSpans.length > 0,
@@ -136,6 +145,7 @@ export async function handleLabelSpansStreamRequest({
   const finalizedSpans = finalization?.spans ?? [];
   if (
     streamCompleted &&
+    userId &&
     spanLabelingCache &&
     finalizedSpans.length > 0 &&
     text
@@ -155,6 +165,7 @@ export async function handleLabelSpansStreamRequest({
         {
           spans: finalizedSpans,
           meta: {
+            ...finalization?.meta,
             version:
               finalization?.meta.version ||
               templateVersion ||
@@ -164,7 +175,7 @@ export async function handleLabelSpansStreamRequest({
             ...(provider ? { provider } : {}),
           },
         },
-        { ttl, ...(provider ? { provider } : {}) },
+        { ttl, ...(provider ? { provider } : {}), identity: spanCacheIdentity(payload, finalization?.meta.execution ?? aiService.resolveExecution("span_labeling")) },
       );
       logger.debug("Stream cache backfill completed", {
         operation,

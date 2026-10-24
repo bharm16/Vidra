@@ -18,6 +18,7 @@ import { readSpanLabelStream } from "./spanLabelingStream";
 function buildLabelSpansBody(payload: LabelSpansPayload): string {
   return JSON.stringify({
     text: payload.text,
+    streamVersion: 2,
     maxSpans: payload.maxSpans,
     minConfidence: payload.minConfidence,
     policy: payload.policy,
@@ -128,10 +129,11 @@ export class SpanLabelingApi {
     const reader = res.body?.getReader();
     if (!reader) throw new Error("Response body not readable");
 
-    const { spans, linesProcessed, parseErrors } = await readSpanLabelStream(
+    const { spans, meta, linesProcessed, parseErrors } = await readSpanLabelStream(
       reader,
       onChunk,
       this.log,
+      { requireCompletion: res.headers.get("X-Span-Stream-Version") === "2" },
     );
 
     this.log.info("Stream completed", {
@@ -140,6 +142,6 @@ export class SpanLabelingApi {
       parseErrors,
     });
 
-    return { spans, meta: { streaming: true } };
+    return { spans, meta: meta ?? { streaming: true } };
   }
 }

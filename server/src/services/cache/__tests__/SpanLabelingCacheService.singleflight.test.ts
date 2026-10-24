@@ -93,3 +93,24 @@ describe("SpanLabelingCacheService single-flight", () => {
     expect(attempts).toBe(2);
   });
 });
+
+it("keeps a shared provider alive when only one request cancels", async () => {
+  const cache = new SpanLabelingCacheService();
+  const first = new AbortController(); const second = new AbortController();
+  let finish!: (value: string) => void; let providerSignal: AbortSignal | undefined;
+  const compute = vi.fn(async (signal?: AbortSignal): Promise<string> => { providerSignal = signal; return new Promise(resolve => { finish = resolve; }); });
+  const abandoned = cache.getOrCompute("same words", null, null, compute, { signal: first.signal });
+  const retained = cache.getOrCompute("same words", null, null, compute, { signal: second.signal });
+  const cancelled = expect(abandoned).rejects.toMatchObject({ name: "AbortError" });
+  await vi.waitFor(() => expect(compute).toHaveBeenCalledTimes(1)); first.abort(); await cancelled;
+  expect(providerSignal?.aborted).toBe(false); finish("complete");
+  await expect(retained).resolves.toMatchObject({ value: "complete", source: "coalesced" });
+});
+
+it("aborts shared provider work when its final request leaves", async () => {
+  const cache = new SpanLabelingCacheService(); const cancellation = new AbortController(); let providerSignal: AbortSignal | undefined;
+  const compute = vi.fn(async (signal?: AbortSignal): Promise<never> => { providerSignal = signal; return new Promise((_resolve, reject) => signal?.addEventListener("abort", () => reject(signal.reason), { once: true })); });
+  const result = cache.getOrCompute("same words", null, null, compute, { signal: cancellation.signal });
+  const cancelled = expect(result).rejects.toMatchObject({ name: "AbortError" }); await vi.waitFor(() => expect(compute).toHaveBeenCalled()); cancellation.abort(); await cancelled;
+  expect(providerSignal?.aborted).toBe(true);
+});

@@ -212,7 +212,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
     options: CompletionOptions,
   ): Promise<AIResponse> {
     const timeout = options.timeout || this.defaultTimeout;
-    const { controller, timeoutId, abortedByTimeout } = createAbortController(
+    const { controller, cleanup, abortedByTimeout } = createAbortController(
       timeout,
       options.signal,
     );
@@ -233,8 +233,6 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -346,7 +344,6 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
       const data = (await response.json()) as OpenAIResponseData;
       return this.responseParser.parseResponse(data, options);
     } catch (error) {
-      clearTimeout(timeoutId);
 
       const errorObj = error as Error;
       if (errorObj.name === "AbortError") {
@@ -375,7 +372,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
       });
 
       throw errorObj;
-    }
+    } finally { cleanup(); }
   }
 
   async streamComplete(
@@ -383,7 +380,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
     options: CompletionOptions & { onChunk: (chunk: string) => void },
   ): Promise<string> {
     const timeout = options.timeout || this.defaultTimeout;
-    const { controller, timeoutId, abortedByTimeout } = createAbortController(
+    const { controller, cleanup, abortedByTimeout } = createAbortController(
       timeout,
       options.signal,
     );
@@ -440,7 +437,6 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
         if (!response.ok) {
           const retryErrorBody =
             response.bodyUsed === false ? await response.text() : errorBody;
-          clearTimeout(timeoutId);
           const isRetryable = response.status >= 500 || response.status === 429;
           throw new APIError(
             `${this.providerName} API error: ${response.status} - ${retryErrorBody}`,
@@ -449,11 +445,8 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
           );
         }
       }
-
-      clearTimeout(timeoutId);
       return await this.streamParser.readStream(response, options.onChunk);
     } catch (error) {
-      clearTimeout(timeoutId);
 
       const errorObj = error as Error;
       if (errorObj.name === "AbortError") {
@@ -478,6 +471,6 @@ export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
       }
 
       throw errorObj;
-    }
+    } finally { cleanup(); }
   }
 }

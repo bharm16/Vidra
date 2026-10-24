@@ -6,6 +6,7 @@
       "Content-Type",
       "Content-Length",
       "Content-Range",
+      "Range",
       "x-goog-if-generation-match",
       "x-goog-content-length-range"
     ],

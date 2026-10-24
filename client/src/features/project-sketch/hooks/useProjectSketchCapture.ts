@@ -8,7 +8,7 @@ import { SketchCheckpointStore, type SketchCheckpoint } from "../api/SketchCheck
 
 export function useProjectSketchCapture({ ownerId, projectId, settings, onAccepted }: { ownerId: string; projectId: string; settings: SketchSettings; onAccepted(version: MediaVersion): void }): {
   loaded: boolean; restore?: SketchCheckpoint; chooseRestore(): void; chooseBlank(): void; initialDrawing: string | undefined;
-  checkpoint(dataUri: string): void; recoveredSettings: SketchSettings | undefined; localError: string | undefined;
+  checkpoint(dataUri: string): void; retainBeforeClose(): Promise<boolean>; recoveredSettings: SketchSettings | undefined; localError: string | undefined;
   saving: boolean; pending: ProjectSketchCaptureCommand | undefined; saved: MediaVersion | undefined; saveError: string | undefined; save(output?: LiveOutput): Promise<void>;
 } {
   const store = useMemo(() => new SketchCheckpointStore(), []);
@@ -32,6 +32,18 @@ export function useProjectSketchCapture({ ownerId, projectId, settings, onAccept
   const captures = useRef(new Map<string, ProjectSketchCaptureCommand>());
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
 
+  const retainBeforeClose = useCallback(async (): Promise<boolean> => {
+    if (!chosen.current) return true;
+    try {
+      for (;;) {
+        if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = undefined; }
+        const captured = row.current;
+        await store.save(captured);
+        if (row.current === captured) return true;
+      }
+    } catch { if (alive.current) setLocalError("This drawing could not be saved on this device. Keep this tab open."); return false; }
+  }, [store]);
+
   useEffect(() => {
     alive.current = true;
     let current = true;
@@ -42,14 +54,14 @@ export function useProjectSketchCapture({ ownerId, projectId, settings, onAccept
       if (!checkpoint?.drawingDataUri) chosen.current = true;
       setLoaded(true);
     }).catch((error: unknown) => { if (current) { chosen.current = true; setLoaded(true); setLocalError(error instanceof Error ? error.message : "Drawing recovery is unavailable. Keep this tab open."); } });
-    return () => { alive.current = false; current = false; if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [store, key, ownerId, projectId]);
+    return () => { alive.current = false; current = false; if (saveTimer.current) void retainBeforeClose(); };
+  }, [store, key, ownerId, projectId, retainBeforeClose]);
 
   const persist = useCallback((): void => {
     if (!chosen.current) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { void store.save(row.current).catch(() => setLocalError("This drawing could not be saved on this device. Keep this tab open.")); }, 250);
-  }, [store]);
+    saveTimer.current = setTimeout(() => { void retainBeforeClose(); }, 250);
+  }, [retainBeforeClose]);
   useEffect(() => { row.current = { ...row.current, inputs: settings }; if (loaded) persist(); }, [settings, loaded, persist]);
   const checkpoint = useCallback((dataUri: string): void => { if (!chosen.current) return; row.current = { ...row.current, drawingDataUri: dataUri }; persist(); }, [persist]);
   const chooseRestore = useCallback((): void => { if (!restore) return; chosen.current = true; setInitialDrawing(restore.drawingDataUri); setRecoveredSettings(restore.inputs); setRestore(undefined); }, [restore]);
@@ -85,5 +97,5 @@ export function useProjectSketchCapture({ ownerId, projectId, settings, onAccept
     flight.current = promise;
     return promise;
   }, [store, ownerId, projectId, key]);
-  return { loaded, ...(restore ? { restore } : {}), chooseRestore, chooseBlank, initialDrawing, checkpoint, recoveredSettings, localError, saving, pending, saved, saveError, save };
+  return { loaded, ...(restore ? { restore } : {}), chooseRestore, chooseBlank, initialDrawing, checkpoint, retainBeforeClose, recoveredSettings, localError, saving, pending, saved, saveError, save };
 }

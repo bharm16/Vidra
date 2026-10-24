@@ -37,5 +37,5 @@ it("resumes audio with the original identity and canonical type, then publishes 
  ports.imports.mockResolvedValue([audioRecord]); ports.begin.mockResolvedValue({ record: audioRecord, uploadUrl: "https://storage.googleapis.com/resume", offset: 0 }); ports.command.mockResolvedValue(audioCommand); ports.finish.mockResolvedValue(audioVersion);
  const ready = vi.fn(); const { result } = renderHook(() => useProjectImports("creator", "project_one", ready)); await waitFor(() => expect(result.current.jobs[0]?.state).toBe("file-needed"));
  await act(async () => { await result.current.choose(new File(["private"], "Track.m4a", { type: "audio/x-m4a" }), audioCommand.id); });
- expect(ports.transfer).toHaveBeenCalledWith("creator", expect.any(String), expect.any(Blob), 0, expect.any(AbortSignal), expect.any(Function), "audio/mp4"); expect(ready).toHaveBeenCalledWith(audioVersion); expect(result.current.jobs).toEqual([]);
+ expect(ports.transfer).toHaveBeenCalledWith("creator", expect.any(String), expect.any(Blob), 0, expect.any(AbortSignal), expect.any(Function), expect.objectContaining({ contentType: "audio/mp4", reconcileOffset: expect.any(Function) })); expect(ready).toHaveBeenCalledWith(audioVersion); expect(result.current.jobs).toEqual([]);
 });

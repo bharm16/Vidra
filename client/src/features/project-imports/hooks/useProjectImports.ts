@@ -46,7 +46,7 @@ export function useProjectImports(ownerId: string, projectId: string, onReady: (
         if (!blob) { update({ ...job, state: "file-needed" }); return; }
         if (blob.size !== command.bytes || await fingerprint(blob) !== command.sha256) { update({ ...job, state: "file-needed", reason: "Choose the original file. The bytes do not match." }); return; }
         if (!session.uploadUrl) throw new Error("Upload interrupted");
-        await transferImport(ownerId, session.uploadUrl, blob, session.offset, abort.signal, progress => update({ ...job, progress }), command.contentType);
+        await transferImport(ownerId, session.uploadUrl, blob, session.offset, abort.signal, progress => update({ ...job, progress }), { contentType: command.contentType, reconcileOffset: async () => (await api.beginImport(projectId, command, abort.signal)).offset });
       }
       const version = await api.finishImport(projectId, command.id, abort.signal);
       if (!abort.signal.aborted && !cancelled.current.has(command.id) && mounted.current) { readyRef.current(version); remove(command.id); await cleanCheckpoint(command.id); }

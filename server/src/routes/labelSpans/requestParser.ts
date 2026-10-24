@@ -12,6 +12,7 @@ export interface ParsedLabelSpansRequest {
   policy?: ValidationPolicy;
   templateVersion?: string;
   isI2VMode?: boolean;
+  streamVersion?: 2;
 }
 
 export type LabelSpansRequestParseResult =
@@ -29,6 +30,7 @@ const sanitizeNumber = (value: unknown): number | undefined => {
 
 const LabelSpansRequestSchema = z
   .object({
+    streamVersion: z.literal(2).optional(),
     text: z.string().min(1, "text is required"),
     maxSpans: z
       .preprocess(sanitizeNumber, z.number().int().min(1).max(80))
@@ -87,6 +89,7 @@ export function parseLabelSpansRequest(
     ok: true,
     data: {
       payload,
+      ...(parsed.data.streamVersion ? { streamVersion: parsed.data.streamVersion } : {}),
       text,
       ...(maxSpans !== undefined ? { maxSpans } : {}),
       ...(minConfidence !== undefined ? { minConfidence } : {}),

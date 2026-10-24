@@ -15,19 +15,7 @@ vi.mock("@infrastructure/Logger", () => ({
   },
 }));
 
-vi.mock("@clients/utils/abortController", () => ({
-  createAbortController: (timeout: number, signal?: AbortSignal) => {
-    const controller = new AbortController();
-    if (signal) {
-      signal.addEventListener("abort", () => controller.abort());
-    }
-    return {
-      controller,
-      timeoutId: setTimeout(() => undefined, timeout),
-      abortedByTimeout: { value: false },
-    };
-  },
-}));
+
 
 import { GeminiAdapter } from "../GeminiAdapter";
 

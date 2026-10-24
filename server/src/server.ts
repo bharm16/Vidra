@@ -1,3 +1,4 @@
+import type { NativeMediaRuntime } from "@services/native-media/NativeMediaRuntime";
 import type { VideoExportService } from "@services/video-export/VideoExportService";
 import type { CreationRequestLifecycle } from "@services/creation-requests/lifecycle";
 import type { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
@@ -160,6 +161,9 @@ export function setupGracefulShutdown(
       videoWorkerShutdownDrainSeconds * 1000,
     );
 
+    // Begin native draining before HTTP close waits for active media requests.
+    const nativeDrain = resolveOptional<NativeMediaRuntime>("nativeMediaRuntime")?.drain(drainTimeoutMs);
+
     // Stop accepting new connections
     server.close(async () => {
       logger.info("HTTP server closed");
@@ -177,9 +181,9 @@ export function setupGracefulShutdown(
           try { await Promise.race([workflow.drain(AbortSignal.timeout(drainTimeoutMs)), new Promise<void>(resolve => { timer = setTimeout(resolve, drainTimeoutMs); })]); }
           finally { if (timer) clearTimeout(timer); }
         };
-        const drained = await Promise.allSettled([videoJobWorker?.shutdown(drainTimeoutMs), workflowDrain(), exports?.drain(drainTimeoutMs)]);
+        const drained = await Promise.allSettled([videoJobWorker?.shutdown(drainTimeoutMs), workflowDrain(), exports?.drain(drainTimeoutMs), nativeDrain]);
         drained.forEach((result, index) => {
-          if (result.status === "rejected") logger.warn("Executor shutdown needs durable recovery", { executor: ["video-jobs", "workflow", "exports"][index], error: result.reason instanceof Error ? result.reason.message : String(result.reason) });
+          if (result.status === "rejected") logger.warn("Executor shutdown needs durable recovery", { executor: ["video-jobs", "workflow", "exports", "native-media"][index], error: result.reason instanceof Error ? result.reason.message : String(result.reason) });
           else if (result.value === false) logger.warn("Native exports retain unresolved work for recovery");
         });
 

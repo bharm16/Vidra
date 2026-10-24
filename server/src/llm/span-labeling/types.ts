@@ -2,6 +2,7 @@
  * Types for span labeling service
  */
 
+import type { ResolvedExecution } from "@services/ai-model/types";
 import type { ProviderType } from "@utils/provider/ProviderDetector";
 
 /**
@@ -40,6 +41,7 @@ export interface LLMMeta {
    * must not re-derive it from ModelConfig.
    */
   provider?: ProviderType;
+  execution?: ResolvedExecution;
   [key: string]: unknown;
 }
 
@@ -76,6 +78,9 @@ export interface ProcessingOptions {
  * Label spans parameters
  */
 export interface LabelSpansParams {
+  signal?: AbortSignal;
+  /** Authenticated server context; never decoded from the public request body. */
+  ownerId?: string;
   text: string;
   maxSpans?: number;
   minConfidence?: number;
