@@ -5,7 +5,7 @@ import { AcceptedRequestSchema, RequestSlotSchema, type AcceptedRequest, type Re
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { ProjectSchema } from "@shared/schemas/workflow/project.schemas";
 import { OwnerIdSchema, RequestIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
-import { WorkflowOutboxSchema } from "@services/admission/idempotency/workflowReceipts";
+import { WorkflowOutboxSchema } from "@services/creation-requests/admission/workflowReceipts";
 import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import { WorkflowError } from "@services/projects/WorkflowError";
 import { ExecutionAttemptSchema, NativeOutputSchema, VerifiedOutputSchema, instructionsFor, type ExecutionAttempt, type NativeOutput, type VerifiedOutput } from "./types";
@@ -106,8 +106,8 @@ export class WorkflowExecutionStore {
             id: versionId,
             ownerId: request.ownerId,
             projectId: request.projectId,
-            kind: current.output.kind,
-            label: request.snapshot.instructions.trim().slice(0, 160) || (current.output.kind === "image" ? "Picture" : current.output.kind === "audio" ? "Audio" : "Clip"),
+            kind: current.output.kind === "provider-media" ? current.output.mediaKind : current.output.kind,
+            label: request.snapshot.instructions.trim().slice(0, 160) || ((current.output.kind === "provider-media" ? current.output.mediaKind : current.output.kind) === "image" ? "Picture" : (current.output.kind === "provider-media" ? current.output.mediaKind : current.output.kind) === "audio" ? "Audio" : "Clip"),
             origin: { kind: "generated", requestId: request.id, slotId: current.slotId },
             sourceInputs: request.snapshot.inputs,
             ...stored,

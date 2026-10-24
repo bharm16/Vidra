@@ -5,7 +5,7 @@ import type { SubmissionCheckpoint } from "@/repositories/workflow/DraftCheckpoi
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { Button } from "@promptstudio/system/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/dropdown-menu";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { RequestSlotStatus, slotProgress } from "./RequestResults";
 import "./history-fidelity.css";
 

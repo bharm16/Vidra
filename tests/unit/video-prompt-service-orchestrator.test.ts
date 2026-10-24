@@ -1,3 +1,4 @@
+import { StrategyRegistry } from "@services/video-prompt-analysis/strategies/StrategyRegistry";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { VideoPromptService } from "@services/video-prompt-analysis/VideoPromptService";
@@ -8,14 +9,7 @@ describe("VideoPromptService orchestrator", () => {
   });
 
   it("returns original prompt when no model is detected", async () => {
-    const service = new VideoPromptService();
-    (
-      service as unknown as {
-        modelDetector: { detectTargetModel: (prompt: string) => null };
-      }
-    ).modelDetector = {
-      detectTargetModel: vi.fn(() => null),
-    };
+    const service = new VideoPromptService({ strategyRegistry: new StrategyRegistry() });
 
     const result = await service.optimizeForModel("A simple prompt");
 
@@ -33,50 +27,20 @@ describe("VideoPromptService orchestrator", () => {
   });
 
   it("normalizes model aliases before strategy lookup", async () => {
-    const service = new VideoPromptService();
-    const getMock = vi.fn(() => undefined);
-    (
-      service as unknown as {
-        modelDetector: { detectTargetModel: (prompt: string) => string };
-      }
-    ).modelDetector = {
-      detectTargetModel: vi.fn(() => "kling"),
-    };
-    (
-      service as unknown as {
-        strategyRegistry: { get: (modelId: string) => unknown };
-      }
-    ).strategyRegistry = {
-      get: getMock,
-    };
+    const service = new VideoPromptService({ strategyRegistry: new StrategyRegistry() });
 
-    const result = await service.optimizeForModel("A model-specific prompt");
+    const result = await service.optimizeForModel("A cinematic shot for Kling 2.1");
 
-    expect(getMock).toHaveBeenCalledWith("kling-2.1");
     expect(result.metadata.modelId).toBe("kling-2.1");
   });
 
   it("returns original prompt with detected model when no strategy exists", async () => {
-    const service = new VideoPromptService();
-    (
-      service as unknown as {
-        modelDetector: { detectTargetModel: (prompt: string) => string };
-      }
-    ).modelDetector = {
-      detectTargetModel: vi.fn(() => "sora-2"),
-    };
-    (
-      service as unknown as {
-        strategyRegistry: { get: (modelId: string) => undefined };
-      }
-    ).strategyRegistry = {
-      get: vi.fn(() => undefined),
-    };
+    const service = new VideoPromptService({ strategyRegistry: new StrategyRegistry() });
 
-    const result = await service.optimizeForModel("A model-specific prompt");
+    const result = await service.optimizeForModel("A cinematic shot for Sora 2");
 
     expect(result).toEqual({
-      prompt: "A model-specific prompt",
+      prompt: "A cinematic shot for Sora 2",
       metadata: {
         modelId: "sora-2",
         pipelineVersion: "1.0.0",

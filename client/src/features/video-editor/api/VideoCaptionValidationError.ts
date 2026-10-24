@@ -1,5 +1,5 @@
 import type { VideoCaptionValidationDetails } from "@shared/schemas/workflow/video-edit.schemas";
-import { WorkflowApiError } from "@/features/project-workspace/api/workflowApi";
+import { OwnedRequestError as WorkflowApiError } from "@/services/http/OwnedRequest";
 
 /** A definitive rejection of one captured edit revision, not a saved edit mutation. */
 export class VideoCaptionValidationError extends WorkflowApiError {

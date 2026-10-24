@@ -1,3 +1,4 @@
+import { allDocuments } from "@services/firestore/WorkflowLists";
 import type { Firestore, DocumentReference, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
 import { CopyMediaCommandSchema, ImportCommandSchema, ImportIdSchema, ImportRecordSchema, importedVersionId, type ImportRecord } from "@shared/schemas/workflow/import.schemas";
@@ -35,7 +36,7 @@ export class ProjectMediaService {
   }
   async list(owner: string, project: string): Promise<ImportRecord[]> {
     await this.projects.get(owner, project);
-    const rows = await this.database.collection("creation_projects").doc(ProjectIdSchema.parse(project)).collection("imports").where("recoveryPending", "==", true).limit(200).get();
+    const rows = { docs: await allDocuments(this.database.collection("creation_projects").doc(ProjectIdSchema.parse(project)).collection("imports").where("recoveryPending", "==", true)) };
     return rows.docs.map(row => { const record = ImportRecordSchema.parse(ImportRecordSchema.strip().parse(row.data())); if (record.ownerId !== owner || record.projectId !== project || record.id !== row.id) throw new WorkflowError("access_denied", "This upload is unavailable."); return record; });
   }
   async begin(owner: string, project: string, input: unknown, origin?: string): Promise<{ record: ImportRecord; uploadUrl?: string; offset: number }> {

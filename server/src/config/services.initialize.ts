@@ -1,5 +1,5 @@
-import type { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
-import type { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
+import type { WorkflowExecutionService } from "@services/creation-requests/execution";
+import type { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
 import type { Bucket } from "@google-cloud/storage";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";

@@ -1,4 +1,5 @@
-import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
+import type { Firestore, CollectionReference } from "firebase-admin/firestore";
+import { admin } from "@infrastructure/firebaseAdmin";
 import type { SessionRecord } from "./types";
 import type { SessionStatus } from "@shared/types/session";
 import {
@@ -21,8 +22,8 @@ interface StoredSession {
 }
 
 export class SessionStore {
-  private readonly db = getFirestore();
-  private readonly collection = this.db.collection("sessions");
+  private readonly collection: CollectionReference;
+  constructor(private readonly db: Firestore) { this.collection = db.collection("sessions"); }
 
   getDocRef(sessionId: string): FirebaseFirestore.DocumentReference {
     return this.collection.doc(sessionId);

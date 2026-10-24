@@ -1,10 +1,11 @@
+import { authoringDraft, type AuthoringDraft } from "../state/authoringView";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { CreationDraftSchema, type DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { PromptComposer, type PromptComposerProps } from "../components/PromptComposer";
-import { acknowledgeDraftBuffer, editDraftBuffer, openDraftBuffer, redoDraftBuffer, undoDraftBuffer } from "../state/draftBuffer";
+import { acknowledgeDraftBuffer as acknowledgeBuffer, editDraftBuffer as editBuffer, openDraftBuffer as openBuffer, redoDraftBuffer as redoBuffer, undoDraftBuffer as undoBuffer, type DraftBuffer } from "../state/draftBuffer";
 import type { LabeledSpan } from "@/features/span-highlighting/hooks/useSpanLabeling";
 
 const ports = vi.hoisted(() => {
@@ -25,8 +26,15 @@ vi.mock("@/features/prompt-optimizer/api/customSuggestionsApi", () => ({ fetchCu
 const timestamp = "2026-10-17T06:00:00.000Z";
 const profile = CapabilityProfileSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "controlled", revision: "1", label: "Available model", action: "make-image", provider: "controlled", endpoint: "controlled/picture", mode: "text-to-image", availability: "qualified", inputs: [], output: { kind: "image", maxCount: 1 }, maxContextCharacters: 32000, parameters: {}, recovery: { start: "supported", status: "supported", cancel: "supported", result: "supported", deadlineSeconds: 600 }, generatedAudio: "unsupported", pricing: { mode: "free", maximumCreditsPerSlot: 0 } });
 const draft = CreationDraftSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "draft_current", ownerId: "creator", projectId: "project_current", conversationId: "conversation_current", revision: 1, status: "open", action: "make-image", instructions: "Cool lights. Keep the camera low.", inputs: [], settings: { profileId: "controlled", profileRevision: "1", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination: { projectId: "project_current", conversationId: "conversation_current" }, createdAt: timestamp, updatedAt: timestamp });
-function controller(): PromptComposerProps["controller"] {
-  return { active: openDraftBuffer(draft), loading: false, profiles: [profile], media: [], view: { requests: [] }, project: { status: "active" }, conversation: { status: "active" }, localErrors: {}, saveErrors: {}, prepared: undefined, preparing: false, newDraft: vi.fn(async () => undefined), edit: vi.fn(), flush: vi.fn(async () => true), chooseProfile: vi.fn(), undo: vi.fn(), redo: vi.fn(), access: vi.fn(async () => ({ url: "/picture.png" })) };
+type TestDraft = DraftBuffer & AuthoringDraft;
+function present(buffer: DraftBuffer): TestDraft { return { ...buffer, ...authoringDraft(buffer) }; }
+function openDraftBuffer(...args: Parameters<typeof openBuffer>): TestDraft { return present(openBuffer(...args)); }
+function editDraftBuffer(...args: Parameters<typeof editBuffer>): TestDraft { return present(editBuffer(...args)); }
+function acknowledgeDraftBuffer(...args: Parameters<typeof acknowledgeBuffer>): TestDraft { return present(acknowledgeBuffer(...args)); }
+function undoDraftBuffer(...args: Parameters<typeof undoBuffer>): TestDraft { return present(undoBuffer(...args)); }
+function redoDraftBuffer(...args: Parameters<typeof redoBuffer>): TestDraft { return present(redoBuffer(...args)); }
+function controller(): Omit<PromptComposerProps["controller"], "active"> & { active: TestDraft | undefined } {
+  return { active: openDraftBuffer(draft), loading: false, profiles: [profile], media: [], view: { requests: [] }, project: { status: "active" }, conversation: { status: "active" }, blockingReasons: [], preparing: false, newDraft: vi.fn(async () => undefined), edit: vi.fn(), flush: vi.fn(async () => true), chooseProfile: vi.fn(), undo: vi.fn(), redo: vi.fn(), access: vi.fn(async () => ({ url: "/picture.png" })) };
 }
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.clearAllMocks(); ports.spans.current = undefined; ports.status.current = "success"; });
 
@@ -148,9 +156,9 @@ it("keeps highlighted phrases inert when the conversation is read only", async (
 it("shows the compact at-risk indicator only when both copies fail and retains the exact failure details", () => {
   const state = controller(); const active = state.active;
   if (!active) throw new Error("Expected the current draft");
-  state.active = { ...active, sequence: 1 };
-  state.localErrors = { [active.record.id]: "Device copy failed." };
-  state.saveErrors = { [active.record.id]: "Server copy failed." };
+  state.active = { ...active, sequence: 1, retention: { safe: false, onDevice: false, onServer: false } };
+  state.active = { ...state.active!, retention: { ...state.active!.retention, deviceError: "Device copy failed." } };
+  state.active = { ...state.active!, retention: { ...state.active!.retention, serverError: "Server copy failed." } };
   const { rerender } = render(<PromptComposer controller={state} onChooseInput={vi.fn()} />);
   const indicator = screen.getByRole("status");
   expect(indicator).toHaveTextContent("Not saved · Keep this tab open");
@@ -158,7 +166,7 @@ it("shows the compact at-risk indicator only when both copies fail and retains t
   expect(indicator.getAttribute("aria-describedby")).toBe(screen.getByText("Device copy failed. Server copy failed.").id);
   expect(screen.queryByRole("button", { name: "Retry saving" })).not.toBeInTheDocument();
   expect(state.edit).not.toHaveBeenCalled(); expect(state.flush).not.toHaveBeenCalled();
-  rerender(<PromptComposer controller={{ ...state, localErrors: {}, active: { ...state.active, checkpointSequence: 1 } }} onChooseInput={vi.fn()} />);
+  rerender(<PromptComposer controller={{ ...state, active: { ...state.active, retention: { safe: true, onDevice: true, onServer: false, serverError: "Server copy failed." } } }} onChooseInput={vi.fn()} />);
   expect(screen.queryByText("Not saved · Keep this tab open")).not.toBeInTheDocument();
   expect(screen.getByText("Your latest words are kept on this device. Retry saving to reopen them elsewhere.")).toBeInTheDocument();
 });
@@ -166,12 +174,12 @@ it("shows the compact at-risk indicator only when both copies fail and retains t
 it("keeps generation unavailable while the latest words are saved neither on this device nor on the server", () => {
   const state = controller(); const active = state.active;
   if (!active) throw new Error("Expected the current draft");
-  state.active = { ...active, sequence: 1 };
-  state.localErrors = { [active.record.id]: "Device copy failed." };
-  state.saveErrors = { [active.record.id]: "Server copy failed." };
+  state.active = { ...active, sequence: 1, retention: { safe: false, onDevice: false, onServer: false } };
+  state.active = { ...state.active!, retention: { ...state.active!.retention, deviceError: "Device copy failed." } };
+  state.active = { ...state.active!, retention: { ...state.active!.retention, serverError: "Server copy failed." } };
   const { rerender } = render(<PromptComposer controller={state} onChooseInput={vi.fn()} onSubmit={vi.fn(async () => undefined)} />);
   expect(screen.getByRole("button", { name: "Make image" })).toBeDisabled();
-  rerender(<PromptComposer controller={{ ...state, localErrors: {}, active: { ...state.active, checkpointSequence: 1 } }} onChooseInput={vi.fn()} onSubmit={vi.fn(async () => undefined)} />);
+  rerender(<PromptComposer controller={{ ...state, active: { ...state.active, retention: { safe: true, onDevice: true, onServer: false, serverError: "Server copy failed." } } }} onChooseInput={vi.fn()} onSubmit={vi.fn(async () => undefined)} />);
   expect(screen.getByRole("button", { name: "Make image" })).toBeEnabled();
 });
 
@@ -189,7 +197,7 @@ it("dismisses alternatives with Escape while the native textarea still owns its 
   expect(state.edit).not.toHaveBeenCalled();
 });
 
-function compactComposer(instructions: string): { state: PromptComposerProps["controller"]; field: HTMLTextAreaElement; refresh(): void } {
+function compactComposer(instructions: string): { state: ReturnType<typeof controller>; field: HTMLTextAreaElement; refresh(): void } {
   vi.spyOn(HTMLTextAreaElement.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 304, 78));
   vi.spyOn(HTMLTextAreaElement.prototype, "scrollHeight", "get").mockImplementation(function (this: HTMLTextAreaElement): number { return this.value.split("\n").length * 26; });
   const computedStyle = window.getComputedStyle.bind(window);
@@ -224,7 +232,7 @@ it.each([[2, "52px"], [3, "72px"], [4, "96px"]])("allocates the native scrolling
   expect(field.closest<HTMLElement>(".vf-composer-region")?.style.getPropertyValue("--vf-words-height")).toBe(height);
   expect(field.style.overflowY).toBe("auto");
   expect(field.value).toBe(words.replace("Cool lights", "Warm lamps"));
-  expect(state.edit).toHaveBeenCalledTimes(1); expect(state.active?.past).toHaveLength(1);
+  expect(state.edit).toHaveBeenCalledTimes(1);
   expect(state.active?.content).toEqual({ ...before, instructions: field.value });
   const active = state.active; if (!active) throw new Error("Expected applied draft");
   state.active = acknowledgeDraftBuffer(active, { ...active.record, revision: 2 }, active.sequence); refresh();
@@ -340,11 +348,11 @@ it("shows plain words under the highlighting notice when labeling fails", async 
 it("states offline device retention only once the latest words are checkpointed, and keeps archived history explicit", () => {
   const state = controller(); const active = state.active;
   if (!active) throw new Error("Expected the current draft");
-  state.active = { ...active, sequence: 2, checkpointSequence: 1 };
+  state.active = { ...active, sequence: 2, checkpointSequence: 1, retention: { safe: false, onDevice: false, onServer: false } };
   const { rerender } = render(<PromptComposer controller={state} onChooseInput={vi.fn()} offline />);
   expect(screen.queryByText("Offline · saved on this device")).not.toBeInTheDocument();
   expect(screen.queryByText("Only on this device")).not.toBeInTheDocument();
-  rerender(<PromptComposer controller={{ ...state, active: { ...state.active, checkpointSequence: 2 } }} onChooseInput={vi.fn()} offline />);
+  rerender(<PromptComposer controller={{ ...state, active: { ...state.active, retention: { safe: true, onDevice: true, onServer: false, serverError: "Server copy failed." } } }} onChooseInput={vi.fn()} offline />);
   expect(screen.getByText("Offline · saved on this device")).toBeInTheDocument();
   expect(screen.getByText("Only on this device")).toBeInTheDocument();
   rerender(<PromptComposer controller={{ ...state, conversation: { status: "archived" } }} onChooseInput={vi.fn()} />);

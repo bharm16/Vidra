@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 
 /** The area tint uses the selected mask bytes, never an invented preview region; on a 72×48 tile it is drawn solid and widened so a thin stroke still reads. */
 export function CompactInputPreview({ version, maskId, unavailable, uploading, access }: { version: MediaVersion | undefined; maskId: string | undefined; unavailable: boolean; uploading: boolean; access(versionId: string): Promise<{ url: string }> }): ReactElement {

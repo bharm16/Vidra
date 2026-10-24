@@ -1,4 +1,5 @@
-import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
+import type { Firestore, CollectionReference } from "firebase-admin/firestore";
+import { admin } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import { z } from "zod";
@@ -60,12 +61,12 @@ type DeadLetterSource =
   | "inline-terminal";
 
 export class DeadLetterStore {
-  private readonly db = getFirestore();
-  private readonly collection = this.db.collection("video_job_dlq");
+  private readonly collection: CollectionReference;
   private readonly log = logger.child({ service: "DeadLetterStore" });
   private readonly firestoreCircuitExecutor: FirestoreCircuitExecutor;
 
-  constructor(firestoreCircuitExecutor: FirestoreCircuitExecutor) {
+  constructor(private readonly db: Firestore, firestoreCircuitExecutor: FirestoreCircuitExecutor) {
+    this.collection = db.collection("video_job_dlq");
     this.firestoreCircuitExecutor = firestoreCircuitExecutor;
   }
 

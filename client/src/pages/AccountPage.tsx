@@ -7,7 +7,7 @@ import { FreshButton } from "@/components/fresh/FreshButton";
 import { FreshRail } from "@/components/fresh/FreshRail";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
 import { prepareWorkspaceSignOut, type WorkspaceDraftReturnTarget } from "@/repositories/workflow/WorkspaceRetention";
-import { reopenWorkspaceState, workspaceEntryPath } from "@/features/project-workspace/state/workspaceEntry";
+import { reopenWorkspaceState, workspaceEntryPath } from "@/features/project-workspace/navigation";
 import { AuthFieldError, AuthNotice } from "./auth/AuthFormControls";
 import { AccountMobileHeader, AccountSettingsNav, type AccountSection } from "./account/AccountSettingsNav";
 import { AccountUsagePanel } from "./account/AccountUsagePanel";

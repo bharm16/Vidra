@@ -1,3 +1,4 @@
+import { readProjectAreaMask } from "@/features/project-sketch/api/projectSketchApi";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams, useBlocker, useLocation } from "react-router-dom";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -5,7 +6,6 @@ import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { FreshRail, type FreshDestination } from "@/components/fresh/FreshRail";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
-import { WorkflowApi } from "./api/workflowApi";
 import { MediaActionsApi } from "./api/mediaActionsApi";
 import { useProjectWorkspace } from "./hooks/useProjectWorkspace";
 import { useLibraryEntry } from "./hooks/useLibraryEntry";
@@ -13,7 +13,7 @@ import { useOpenFolder } from "./hooks/useOpenFolder";
 import { GuestWorkspace } from "./GuestWorkspace";
 import { PromptComposer, type PromptComposerProps } from "./components/PromptComposer";
 import type { CapabilityLookupStatus } from "./components/CapabilitySettings";
-import { reuseDraftContent, roleKinds, withoutDraftInput } from "./state/inputBinding";
+import { roleKinds } from "./state/inputBinding";
 import { importedVersionId } from "@shared/schemas/workflow/import.schemas";
 import { GenerationFeed } from "./components/GenerationFeed";
 import { HistoryRail } from "./components/HistoryRail";
@@ -30,13 +30,12 @@ import { ConversationHistory } from "./components/ConversationHistory";
 import { RequestDetails } from "./components/RequestDetails";
 import { requestHistoryDescription } from "./state/requestDescription";
 import { versionTree } from "./state/versionTree";
-import { draftHasSafeRetention } from "./state/draftBuffer";
 import { bindWorkspaceEntry, consumeCreatedWorkspaceEntry, readWorkspaceEntry, reopenWorkspaceState, workspaceEntryMatches, type WorkspaceEntryBinding, type WorkspaceEntryTicket } from "./state/workspaceEntry";
 import { FolderIdSchema, ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { CreationAction, DraftInput } from "@shared/schemas/workflow/draft.schemas";
-import { ProjectAreaMaskSchema, type ProjectAreaMask } from "@shared/schemas/workflow/sketch.schemas";
+import { type ProjectAreaMask } from "@shared/schemas/workflow/sketch.schemas";
 import { useProjectImports } from "@/features/project-imports/hooks/useProjectImports";
 import { SavedImportSheet, isSavedImportVersion } from "@/features/project-imports/components/SavedImportSheet";
 import { ProjectMediaLibrary } from "@/features/project-media/ProjectMediaLibrary";
@@ -45,7 +44,6 @@ import { ProjectBrowser, ProjectManagementPanel } from "@/features/project-manag
 import { VideoEditor } from "@/features/video-editor/VideoEditor";
 import { ProjectSketch } from "@/features/project-sketch/ProjectSketch";
 import { AreaEditPanel } from "@/features/project-sketch/AreaEditPanel";
-import { acceptAreaMask } from "@/features/project-sketch/api/projectSketchApi";
 import { SystemRoutePage } from "@/features/public-site/SystemPage";
 import { ShareVersionPanel } from "@/features/workflow-sharing/ShareVersionPanel";
 import { registerWorkspaceRetention } from "@/repositories/workflow/WorkspaceRetention";
@@ -69,7 +67,6 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   const openFolder = useOpenFolder(ownerId, folderId);
   const controller = useProjectWorkspace(ownerId, projectId, search.get("conversation") ?? undefined, initialEntry.current?.draftId, { library, folderId });
   const imports = useProjectImports(ownerId, projectId, controller.updateMedia);
-  const api = useMemo(() => new WorkflowApi(undefined, ownerId), [ownerId]);
   const mediaActions = useMemo(() => new MediaActionsApi(ownerId, projectId), [ownerId, projectId]);
   const navigate = useNavigate();
   const [panel, setPanel] = useState<Panel>("none");
@@ -222,7 +219,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     setEntryBinding(binding); setEntryTicket(undefined);
   }, [entryTicket, controller.loading, controller.conversation, active?.record, consumeCreationTicket]);
   const profile = controller.profiles.find(candidate => candidate.id === active?.content.settings.profileId && candidate.action === active?.content.action);
-  const capabilityLookupStatus: CapabilityLookupStatus = controller.loading ? "loading" : controller.resourceErrors.some(problem => problem.startsWith("Models")) ? "error" : "ready";
+  const capabilityLookupStatus: CapabilityLookupStatus = controller.loading ? "loading" : controller.resources.models.state === "error" ? "error" : "ready";
   const failedInput = active?.content.inputs.find(input => input.state === "pending" && controller.view.requests.some(request => request.id === input.requestId && request.slots.some(slot => slot.id === input.slotId && (slot.outcome === "failed" || slot.outcome === "cancelled" || slot.delivery === "lost"))));
   const scopeAlive = useRef(true);
   useEffect(() => { scopeAlive.current = true; return () => { scopeAlive.current = false; }; }, []);
@@ -249,7 +246,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
 
   useEffect(() => registerWorkspaceRetention(ownerId, async () => { await controllerRef.current.flush(); return controllerRef.current.canLeave(); }), [ownerId]);
   useEffect(() => {
-    const protect = (event: BeforeUnloadEvent): void => { if (active && !draftHasSafeRetention(active)) { event.preventDefault(); event.returnValue = ""; } };
+    const protect = (event: BeforeUnloadEvent): void => { if (active && !active.retention.safe) { event.preventDefault(); event.returnValue = ""; } };
     window.addEventListener("beforeunload", protect); return () => window.removeEventListener("beforeunload", protect);
   }, [active]);
   useEffect(() => {
@@ -322,29 +319,12 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       if (scopeAlive.current && current.conversation?.id === conversationId && current.active?.record.id === draftId) setActionError(failure instanceof Error ? failure.message : "This action was not confirmed. Try again.");
     }
   };
-  // One restore at a time: a double click must not create two drafts.
-  const reusing = useRef(false);
   const reuseRequest = async (request: AcceptedRequest, variation = false): Promise<void> => {
-    if (reusing.current) return;
-    reusing.current = true;
-    try { await restoreRequest(request, variation); } finally { reusing.current = false; }
-  };
-  const restoreRequest = async (request: AcceptedRequest, variation: boolean): Promise<void> => {
-    const current = controllerRef.current;
-    const captured = current.active;
-    if (!current.conversation || request.ownerId !== ownerId || request.projectId !== projectId) return;
-    const conversationId = current.conversation.id;
-    const stillCurrent = (): boolean => scopeAlive.current && controllerRef.current.conversation?.id === conversationId && controllerRef.current.active?.record.id === captured?.record.id && controllerRef.current.active?.sequence === captured?.sequence;
-    await current.flush();
-    if (!stillCurrent() || !current.canLeave()) return;
-    const record = await api.createDraft(projectId, conversationId, `draft_${crypto.randomUUID()}`, reuseDraftContent(request, current.conversation.projectId, conversationId, variation));
-    if (stillCurrent()) {
-      controllerRef.current.openDraft(record);
-      const resultId = request.slots.find(slot => slot.versionId === current.view.viewedVersionId)?.versionId ?? request.slots.find(slot => slot.versionId && current.media.some(version => version.id === slot.versionId && version.ownerId === ownerId && version.projectId === projectId))?.versionId;
-      // The docked composer shows the restored setup itself, so Focus closes onto it; the phone layout keeps its notice.
-      if (!isMobile) setFocusOpen(false);
-      else if (!variation && resultId) setResultFeedback({ conversationId, draftId: record.id, versionId: resultId, kind: "setup" });
-    }
+    const conversationId = controllerRef.current.conversation?.id;
+    const restored = await controllerRef.current.reuseSetup(request, variation);
+    if (!restored || !scopeAlive.current || controllerRef.current.active?.record.id !== restored.draftId) return;
+    if (!isMobile) setFocusOpen(false);
+    else if (!variation && restored.resultId && conversationId) setResultFeedback({ conversationId, draftId: restored.draftId, versionId: restored.resultId, kind: "setup" });
   };
   const reuse = (version: MediaVersion): void => { if (version.origin.kind !== "generated") return; const requestId = version.origin.requestId; const request = controller.view.requests.find(candidate => candidate.id === requestId); if (request) void perform(() => reuseRequest(request)); };
   const change = (version: MediaVersion, patch: { label?: string; hidden?: boolean; favorite?: boolean }): void => { void perform(async () => { const updated = await mediaActions.change(version.id, patch); if (scopeAlive.current) controller.updateMedia(updated); }); };
@@ -391,28 +371,12 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       if (scopeAlive.current) { if (bound && painted) setMasks(current => ({ ...current, [bound.maskId]: painted })); controllerRef.current.viewMedia(version.id); setArea({ version, url: resource.url }); setPanel("area"); setPane("viewer"); setFocusOpen(true); }
     });
   };
-  const storedArea = async (maskId: string, version: MediaVersion): Promise<ProjectAreaMask> => {
-    const blob = await (await fetch((await access(maskId)).url)).blob();
-    const dataUri = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("The area could not be read.")); reader.onerror = () => reject(new Error("The area could not be read.")); reader.readAsDataURL(blob); });
-    const size = version.metadata.state === "verified" ? version.metadata : undefined;
-    return ProjectAreaMaskSchema.parse({ versionId: version.id, width: size?.width, height: size?.height, transform: "identity", dataUri });
-  };
+  const storedArea = (maskId: string, version: MediaVersion): Promise<ProjectAreaMask> => readProjectAreaMask(version, maskId, access);
   /** Done binds the painted area as the request's mask input; Done with nothing painted removes it. Either way the composer comes back. */
   const finishArea = (source: MediaVersion, mask: ProjectAreaMask | undefined): void => {
     void perform(async () => {
-      const primary = controllerRef.current.active?.content.inputs.find(input => input.role === "primary");
-      if (primary?.state !== "resolved" || primary.versionId !== source.id) throw new Error("This picture is no longer the one being edited. Choose Edit a region again.");
-      if (mask) {
-        const version = await acceptAreaMask(ownerId, projectId, mask);
-        if (!scopeAlive.current) return;
-        setMasks(current => ({ ...current, [version.id]: mask }));
-        controllerRef.current.updateMedia(version);
-        controllerRef.current.applyMediaInput(version, "mask");
-      } else {
-        const current = controllerRef.current.active;
-        const bound = current?.content.inputs.find(input => input.role === "mask");
-        if (current && bound) controllerRef.current.edit(withoutDraftInput(current.content, controllerRef.current.profiles, bound));
-      }
+      const version = await controllerRef.current.finishArea(source, mask);
+      if (version && mask && scopeAlive.current) setMasks(current => ({ ...current, [version.id]: mask }));
       if (scopeAlive.current) { setPanel("none"); setFocusOpen(false); showView(); setPane("conversation"); setViewerOrigin("conversation"); }
     });
   };
@@ -582,7 +546,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       if (current.conversation?.id !== currentResultFeedback.conversationId || current.active?.record.id !== currentResultFeedback.draftId) return;
       setInspectedRequest(undefined); setVersionsOpen(false); current.viewMedia(feedbackVersion.id); setPane("viewer"); setResultFeedback(undefined);
     }} /> : undefined;
-    return <MediaViewer {...(inspectionActions ? { inspectionActions, onBackToEdit: () => setInspectingVideo(false) } : {})} {...(sourceRequest && selected ? { renderRequestDetails: (onClose: () => void) => <RequestDetails request={sourceRequest} result={selected} media={controller.media} profile={controller.profiles.find(candidate => candidate.id === sourceRequest.snapshot.settings.profileId && candidate.revision === sourceRequest.snapshot.settings.profileRevision)} projectName={controller.project?.name ?? "Project"} conversationName={controller.conversations.find(row => row.id === sourceRequest.conversationId)?.name ?? "Conversation"} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} onReuse={request => { onClose(); void perform(() => reuseRequest(request)); }} onClose={onClose} /> } : {})} mobilePreview={Boolean(mobilePreviewKind)} onView={() => setPane("viewer")} onBack={() => { if (viewerOrigin === "media") showView("media"); else setPane("conversation"); }} banner={failedInput ? <WorkspaceNotice title="The image for this draft could not be made" message="Choose an input or reuse the original setup." actionLabel="Choose input" onAction={() => requestInput(failedInput.role, failedInput)} /> : controller.serviceUnavailable ? <WorkspaceNotice title="New requests are temporarily unavailable" message="The service is at capacity" actionLabel="Check again" onAction={controller.reload} /> : offline ? <WorkspaceNotice title="You are offline" message={active?.checkpointSequence === active?.sequence ? "Changes are saved on this device" : "Keep your latest work before leaving"} actionLabel="View history" onAction={() => showView("conversations")} /> : controller.conversation?.status === "archived" ? <WorkspaceNotice title="This conversation is archived" message="Restore it to make changes." actionLabel="Restore" onAction={() => { const conversation = controller.conversation; if (conversation) void perform(async () => { const updated = await managementApi.changeConversation(projectId, conversation.id, { expectedRevision: conversation.revision, status: "active" }); if (scopeAlive.current) controller.observeConversation(updated); }); }} /> : feedbackBanner ? feedbackBanner : isMobile && newlyReadyVersionId && newlyReadyVersionId !== selected?.id ? <div className="vf-workspace-banner"><p>{controller.media.find(version => version.id === newlyReadyVersionId)?.label ?? "New version"} is ready.</p><FreshButton onClick={() => { setInspectedRequest(undefined); controller.viewMedia(newlyReadyVersionId); setPane("viewer"); }}>View result</FreshButton></div> : undefined} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} timeline={timeline} timelineControl={timelineControl} {...(selected && boundArea?.sourceId === selected.id && boundArea.painted ? { areaMask: { versionId: selected.id, dataUri: boundArea.painted.dataUri } } : {})} version={selected} access={access} onUseInput={controller.applyMediaInput} onUseFrame={captureFrame} onDownload={download} onReuseSetup={reuse} canReuseSetup={selected?.origin.kind === "generated" && controller.view.requests.some(request => request.id === (selected.origin.kind === "generated" ? selected.origin.requestId : ""))} onEdit={edit} onAnimate={animate} onEditRegion={editRegion} onExtend={extend} onAddToVideo={addToVideo} onMakeCaptions={version => startFromMedia("transcribe", version, "primary")} {...(selected ? { verbs: resultActions(selected) } : {})} onVersions={() => setVersionsOpen(true)} onPreferred={makePreferred} {...(preferred ? { preferredVersionId: preferred } : {})} onShare={version => { setSharePlacement("viewer"); setShareVersion(version); }} onHide={version => change(version, { hidden: !version.hidden })} onRename={version => { setRename({ version, label: version.label }); setPanel("rename"); }} onFavorite={version => change(version, { favorite: !version.favorite })} {...(selected?.favorite !== undefined ? { favorite: selected.favorite } : {})} onPictureTools={version => { void perform(async () => { const resource = await access(version.id); if (scopeAlive.current) { setArea({ version, url: resource.url }); setPanel("area"); } }); }} /> };
+    return <MediaViewer {...(inspectionActions ? { inspectionActions, onBackToEdit: () => setInspectingVideo(false) } : {})} {...(sourceRequest && selected ? { renderRequestDetails: (onClose: () => void) => <RequestDetails request={sourceRequest} result={selected} media={controller.media} profile={controller.profiles.find(candidate => candidate.id === sourceRequest.snapshot.settings.profileId && candidate.revision === sourceRequest.snapshot.settings.profileRevision)} projectName={controller.project?.name ?? "Project"} conversationName={controller.conversations.find(row => row.id === sourceRequest.conversationId)?.name ?? "Conversation"} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} onReuse={request => { onClose(); void perform(() => reuseRequest(request)); }} onClose={onClose} /> } : {})} mobilePreview={Boolean(mobilePreviewKind)} onView={() => setPane("viewer")} onBack={() => { if (viewerOrigin === "media") showView("media"); else setPane("conversation"); }} banner={failedInput ? <WorkspaceNotice title="The image for this draft could not be made" message="Choose an input or reuse the original setup." actionLabel="Choose input" onAction={() => requestInput(failedInput.role, failedInput)} /> : controller.serviceUnavailable ? <WorkspaceNotice title="New requests are temporarily unavailable" message="The service is at capacity" actionLabel="Check again" onAction={controller.reload} /> : offline ? <WorkspaceNotice title="You are offline" message={active?.retention.onDevice ? "Changes are saved on this device" : "Keep your latest work before leaving"} actionLabel="View history" onAction={() => showView("conversations")} /> : controller.conversation?.status === "archived" ? <WorkspaceNotice title="This conversation is archived" message="Restore it to make changes." actionLabel="Restore" onAction={() => { const conversation = controller.conversation; if (conversation) void perform(async () => { const updated = await managementApi.changeConversation(projectId, conversation.id, { expectedRevision: conversation.revision, status: "active" }); if (scopeAlive.current) controller.observeConversation(updated); }); }} /> : feedbackBanner ? feedbackBanner : isMobile && newlyReadyVersionId && newlyReadyVersionId !== selected?.id ? <div className="vf-workspace-banner"><p>{controller.media.find(version => version.id === newlyReadyVersionId)?.label ?? "New version"} is ready.</p><FreshButton onClick={() => { setInspectedRequest(undefined); controller.viewMedia(newlyReadyVersionId); setPane("viewer"); }}>View result</FreshButton></div> : undefined} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} timeline={timeline} timelineControl={timelineControl} {...(selected && boundArea?.sourceId === selected.id && boundArea.painted ? { areaMask: { versionId: selected.id, dataUri: boundArea.painted.dataUri } } : {})} version={selected} access={access} onUseInput={controller.applyMediaInput} onUseFrame={captureFrame} onDownload={download} onReuseSetup={reuse} canReuseSetup={selected?.origin.kind === "generated" && controller.view.requests.some(request => request.id === (selected.origin.kind === "generated" ? selected.origin.requestId : ""))} onEdit={edit} onAnimate={animate} onEditRegion={editRegion} onExtend={extend} onAddToVideo={addToVideo} onMakeCaptions={version => startFromMedia("transcribe", version, "primary")} {...(selected ? { verbs: resultActions(selected) } : {})} onVersions={() => setVersionsOpen(true)} onPreferred={makePreferred} {...(preferred ? { preferredVersionId: preferred } : {})} onShare={version => { setSharePlacement("viewer"); setShareVersion(version); }} onHide={version => change(version, { hidden: !version.hidden })} onRename={version => { setRename({ version, label: version.label }); setPanel("rename"); }} onFavorite={version => change(version, { favorite: !version.favorite })} {...(selected?.favorite !== undefined ? { favorite: selected.favorite } : {})} onPictureTools={version => { void perform(async () => { const resource = await access(version.id); if (scopeAlive.current) { setArea({ version, url: resource.url }); setPanel("area"); } }); }} /> };
   const sharing = shareVersion ? <ShareVersionPanel ownerId={ownerId} projectId={projectId} version={shareVersion} placement={sharePlacement} onClose={() => setShareVersion(undefined)} /> : null;
   // A library's unused conversations are home's scratch space, hidden from its list; the dialog lists what home lists (plus the one open).
   const managedConversations = library ? controller.conversations.filter(conversation => conversation.acceptanceSequence > 0 || conversation.status === "archived" || (!libraryHome && conversation.id === controller.conversation?.id)) : controller.conversations;
@@ -606,7 +570,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     const homeNotice = loadProblem ? <div className="vf-notice" role="status"><p>{loadProblem}</p><FreshButton onClick={controller.reload}>Retry loading</FreshButton></div> : actionError ? <div className="vf-notice" role="alert"><p>{actionError}</p><FreshButton tone="quiet" onClick={() => setActionError(undefined)}>Dismiss</FreshButton></div> : null;
     return <div className="vf vf-project-home-shell">{renderRail(folderId ? "projects" : "create")}<ConversationHome {...(title !== undefined ? { title } : {})} actions={<FreshIconButton icon="more" label={folderId ? "Project options" : "Conversation options"} onClick={() => setPanel("options")} />} composer={<>{homeNotice}{renderComposer()}</>} conversations={homeConversations} onOpenConversation={id => { void showConversation(id); }} />{options}{sharing}{workspaceDialog}</div>;
   }
-  const useWords = (request: AcceptedRequest): void => { void perform(async () => { const current = controllerRef.current.active; const conversation = controllerRef.current.conversation; if (!conversation) return; await controller.flush(); if (!scopeAlive.current || controllerRef.current.active?.record.id !== current?.record.id || controllerRef.current.active?.sequence !== current?.sequence || !controllerRef.current.canLeave()) return; const record = await api.createDraft(projectId, conversation.id, `draft_${crypto.randomUUID()}`, { ...(current?.content ?? request.snapshot), instructions: request.snapshot.instructions, destination: { projectId: conversation.projectId, conversationId: conversation.id } }); if (scopeAlive.current && controllerRef.current.active?.record.id === current?.record.id && controllerRef.current.active?.sequence === current?.sequence) controller.openDraft(record); }); };
+  const useWords = (request: AcceptedRequest): void => { void perform(() => controllerRef.current.useWords(request)); };
   const viewSources = (request: AcceptedRequest): void => { const ids = request.snapshot.inputs.flatMap(input => input.state === "resolved" && input.role !== "mask" ? [input.versionId] : []); if (ids.length === 1 && ids[0]) { setInspectedRequest(undefined); setViewerOrigin("conversation"); controller.viewMedia(ids[0]); setPane("viewer"); } else { setSourceVersionIds(ids); showView("media"); } };
   const hideFromMedia = (request: AcceptedRequest): void => { void perform(async () => { for (const slot of request.slots) if (slot.versionId) { const updated = await mediaActions.change(slot.versionId, { hidden: true }); if (scopeAlive.current) controller.updateMedia(updated); } }); };
   /** A deliberate jump to one request leaves the end; reaching the end again resumes following. */
@@ -623,7 +587,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     {controller.resourceErrors.length ? <div className="vf-notice" role="status">{controller.resourceErrors.map(problem => <p key={problem}>{problem}</p>)}<FreshButton onClick={controller.reload}>Retry loading missing work</FreshButton></div> : null}
     {controller.deviceCopies.length ? <FreshButton tone="quiet" onClick={() => setPanel("recovery")}>Review {controller.deviceCopies.length} retained device {controller.deviceCopies.length === 1 ? "copy" : "copies"}</FreshButton> : null}
     {areaDroppedNotice}
-    {failedInput ? <WorkspaceNotice title="The image for this draft could not be made" message="Choose an input or reuse the original setup." actionLabel="Choose input" onAction={() => requestInput(failedInput.role, failedInput)} /> : controller.serviceUnavailable ? <WorkspaceNotice title="New requests are temporarily unavailable" message="The service is at capacity" actionLabel="Check again" onAction={controller.reload} /> : offline ? <WorkspaceNotice title="You are offline" message={active?.checkpointSequence === active?.sequence ? "Changes are saved on this device" : "Keep your latest work before leaving"} actionLabel="View history" onAction={() => showView("conversations")} /> : controller.conversation?.status === "archived" ? <WorkspaceNotice title="This conversation is archived" message="Restore it to make changes." actionLabel="Restore" onAction={() => { const conversation = controller.conversation; if (conversation) void perform(async () => { const updated = await managementApi.changeConversation(projectId, conversation.id, { expectedRevision: conversation.revision, status: "active" }); if (scopeAlive.current) controller.observeConversation(updated); }); }} /> : null}
+    {failedInput ? <WorkspaceNotice title="The image for this draft could not be made" message="Choose an input or reuse the original setup." actionLabel="Choose input" onAction={() => requestInput(failedInput.role, failedInput)} /> : controller.serviceUnavailable ? <WorkspaceNotice title="New requests are temporarily unavailable" message="The service is at capacity" actionLabel="Check again" onAction={controller.reload} /> : offline ? <WorkspaceNotice title="You are offline" message={active?.retention.onDevice ? "Changes are saved on this device" : "Keep your latest work before leaving"} actionLabel="View history" onAction={() => showView("conversations")} /> : controller.conversation?.status === "archived" ? <WorkspaceNotice title="This conversation is archived" message="Restore it to make changes." actionLabel="Restore" onAction={() => { const conversation = controller.conversation; if (conversation) void perform(async () => { const updated = await managementApi.changeConversation(projectId, conversation.id, { expectedRevision: conversation.revision, status: "active" }); if (scopeAlive.current) controller.observeConversation(updated); }); }} /> : null}
   </>;
   const readOnly = controller.project?.status !== "active" || controller.conversation?.status !== "active";
   const feedVersions = controller.view.requests.flatMap(request => request.slots.flatMap(slot => slot.versionId && controller.media.some(version => version.id === slot.versionId) ? [slot.versionId] : []));
@@ -641,7 +605,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   }} />;
   const feedLayout = <div className="vf vf-workspace vf-feed-workspace" data-workspace-entry={entryWorkingCopy ? entryBinding?.kind : undefined} data-library={libraryOpen || undefined} data-focus={focusOpen || inlineVideo || undefined} data-versions={versionsOpen || undefined} style={{ "--vf-composer-height": `${composerHeight}px` } as CSSProperties}>
     {renderRail(libraryOpen ? "media" : "create")}
-    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} selectedVersionId={selected?.id} {...(selected && !readOnly ? { actionBar: <>{resultActions(selected).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" disabled={verb.disabled} onClick={() => verb.run(0)}>{verb.label}</FreshButton>)}<span className="vf-action-bar-divider" aria-hidden="true" /><FreshIconButton icon="download" label="Download original" onClick={() => download(selected)} /></> } : {})} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setFocusOpen(true); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resourceErrors.find(problem => problem.includes("Media"))} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : <>
+    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} selectedVersionId={selected?.id} {...(selected && !readOnly ? { actionBar: <>{resultActions(selected).map(verb => <FreshButton key={verb.label} tone="quiet" className="vf-generation-verb" disabled={verb.disabled} onClick={() => verb.run(0)}>{verb.label}</FreshButton>)}<span className="vf-action-bar-divider" aria-hidden="true" /><FreshIconButton icon="download" label="Download original" onClick={() => download(selected)} /></> } : {})} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setFocusOpen(true); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resources.media.message} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : <>
       {historyRail(focusOpen ? undefined : selectedRequestId)}
       <main ref={feedStage} className="vf-feed-stage" aria-label={controller.conversation?.name ?? "Conversation"} onScroll={event => {
         const node = event.currentTarget; const previous = feedGeometry.current;
@@ -674,7 +638,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
   if (!isMobile) return feedLayout;
   return <div className="vf vf-workspace" data-workspace-entry={entryWorkingCopy ? entryBinding?.kind : undefined} data-mobile-pane={pane} data-library={libraryOpen || undefined} data-area={panel === "area" || undefined} data-mobile-preview={mobilePreviewKind} data-versions={versionsOpen || undefined} data-empty={!libraryOpen && !inlineVideo && !controller.view.requests.length && !controller.submissions.length && !selected || undefined}>
     {renderRail(libraryOpen || selected && (viewerOrigin === "media" || isMobile && pane === "viewer") ? "media" : "create")}
-    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setPane("viewer"); showView(); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resourceErrors.find(problem => problem.includes("Media"))} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : null}
+    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? listedMedia.filter(version => sourceVersionIds.includes(version.id)) : listedMedia} imports={imports} onChange={controller.updateMedia} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setPane("viewer"); showView(); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-video")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resources.media.message} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : null}
     <header className="vf-project-bar"><FreshIconButton icon="folder" label="Project options" onClick={() => setPanel("options")} /><div className="vf-flex" />{controller.view.requests.length || selected ? <FreshIconButton icon="more" label="More project options" onClick={() => setPanel("options")} /> : null}</header>
     <aside className="vf-conversation">
       {controller.loading ? <p className="vf-notice" role="status">Opening saved work…</p> : null}

@@ -73,6 +73,21 @@ module.exports = {
       to: { circular: true },
     },
 
+    {
+      name: "workspace-through-entrypoints",
+      comment: "Other features and external tests use workspace root entry points; its hooks, state and presentation are private.",
+      severity: "error",
+      from: { pathNot: "^client/src/features/project-workspace/" },
+      to: { path: "^client/src/features/project-workspace/[^/]+/" },
+    },
+    {
+      name: "creation-through-entrypoints",
+      comment: "Creation preparation, admission, execution and provider definitions are private implementation. Includes type-only imports and external tests.",
+      severity: "error",
+      from: { pathNot: "^server/src/services/creation-requests/" },
+      to: { path: "^server/src/services/creation-requests/[^/]+/" },
+    },
+
     // --- Layering (optional, off by default) ----------------------------------
     // Interface-hiding controls HOW you import (through the entry points).
     // Layering controls WHICH packages may depend on which. Add your own rules

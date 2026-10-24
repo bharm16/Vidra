@@ -1,6 +1,6 @@
 import type { VideoExportService } from "@services/video-export/VideoExportService";
-import type { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
-import type { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
+import type { WorkflowExecutionService } from "@services/creation-requests/execution";
+import type { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
 /**
  * Server Lifecycle Management
  *

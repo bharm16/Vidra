@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { WorkflowApi } from "@/features/project-workspace/api/workflowApi";
+import { WorkflowApi } from "@/features/project-workspace/api";
 import type { Project } from "@shared/schemas/workflow/project.schemas";
 import { MediaVersionSchema, type MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { ProjectMediaLibrary } from "../ProjectMediaLibrary";

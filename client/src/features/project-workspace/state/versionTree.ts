@@ -1,3 +1,5 @@
+import { mediaVersionParent, mediaVersionRoot } from "@shared/workflow/mediaLineage";
+export { mediaVersionParent } from "@shared/workflow/mediaLineage";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 
 export interface VersionTreeRow {
@@ -9,29 +11,11 @@ export interface VersionTreeRow {
   ancestorRails: boolean[];
 }
 
-/** Only an explicit same-kind edit input establishes a version parent. References never do. */
-export function mediaVersionParent(version: MediaVersion, versions: Map<string, MediaVersion>): string | undefined {
-  const input = version.sourceInputs.find(candidate => (candidate.role === "primary" || candidate.role === "clip") && versions.get(candidate.versionId)?.kind === version.kind && candidate.versionId !== version.id);
-  return input?.versionId;
-}
-
 export function versionTree(versions: MediaVersion[], selectedVersionId: string | undefined): VersionTreeRow[] {
   const byId = new Map<string, MediaVersion>(versions.map(version => [version.id, version]));
-  const rootOf = (version: MediaVersion): string => {
-    let current = version;
-    const visited = new Set<string>([current.id]);
-    for (;;) {
-      const parentId = mediaVersionParent(current, byId);
-      if (!parentId) return current.id;
-      if (visited.has(parentId)) return [...visited].sort()[0] ?? current.id;
-      const parent = byId.get(parentId);
-      if (!parent) return current.id;
-      visited.add(parentId); current = parent;
-    }
-  };
   const selected = selectedVersionId ? byId.get(selectedVersionId) : undefined;
-  const rootId = selected ? rootOf(selected) : undefined;
-  const family = versions.filter(version => !rootId || rootOf(version) === rootId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const rootId = selected ? mediaVersionRoot(selected, byId) : undefined;
+  const family = versions.filter(version => !rootId || mediaVersionRoot(version, byId) === rootId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const numbers = new Map<string, number>(family.map((version, index) => [version.id, index + 1]));
   const familyIds = new Set<string>(family.map(version => version.id));
   const children = new Map<string, MediaVersion[]>();

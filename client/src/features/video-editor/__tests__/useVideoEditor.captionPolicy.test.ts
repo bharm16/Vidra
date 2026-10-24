@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { CreateVideoExportSchema, VideoCaptionValidationDetailsSchema, VideoEditSchema, VideoExportSchema, type VideoCaptionValidationDetails, type VideoEdit, type VideoExport } from "@shared/schemas/workflow/video-edit.schemas";
 import { VideoCaptionValidationError } from "../api/VideoCaptionValidationError";
-import { WorkflowApiError } from "@/features/project-workspace/api/workflowApi";
+import { WorkflowApiError } from "@/features/project-workspace/api";
 import { useVideoEditor } from "../hooks/useVideoEditor";
 import type { ExportEnvelope } from "../api/videoEditorApi";
 

@@ -7,23 +7,25 @@ import { join } from "node:path";
 import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { z } from "zod";
-import { AUDIO_IMPORT_LIMITS, GENERATED_PICTURE_MAX_BYTES, GeneratedOutputCommandSchema } from "@shared/schemas/workflow/import.schemas";
-import { isOwnedPicturePath } from "@services/owned-media";
+import { AUDIO_IMPORT_LIMITS, GENERATED_PICTURE_MAX_BYTES, GeneratedOutputCommandSchema, canonicalImportContentType } from "@shared/schemas/workflow/import.schemas";
+import { isOwnedPicturePath, fetchRemoteMedia, openRemoteMedia, type PublicNetworkDependencies } from "@services/owned-media";
+import { fileTypeFromBuffer } from "file-type";
 import { verifyImportFile } from "@services/project-media/ProjectMediaStorage";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
 import { WorkflowError } from "@services/projects/WorkflowError";
-import { VerifiedOutputSchema, type ExecutionAttempt, type NativeOutput, type VerifiedOutput, type WorkflowOutputStorage } from "@services/creation-requests/execution/types";
+import { VerifiedOutputSchema, type ExecutionAttempt, type NativeOutput, type VerifiedOutput, type WorkflowOutputStorage } from "@services/creation-requests/execution";
 
 const MAX_BYTES = 500 * 1024 * 1024;
 function code(error: unknown): unknown { return typeof error === "object" && error !== null && "code" in error ? error.code : undefined; }
 
 /** Publishes owned bytes under deterministic slot paths; a 412 reconciles, never overwrites. */
 export class GcsWorkflowOutputStorage implements WorkflowOutputStorage {
-  constructor(private readonly bucket: Bucket, private readonly videos: Pick<VideoGenerationService, "getVideoContent"> | null) {}
+  constructor(private readonly bucket: Bucket, private readonly videos: Pick<VideoGenerationService, "getVideoContent"> | null, private readonly network: PublicNetworkDependencies = {}) {}
 
   async materialize(attempt: ExecutionAttempt, output: NativeOutput): Promise<VerifiedOutput> {
     if (output.kind === "text") throw new WorkflowError("invalid_settings", "Text does not have a media file.");
-    const [folder, extension, filename, limit] = output.kind === "image" ? ["images", "webp", "Picture.webp", GENERATED_PICTURE_MAX_BYTES] : output.kind === "audio" ? ["audio", "mp3", "Audio.mp3", AUDIO_IMPORT_LIMITS.maxBytes] : ["videos", "mp4", "Clip.mp4", MAX_BYTES];
+    const kind = output.kind === "provider-media" ? output.mediaKind : output.kind;
+    const [folder, extension, filename, limit] = kind === "image" ? ["images", "webp", "Picture.webp", GENERATED_PICTURE_MAX_BYTES] : kind === "audio" ? ["audio", "mp3", "Audio.mp3", AUDIO_IMPORT_LIMITS.maxBytes] : ["videos", "mp4", "Clip.mp4", MAX_BYTES];
     const path = `users/${attempt.ownerId}/previews/${folder}/workflow-${attempt.slotId}.${extension}`;
     const destination = this.bucket.file(path);
     const provenance = { workflowRequestId: attempt.requestId, workflowSlotId: attempt.slotId, workflowSnapshotHash: attempt.snapshotHash };
@@ -31,7 +33,22 @@ export class GcsWorkflowOutputStorage implements WorkflowOutputStorage {
     try { [metadata] = await destination.getMetadata(); } catch (error) { if (code(error) !== 404) throw error; }
     if (!metadata) {
       try {
-        if (output.kind === "image" || output.kind === "audio") {
+        if (output.kind === "provider-media") {
+          const allowed = kind === "image" ? ["image/png", "image/jpeg", "image/webp"] : kind === "audio" ? ["audio/mpeg", "audio/wav", "audio/ogg", "audio/mp4", "video/mp4"] : ["video/mp4", "video/webm"];
+          const options = { sourceUrl: output.sourceUrl, fieldName: "provider output", allowedContentTypes: [...allowed, "application/octet-stream"], maxBytes: limit, timeoutMs: 120000 };
+          if (kind === "video") {
+            const remote = await openRemoteMedia(options, this.network);
+            try { await pipeline(remote.stream, destination.createWriteStream({ resumable: false, metadata: { contentType: remote.contentType, metadata: provenance }, preconditionOpts: { ifGenerationMatch: 0 } }), { signal: AbortSignal.timeout(120000) }); }
+            finally { remote.cancel(); }
+          } else {
+            const remote = await fetchRemoteMedia(options, this.network);
+            const sniffed = await fileTypeFromBuffer(remote.buffer);
+            const contentType = canonicalImportContentType(sniffed?.mime ?? "");
+            const accepted = kind === "audio" && contentType === "video/mp4" ? "audio/mp4" : contentType;
+            if (!remote.buffer.length || !allowed.includes(contentType)) throw new WorkflowError("invalid_settings", "The produced file has an unexpected type.");
+            await destination.save(remote.buffer, { resumable: false, metadata: { contentType: accepted, metadata: provenance }, preconditionOpts: { ifGenerationMatch: 0 } });
+          }
+        } else if (output.kind === "image" || output.kind === "audio") {
           const owned = output.kind === "image" ? isOwnedPicturePath(attempt.ownerId, output.storagePath) : output.storagePath.startsWith(`users/${attempt.ownerId}/previews/audio/`);
           if (!owned || output.storagePath.includes("..") || output.storagePath.includes("://")) throw new WorkflowError("access_denied", `The produced ${output.kind === "image" ? "picture" : "audio"} is not owned by this creator.`);
           const [source] = await this.bucket.file(output.storagePath).getMetadata();

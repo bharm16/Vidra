@@ -3,7 +3,7 @@ import request from "supertest";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { CreationContextService } from "@services/creation-context/CreationContextService";
-import { ActionPreparationService } from "@services/creation-requests/preparation/ActionPreparationService";
+import { ActionPreparationService } from "@services/creation-requests/preparation";
 import { ProjectStore } from "@services/projects/ProjectStore";
 import { ConversationStore } from "@services/projects/ConversationStore";
 import { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";

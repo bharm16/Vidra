@@ -1,3 +1,5 @@
+import { allPages, listPage, allDocuments, type ListOptions } from "@services/firestore/WorkflowLists";
+import type { WorkflowPage } from "@shared/schemas/workflow/page.schemas";
 import type { Firestore } from "firebase-admin/firestore";
 import { z } from "zod";
 import { AcceptedRequestSchema, type AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
@@ -21,18 +23,21 @@ export class RequestHistoryStore {
   }
 
   async list(ownerId: string, projectId: string, conversation: string): Promise<AcceptedRequest[]> {
+    return (await allPages(options => this.page(ownerId, projectId, conversation, options))).sort((a, b) => a.acceptanceSequence - b.acceptanceSequence);
+  }
+
+  async page(ownerId: string, projectId: string, conversation: string, options: ListOptions = {}): Promise<WorkflowPage<AcceptedRequest>> {
     const project = await this.projects.get(ownerId, projectId);
     const conversationId = ConversationIdSchema.parse(conversation);
-    const rows = await this.database.collection("creation_requests").where("ownerId", "==", ownerId).where("projectId", "==", project.id).where("conversationId", "==", conversationId).limit(200).get();
-    return rows.docs.map(row => this.owned(ownerId, projectId, row.id, row.data(), conversationId)).sort((a, b) => a.acceptanceSequence - b.acceptanceSequence);
+    return listPage(this.database.collection("creation_requests").where("ownerId", "==", ownerId).where("projectId", "==", project.id).where("conversationId", "==", conversationId), `history:${ownerId}:${projectId}:${conversationId}`, row => this.owned(ownerId, projectId, row.id, row.data(), conversationId), options);
   }
 
   /** Pictures and clips each conversation produced. Hidden media and rows owned by another account are not counted. */
   async conversationMediaCounts(ownerId: string, projectId: string): Promise<Map<string, ConversationMediaCount>> {
     const project = await this.projects.get(ownerId, projectId);
     const [requests, versions] = await Promise.all([
-      this.database.collection("creation_requests").where("ownerId", "==", ownerId).where("projectId", "==", project.id).select("conversationId").limit(2000).get(),
-      this.database.collection("creation_projects").doc(project.id).collection("media_versions").select("ownerId", "kind", "origin", "hidden").limit(2000).get(),
+      allDocuments(this.database.collection("creation_requests").where("ownerId", "==", ownerId).where("projectId", "==", project.id).select("conversationId")).then(docs => ({ docs })),
+      allDocuments(this.database.collection("creation_projects").doc(project.id).collection("media_versions").select("ownerId", "kind", "origin", "hidden")).then(docs => ({ docs })),
     ]);
     const conversations = new Map<string, string>();
     for (const row of requests.docs) { const conversationId = ConversationIdSchema.safeParse(row.get("conversationId")); if (conversationId.success) conversations.set(row.id, conversationId.data); }

@@ -14,15 +14,16 @@ import { draftContent } from "../state/draftBuffer";
 import { useProjectWorkspace } from "../hooks/useProjectWorkspace";
 
 const ports = vi.hoisted(() => ({
+  areaMask: vi.fn(),
   api: {
-    getProject: vi.fn(), listConversations: vi.fn(), listDrafts: vi.fn(), history: vi.fn(), profiles: vi.fn(), media: vi.fn(),
+    getProject: vi.fn(), getConversation: vi.fn(), listConversations: vi.fn(), listDrafts: vi.fn(), history: vi.fn(), profiles: vi.fn(), media: vi.fn(),
     requestStatus: vi.fn(), cancelRequest: vi.fn(), reconcileRequest: vi.fn(), createConversation: vi.fn(), saveDraft: vi.fn(), createDraft: vi.fn(), draftStatus: vi.fn(), prepare: vi.fn(), submit: vi.fn(), recover: vi.fn(), access: vi.fn(),
   },
   device: { save: vi.fn(), get: vi.fn(), list: vi.fn(), submissions: vi.fn(), saveSubmission: vi.fn() },
 }));
 vi.mock("../api/workflowApi", () => ({
   WorkflowApi: class {
-    getProject = ports.api.getProject; listConversations = ports.api.listConversations; listDrafts = ports.api.listDrafts;
+    getProject = ports.api.getProject; getConversation = ports.api.getConversation; listConversations = ports.api.listConversations; listDrafts = ports.api.listDrafts;
     history = ports.api.history; profiles = ports.api.profiles; media = ports.api.media;
     requestStatus = ports.api.requestStatus; cancelRequest = ports.api.cancelRequest; reconcileRequest = ports.api.reconcileRequest; createConversation = ports.api.createConversation;
     saveDraft = ports.api.saveDraft; createDraft = ports.api.createDraft; draftStatus = ports.api.draftStatus;
@@ -32,6 +33,7 @@ vi.mock("../api/workflowApi", () => ({
     constructor(message: string, readonly status: number, readonly code?: string) { super(message); }
   },
 }));
+vi.mock("@/features/project-sketch/api/projectSketchApi", () => ({ acceptAreaMask: ports.areaMask }));
 vi.mock("@/repositories/workflow/DraftCheckpointStore", () => ({
   DraftCheckpointStore: class {
     save = ports.device.save; get = ports.device.get; list = ports.device.list;
@@ -53,7 +55,7 @@ function accepted(command: { submissionId: string; draftId: string; draftRevisio
 
 beforeEach(() => {
   vi.resetAllMocks();
-  ports.api.getProject.mockResolvedValue(project); ports.api.listConversations.mockResolvedValue([conversation]);
+  ports.api.getProject.mockResolvedValue(project); ports.api.getConversation.mockRejectedValue(Object.assign(new Error("This conversation is unavailable."), { status: 404 })); ports.api.listConversations.mockResolvedValue([conversation]);
   ports.api.listDrafts.mockResolvedValue([original]); ports.api.history.mockResolvedValue([]);
   ports.api.profiles.mockResolvedValue([profile]); ports.api.media.mockResolvedValue([]);
   ports.device.get.mockResolvedValue(undefined); ports.device.list.mockResolvedValue([]); ports.device.submissions.mockResolvedValue([]);
@@ -176,7 +178,7 @@ it("does not replace the only in-memory words with a new draft when both retenti
   const current = result.current.active;
   if (!current) throw new Error("Expected the loaded draft");
   act(() => result.current.edit({ ...current.content, instructions: "Only retained in this tab" }));
-  await waitFor(() => expect(result.current.localErrors[current.record.id]).toBeTruthy());
+  await waitFor(() => expect(result.current.active?.retention.deviceError).toBeTruthy());
   await act(async () => { await result.current.newDraft("make-image"); });
   expect(result.current.active?.record.id).toBe(current.record.id);
   expect(result.current.active?.content.instructions).toBe("Only retained in this tab");
@@ -706,4 +708,44 @@ it("a running request's status reads do not re-read the whole media list until a
   await waitFor(() => expect(result.current.view.requests[0]?.slots[0]?.outcome).toBe("running"));
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
   expect(ports.api.media).toHaveBeenCalledTimes(1);
+});
+
+it("opens an explicitly named owned conversation even when it is outside the browsing page", async () => {
+  ports.api.listConversations.mockResolvedValue([]); ports.api.getConversation.mockResolvedValue(conversation);
+  const { result } = renderHook(() => useProjectWorkspace("creator", project.id, conversation.id));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.conversation?.id).toBe(conversation.id);
+  expect(result.current.active?.content.instructions).toBe("Original direction");
+});
+
+it("reuse setup retains newer words when its draft creation arrives after another edit", async () => {
+  const { result } = await loaded();
+  let finish!: (record: CreationDraft) => void;
+  ports.api.createDraft.mockImplementationOnce(() => new Promise<CreationDraft>(resolve => { finish = resolve; }));
+  const request = accepted({ submissionId: "submission_reuse", draftId: original.id, draftRevision: 1, reviewedHash: "a".repeat(64) });
+  let restoring!: Promise<unknown>;
+  act(() => { restoring = result.current.reuseSetup(request); });
+  await waitFor(() => expect(ports.api.createDraft).toHaveBeenCalled());
+  act(() => result.current.edit({ ...draftContent(original), instructions: "Newer independent words" }));
+  await act(async () => { finish(CreationDraftSchema.parse({ ...original, id: "draft_restored" })); await restoring; });
+  expect(result.current.active?.record.id).toBe(original.id);
+  expect(result.current.active?.content.instructions).toBe("Newer independent words");
+});
+
+it("keeps an arriving area save out of independently edited words while retaining its media", async () => {
+  const source = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_source", ownerId: "creator", projectId: project.id, kind: "image", label: "Source", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "source", storagePath: "users/creator/previews/images/source" }, metadata: { state: "pending" }, association: "linked", createdAt: timestamp });
+  const mask = MediaVersionSchema.parse({ ...source, id: "version_mask", origin: { kind: "area-mask", versionId: source.id }, hidden: true });
+  const editable = CreationDraftSchema.parse({ ...original, action: "edit-image", inputs: [{ role: "primary", state: "resolved", versionId: source.id }] });
+  ports.api.listDrafts.mockResolvedValue([editable]); ports.api.media.mockResolvedValue([source]);
+  let finish!: (value: typeof mask) => void;
+  ports.areaMask.mockImplementationOnce(() => new Promise<typeof mask>(resolve => { finish = resolve; }));
+  const { result } = await loaded();
+  let saving!: Promise<unknown>;
+  act(() => { saving = result.current.finishArea(source, { versionId: source.id, width: 10, height: 10, transform: "identity", dataUri: "data:image/png;base64,bWFzaw==" }); });
+  await waitFor(() => expect(ports.areaMask).toHaveBeenCalled());
+  act(() => result.current.edit({ ...draftContent(editable), instructions: "An independent edit" }));
+  await act(async () => { finish(mask); await saving; });
+  expect(result.current.active?.content.instructions).toBe("An independent edit");
+  expect(result.current.active?.content.inputs).toEqual(editable.inputs);
+  expect(result.current.media.some(version => version.id === mask.id)).toBe(true);
 });

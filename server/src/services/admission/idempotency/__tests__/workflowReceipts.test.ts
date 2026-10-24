@@ -5,7 +5,7 @@ import {
   recoverVideoExportReceiptInTransaction,
   workflowExecutionDraftKey,
   workflowReceiptId,
-} from "../workflowReceipts";
+} from "@services/creation-requests/receipts";
 
 type StoreRecord = Record<string, unknown>;
 

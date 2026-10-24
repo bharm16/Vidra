@@ -5,6 +5,7 @@ import { OwnerIdSchema, ProjectIdSchema, RequestIdSchema, SlotIdSchema, Timestam
 import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/request.schemas";
 
 export const NativeOutputSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("provider-media"), mediaKind: z.enum(["image", "video", "audio"]), sourceUrl: z.url(), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("image"), storagePath: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("video"), assetId: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),
   z.strictObject({ kind: z.literal("audio"), storagePath: z.string().min(1), model: z.string().min(1), provider: z.string().min(1) }),

@@ -1,3 +1,4 @@
+import { CreationRequestLifecycle } from "@services/creation-requests/lifecycle";
 import express from "express";
 import request from "supertest";
 import { afterAll, expect, it, vi } from "vitest";
@@ -9,16 +10,16 @@ import { CreationContextService } from "@services/creation-context/CreationConte
 import { RequestHistoryStore } from "@services/media-history/RequestHistoryStore";
 import { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
-import { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
-import { WorkflowOutboxSchema } from "@services/admission/idempotency/workflowReceipts";
-import { WorkflowExecutionStore } from "@services/creation-requests/execution/WorkflowExecutionStore";
-import { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
-import { ExecutionAttemptSchema, instructionsFor, type ExecutionAttempt, type NativeOutput, type VerifiedOutput, type WorkflowNativeExecutor, type WorkflowOutputStorage } from "@services/creation-requests/execution/types";
+import { WorkflowCapabilityCatalog } from "@services/creation-requests/catalog";
+import { WorkflowOutboxSchema } from "@services/creation-requests/receipts";
+import { WorkflowExecutionStore } from "@services/creation-requests/execution";
+import { WorkflowExecutionService } from "@services/creation-requests/execution";
+import { ExecutionAttemptSchema, instructionsFor, type ExecutionAttempt, type NativeOutput, type VerifiedOutput, type WorkflowNativeExecutor, type WorkflowOutputStorage } from "@services/creation-requests/execution";
 import { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import { createCreationRequestRoutes } from "@routes/creation-requests.routes";
 import { errorHandler } from "@middleware/errorHandler";
 import type { RequestWithUser } from "@middleware/intake";
-import { ActionPreparationService } from "@services/creation-requests/preparation/ActionPreparationService";
+import { ActionPreparationService } from "@services/creation-requests/preparation";
 import { createWorkflowTestDatabase } from "../helpers/workflow/emulator";
 
 const database = createWorkflowTestDatabase();
@@ -131,9 +132,8 @@ it("real prepare/submit HTTP admission reaches owned media and reloadable reques
   const drafts = new CreationDraftStore(database, projects, conversations);
   const draft = await drafts.create("creator", project.id, conversation.id, { id: "draft_route_dispatch", content: { action: "make-image", instructions: "A red boat", inputs: [], settings: { profileId: profile.id, profileRevision: profile.revision, parameters: { aspectRatio: "16:9" }, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination: { projectId: project.id, conversationId: conversation.id } } });
   const preparation = new ActionPreparationService({ database, projects, conversations, drafts, contexts: new CreationContextService(database, projects), profiles: catalog, media: new MediaVersionIndex(database, projects) });
-  const receipts = new RequestIdempotencyService(new FirestoreCircuitExecutor(), { database });
   const calls = vi.fn(native.execute); const service = new WorkflowExecutionService(store, { ...native, execute: calls }, storage);
-  const app = express(); app.use(express.json()); app.use((req, _res, next) => { (req as RequestWithUser).user = { uid: "creator" }; next(); }); app.use("/requests", createCreationRequestRoutes({ preparation, receipts, execution: service })); app.use(errorHandler);
+  const app = express(); app.use(express.json()); app.use((req, _res, next) => { (req as RequestWithUser).user = { uid: "creator" }; next(); }); app.use("/requests", createCreationRequestRoutes(new CreationRequestLifecycle(database, preparation, service))); app.use(errorHandler);
   const prepared = await request(app).post("/requests/prepare").send({ projectId: project.id, draftId: draft.id }); expect(prepared.body.data.state).toBe("ready");
   const command = { projectId: project.id, submissionId: "submission_route_dispatch", draftId: draft.id, draftRevision: draft.revision, reviewedHash: prepared.body.data.reviewedHash };
   const first = await request(app).post("/requests").send(command); expect(first.status).toBe(200); await service.drain();
@@ -156,10 +156,30 @@ it("status/cancel/reconcile reject anonymous and cross-owner access without leak
   const captured = await accepted("authorization"); const service = new WorkflowExecutionService(store, native, storage);
   const app = express(); app.use(express.json()); app.use((req, _res, next) => { const owner = req.header("x-test-owner"); if (owner) (req as RequestWithUser).user = { uid: owner }; next(); });
   const preparation = { prepare: vi.fn(), prepareInTransaction: vi.fn() } as unknown as ActionPreparationService;
-  app.use("/requests", createCreationRequestRoutes({ preparation, receipts: { acceptWorkflow: vi.fn(), getWorkflowRequest: vi.fn() }, execution: service })); app.use(errorHandler);
+  app.use("/requests", createCreationRequestRoutes(new CreationRequestLifecycle(database, preparation, service))); app.use(errorHandler);
   for (const [method, suffix] of [["get", ""], ["post", "/cancel"], ["post", "/reconcile"], ["post", "/retry"]] as const) {
     expect((await request(app)[method](`/requests/${captured.id}${suffix}`).send({})).status).toBe(401);
     const denied = await request(app)[method](`/requests/${captured.id}${suffix}`).set("x-test-owner", "other").send({}); expect(denied.status).toBe(403); expect(JSON.stringify(denied.body)).not.toContain("Private instructions");
   }
   const invalid = await request(app).get("/requests/not-an-identity").set("x-test-owner", "creator"); expect(invalid.status).toBe(422);
+});
+
+it("repairs a native provider result after staging fails and the process restarts, without regeneration", async () => {
+  const { NativeWorkflowExecutor } = await import("@services/creation-requests/execution");
+  const captured = await accepted("native_staging");
+  const run = vi.fn(async () => ["https://replicate.delivery/confirmed.webp"]);
+  const reserve = vi.fn(async () => true);
+  const executor = new NativeWorkflowExecutor({ videos: null, ai: null, imageProviders: new Set(["replicate-flux-schnell"]), models: { runner: { run }, tools: { blackEditMask: vi.fn() } }, inputAccess: vi.fn(), spendGuard: { qualified: () => true, reserve } });
+  const materialize = vi.fn(async (_attempt: ExecutionAttempt, output: NativeOutput): Promise<VerifiedOutput> => {
+    expect(output).toMatchObject({ kind: "provider-media", sourceUrl: "https://replicate.delivery/confirmed.webp", mediaKind: "image" });
+    throw new Error("Staging is offline");
+  });
+  const first = new WorkflowExecutionService(store, executor, { materialize });
+  await first.start("creator", captured.id); await first.drain();
+  expect((await first.get("creator", captured.id)).slots[0]).toMatchObject({ outcome: "completed", delivery: "storage-failed" });
+  await first.drain();
+  const restarted = new WorkflowExecutionService(store, executor, storage);
+  await restarted.reconcile("creator", captured.id); await restarted.drain();
+  expect((await store.get("creator", captured.id)).slots[0]).toMatchObject({ outcome: "completed", delivery: "ready" });
+  expect(run).toHaveBeenCalledTimes(1); expect(reserve).toHaveBeenCalledTimes(1);
 });

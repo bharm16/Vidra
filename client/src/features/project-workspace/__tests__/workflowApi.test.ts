@@ -103,3 +103,11 @@ it("reads exports saved before edits were named \"edit N\" under the current nam
   expect(currentExportLabel(MediaVersionSchema.parse({ ...base, label: "Launch cut" })).label).toBe("Launch cut");
   expect(currentExportLabel(MediaVersionSchema.parse({ ...base, kind: "image", label: "Video · revision 6" })).label).toBe("Video · revision 6");
 });
+
+it("follows every library page and rejects a repeated continuation instead of silently truncating", async () => {
+  const rawRequest = vi.fn().mockResolvedValueOnce(success({ items: [project], nextCursor: "next-page" })).mockResolvedValueOnce(success({ items: [{ ...project, id: "project_later" }] }));
+  expect((await new WorkflowApi({ rawRequest }, "creator").listProjects()).map(row => row.id)).toEqual(["project_expected", "project_later"]);
+  expect(rawRequest).toHaveBeenLastCalledWith("/projects?page=true&cursor=next-page", { method: "GET" });
+  rawRequest.mockImplementation(async () => success({ items: [], nextCursor: "repeated" }));
+  await expect(new WorkflowApi({ rawRequest }, "creator").listProjects()).rejects.toThrow("repeated list cursor");
+});

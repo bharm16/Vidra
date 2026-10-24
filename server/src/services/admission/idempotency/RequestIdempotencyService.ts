@@ -3,7 +3,7 @@ import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import { getFirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
-import { acceptWorkflowRequest, readWorkflowRequest, type WorkflowAdmissionInput } from "./workflowReceipts";
+import { acceptWorkflowRequest, readWorkflowRequest, type WorkflowAdmissionInput } from "@services/creation-requests/receipts";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 
 const DEFAULT_PENDING_LOCK_TTL_MS = 6 * 60 * 1000;

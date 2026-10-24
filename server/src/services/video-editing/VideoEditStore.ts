@@ -1,3 +1,4 @@
+import { allDocuments } from "@services/firestore/WorkflowLists";
 import type { Firestore, Transaction, DocumentReference } from "firebase-admin/firestore";
 import { z } from "zod";
 import { CreateVideoEditSchema, SaveVideoEditSchema, VideoEditSchema, type VideoEdit, type VideoEditChange, type VideoValidationIssue } from "@shared/schemas/workflow/video-edit.schemas";
@@ -31,11 +32,11 @@ export class VideoEditStore {
   async get(owner: string, project: string, id: string): Promise<VideoEdit> { return this.database.runTransaction(transaction => this.readOwned(transaction, owner, project, id)); }
   async list(owner: string, project: string): Promise<VideoEdit[]> {
     await this.projects.get(owner, project);
-    const rows = await this.database.collection("creation_projects").doc(ProjectIdSchema.parse(project)).collection("video_edits").orderBy("updatedAt", "desc").limit(200).get();
+    const rows = { docs: await allDocuments(this.database.collection("creation_projects").doc(ProjectIdSchema.parse(project)).collection("video_edits").orderBy("updatedAt", "desc")) };
     return rows.docs.map(row => this.owned(owner, project, row.id, row.data())).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
   async revisions(owner: string, project: string, id: string): Promise<VideoEdit[]> {
-    await this.get(owner, project, id); const rows = await this.ref(project, id).collection("revisions").orderBy("revision", "desc").limit(1000).get();
+    await this.get(owner, project, id); const rows = { docs: await allDocuments(this.ref(project, id).collection("revisions").orderBy("revision", "desc")) };
     return rows.docs.map(row => this.ownedRevision(owner, project, id, Number(row.id), row.data())).sort((a, b) => a.revision - b.revision);
   }
   async revision(owner: string, project: string, id: string, revision: number, transaction?: Transaction): Promise<VideoEdit> {

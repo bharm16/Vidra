@@ -3,11 +3,9 @@ import { ApiClient } from "@/services/ApiClient";
 import { ApiErrorResponseSchema, ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 import { OwnerIdSchema, ProjectIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { PublishVersionSchema, PublicVersionSchema, VersionShareSchema, WorkflowShareIdSchema, type PublicVersion, type VersionShare } from "@shared/schemas/workflow/sharing.schemas";
-import { createWorkflowClient } from "@/features/project-workspace/api/workflowApi";
+import { OwnedRequest, OwnedRequestError as SharingApiError } from "@/services/http/OwnedRequest";
 
-export class SharingApiError extends Error {
-  constructor(message: string, readonly status: number) { super(message); this.name = "SharingApiError"; }
-}
+export { OwnedRequestError as SharingApiError } from "@/services/http/OwnedRequest";
 async function read<T extends z.ZodType>(response: Response, schema: T): Promise<z.output<T>> {
   const payload: unknown = await response.json().catch(() => undefined);
   if (!response.ok) {
@@ -24,27 +22,27 @@ export interface OwnedSharesPort {
 }
 export class OwnedSharesApi implements OwnedSharesPort {
   private readonly ownerId: string;
-  private readonly client: Pick<ApiClient, "rawRequest">;
-  constructor(ownerId: string, client?: Pick<ApiClient, "rawRequest">) { this.ownerId = OwnerIdSchema.parse(ownerId); this.client = client ?? createWorkflowClient(this.ownerId); }
+  private readonly transport: OwnedRequest;
+  constructor(ownerId: string, client?: Pick<ApiClient, "rawRequest">) { this.ownerId = OwnerIdSchema.parse(ownerId); this.transport = new OwnedRequest(this.ownerId, client); }
   private scoped(projectId: string): typeof VersionShareSchema {
     return VersionShareSchema.refine(share => share.ownerId === this.ownerId && share.projectId === projectId, "Sharing response belongs to another account or project.");
   }
   async list(project: string, signal?: AbortSignal): Promise<VersionShare[]> {
     const projectId = ProjectIdSchema.parse(project);
-    return read(await this.client.rawRequest(`/projects/${encodeURIComponent(projectId)}/shares`, { ...(signal ? { signal } : {}), fetchOptions: { cache: "no-store" } }), z.array(this.scoped(projectId)));
+    return this.transport.request(`/projects/${encodeURIComponent(projectId)}/shares`, z.array(this.scoped(projectId)), "GET", undefined, signal);
   }
   async publish(project: string, versionId: string, id: string): Promise<VersionShare> {
     const projectId = ProjectIdSchema.parse(project);
     const command = PublishVersionSchema.parse({ id, versionId });
-    return read(await this.client.rawRequest(`/projects/${encodeURIComponent(projectId)}/shares`, { method: "POST", body: command }), this.scoped(projectId).refine(share => share.id === id && share.versionId === versionId, "Publication does not match the exact requested version."));
+    return this.transport.request(`/projects/${encodeURIComponent(projectId)}/shares`, this.scoped(projectId).refine(share => share.id === id && share.versionId === versionId, "Publication does not match the exact requested version."), "POST", command);
   }
   async revoke(project: string, id: string): Promise<VersionShare> {
     const projectId = ProjectIdSchema.parse(project); WorkflowShareIdSchema.parse(id);
-    return read(await this.client.rawRequest(`/projects/${encodeURIComponent(projectId)}/shares/${encodeURIComponent(id)}/revoke`, { method: "POST", body: {} }), this.scoped(projectId).refine(share => share.id === id && share.revoked, "The link revocation was not confirmed."));
+    return this.transport.request(`/projects/${encodeURIComponent(projectId)}/shares/${encodeURIComponent(id)}/revoke`, this.scoped(projectId).refine(share => share.id === id && share.revoked, "The link revocation was not confirmed."), "POST", {});
   }
   async access(project: string, version: string, signal?: AbortSignal): Promise<{ url: string }> {
     const projectId = ProjectIdSchema.parse(project); const versionId = VersionIdSchema.parse(version);
-    return read(await this.client.rawRequest(`/projects/${encodeURIComponent(projectId)}/media/${encodeURIComponent(versionId)}/access`, { ...(signal ? { signal } : {}), fetchOptions: { cache: "no-store" } }), z.object({ url: z.url().refine(value => /^https?:$/.test(new URL(value).protocol)), expiresAt: z.iso.datetime().optional() }));
+    return this.transport.request(`/projects/${encodeURIComponent(projectId)}/media/${encodeURIComponent(versionId)}/access`, z.object({ url: z.url().refine(value => /^https?:$/.test(new URL(value).protocol)), expiresAt: z.iso.datetime().optional() }), "GET", undefined, signal);
   }
 }
 export interface PublicSharesPort {

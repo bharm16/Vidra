@@ -1,3 +1,4 @@
+import { DeadLetterStore } from "@services/video-generation/runtime/DeadLetterStore";
 import { registerPreviewRoutes } from "@config/routes/preview.registration";
 import { DIContainer } from "@infrastructure/DIContainer";
 import express from "express";
@@ -13,9 +14,9 @@ import { InMemorySessionStore } from "./test-helpers/inMemoryStores";
 import type { SessionRecord } from "@services/sessions/types";
 import type { PreviewRoutesServices } from "@routes/types";
 import { LegacyVideoSpendGuard, LegacyVideoSpendRefusedError } from "@services/video-generation/runtime/LegacyVideoSpendGuard";
-import { WorkflowPreflightError } from "@services/creation-requests/execution/types";
-import { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
-import { workflowRuntimeProfiles } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
+import { WorkflowPreflightError } from "@services/creation-requests/execution";
+import { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
+import { workflowRuntimeProfiles } from "@services/creation-requests/catalog";
 
 // The only module double is Firebase Admin, a process-external boundary. The
 // real HTTP handler, idempotency adapter, job adapter and session service run.
@@ -173,7 +174,7 @@ async function harness(): Promise<{
   services: PreviewRoutesServices;
 }> {
   const executor = new FirestoreCircuitExecutor({ maxRetries: 0 });
-  const jobs = new VideoJobStore(executor);
+  const jobs = new VideoJobStore(db as never, new DeadLetterStore(db as never, executor), executor);
   const receipts = new RequestIdempotencyService(executor);
   const sessions = new InMemorySessionStore();
   await sessions.save({

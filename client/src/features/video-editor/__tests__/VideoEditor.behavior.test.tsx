@@ -5,7 +5,7 @@ import { VideoEditSchema, VideoExportSchema, type EditCommand, type VideoEdit } 
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { applyEditCommand } from "@shared/video-edit/composition";
 import { VideoEditor } from "../VideoEditor";
-import { MediaViewer } from "@/features/project-workspace/components/MediaViewer";
+import { MediaViewer } from "@/features/project-workspace/viewer";
 
 const api = vi.hoisted(() => ({ list: vi.fn(), exports: vi.fn(), get: vi.fn(), command: vi.fn(), preview: vi.fn(), revisions: vi.fn() }));
 vi.mock("../api/videoEditorApi", () => ({ VideoEditorApi: class { list = api.list; exports = api.exports; get = api.get; command = api.command; preview = api.preview; revisions = api.revisions; } }));

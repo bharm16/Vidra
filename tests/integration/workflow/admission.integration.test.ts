@@ -3,12 +3,12 @@ import { ProjectStore } from "@services/projects/ProjectStore";
 import { ConversationStore } from "@services/projects/ConversationStore";
 import { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
 import { CreationContextService } from "@services/creation-context/CreationContextService";
-import { ActionPreparationService } from "@services/creation-requests/preparation/ActionPreparationService";
+import { ActionPreparationService } from "@services/creation-requests/preparation";
 import { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { createWorkflowTestDatabase } from "../helpers/workflow/emulator";
-import { acceptWorkflowRequest, readWorkflowRequest, workflowReceiptId } from "@services/admission/idempotency/workflowReceipts";
+import { acceptWorkflowRequest, readWorkflowRequest, workflowReceiptId } from "@services/creation-requests/receipts";
 import { sha256Hex } from "@utils/hash";
 
 const database = createWorkflowTestDatabase();

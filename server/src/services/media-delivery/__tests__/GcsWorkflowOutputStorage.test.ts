@@ -3,8 +3,8 @@ import { Readable } from "node:stream";
 import type { Bucket } from "@google-cloud/storage";
 import sharp from "sharp";
 import { expect, it, vi } from "vitest";
-import { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
-import { ExecutionAttemptSchema } from "@services/creation-requests/execution/types";
+import { WorkflowCapabilityCatalog } from "@services/creation-requests/catalog";
+import { ExecutionAttemptSchema } from "@services/creation-requests/execution";
 import { GcsWorkflowOutputStorage } from "../GcsWorkflowOutputStorage";
 
 const profile = new WorkflowCapabilityCatalog().get("flux-schnell")!;
@@ -43,4 +43,18 @@ it("rejects produced audio outside the owner's own audio folder before reading o
     await expect(storage.materialize(attempt, { kind: "audio", storagePath, model: "elevenlabs/v3", provider: "replicate" })).rejects.toMatchObject({ code: "access_denied" });
   }
   expect(copy).not.toHaveBeenCalled(); expect(sourceRead).not.toHaveBeenCalled();
+});
+
+it("reuses the exact remote result after a successful upload loses its response", async () => {
+  const { controlledNetwork } = await import("@services/owned-media/__tests__/controlledNetwork");
+  const bytes = await sharp({ create: { width: 19, height: 13, channels: 3, background: "red" } }).png().toBuffer();
+  let saved: { generation: string; size: number; contentType: string; metadata: Record<string, string> } | undefined;
+  const save = vi.fn(async (_bytes: Buffer, options: { metadata: { contentType: string; metadata: Record<string, string> } }) => { saved = { generation: "2", size: bytes.length, ...options.metadata }; throw new Error("Upload response was lost"); });
+  const bucket = { file: () => ({ getMetadata: async () => { if (!saved) throw Object.assign(new Error("Absent"), { code: 404 }); return [saved]; }, save, createReadStream: () => Readable.from([bytes]) }) } as unknown as Bucket;
+  const network = controlledNetwork(() => ({ headers: { "content-type": "application/octet-stream" }, body: Readable.from([bytes]) }));
+  const storage = new GcsWorkflowOutputStorage(bucket, null, network);
+  const output = { kind: "provider-media" as const, mediaKind: "image" as const, sourceUrl: "https://replicate.delivery/produced.png", model: "native", provider: "replicate" };
+  await expect(storage.materialize(attempt, output)).rejects.toThrow("Upload response was lost");
+  expect((await storage.materialize(attempt, output)).metadata).toMatchObject({ state: "verified", width: 19, height: 13 });
+  expect(save).toHaveBeenCalledTimes(1); expect(network.request).toHaveBeenCalledTimes(1);
 });

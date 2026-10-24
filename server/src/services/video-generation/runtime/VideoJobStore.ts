@@ -2,8 +2,8 @@ import type {
   RequestIdempotencyService,
   IdempotencyResponseSnapshot,
 } from "../../admission/idempotency/RequestIdempotencyService";
-import type { DocumentData, Query } from "firebase-admin/firestore";
-import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
+import type { DocumentData, Query, Firestore, CollectionReference } from "firebase-admin/firestore";
+import { admin } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
 import {
   FirestoreCircuitExecutor,
@@ -66,20 +66,20 @@ function resolveProviderFromRequest(request: VideoJobRequest): string {
 }
 
 export class VideoJobStore {
-  private readonly db = getFirestore();
-  private readonly collection = this.db.collection("video_jobs");
+  private readonly collection: CollectionReference;
   private readonly log = logger.child({ service: "VideoJobStore" });
   private readonly firestoreCircuitExecutor: FirestoreCircuitExecutor;
   private readonly defaultMaxAttempts: number;
-  private readonly dlq: DeadLetterStore;
 
   constructor(
+    private readonly db: Firestore,
+    private readonly dlq: Pick<DeadLetterStore, "enqueueDeadLetter">,
     firestoreCircuitExecutor: FirestoreCircuitExecutor = getFirestoreCircuitExecutor(),
     defaultMaxAttempts: number = DEFAULT_MAX_ATTEMPTS,
   ) {
     this.firestoreCircuitExecutor = firestoreCircuitExecutor;
     this.defaultMaxAttempts = defaultMaxAttempts;
-    this.dlq = new DeadLetterStore(firestoreCircuitExecutor);
+    this.collection = db.collection("video_jobs");
   }
 
   private async withTiming<T>(

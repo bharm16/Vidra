@@ -3,7 +3,7 @@ import { z } from "zod";
 import { CreateVideoExportSchema, EditCommandSchema, type EditCommand, type VideoCaptionValidationDetails, type VideoComposition, type VideoEdit, type VideoExport } from "@shared/schemas/workflow/video-edit.schemas";
 import { VideoEditorApi, type ExportEnvelope } from "../api/videoEditorApi";
 import { VideoCaptionValidationError } from "../api/VideoCaptionValidationError";
-import { WorkflowApiError } from "@/features/project-workspace/api/workflowApi";
+import { OwnedRequestError as WorkflowApiError } from "@/services/http/OwnedRequest";
 import { EMPTY_COMPOSITION } from "../state/editorState";
 
 const PendingChangeSchema = z.strictObject({ editId: z.string(), revision: z.number().int().positive(), operationId: z.string(), command: EditCommandSchema });

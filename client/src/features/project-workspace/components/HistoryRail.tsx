@@ -5,7 +5,7 @@ import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import { Button } from "@promptstudio/system/button";
 import { actionEntry } from "@shared/workflow/actionRegistry";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { slotProgress } from "./RequestResults";
 import { requestHistoryDescription } from "../state/requestDescription";
 

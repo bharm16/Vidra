@@ -1,4 +1,3 @@
-import type { NativeModelOutputStore } from "@services/media-delivery/GcsNativeModelOutputStore";
 import {
   NativeOutputSchema,
   WorkflowPreflightError,
@@ -13,7 +12,6 @@ import type {
 
 export interface ReplicateModelServices {
   runner: ModelRunner;
-  outputs: NativeModelOutputStore;
   tools: ModelInputTools;
 }
 
@@ -68,31 +66,10 @@ export async function executeReplicateModel(
       });
     }
     case "image":
-      return NativeOutputSchema.parse({
-        kind: "image",
-        storagePath: await services.outputs.storePicture(
-          slot.ownerId,
-          slot.slotId,
-          resultUrl(result),
-        ),
-        ...produced,
-      });
     case "audio":
-      return NativeOutputSchema.parse({
-        kind: "audio",
-        storagePath: await services.outputs.storeAudio(
-          slot.ownerId,
-          slot.slotId,
-          resultUrl(result),
-        ),
-        ...produced,
-      });
     case "video":
-      return NativeOutputSchema.parse({
-        kind: "video",
-        assetId: await services.outputs.storeVideo(resultUrl(result)),
-        ...produced,
-      });
+      // The lifecycle checkpoints this evidence before any download or upload.
+      return NativeOutputSchema.parse({ kind: "provider-media", mediaKind: definition.profile.output.kind, sourceUrl: resultUrl(result), ...produced });
     case "file":
       throw new Error(`${endpoint} declares an unsupported file output`);
   }

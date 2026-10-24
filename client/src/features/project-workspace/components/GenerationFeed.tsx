@@ -6,7 +6,7 @@ import type { SubmissionCheckpoint } from "@/repositories/workflow/DraftCheckpoi
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { Button } from "@promptstudio/system/button";
 import { actionEntry } from "@shared/workflow/actionRegistry";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { RequestSlotStatus, slotProgress } from "./RequestResults";
 import { RequestActions, type ConversationHistoryProps } from "./ConversationHistory";
 import { requestHistoryDescription } from "../state/requestDescription";

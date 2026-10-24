@@ -1,3 +1,6 @@
+import { authoringDraft, type AuthoringDraft } from "../state/authoringView";
+import { acceptAreaMask } from "@/features/project-sketch/api/projectSketchApi";
+import type { ProjectAreaMask } from "@shared/schemas/workflow/sketch.schemas";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { CreationDraftSchema, type CreationAction, type CreationDraft, type DraftContent, type DraftConflict, type DraftInput } from "@shared/schemas/workflow/draft.schemas";
@@ -6,7 +9,7 @@ import { SubmissionCommandSchema, type AcceptedRequest } from "@shared/schemas/w
 import type { Project, Conversation, ConversationListing } from "@shared/schemas/workflow/project.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import type { PreparedAction } from "@shared/schemas/workflow/preparation.schemas";
+import type { PreparedAction, PreparationReason } from "@shared/schemas/workflow/preparation.schemas";
 import { DraftCheckpointStore, type DraftCheckpoint, type SubmissionCheckpoint } from "@/repositories/workflow/DraftCheckpointStore";
 import { WorkflowApi, WorkflowApiError } from "../api/workflowApi";
 import { acknowledgeDraftBuffer, draftContent, draftHasSafeRetention, openDraftBuffer, redoDraftBuffer, sortDeviceCopies, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
@@ -21,6 +24,8 @@ import {
   mediaActionDraftContent,
   resolvePendingDraftInputs,
   retrySlotDraftContent,
+  reuseDraftContent,
+  withoutDraftInput,
   settleModel,
 } from "../state/inputBinding";
 import { autoSettings, resolveAuto, settingsForOutput, settingsForProfile } from "../state/capabilitySettings";
@@ -39,24 +44,27 @@ export function unusedConversation(rows: ConversationListing[], folderId?: strin
   return rows.filter(row => row.status === "active" && row.acceptanceSequence === 0 && row.folderId === folderId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0];
 }
 
+export type WorkspaceResource = "models" | "media" | "history" | "recovery" | "drafts" | "updates";
+
 export interface ProjectWorkspaceController {
-  view: WorkspaceViewState;
+  view: Omit<WorkspaceViewState, "drafts"> & { drafts: Record<string, Pick<AuthoringDraft, "record" | "content" | "sequence">> };
   project: Project | undefined;
   conversation: Conversation | undefined;
   conversations: ConversationListing[];
   media: MediaVersion[];
   profiles: CapabilityProfile[];
-  active: DraftBuffer | undefined;
+  active: AuthoringDraft | undefined;
+  resources: Record<WorkspaceResource, { state: "loading" | "ready" | "error"; message: string | undefined }>;
+  reuseSetup(request: AcceptedRequest, variation?: boolean): Promise<{ draftId: string; resultId: string | undefined } | undefined>;
+  useWords(request: AcceptedRequest): Promise<void>;
+  finishArea(source: MediaVersion, mask: ProjectAreaMask | undefined): Promise<MediaVersion | undefined>;
   loading: boolean;
   error: string | undefined;
   loadFailureStatus: number | undefined;
   resourceErrors: string[];
   deviceCopies: DraftCheckpoint[];
   recoverDeviceCopy(copy: DraftCheckpoint): Promise<void>;
-  localErrors: Record<string, string>;
-  saveErrors: Record<string, string>;
-  conflicts: Record<string, { current: CreationDraft; retained: DraftConflict }>;
-  prepared: PreparedAction | undefined;
+  blockingReasons: PreparationReason[];
   preparing: boolean;
   serviceUnavailable?: boolean;
   submissions: SubmissionCheckpoint[];
@@ -158,7 +166,11 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [loadFailureStatus, setLoadFailureStatus] = useState<number>();
-  const [resourceErrors, setResourceErrors] = useState<string[]>([]);
+  const [resourceProblems, setResourceProblems] = useState<Partial<Record<WorkspaceResource, string>>>({});
+  const resourceErrors = Object.values(resourceProblems).filter((problem): problem is string => problem !== undefined);
+  const resourceProblem = useCallback((resource: WorkspaceResource, problem: string | undefined): void => {
+    setResourceProblems(previous => { const next = { ...previous }; if (problem === undefined) delete next[resource]; else next[resource] = problem; return next; });
+  }, []);
   const [deviceCopies, setDeviceCopies] = useState<DraftCheckpoint[]>([]);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
@@ -198,7 +210,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   }, [beginSelectionIntent, emit, initialConversationId]);
   useEffect(() => {
     if (hydrationTarget.current.scopeKey !== scopeKey) { selectionIntent.current += 1; hydrationTarget.current = { scopeKey, conversationId: initialConversationRef.current, draftId: initialDraftTargetRef.current }; }
-    emit({ type: "reset" }); setProject(undefined); setConversation(undefined); setMedia([]); setPrepared(undefined); setRequestedConversationId(initialConversationRef.current); setSubmissions([]); setResourceErrors([]); setLocalErrors({}); setSaveErrors({}); setConflicts({});
+    emit({ type: "reset" }); setProject(undefined); setConversation(undefined); setMedia([]); setPrepared(undefined); setRequestedConversationId(initialConversationRef.current); setSubmissions([]); setResourceProblems({}); setLocalErrors({}); setSaveErrors({}); setConflicts({});
   }, [emit, scopeKey]);
   const checkpoint = useCallback(async (buffer: DraftBuffer): Promise<void> => {
     try {
@@ -217,7 +229,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const requestedDraftId = hydrationTarget.current.scopeKey === scopeKey ? hydrationTarget.current.draftId : undefined;
     const selectionCurrent = (): boolean => selectionIntent.current === intent;
     void (async (): Promise<void> => {
-      setLoading(true); setError(undefined); setLoadFailureStatus(undefined); setResourceErrors([]);
+      setLoading(true); setError(undefined); setLoadFailureStatus(undefined); setResourceProblems({});
       try {
         const owned = await api.getProject(projectId, abort.signal);
         if (owned.ownerId !== ownerId) throw new Error("The project belongs to a different account.");
@@ -226,8 +238,11 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
         const rows = await api.listConversations(projectId, abort.signal);
         if (rows.some(row => row.ownerId !== ownerId || row.projectId !== projectId)) throw new Error("The conversation list does not belong to this project and account.");
         let chosen: ConversationListing | undefined = requestedConversationId ? rows.find(row => row.id === requestedConversationId) : library ? unusedConversation(rows, folderId) : rows.find(row => row.status === "active") ?? rows[0];
-        // A missing conversation is not a failed load: retrying cannot find it (404).
-        if (requestedConversationId && !chosen) throw Object.assign(new Error("This conversation is unavailable in the current project."), { status: 404 });
+        // An exact target is read independently of browsing; a failed target never opens somebody else's default work.
+        if (requestedConversationId && !chosen) {
+          chosen = await api.getConversation(projectId, requestedConversationId, abort.signal);
+          rows.push(chosen);
+        }
         if (!chosen && library && owned.status === "active") {
           // Reusing an unused conversation keeps repeat visits from piling up empty rows.
           const created = await api.createConversation(projectId, id("conversation"), DEFAULT_CONVERSATION_NAME, folderId);
@@ -262,7 +277,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
             const { recoverable, settled } = sortDeviceCopies(copies, ownedDrafts, chosen.id);
             if (!abort.signal.aborted && inScope()) setDeviceCopies(recoverable);
             for (const copy of settled) void device.remove(ownerId, projectId, copy.draftId).catch(() => undefined);
-          } catch (failure) { if (!abort.signal.aborted && inScope()) setResourceErrors(previous => [...previous, `Device recovery copies could not load. ${message(failure)}`]); }
+          } catch (failure) { if (!abort.signal.aborted && inScope()) resourceProblem("recovery", `Device recovery copies could not load. ${message(failure)}`); }
           try {
             const history = await api.history(projectId, chosen.id, abort.signal);
             if (abort.signal.aborted || !inScope()) return;
@@ -278,21 +293,21 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
                 freshDraftIds.current.add(created.id);
                 const initial = viewRef.current.drafts[created.id] ?? openDraftBuffer(created);
                 if (selectionCurrent() && !viewRef.current.activeDraftId && ["open", "parked"].includes(created.status)) emit({ type: "open-draft", buffer: initial });
-              } catch (failure) { if (!abort.signal.aborted && inScope() && selectionCurrent()) setResourceErrors(previous => [...previous, `The empty request could not open. Retry loading. ${message(failure)}`]); }
+              } catch (failure) { if (!abort.signal.aborted && inScope() && selectionCurrent()) resourceProblem("drafts", `The empty request could not open. Retry loading. ${message(failure)}`); }
             }
-          } catch (failure) { if (!abort.signal.aborted && inScope()) setResourceErrors(previous => [...previous, `History could not load. ${message(failure)}`]); }
+          } catch (failure) { if (!abort.signal.aborted && inScope()) resourceProblem("history", `History could not load. ${message(failure)}`); }
         }
         const auxiliary = await Promise.allSettled([api.profiles(abort.signal), api.media(projectId, abort.signal), device.submissions(ownerId)]);
         if (abort.signal.aborted || !inScope()) return;
         if (auxiliary[0]?.status === "fulfilled") setProfiles(auxiliary[0].value);
         if (auxiliary[1]?.status === "fulfilled") setMedia(auxiliary[1].value);
         if (auxiliary[2]?.status === "fulfilled") setSubmissions(auxiliary[2].value.filter(item => item.projectId === projectId && item.state === "unknown"));
-        auxiliary.forEach((result, index) => { if (result.status === "rejected") setResourceErrors(previous => [...previous, `${["Models", "Media", "Unconfirmed requests"][index]} could not load. ${message(result.reason)}`]); });
+        auxiliary.forEach((result, index) => { if (result.status === "rejected") resourceProblem((["models", "media", "recovery"] as const)[index] ?? "recovery", `${["Models", "Media", "Unconfirmed requests"][index]} could not load. ${message(result.reason)}`); });
       } catch (failure) { if (!abort.signal.aborted && inScope() && selectionCurrent()) { setError(message(failure)); setLoadFailureStatus(failure instanceof Error && "status" in failure && typeof failure.status === "number" ? failure.status : typeof navigator !== "undefined" && navigator.onLine === false || failure instanceof TypeError ? 0 : 502); } }
       finally { if (!abort.signal.aborted && inScope()) setLoading(false); }
     })();
     return () => { abort.abort(); mounted.current = false; };
-  }, [api, device, emit, folderId, inScope, library, loadVersion, ownerId, projectId, requestedConversationId, scopeKey]);
+  }, [api, device, emit, folderId, inScope, library, loadVersion, ownerId, projectId, requestedConversationId, scopeKey, resourceProblem]);
 
   const flushId = useCallback(async (draftId: string): Promise<boolean> => {
     // Recheck after each awaited save: several callers can resume together.
@@ -324,6 +339,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
   }, [api, checkpoint, emit, inScope, ownerId, projectId]);
 
   const active = view.activeDraftId ? view.drafts[view.activeDraftId] : undefined;
+  const activeView = useMemo(() => active ? authoringDraft(active, { device: localErrors[active.record.id], server: saveErrors[active.record.id] }) : undefined, [active, localErrors, saveErrors]);
   useEffect(() => { if (!active || active.acknowledgedSequence === active.sequence) return; const timeout = setTimeout(() => { void flushId(active.record.id); }, 500); return () => clearTimeout(timeout); }, [active, flushId]);
 
   const edit = useCallback((content: DraftContent, typingGroup?: string): void => {
@@ -777,20 +793,59 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
           setMedia(mediaRef.current);
         }
         const rejected = [...historyResults, ...mediaResults, ...statusResults].find(result => result.status === "rejected");
-        setResourceErrors(previous => rejected ? [...previous.filter(problem => !problem.startsWith("Request updates")), "Request updates could not load. Existing work is retained; checking again."] : previous.filter(problem => !problem.startsWith("Request updates")));
+        resourceProblem("updates", rejected ? "Request updates could not load. Existing work is retained; checking again." : undefined);
         if (observed.length) emit({ type: "observe-requests", requests: observed });
 
-      } catch (failure) { if (!abort.signal.aborted && inScope()) setResourceErrors(previous => [...previous.filter(problem => !problem.startsWith("Request updates")), `Request updates could not load. ${message(failure)}`]); }
+      } catch (failure) { if (!abort.signal.aborted && inScope()) resourceProblem("updates", `Request updates could not load. ${message(failure)}`); }
       finally { if (!abort.signal.aborted && inScope()) timer = setTimeout(() => { void tick(); }, 2000); }
     };
     void tick();
     return () => { abort.abort(); if (timer) clearTimeout(timer); };
-  }, [api, checkpoint, conversation, emit, flushId, inScope, ownerId, pollingIds, projectId]);
+  }, [api, checkpoint, conversation, emit, flushId, inScope, ownerId, pollingIds, projectId, resourceProblem]);
+
+  const restoring = useRef(false);
+  const restoreWords = useCallback(async (request: AcceptedRequest, mode: "setup" | "variation" | "words"): Promise<{ draftId: string; resultId: string | undefined } | undefined> => {
+    if (restoring.current || request.ownerId !== ownerId || request.projectId !== projectId) return undefined;
+    const conversation = conversationRef.current;
+    const draftId = viewRef.current.activeDraftId;
+    const captured = draftId ? viewRef.current.drafts[draftId] : undefined;
+    if (!conversation) return undefined;
+    const current = (): boolean => inScope() && conversationRef.current?.id === conversation.id && viewRef.current.activeDraftId === draftId && (!captured || viewRef.current.drafts[captured.record.id]?.sequence === captured.sequence);
+    restoring.current = true;
+    try {
+      await Promise.all(Object.values(viewRef.current.drafts).filter(buffer => buffer.acknowledgedSequence !== buffer.sequence).map(buffer => flushId(buffer.record.id)));
+      if (!current() || !Object.values(viewRef.current.drafts).every(draftHasSafeRetention)) return undefined;
+      const content = mode === "words" ? { ...(captured?.content ?? request.snapshot), instructions: request.snapshot.instructions, destination: { projectId: ProjectIdSchema.parse(projectId), conversationId: conversation.id } } : reuseDraftContent(request, conversation.projectId, conversation.id, mode === "variation");
+      const record = await api.createDraft(projectId, conversation.id, id("draft"), content);
+      if (!current()) return undefined;
+      beginSelectionIntent(); emit({ type: "open-draft", buffer: openDraftBuffer(record) }); setPrepared(undefined);
+      return { draftId: record.id, resultId: request.slots.find(slot => slot.versionId === viewRef.current.viewedVersionId)?.versionId ?? request.slots.find(slot => slot.versionId && mediaRef.current.some(version => version.id === slot.versionId))?.versionId };
+    } finally { restoring.current = false; }
+  }, [api, beginSelectionIntent, emit, flushId, inScope, ownerId, projectId]);
+
+  const finishArea = useCallback(async (source: MediaVersion, mask: ProjectAreaMask | undefined): Promise<MediaVersion | undefined> => {
+    const draftId = viewRef.current.activeDraftId;
+    const captured = draftId ? viewRef.current.drafts[draftId] : undefined;
+    const primary = captured?.content.inputs.find(input => input.role === "primary");
+    if (!captured || primary?.state !== "resolved" || primary.versionId !== source.id) throw new Error("This picture is no longer the one being edited. Choose Edit a region again.");
+    if (!mask) { const bound = captured.content.inputs.find(input => input.role === "mask"); if (bound) edit(withoutDraftInput(captured.content, profiles, bound)); return undefined; }
+    const version = await acceptAreaMask(ownerId, projectId, mask);
+    if (!inScope()) return undefined;
+    mediaEpoch.current += 1;
+    mediaRef.current = [...mediaRef.current.filter(row => row.id !== version.id), version]; setMedia(mediaRef.current);
+    // An arriving save remains media, but may not edit a different or independently changed draft.
+    if (viewRef.current.activeDraftId === captured.record.id && viewRef.current.drafts[captured.record.id]?.sequence === captured.sequence) applyMediaInput(version, "mask");
+    return version;
+  }, [applyMediaInput, edit, inScope, ownerId, profiles, projectId]);
 
   const changeHistory = useCallback((direction: "undo" | "redo"): void => { const draftId = viewRef.current.activeDraftId; const current = draftId ? viewRef.current.drafts[draftId] : undefined; if (!current) return; const buffer = direction === "undo" ? undoDraftBuffer(current) : redoDraftBuffer(current); emit({ type: "update-buffer", buffer }); setPrepared(undefined); void checkpoint(buffer); }, [checkpoint, emit]);
 
+  const resourceState = (resource: WorkspaceResource): ProjectWorkspaceController["resources"][WorkspaceResource] => ({ state: resourceProblems[resource] ? "error" : loading ? "loading" : "ready", message: resourceProblems[resource] });
+
   return {
-    view, project, conversation, conversations, media, profiles, active, loading, error, loadFailureStatus, resourceErrors, deviceCopies, localErrors, saveErrors, conflicts, prepared, preparing, serviceUnavailable, submissions, resendableSubmissions,
+    view, project, conversation, conversations, media, profiles, active: activeView, loading, error, loadFailureStatus, resourceErrors,
+    resources: { models: resourceState("models"), media: resourceState("media"), history: resourceState("history"), recovery: resourceState("recovery"), drafts: resourceState("drafts"), updates: resourceState("updates") },
+    reuseSetup: (request, variation = false) => restoreWords(request, variation ? "variation" : "setup"), useWords: async request => { await restoreWords(request, "words"); }, finishArea, deviceCopies, blockingReasons: prepared?.state === "blocked" ? prepared.reasons : [], preparing, serviceUnavailable, submissions, resendableSubmissions,
     followupNotice: followupNotice?.draftId === active?.record.id && !active?.content.inputs.length ? followupNotice : undefined,
     recoverDeviceCopy: async copy => { if (copy.ownerId !== ownerId || copy.projectId !== projectId || !conversation) return; const record = await api.createDraft(projectId, conversation.id, id("draft"), { ...copy.content, destination: { projectId: ProjectIdSchema.parse(projectId), conversationId: conversation.id } }); emit({ type: "open-draft", buffer: openDraftBuffer(record) }); },
     reload: () => { setServiceUnavailable(false); setLoadVersion(version => version + 1); }, edit, openDraft: record => { if (record.ownerId !== ownerId || record.projectId !== projectId || record.conversationId !== conversationRef.current?.id) return; beginSelectionIntent(); emit({ type: "open-draft", buffer: viewRef.current.drafts[record.id] ?? openDraftBuffer(record) }); setPrepared(undefined); }, newDraft, chooseProfile, chooseAuto,

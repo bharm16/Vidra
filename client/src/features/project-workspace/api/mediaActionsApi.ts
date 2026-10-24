@@ -3,23 +3,21 @@ import { ApiErrorResponseSchema, ApiSuccessResponseSchema } from "@shared/schema
 import { ProjectIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { ChangeMediaSchema, DeriveFrameSchema } from "@shared/schemas/workflow/management.schemas";
 import { MediaVersionSchema, type MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { createWorkflowClient, WorkflowApiError } from "./workflowApi";
+import { OwnedRequest } from "@/services/http/OwnedRequest";
 
 /** Exact-version actions share the workspace's account-bound transport. */
 export class MediaActionsApi {
-  private readonly client;
+  private readonly transport: OwnedRequest;
   constructor(private readonly ownerId: string, private readonly projectId: string) {
     ProjectIdSchema.parse(projectId);
-    this.client = createWorkflowClient(ownerId);
+    this.transport = new OwnedRequest(ownerId);
   }
   private owned() { return MediaVersionSchema.refine(row => row.ownerId === this.ownerId && row.projectId === this.projectId, "The media response belongs to different work."); }
   private async request<T extends z.ZodType>(versionId: string, suffix: string, schema: T, method: string, body?: unknown): Promise<z.output<T>> {
     VersionIdSchema.parse(versionId);
-    const response = await this.client.rawRequest(`/projects/${encodeURIComponent(this.projectId)}/media/${encodeURIComponent(versionId)}${suffix}`, { method, ...(body === undefined ? {} : { body }) });
-    const value: unknown = await response.json().catch(() => undefined);
-    if (!response.ok) { const parsed = ApiErrorResponseSchema.safeParse(value); throw new WorkflowApiError(parsed.success ? parsed.data.error : "This media action was not confirmed.", response.status, parsed.success ? parsed.data.code : undefined); }
-    return schema.parse(ApiSuccessResponseSchema(z.unknown()).parse(value).data);
+    return this.transport.request(`/projects/${encodeURIComponent(this.projectId)}/media/${encodeURIComponent(versionId)}${suffix}`, schema, method, body);
   }
+
   change(versionId: string, patch: { label?: string; hidden?: boolean; favorite?: boolean }): Promise<MediaVersion> {
     return this.request(versionId, "", this.owned().refine(row => row.id === versionId), "PATCH", ChangeMediaSchema.parse(patch));
   }

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@promptstudio/system/dialog";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
-import { MediaThumbnail } from "@/features/project-workspace/components/MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import "../imports.css";
 
