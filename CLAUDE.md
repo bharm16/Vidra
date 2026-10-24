@@ -9,6 +9,7 @@ Use current source, tests and `CONTEXT.md` for implementation scope. ADRs preser
 Packages are deep modules: read [packages/README.md](packages/README.md) before adding or importing one.
 
 - Client and server import their own code and `shared/`; neither imports the other.
+- Workspace and creation-request subfolders are private. Other modules and external tests use their named root entry points; keep composition, transaction ordering and persistence layouts inside the owning module.
 - Shared code is pure types, schemas, constants and data utilities, without framework, network, database or filesystem dependencies. Run `npx tsc --noEmit` immediately after a shared contract change, before changing other files.
 - Services use constructor injection and canonical domain imports. `container.resolve()` belongs only in DI configuration and route factories.
 - Text LLM calls go through `aiService`. Cross-domain coordination belongs in a route factory or an orchestrator with explicit ports.
@@ -32,7 +33,8 @@ Named asset/trigger libraries, depth/convergence, continuity generation, storybo
 - Browsing and selection preserve working words/settings. Restore them through explicit **Reuse setup**.
 - Repeatedly used panels persist across context changes; opening an unrelated panel does not close them.
 - Dispatch snapshots visible words, inputs, model, settings and destination. A retry after a lost response reuses its authoritative receipt and original take identity.
-- Durable completion precedes attachment. Attachment repair reuses stored media/destination without regeneration or refunds.
+- Durable completion precedes attachment. Checkpoint confirmed provider-result evidence before downloading or uploading it. Attachment repair reuses the original result/destination without regeneration or refunds.
+- Complete library/history reads traverse explicit owner-scoped pages; bounded queries must never silently masquerade as a complete list.
 - Preserve the Studio daily spend cap and ledger that bound every native request, and the Sketch bounds. Free testing does not authorize paid offerings, provider spend or schedules.
 
 The URL prefix `/api/preview` remains compatible with saved media. Say picture, clip or take for artifacts. Draft/render is a model tier, not lifecycle. Generation offers come from `shared/videoModels.ts`; historical ids and prompt compilation have separate contracts.
@@ -41,7 +43,7 @@ The URL prefix `/api/preview` remains compatible with saved media. Say picture, 
 
 Preserve ADRs as project records. Cleanup must not delete or replace their history; describe current implementation status in `CONTEXT.md`.
 
-Read impacted modules/contracts first. Follow the `studio/` frontend pattern and the thin orchestrator/specialized services pattern in `prompt-optimization/`. Split by responsibility, not line count. Preserve independently owned work and credential/environment files.
+Read impacted modules/contracts first. Follow the workspace authoring/history/selection pattern and the thin orchestrator/specialized services pattern in `prompt-optimization/`. Split by responsibility, not line count. Preserve independently owned work and credential/environment files.
 
 Use explicit exported/async return types, `unknown` and guards instead of `any`, and Zod at input/persistence boundaries. Prefer `undefined` except for deliberate nullable wire fields. If a type fix needs to widen more than three interfaces, find the root cause. Keep dependency upgrades and test infrastructure changes separate from production changes.
 
@@ -72,6 +74,7 @@ For performance, establish a working baseline and measure one change at a time. 
 
 ## References
 
+- [Creation and workspace seams](docs/architecture/creation-workspace-seams.md).
 - [Service boundaries](docs/architecture/SERVICE_BOUNDARIES.md).
 - [Media lifecycle](docs/architecture/admission-media-lifecycle.md).
 - [Page 21 adoption](docs/design/page21-component-migration.md): current components/state journeys. Pages 22/23 do not authorize a new draft ownership model.

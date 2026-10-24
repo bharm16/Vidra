@@ -1,3 +1,7 @@
+import { relatedMediaVersions } from "@shared/workflow/mediaLineage";
+export { relatedMediaVersions } from "@shared/workflow/mediaLineage";
+import { allPages, listPage, allDocuments, type ListOptions } from "@services/firestore/WorkflowLists";
+import type { WorkflowPage } from "@shared/schemas/workflow/page.schemas";
 import type { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
 import type { z } from "zod";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
@@ -19,30 +23,6 @@ export interface PublishMediaVersionOptions {
   verifyExisting?: (existing: MediaVersion, candidate: MediaVersion) => void;
   beforeCreate?: () => void;
   afterCreate?: (version: MediaVersion) => void;
-}
-
-/** Matches the version panel: references, animation inputs and copies never imply an edit parent. */
-export function relatedMediaVersions(versions: MediaVersion[], selectedId: string): MediaVersion[] {
-  const byId = new Map<string, MediaVersion>(versions.map(version => [version.id, version]));
-  const root = (version: MediaVersion): string => {
-    let current = version;
-    const seen = new Set<string>([current.id]);
-    for (;;) {
-      const parent = current.sourceInputs.find(
-        input => (input.role === "primary" || input.role === "clip") && input.versionId !== current.id && byId.get(input.versionId)?.kind === current.kind,
-      );
-      if (!parent) return current.id;
-      if (seen.has(parent.versionId)) return [...seen].sort()[0] ?? current.id;
-      const next = byId.get(parent.versionId);
-      if (!next) return current.id;
-      seen.add(next.id);
-      current = next;
-    }
-  };
-  const selected = byId.get(selectedId);
-  if (!selected) return [];
-  const selectedRoot = root(selected);
-  return versions.filter(version => root(version) === selectedRoot);
 }
 
 /** Authoritative persistence and read model for immutable MediaVersion records; storage authorization remains in the media port. */
@@ -67,15 +47,18 @@ export class MediaVersionIndex {
   }
 
   async list(ownerId: string, project: string): Promise<MediaVersion[]> {
+    return (await allPages(options => this.page(ownerId, project, options))).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  }
+
+  async page(ownerId: string, project: string, options: ListOptions = {}): Promise<WorkflowPage<MediaVersion>> {
     const projectId = ProjectIdSchema.parse(project);
     await this.projects.get(ownerId, projectId);
-    const rows = await this.database.collection("creation_projects").doc(projectId).collection("media_versions").limit(200).get();
-    return rows.docs.map(row => this.owned(ownerId, projectId, row.id, row.data())).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+    return listPage(this.database.collection("creation_projects").doc(projectId).collection("media_versions"), `media:${ownerId}:${projectId}`, row => this.owned(ownerId, projectId, row.id, row.data()), options);
   }
 
   async listRecoveries(owner: string): Promise<MediaVersion[]> {
     const ownerId = OwnerIdSchema.parse(owner);
-    const rows = await this.database.collection("creation_recovery").doc(ownerId).collection("media_versions").limit(200).get();
+    const rows = { docs: await allDocuments(this.database.collection("creation_recovery").doc(ownerId).collection("media_versions")) };
     return rows.docs.map(row => {
       const version = MediaVersionSchema.parse(row.data());
       if (version.ownerId !== ownerId || version.id !== row.id) throw new WorkflowError("access_denied", "This result is unavailable.");

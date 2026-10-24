@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type ReactElement } from "react";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import type { SubmissionCheckpoint } from "@/repositories/workflow/DraftCheckpointStore";
+import type { PendingSubmission } from "../state/authoringView";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { Button } from "@promptstudio/system/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@promptstudio/system/dropdown-menu";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { RequestSlotStatus, slotProgress } from "./RequestResults";
 import "./history-fidelity.css";
 
@@ -13,9 +13,9 @@ export interface ConversationHistoryProps {
   requests: AcceptedRequest[];
   media: MediaVersion[];
   selected: string | undefined;
-  pending: SubmissionCheckpoint[];
+  pending: PendingSubmission[];
   onView(versionId: string): void;
-  onRecover(submission: SubmissionCheckpoint): void;
+  onRecover(submissionId: string): void;
   access(versionId: string): Promise<{ url: string }>;
   onRetry?(request: AcceptedRequest, slotId: string): void;
   onCancel?(request: AcceptedRequest): void;
@@ -125,6 +125,6 @@ export function ConversationHistory(props: ConversationHistoryProps): ReactEleme
       return <div className="vf-result-slot" key={slot.id} data-slot-id={slot.id}>{slot.text !== undefined && slot.outcome === "completed" ? <div className="vf-text-answer"><p>{slot.text}</p>{onApplyText ? <FreshButton tone="quiet" onClick={() => onApplyText(request, slot.text ?? "")}>Use these words</FreshButton> : null}</div> : version ? <FreshButton tone="quiet" className="vf-result-card focus-visible:!outline" data-selected={showSelection || undefined} aria-label={`View ${version.label}`} aria-pressed={version.id === selected} onClick={() => onView(version.id)}><MediaThumbnail version={version} access={access} className="vf-result-thumbnail" /></FreshButton> : <RequestSlotStatus request={request} slot={slot} presentation={isImageBatch(request) || running && !runningClip || failedPicture ? "tile" : hasPriorMedia ? "inline" : "card"} onInspect={onInspectRequest && isImageBatch(request) ? () => onInspectRequest(request) : undefined} onRetry={onRetry} caption={runningClip ? request.snapshot.instructions : undefined} />}</div>;
     })}</div>{newlyReadyVersionId && versions.has(newlyReadyVersionId) && request.slots.some(slot => slot.versionId === newlyReadyVersionId && slot.outcome === "completed" && slot.delivery === "ready") ? <div className="vf-history-completion" role="status"><div><img src="/design-assets/prompt-history/ready.svg" alt="" /><p>{selected === newlyReadyVersionId ? "Ready" : "New version ready"}</p></div>{selected !== newlyReadyVersionId ? <FreshButton className="vf-history-view-result" onClick={() => onView(newlyReadyVersionId)}>View result</FreshButton> : null}</div> : null}</article>;
     })}
-    {pending.filter(item => !requests.some(request => request.executionDraftId === item.command.draftId && request.executionDraftRevision === item.command.draftRevision)).map(submission => <article className="vf-unknown-submission" key={submission.submissionId}><p>Checking submission…</p><FreshButton tone="quiet" onClick={() => onRecover(submission)}>Check again</FreshButton></article>)}
+    {pending.filter(item => !requests.some(request => request.executionDraftId === item.draftId && request.executionDraftRevision === item.draftRevision)).map(submission => <article className="vf-unknown-submission" key={submission.submissionId}><p>Checking submission…</p><FreshButton tone="quiet" onClick={() => onRecover(submission.submissionId)}>Check again</FreshButton></article>)}
   </div>;
 }

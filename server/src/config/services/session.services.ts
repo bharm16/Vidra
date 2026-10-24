@@ -1,3 +1,4 @@
+import { getFirestore } from "@infrastructure/firebaseAdmin";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { SessionService } from "@services/sessions/SessionService";
 import { SessionStore } from "@services/sessions/SessionStore";
@@ -12,7 +13,7 @@ import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCirc
  * the file name reflects what's inside.
  */
 export function registerSessionServices(container: DIContainer): void {
-  container.register("sessionStore", () => new SessionStore(), []);
+  container.register("sessionStore", () => new SessionStore(getFirestore()), []);
 
   container.register(
     "sessionService",

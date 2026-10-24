@@ -1,3 +1,5 @@
+import { allPages, listPage, allDocuments, type ListOptions } from "@services/firestore/WorkflowLists";
+import type { WorkflowPage } from "@shared/schemas/workflow/page.schemas";
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
 import { ConversationSchema, CreateConversationCommandSchema, isLibraryProject, type Conversation, type Project } from "@shared/schemas/workflow/project.schemas";
@@ -75,11 +77,13 @@ export class ConversationStore {
   }
 
   async list(ownerId: string, id: string): Promise<Conversation[]> {
+    return (await allPages(options => this.page(ownerId, id, options))).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  }
+
+  async page(ownerId: string, id: string, options: ListOptions = {}): Promise<WorkflowPage<Conversation>> {
     const projectId = ProjectIdSchema.parse(id);
     await this.projects.get(ownerId, projectId);
-    // Newest first, so a busy library never drops recent work past the cap.
-    const result = await this.database.collection("creation_projects").doc(projectId).collection("conversations").orderBy("updatedAt", "desc").limit(200).get();
-    return result.docs.map(doc => this.owned(ownerId, projectId, doc.id, doc.data())).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+    return listPage(this.database.collection("creation_projects").doc(projectId).collection("conversations"), `conversations:${ownerId}:${projectId}`, row => this.owned(ownerId, projectId, row.id, row.data()), options);
   }
 
   async readOwned(transaction: Transaction, ownerId: string, id: string, conversation: string): Promise<Conversation> {

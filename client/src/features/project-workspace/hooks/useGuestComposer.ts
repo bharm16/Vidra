@@ -1,3 +1,4 @@
+import { authoringDraft } from "../state/authoringView";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CreationDraftSchema, type CreationAction, type CreationDraft, type DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
@@ -94,7 +95,7 @@ export function useGuestComposer(intent: string | null, store: GuestDraftStore =
   const keep = useCallback((): string => { persist(bufferRef.current); return guest.id; }, [guest.id, persist]);
 
   const controller = useMemo((): PromptComposerProps["controller"] => ({
-    active: buffer, loading: false, profiles, media: [], localErrors, saveErrors: {}, prepared: undefined, preparing: false,
+    active: authoringDraft(buffer, { device: localErrors[buffer.record.id] }), loading: false, profiles, media: [], blockingReasons: [], preparing: false,
     project: { status: "active" }, conversation: { status: "active" }, view: { requests: [] },
     edit,
     newDraft: async action => changeAction(action),

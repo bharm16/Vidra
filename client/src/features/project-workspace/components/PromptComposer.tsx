@@ -2,7 +2,7 @@ import { Button } from "@promptstudio/system/button";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
 import { MAX_DRAFT_WORDS, type CreationAction, type DraftInput } from "@shared/schemas/workflow/draft.schemas";
-import type { DraftBuffer } from "../state/draftBuffer";
+import type { AuthoringDraft } from "../state/authoringView";
 import type { ProjectWorkspaceController } from "../hooks/useProjectWorkspace";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { applyPhraseChange, bindPhrase, reviewPhraseChange, type PhraseBinding } from "../state/phraseChange";
@@ -40,7 +40,7 @@ function inputTileLabel(role: OfferedInputRole, kinds: ReadonlyArray<"image" | "
   return kinds.includes("image") ? "Picture" : kinds.includes("audio") ? "Clip or audio" : "Clip";
 }
 const SuggestionResponseSchema = z.object({ suggestions: z.array(z.union([z.string(), z.object({ text: z.string() }), z.object({ suggestion: z.string() })])), isPlaceholder: z.boolean().optional() });
-function contextKey(buffer: DraftBuffer): string { return canonicalJson({ action: buffer.content.action, inputs: buffer.content.inputs, settings: buffer.content.settings, context: buffer.content.context }); }
+function contextKey(buffer: AuthoringDraft): string { return canonicalJson({ action: buffer.content.action, inputs: buffer.content.inputs, settings: buffer.content.settings, context: buffer.content.context }); }
 
 interface HighlightInteraction {
   writable: boolean;
@@ -75,7 +75,7 @@ function highlightedWords(text: string, spans: LabeledSpan[], interaction: Highl
 }
 
 export interface PromptComposerProps {
-  controller: Pick<ProjectWorkspaceController, "active" | "loading" | "profiles" | "media" | "localErrors" | "saveErrors" | "prepared" | "preparing" | "newDraft" | "edit" | "flush" | "chooseProfile" | "undo" | "redo" | "access"> & Partial<Pick<ProjectWorkspaceController, "chooseAuto" | "parkedInputs" | "discardParkedInput">> & {
+  controller: Pick<ProjectWorkspaceController, "active" | "loading" | "profiles" | "media" | "blockingReasons" | "preparing" | "newDraft" | "edit" | "flush" | "chooseProfile" | "undo" | "redo" | "access"> & Partial<Pick<ProjectWorkspaceController, "chooseAuto" | "parkedInputs" | "discardParkedInput">> & {
     project: Pick<NonNullable<ProjectWorkspaceController["project"]>, "status"> | undefined;
     conversation: Pick<NonNullable<ProjectWorkspaceController["conversation"]>, "status"> | undefined;
     view: Pick<ProjectWorkspaceController["view"], "requests">;
@@ -347,8 +347,8 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   const failedPendingInput = buffer.content.inputs.some(input => input.state === "pending" && controller.view.requests.some(request => request.id === input.requestId && request.slots.some(slot => slot.id === input.slotId && (slot.outcome === "failed" || slot.outcome === "cancelled" || slot.delivery === "lost"))));
   const waitingForImage = buffer.content.inputs.some(input => input.state === "pending" && input.role === "primary" && !controller.view.requests.some(request => request.id === input.requestId && request.slots.some(slot => slot.id === input.slotId && (slot.outcome === "failed" || slot.outcome === "cancelled" || slot.delivery === "lost" || slot.outcome === "completed" && slot.delivery === "ready" && slot.versionId !== undefined))));
   const matchingBinding = binding?.draftId === buffer.record.id && binding.contextKey === contextKey(buffer);
-  const retentionAtRisk = Boolean(controller.localErrors[buffer.record.id] && controller.saveErrors[buffer.record.id] && buffer.checkpointSequence !== buffer.sequence && buffer.acknowledgedSequence !== buffer.sequence);
-  const retentionFailure = [controller.localErrors[buffer.record.id], controller.saveErrors[buffer.record.id]].filter(Boolean).join(" ");
+  const retentionAtRisk = Boolean(buffer.retention.deviceError && buffer.retention.serverError && !buffer.retention.safe);
+  const retentionFailure = [buffer.retention.deviceError, buffer.retention.serverError].filter(Boolean).join(" ");
   const entry = actionEntry(buffer.content.action);
   const sourceRole = entry.changesSource ? entry.verb?.role : undefined;
   const source = sourceRole ? buffer.content.inputs.find(input => input.role === sourceRole) : undefined;
@@ -363,7 +363,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   const parked = controller.parkedInputs ?? [];
   const offeredRoles = offeredInputRoles(buffer.content, controller.profiles);
   const maskInput = source ? buffer.content.inputs.find(input => input.role === "mask") : undefined;
-  const savedOnDevice = offline && buffer.checkpointSequence === buffer.sequence;
+  const savedOnDevice = offline && buffer.retention.onDevice;
   const wordsHint = waitingForImage && source ? "Waiting for the selected image" : controller.conversation?.status === "archived" ? "Your work and history are kept" : savedOnDevice ? "Offline · saved on this device" : buffer.content.instructions.length >= MAX_DRAFT_WORDS ? `Words stop at ${MAX_DRAFT_WORDS.toLocaleString("en-US")} characters` : undefined;
   const submit = async (): Promise<void> => { if (!onSubmit || making) return; setMaking(true); setSubmitError(undefined); try { await onSubmit(); } catch (failure) { setSubmitError(failure instanceof Error ? failure.message : "This request could not start. Your words are retained."); } finally { setMaking(false); } };
 
@@ -401,15 +401,15 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
       <CapabilitySettings profiles={controller.profiles} content={observedContent} media={controller.media} disabled={!writable} onProfile={controller.chooseProfile} {...(controller.chooseAuto ? { onAuto: controller.chooseAuto } : {})} onChange={next => controller.edit({ ...next, inputs: buffer.content.inputs })} lookupStatus={capabilityLookupStatus}>
       <ComposerSubmit key={buffer.record.id} action={buffer.content.action} label={primaryLabel ?? entry.label} writable={writable} canSubmit={Boolean(onSubmit && writable && capabilityLookupStatus === "ready" && !unavailableInput && !missingInput && !invalidSettings && !submissionBlockedReason && !controller.serviceUnavailable && !retentionAtRisk && (!needsWords || hasWords) && !controller.preparing && !making && (profile ? profile.availability === "qualified" : auto && autoReady))} busy={making || controller.preparing} onSubmit={() => { void submit(); }} {...(onActionChange ? { onActionChange } : {})} />
       </CapabilitySettings>
-      {controller.prepared?.state === "blocked" ? <ul className="vf-blocking-reasons">{controller.prepared.reasons.map((reason, index) => <li key={`${reason.code}:${index}`}>{reason.message}</li>)}</ul> : null}
+      {controller.blockingReasons.length > 0 ? <ul className="vf-blocking-reasons">{controller.blockingReasons.map((reason, index) => <li key={`${reason.code}:${index}`}>{reason.message}</li>)}</ul> : null}
       {submitError ? <p className="vf-setting-warning" role="status">{submitError}</p> : null}
       </div>
     </div>
     {retentionAtRisk ? <><div className="vf-save-at-risk" role="status" aria-describedby={retentionDescription} title={retentionFailure}><img src="/design-assets/prompt-history/save-at-risk.svg" width="14" height="14" alt="" /><p>Not saved · Keep this tab open</p></div><p id={retentionDescription} className="vf-sr-only">{retentionFailure}</p></> : <>
       {savedOnDevice ? <p className="vf-device-only"><img src="/design-assets/workspace-device-only.svg" width="14" height="14" alt="" />Only on this device</p> : null}
-      {buffer.checkpointSequence === buffer.sequence && buffer.acknowledgedSequence !== buffer.sequence && controller.saveErrors[buffer.record.id] ? <p className="vf-setting-warning" role="status">Your latest words are kept on this device. Retry saving to reopen them elsewhere.</p> : null}
-      {controller.localErrors[buffer.record.id] ? <p className="vf-notice">{controller.localErrors[buffer.record.id]}</p> : null}
-      {controller.saveErrors[buffer.record.id] ? <div className="vf-notice"><p>{controller.saveErrors[buffer.record.id]}</p><FreshButton onClick={() => { void controller.flush(); }}>Retry saving</FreshButton></div> : null}
+      {buffer.retention.onDevice && !buffer.retention.onServer && buffer.retention.serverError ? <p className="vf-setting-warning" role="status">Your latest words are kept on this device. Retry saving to reopen them elsewhere.</p> : null}
+      {buffer.retention.deviceError ? <p className="vf-notice">{buffer.retention.deviceError}</p> : null}
+      {buffer.retention.serverError ? <div className="vf-notice"><p>{buffer.retention.serverError}</p><FreshButton onClick={() => { void controller.flush(); }}>Retry saving</FreshButton></div> : null}
     </>}
   </div>;
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { CreationDraftSchema, type CreationDraft } from "@shared/schemas/workflow/draft.schemas";
 import type { Conversation } from "@shared/schemas/workflow/project.schemas";
 import { getAuthRepository } from "@/repositories/index";
-import { WorkflowApi } from "@/features/project-workspace/api/workflowApi";
+import { WorkflowApi } from "@/features/project-workspace/api";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 
 /** Requests a person wrote: an empty one is a composer's scratch, and the same setup saved twice is listed once (newest). */

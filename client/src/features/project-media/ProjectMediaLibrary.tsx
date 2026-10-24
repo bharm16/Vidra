@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { Popover, PopoverAnchor, PopoverContent } from "@promptstudio/system/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@promptstudio/system/dropdown-menu";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
-import { WorkflowApi } from "@/features/project-workspace/api/workflowApi";
+import { WorkflowApi } from "@/features/project-workspace/api";
 import { ImportControl, type ImportLanding } from "@/features/project-imports/components/ImportControl";
 import type { ProjectImportsController } from "@/features/project-imports/hooks/useProjectImports";
 import { spring } from "@/components/motion/easing";

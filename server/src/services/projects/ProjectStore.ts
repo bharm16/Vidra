@@ -1,3 +1,5 @@
+import { allPages, listPage, allDocuments, type ListOptions } from "@services/firestore/WorkflowLists";
+import type { WorkflowPage } from "@shared/schemas/workflow/page.schemas";
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
 import { ChangeProjectCommandSchema, CreateProjectCommandSchema, ProjectSchema, isLibraryProject, type Project } from "@shared/schemas/workflow/project.schemas";
@@ -59,9 +61,13 @@ export class ProjectStore {
   }
 
   async list(owner: string): Promise<Project[]> {
+    return (await allPages(options => this.page(owner, options))).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+  }
+
+  async page(owner: string, options: ListOptions = {}): Promise<WorkflowPage<Project>> {
     const ownerId = OwnerIdSchema.parse(owner);
-    const result = await this.database.collection("creation_projects").where("ownerId", "==", ownerId).limit(200).get();
-    return result.docs.map(doc => this.owned(ownerId, doc.id, doc.data())).filter(project => !isLibraryProject(project)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+    const page = await listPage(this.database.collection("creation_projects").where("ownerId", "==", ownerId), `projects:${ownerId}`, row => this.owned(ownerId, row.id, row.data()), options);
+    return { ...page, items: page.items.filter(project => !isLibraryProject(project)) };
   }
 
   async change(owner: string, id: string, input: unknown): Promise<Project> {

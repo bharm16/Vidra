@@ -9,6 +9,8 @@ import { useVersionSharing } from "../hooks/useVersionSharing";
 import { ShareVersionPanel } from "../ShareVersionPanel";
 import { WorkflowSharePage } from "../WorkflowSharePage";
 
+vi.mock("@/repositories/index", () => ({ getAuthRepository: () => ({ getCurrentUser: () => ({ uid: "creator" }) }) }));
+
 const ID = "f6079012-0089-43be-a1ba-c6d3be995f22";
 const OTHER_ID = "f6079012-0089-43be-a1ba-c6d3be995f23";
 const SCOPE = { ownerId: "creator", projectId: "project_share", versionId: "version_picture" };

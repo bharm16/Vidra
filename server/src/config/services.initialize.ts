@@ -1,5 +1,5 @@
-import type { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
-import type { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
+import type { CreationRequestLifecycle } from "@services/creation-requests/lifecycle";
+import type { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
 import type { Bucket } from "@google-cloud/storage";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
@@ -188,7 +188,7 @@ export async function initializeServices(
     if (runtimeFlags.processRole === "api") {
       await initializeApiServices();
       await container.resolve<StudioWorkflowSpendGuard>("workflowSpendGuard").start();
-      await container.resolve<WorkflowExecutionService>("workflowExecutionService").initialize();
+      await container.resolve<CreationRequestLifecycle>("workflowRequestLifecycle").initialize();
     } else if (runtimeFlags.processRole === "worker") {
       await initializeWorkerServices(container);
     }

@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { ApiSuccessResponseSchema, ApiErrorResponseSchema } from "@shared/schemas/api.schemas";
 import { CreateVideoEditSchema, CreateVideoExportSchema, EditCommandSchema, ExportIdSchema, SaveVideoEditSchema, VideoCaptionValidationDetailsSchema, VideoEditSchema, VideoExportSchema, type VideoCaptionValidationDetails, type VideoEdit, type VideoComposition, type EditCommand, type VideoExport } from "@shared/schemas/workflow/video-edit.schemas";
 import { OwnerIdSchema, ProjectIdSchema, EditIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
-import { createWorkflowClient, WorkflowApiError } from "@/features/project-workspace/api/workflowApi";
+import { OwnedRequest } from "@/services/http/OwnedRequest";
 import type { ApiClient } from "@/services/ApiClient";
 import { VideoCaptionValidationError } from "./VideoCaptionValidationError";
 
@@ -16,29 +15,24 @@ function captionValidationDetails(serialized: string | undefined): VideoCaptionV
 
 /** No automatic request replay: accepted export identities survive a lost response. */
 export class VideoEditorApi {
-  private readonly client: Pick<ApiClient, "rawRequest">;
+  private readonly transport: OwnedRequest;
   private readonly owner: string;
   private readonly project: string;
   constructor(owner: string, project: string, client?: Pick<ApiClient, "rawRequest">) {
     this.owner = OwnerIdSchema.parse(owner); this.project = ProjectIdSchema.parse(project);
-    this.client = client ?? createWorkflowClient(owner);
+    this.transport = new OwnedRequest(owner, client);
   }
   private path(path = ""): string { return `/projects/${encodeURIComponent(this.project)}${path}`; }
   private editPath(id: string): string { return `/video-edits/${encodeURIComponent(EditIdSchema.parse(id))}`; }
   private exportPath(id: string): string { return `/exports/${encodeURIComponent(ExportIdSchema.parse(id))}`; }
   private async request<T extends z.ZodType>(path: string, schema: T, method = "GET", body?: unknown, signal?: AbortSignal, captionSubmission?: { editId: string; revision: number }): Promise<z.output<T>> {
-    const response = await this.client.rawRequest(this.path(path), { method, ...(body === undefined ? {} : { body }), ...(signal ? { signal } : {}) });
-    const payload: unknown = await response.json().catch(() => undefined);
-    if (!response.ok) {
-      const failure = ApiErrorResponseSchema.safeParse(payload);
-      if (response.status === 422 && failure.success && failure.data.code === "invalid_settings" && captionSubmission) {
-        const details = captionValidationDetails(failure.data.details);
-        if (details && details.ownerId === this.owner && details.projectId === this.project && details.editId === captionSubmission.editId && details.revision === captionSubmission.revision) throw new VideoCaptionValidationError(failure.data.error, details);
-      }
-      throw new WorkflowApiError(failure.success ? failure.data.error : `This change was not confirmed (${response.status}).`, response.status, failure.success ? failure.data.code : undefined);
-    }
-    return schema.parse(ApiSuccessResponseSchema(z.unknown()).parse(payload).data);
+    return this.transport.request(this.path(path), schema, method, body, signal, (status, failure) => {
+      if (status !== 422 || failure.code !== "invalid_settings" || !captionSubmission) return undefined;
+      const details = captionValidationDetails(failure.details);
+      return details && details.ownerId === this.owner && details.projectId === this.project && details.editId === captionSubmission.editId && details.revision === captionSubmission.revision ? new VideoCaptionValidationError(failure.error, details) : undefined;
+    });
   }
+
   private editSchema(id?: string): typeof VideoEditSchema { return VideoEditSchema.refine(value => value.ownerId === this.owner && value.projectId === this.project && (id === undefined || value.id === id), "The edit belongs to different work or another account."); }
   private exportSchema(id?: string): typeof VideoExportSchema { return VideoExportSchema.refine(value => value.ownerId === this.owner && value.projectId === this.project && (id === undefined || value.id === id), "The export belongs to different work or another account."); }
   list(signal?: AbortSignal): Promise<VideoEdit[]> { return this.request("/video-edits", z.array(this.editSchema()), "GET", undefined, signal); }

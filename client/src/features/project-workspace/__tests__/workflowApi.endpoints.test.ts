@@ -50,7 +50,7 @@ describe("WorkflowApi projects and conversations", () => {
     const { api, rawRequest } = setup([project]);
     const abort = new AbortController();
     expect((await api.listProjects(abort.signal)).map(item => item.id)).toEqual([project.id]);
-    expect(rawRequest).toHaveBeenCalledWith("/projects", { method: "GET", signal: abort.signal });
+    expect(rawRequest).toHaveBeenCalledWith("/projects?page=true", { method: "GET", signal: abort.signal });
     rawRequest.mockResolvedValueOnce(success([project, { ...project, id: "project_foreign", ownerId: "other-creator" }]));
     await expect(api.listProjects()).rejects.toThrow("does not match the requested account");
   });
@@ -145,7 +145,7 @@ describe("WorkflowApi media and imports", () => {
   it("lists media and imports for one project and rejects records from another project", async () => {
     const { api, rawRequest } = setup([picture]);
     expect((await api.media(project.id)).map(version => version.id)).toEqual([picture.id]);
-    expect(rawRequest).toHaveBeenCalledWith("/projects/project_expected/media", { method: "GET" });
+    expect(rawRequest).toHaveBeenCalledWith("/projects/project_expected/media?page=true", { method: "GET" });
     rawRequest.mockResolvedValueOnce(success([importRecord]));
     expect((await api.imports(project.id)).map(record => record.id)).toEqual([importRecord.id]);
     expect(rawRequest).toHaveBeenLastCalledWith("/projects/project_expected/imports", { method: "GET" });
@@ -215,7 +215,7 @@ describe("WorkflowApi error mapping", () => {
   it("maps an unreadable failure body to an unconfirmed error without a code", async () => {
     const { api, rawRequest } = setup(draft);
     rawRequest.mockResolvedValueOnce(failure(502, "<html>Bad gateway</html>"));
-    await expect(api.listProjects()).rejects.toMatchObject({ name: "WorkflowApiError", message: "The request was not confirmed (502).", status: 502, code: undefined });
+    await expect(api.listProjects()).rejects.toMatchObject({ name: "OwnedRequestError", message: "The request was not confirmed (502).", status: 502, code: undefined });
   });
 
   it("rejects a confirmed response when the signed-in account changed while it loaded", async () => {

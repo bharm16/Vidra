@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ImportCommandSchema, type ImportCommand } from "@shared/schemas/workflow/import.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { WorkflowApi, WorkflowApiError } from "@/features/project-workspace/api/workflowApi";
+import { WorkflowApi, WorkflowApiError } from "@/features/project-workspace/api";
 import { ImportCheckpointStore } from "../api/ImportCheckpointStore";
 import { fingerprint, importCommand, transferImport } from "../api/importTransfer";
 

@@ -5,7 +5,7 @@ import {
   recoverVideoExportReceiptInTransaction,
   workflowExecutionDraftKey,
   workflowReceiptId,
-} from "../workflowReceipts";
+} from "@services/admission/idempotency/OperationIdentity";
 
 type StoreRecord = Record<string, unknown>;
 

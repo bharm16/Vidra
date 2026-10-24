@@ -25,9 +25,9 @@ import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCirc
 import type { ServiceConfig } from "./service-config.types.ts";
 import { getFirestore } from "@infrastructure/firebaseAdmin";
 import { LegacyVideoSpendGuard, LegacyVideoSpendRefusedError } from "@services/video-generation/runtime/LegacyVideoSpendGuard";
-import type { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
-import { WorkflowPreflightError } from "@services/creation-requests/execution/types";
-import { workflowRuntimeProfiles } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
+import type { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
+import { WorkflowPreflightError } from "@services/creation-requests/execution";
+import { workflowRuntimeProfiles } from "@services/creation-requests/catalog";
 
 /**
  * Every video provider registration that feeds VideoGenerationService.

@@ -3,9 +3,9 @@ import { ProjectStore } from "@services/projects/ProjectStore";
 import { ConversationStore } from "@services/projects/ConversationStore";
 import { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
 import { CreationContextService } from "@services/creation-context/CreationContextService";
-import { ActionPreparationService } from "@services/creation-requests/preparation/ActionPreparationService";
-import { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
-import { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
+import { createTestLifecycle } from "../helpers/workflow/lifecycle";
+import { WorkflowCapabilityCatalog } from "@services/creation-requests/catalog";
+import { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
 import { createWorkflowTestDatabase } from "../helpers/workflow/emulator";
@@ -27,7 +27,7 @@ const freshSeedProfile = CapabilityProfileSchema.parse({ ...profile, id: "contro
 const audioProfile = CapabilityProfileSchema.parse({ ...profile, id: "controlled-audio-reference", inputs: [{ role: "audio", kinds: ["audio"], minCount: 1, maxCount: 1, minDurationSeconds: 3, maxDurationSeconds: 30 }], parameters: { duration: { policy: "derived", from: "input-duration", role: "audio" } } });
 const providerChosenProfile = CapabilityProfileSchema.parse({ ...profile, id: "controlled-provider-seed", parameters: { seed: { policy: "fixed", value: -1 } } });
 const ownedAudio = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "version_reference_audio", ownerId: "creator", projectId: "project_prepare", kind: "audio", label: "Audio reference", origin: { kind: "upload" }, sourceInputs: [], object: { identity: "unknown", assetId: "owned-audio", storagePath: "users/creator/audio.wav" }, metadata: { state: "verified", audio: "present", durationSeconds: 10, probeVersion: "controlled/1" }, association: "linked", createdAt: "2026-10-10T20:00:00.000Z" });
-const preparation = new ActionPreparationService({ database, projects, conversations, drafts, contexts, profiles: { get: id => [profile, requiredInputProfile, freshSeedProfile, audioProfile, providerChosenProfile].find(candidate => candidate.id === id) }, media: { get: async (_owner, _project, id) => id === ownedAudio.id ? ownedAudio : undefined } });
+const preparation = createTestLifecycle({ database, projects, conversations, drafts, contexts, profiles: { get: id => [profile, requiredInputProfile, freshSeedProfile, audioProfile, providerChosenProfile].find(candidate => candidate.id === id) }, media: { get: async (_owner, _project, id) => id === ownedAudio.id ? ownedAudio : undefined } });
 afterAll(async () => { await database.terminate(); });
 beforeAll(async () => {
   await projects.create("creator", { id: "project_prepare", name: "Campaign" });
@@ -131,7 +131,7 @@ it("refuses a conversation whose persisted owner no longer matches the project",
 it("blocks a draft for a model another server held, before acceptance", async () => {
   const guard = new StudioWorkflowSpendGuard(database, { dailyCapCents: 500 }, () => Date.parse("2026-10-20T00:00:00.000Z"));
   const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(), videoAvailable: () => false, textAvailable: false, replicateAvailable: true, spendGuard: guard });
-  const live = new ActionPreparationService({ database, projects, conversations, drafts, contexts, profiles: catalog, media: { get: async () => undefined } });
+  const live = createTestLifecycle({ database, projects, conversations, drafts, contexts, profiles: catalog, media: { get: async () => undefined } });
   const gemini = catalog.get("gemini-omni-1.1-t2v")!;
   await drafts.create("creator", "project_prepare", "conversation_prepare", { id: "draft_held_model", content: {
     action: "make-video", instructions: "A runner at dusk", inputs: [],

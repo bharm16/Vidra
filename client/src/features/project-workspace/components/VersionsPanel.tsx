@@ -4,7 +4,7 @@ import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import { FreshButton, FreshIcon, FreshIconButton } from "@/components/fresh/FreshButton";
 import { Dialog, DialogContent, DialogTitle } from "@promptstudio/system/dialog";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { versionTree } from "../state/versionTree";
 import "./viewer-fidelity.css";
 

@@ -1,3 +1,4 @@
+import { getFirestore } from "@infrastructure/firebaseAdmin";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionRecord } from "../types";
 import type { ContinuitySession } from "@server/domain/continuity/types";
@@ -182,7 +183,7 @@ describe("SessionStore", () => {
   });
 
   it("finds by user and by prompt UUID", async () => {
-    const store = new SessionStore();
+    const store = new SessionStore(getFirestore());
 
     await store.save(
       buildRecord({ id: "s-1", userId: "user-1", promptUuid: "p-1" }),
@@ -203,7 +204,7 @@ describe("SessionStore", () => {
   });
 
   it("stores and retrieves continuity payloads and supports continuity user queries", async () => {
-    const store = new SessionStore();
+    const store = new SessionStore(getFirestore());
     const continuity = buildContinuity();
 
     await store.save(

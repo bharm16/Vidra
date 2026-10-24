@@ -125,7 +125,7 @@ async function main(): Promise<number> {
   const { registerCoreServices } = await import("../../server/src/config/services/core.services.js");
   const { registerLLMServices } = await import("../../server/src/config/services/llm.services.js");
   const { GuidedWordingService } = await import("../../server/src/services/prompt-optimization/services/GuidedWordingService.js");
-  const { REPLICATE_MODEL_DEFINITIONS, wordingGuidanceFor } = await import("../../server/src/services/creation-requests/replicate-models/index.js");
+  const { REPLICATE_MODEL_DEFINITIONS, wordingGuidanceFor } = await import("../../server/src/services/creation-requests/models.js");
   const { AIModelService } = await import("../../server/src/services/ai-model/AIModelService.js");
 
   if (!isOperationName("improve_wording")) throw new Error("improve_wording operation is missing");

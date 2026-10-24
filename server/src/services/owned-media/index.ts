@@ -16,6 +16,9 @@ export {
 } from "./OwnedPictureResolver";
 export {
   fetchRemoteMedia,
+  openRemoteMedia,
   type FetchedRemoteMedia,
   type RemoteMediaFetchOptions,
+  type RemoteMediaStream,
 } from "./RemoteMediaFetcher";
+export type { PublicNetworkDependencies } from "./PublicNetworkTransport";

@@ -43,7 +43,7 @@ test.describe("auth pages", () => {
 
   test("an authenticated visit rejects an external return destination", async ({ page, baseURL }) => {
     await injectAuthUser(page);
-    await page.route("**/api/projects", async route => { await route.fulfill(jsonResponse({ success: true, data: [] })); });
+    await page.route("**/api/projects?*", async route => { await route.fulfill(jsonResponse({ success: true, data: [] })); });
     await page.goto("/signin?redirect=https%3A%2F%2Fexternal.example%2Fsteal");
     await expect(page).toHaveURL(/\/app$/);
     expect(new URL(page.url()).origin).toBe(new URL(baseURL ?? "http://127.0.0.1:58175").origin);

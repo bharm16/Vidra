@@ -99,9 +99,9 @@ async function createPredictionWithRetry(
  * Throws the raw underlying error (SDK message intact, so callers can classify
  * 402/429 via {@link classifyReplicateError}) on failure.
  */
-export async function awaitReplicatePredictionOutput(
+export async function awaitReplicatePrediction(
   opts: RunReplicatePredictionOptions,
-): Promise<unknown> {
+): Promise<ReplicatePrediction> {
   const prediction = await createPredictionWithRetry(opts);
 
   opts.log.info("Prediction created", {
@@ -184,7 +184,12 @@ export async function awaitReplicatePredictionOutput(
     userId: opts.userId,
   });
 
-  return output;
+  return currentPrediction;
+}
+
+/** Legacy preview callers need only the output; native lifecycle callers retain the prediction identity. */
+export async function awaitReplicatePredictionOutput(opts: RunReplicatePredictionOptions): Promise<unknown> {
+  return (await awaitReplicatePrediction(opts)).output;
 }
 
 /**

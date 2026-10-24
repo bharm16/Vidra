@@ -5,7 +5,7 @@ Follow [../CLAUDE.md](../CLAUDE.md). Express, TypeScript/tsx, ESM, Firebase Admi
 - Use constructor injection and canonical domain imports. Keep response shaping in thin routes and coordinate domains through explicit ports at registration.
 - Validate requests with Zod; use canonical envelopes from `middleware/respond.ts` and typed domain errors for error middleware.
 - Text LLM calls go through `aiService`; SDK construction belongs in `clients/`. Keep service-owned prompt templates beside their owner.
-- `admission/idempotency/` owns durable receipts. `video-generation/runtime/` owns records, leases, completion, terminal evidence and clip attachment recovery.
+- The creation lifecycle owns native preparation, receipt acceptance and recovery; its transaction callbacks stay private. `admission/idempotency/` owns shared operation identities and legacy receipts. `video-generation/runtime/` owns records, leases, completion, terminal evidence and clip attachment recovery.
 - `video-generation/refunds/` retains legacy charged-job/refund-debt compatibility. Free intake reserves zero credits; charged jobs require a refunder.
 - Generic sessions and shared schemas still read historical continuity/camera/provider fields. Their execution backends are retired.
 - Preserve media ownership, signed-URL grants and original take/session/version identity during recovery.

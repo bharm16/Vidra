@@ -2,11 +2,11 @@ import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ReactEle
 import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/request.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
-import type { SubmissionCheckpoint } from "@/repositories/workflow/DraftCheckpointStore";
+import type { PendingSubmission } from "../state/authoringView";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { Button } from "@promptstudio/system/button";
 import { actionEntry } from "@shared/workflow/actionRegistry";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { RequestSlotStatus, slotProgress } from "./RequestResults";
 import { RequestActions, type ConversationHistoryProps } from "./ConversationHistory";
 import { requestHistoryDescription } from "../state/requestDescription";
@@ -24,7 +24,7 @@ export interface GenerationFeedProps extends Pick<ConversationHistoryProps, "onR
   requests: AcceptedRequest[];
   media: MediaVersion[];
   profiles: CapabilityProfile[];
-  pending: SubmissionCheckpoint[];
+  pending: PendingSubmission[];
   viewedVersionId: string | undefined;
   access(versionId: string): Promise<{ url: string }>;
   /** Opens Focus on one result. */
@@ -32,7 +32,7 @@ export interface GenerationFeedProps extends Pick<ConversationHistoryProps, "onR
   onVerb(verb: ResultVerb, version: MediaVersion, request: AcceptedRequest): void;
   onDownload(version: MediaVersion): void;
   onRetry(request: AcceptedRequest, slotId: string): void;
-  onRecover(submission: SubmissionCheckpoint): void;
+  onRecover(submissionId: string): void;
   onApplyText(request: AcceptedRequest, text: string): void;
   /** Places a transcript's cues on the video's Captions lane. */
   onCaptionsToVideo?(request: AcceptedRequest, text: string): void;
@@ -187,6 +187,6 @@ export const GenerationFeed = forwardRef<HTMLDivElement, GenerationFeedProps>(fu
   const { requests, pending, onRecover } = props;
   return <div ref={ref} className="vf-generation-feed" aria-label="Generations">
     {requests.map(request => <Generation key={request.id} request={request} props={props} />)}
-    {pending.filter(item => !requests.some(request => request.executionDraftId === item.command.draftId && request.executionDraftRevision === item.command.draftRevision)).map(submission => <article className="vf-generation vf-unknown-submission" key={submission.submissionId}><p>Checking submission…</p><FreshButton tone="quiet" onClick={() => onRecover(submission)}>Check again</FreshButton></article>)}
+    {pending.filter(item => !requests.some(request => request.executionDraftId === item.draftId && request.executionDraftRevision === item.draftRevision)).map(submission => <article className="vf-generation vf-unknown-submission" key={submission.submissionId}><p>Checking submission…</p><FreshButton tone="quiet" onClick={() => onRecover(submission.submissionId)}>Check again</FreshButton></article>)}
   </div>;
 });

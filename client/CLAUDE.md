@@ -2,7 +2,7 @@
 
 Follow [../CLAUDE.md](../CLAUDE.md). React 18, Vite, TypeScript, Tailwind and `@promptstudio/system`.
 
-- Separate presentation from behavior using the `features/studio/` orchestrator/hooks/api/components pattern.
+- Keep workspace authoring, history observation and selection in cohesive modules. Inject owned-server/device adapters at composition; presentation consumes read models and opaque recovery identities.
 - Use reducers for complex state, feature-local display types and validated feature `api/` boundaries.
 - Use shared design-system primitives and semantic tokens; type icons as `IconProps["icon"]`.
 - Preserve working words/settings when inspecting results. **Reuse setup** is explicit restoration.

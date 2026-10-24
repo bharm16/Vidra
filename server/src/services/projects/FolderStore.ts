@@ -1,3 +1,5 @@
+import { allPages, listPage, type ListOptions } from "@services/firestore/WorkflowLists";
+import type { WorkflowPage } from "@shared/schemas/workflow/page.schemas";
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
 import {
@@ -48,18 +50,12 @@ export class FolderStore {
   }
 
   async list(owner: string): Promise<Folder[]> {
+    return (await allPages(options => this.page(owner, options))).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+  }
+
+  async page(owner: string, options: ListOptions = {}): Promise<WorkflowPage<Folder>> {
     const ownerId = OwnerIdSchema.parse(owner);
-    const result = await this.database
-      .collection("creation_folders")
-      .where("ownerId", "==", ownerId)
-      .limit(200)
-      .get();
-    return result.docs
-      .map((doc) => this.owned(ownerId, doc.id, doc.data()))
-      .sort(
-        (a, b) =>
-          b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id),
-      );
+    return listPage(this.database.collection("creation_folders").where("ownerId", "==", ownerId), `folders:${ownerId}`, row => this.owned(ownerId, row.id, row.data()), options);
   }
 
   async change(owner: string, id: string, input: unknown): Promise<Folder> {

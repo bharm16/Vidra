@@ -1,3 +1,4 @@
+import { listOptions } from "@services/firestore/WorkflowLists";
 import { Router, type Request } from "express";
 import { z } from "zod";
 import { handle } from "@middleware/intake";
@@ -42,7 +43,7 @@ export function createProjectRoutes({ projects, conversations, drafts, history, 
       next();
     });
   }
-  router.get("/", handle({}, ({ creatorId }) => projects.list(creatorId)));
+  router.get("/", handle({}, ({ creatorId, req }) => req.query.page === "true" ? projects.page(creatorId, listOptions(req.query)) : projects.list(creatorId)));
   router.post("/", handle({ body: CreateProjectCommandSchema }, async ({ creatorId, body, req, res }) => {
     respond.ok(res, req, await projects.create(creatorId, body), 201);
   }));
@@ -51,14 +52,16 @@ export function createProjectRoutes({ projects, conversations, drafts, history, 
   router.patch("/:projectId", handle({ body: ChangeProjectCommandSchema }, ({ creatorId, req, body }) => projects.change(creatorId, param(req, "projectId"), body)));
   router.get("/:projectId/conversations", handle({}, async ({ creatorId, req }) => {
     const projectId = param(req, "projectId");
-    const [rows, counts] = await Promise.all([conversations.list(creatorId, projectId), history?.conversationMediaCounts(creatorId, projectId)]);
-    return counts ? rows.map(row => ConversationListingSchema.parse({ ...row, media: counts.get(row.id) ?? { pictures: 0, clips: 0 } })) : rows;
+    const [rows, counts] = await Promise.all([req.query.page === "true" ? conversations.page(creatorId, projectId, listOptions(req.query)) : conversations.list(creatorId, projectId), history?.conversationMediaCounts(creatorId, projectId)]);
+    const decorate = (row: z.input<typeof ConversationListingSchema>): z.output<typeof ConversationListingSchema> => ConversationListingSchema.parse({ ...row, media: counts?.get(row.id) ?? { pictures: 0, clips: 0 } });
+    if (!counts) return rows;
+    return Array.isArray(rows) ? rows.map(decorate) : { ...rows, items: rows.items.map(decorate) };
   }));
   router.post("/:projectId/conversations", handle({ body: CreateConversationCommandSchema }, async ({ creatorId, req, res, body }) => {
     respond.ok(res, req, await conversations.create(creatorId, param(req, "projectId"), body), 201);
   }));
   router.get("/:projectId/conversations/:conversationId", handle({}, ({ creatorId, req }) => conversations.get(creatorId, param(req, "projectId"), param(req, "conversationId"))));
-  router.get("/:projectId/conversations/:conversationId/drafts", handle({}, ({ creatorId, req }) => drafts.list(creatorId, param(req, "projectId"), param(req, "conversationId"))));
+  router.get("/:projectId/conversations/:conversationId/drafts", handle({}, ({ creatorId, req }) => req.query.page === "true" ? drafts.page(creatorId, param(req, "projectId"), param(req, "conversationId"), listOptions(req.query)) : drafts.list(creatorId, param(req, "projectId"), param(req, "conversationId"))));
   router.post("/:projectId/conversations/:conversationId/drafts", handle({ body: CreateDraftCommandSchema }, async ({ creatorId, req, res, body }) => {
     respond.ok(res, req, await drafts.create(creatorId, param(req, "projectId"), param(req, "conversationId"), body), 201);
   }));
@@ -68,9 +71,9 @@ export function createProjectRoutes({ projects, conversations, drafts, history, 
   router.get("/:projectId/drafts/:draftId/revisions", handle({}, ({ creatorId, req }) => drafts.revisions(creatorId, param(req, "projectId"), param(req, "draftId"))));
   router.get("/:projectId/drafts/:draftId/conflicts", handle({}, ({ creatorId, req }) => drafts.conflicts(creatorId, param(req, "projectId"), param(req, "draftId"))));
   router.post("/:projectId/drafts/:draftId/status", handle({ body: z.strictObject({ expectedRevision: RevisionSchema, status: z.enum(["open", "parked", "discarded"]) }) }, ({ creatorId, req, body }) => drafts.setStatus(creatorId, param(req, "projectId"), param(req, "draftId"), body.expectedRevision, body.status)));
-  if (history) router.get("/:projectId/conversations/:conversationId/requests", handle({}, ({ creatorId, req }) => history.list(creatorId, param(req, "projectId"), param(req, "conversationId"))));
+  if (history) router.get("/:projectId/conversations/:conversationId/requests", handle({}, ({ creatorId, req }) => req.query.page === "true" ? history.page(creatorId, param(req, "projectId"), param(req, "conversationId"), listOptions(req.query)) : history.list(creatorId, param(req, "projectId"), param(req, "conversationId"))));
   if (media) {
-    router.get("/:projectId/media", handle({}, ({ creatorId, req }) => media.list(creatorId, param(req, "projectId"))));
+    router.get("/:projectId/media", handle({}, ({ creatorId, req }) => req.query.page === "true" ? media.page(creatorId, param(req, "projectId"), listOptions(req.query)) : media.list(creatorId, param(req, "projectId"))));
     router.get("/:projectId/media/:versionId/access", handle({}, async ({ creatorId, req }) => {
       const versionId = VersionIdSchema.safeParse(req.params.versionId);
       if (!versionId.success) throw new WorkflowError("invalid_settings", "This media identity is invalid.");

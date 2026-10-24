@@ -1,3 +1,4 @@
+import { allDocuments } from "@services/firestore/WorkflowLists";
 import type { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
 import { rm } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
@@ -17,7 +18,7 @@ import {
   commitVideoExportReceiptInTransaction,
   recoverVideoExportReceiptInTransaction,
   workflowExecutionDraftKey,
-} from "@services/admission/idempotency/workflowReceipts";
+} from "@services/admission/idempotency/OperationIdentity";
 import { logger } from "@infrastructure/Logger";
 import type { ExportStorage } from "./ExportStorage";
 import { hashLocalFile } from "./ExportStorage";
@@ -96,7 +97,7 @@ export class VideoExportService {
     this.schedule(record); return record;
   }
   async list(ownerId: string, projectId: string): Promise<VideoExport[]> {
-    await this.projects.get(ownerId, projectId); const rows = await this.database.collection("creation_projects").doc(ProjectIdSchema.parse(projectId)).collection("video_exports").orderBy("createdAt", "desc").limit(200).get();
+    await this.projects.get(ownerId, projectId); const rows = { docs: await allDocuments(this.database.collection("creation_projects").doc(ProjectIdSchema.parse(projectId)).collection("video_exports").orderBy("createdAt", "desc")) };
     const records = rows.docs.map(row => this.owned(ownerId, projectId, row.id, row.data())).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); for (const record of records) if (record.state === "queued") this.schedule(record); return records;
   }
   async get(ownerId: string, projectId: string, id: string): Promise<VideoExport> {

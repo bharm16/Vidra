@@ -7,7 +7,7 @@ import { ProjectManagementPanel } from "../ProjectManagementPanel";
 import { conversation, project } from "./fixtures";
 
 const ports = vi.hoisted(() => ({ listDrafts: vi.fn(), ownerId: "creator" }));
-vi.mock("@/features/project-workspace/api/workflowApi", () => ({ WorkflowApi: class { listDrafts = ports.listDrafts; } }));
+vi.mock("@/features/project-workspace/api", () => ({ WorkflowApi: class { listDrafts = ports.listDrafts; } }));
 vi.mock("../api/projectManagementApi", () => ({ ProjectManagementApi: class {} }));
 vi.mock("@/repositories/index", () => ({ getAuthRepository: () => ({ getCurrentUser: () => ({ uid: ports.ownerId }) }) }));
 const draft = CreationDraftSchema.parse({ schemaVersion: "vidra-workflow/v2", id: "draft_one", ownerId: "creator", projectId: project.id, conversationId: conversation.id, revision: 1, status: "parked", action: "make-image", instructions: "Keep these exact unfinished words", inputs: [], settings: { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination: { projectId: project.id, conversationId: conversation.id }, createdAt: project.createdAt, updatedAt: project.updatedAt });

@@ -1,10 +1,10 @@
+import { assertNoLegacyApiKeyData } from "@utils/apiKeyUser";
 import { z } from "zod";
+import { stripPreviewSections } from "@services/image-generation/promptSanitization";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/request.schemas";
-import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
-import type { ImageGenerationOptions } from "@services/image-generation/types";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
-import type { VideoGenerationOptions } from "@services/video-generation/types";
+import { buildReplicateInput } from "@services/video-generation/providers/replicateProvider";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { executeReplicateModel, type ReplicateModelServices } from "@services/creation-requests/replicate-models/executeReplicateModel";
@@ -16,11 +16,11 @@ import {
 import { NativeOutputSchema, WorkflowPreflightError, type ExecutionAttempt, type NativeOutput, type VerifiedOutput, type WorkflowNativeExecutor, type WorkflowSpendGuard } from "./types";
 
 export interface NativeWorkflowExecutorDeps {
-  images: Pick<ImageGenerationService, "generatePreview"> | null;
-  videos: Pick<VideoGenerationService, "generateVideo" | "getModelAvailability"> | null;
+  videos: Pick<VideoGenerationService, "getModelAvailability"> | null;
   ai: AIExecutionPort | null;
   imageProviders: ReadonlySet<string>;
   spendGuard?: WorkflowSpendGuard;
+  prepareVideoInput?(url: string, signal: AbortSignal): Promise<string | Blob>;
   inputAccess(ownerId: string, projectId: string, versionId: string): Promise<string>;
   /** Exact native Replicate models; null when Replicate is unconfigured or replaying. */
   models?: ReplicateModelServices | null;
@@ -28,7 +28,7 @@ export interface NativeWorkflowExecutorDeps {
   inputVersion?(ownerId: string, projectId: string, versionId: string): Promise<MediaVersion | undefined>;
 }
 
-/** Exact mappings only. Explicit image providers disable the native automatic fallback chain. */
+/** Exact mappings return provider evidence; delivery owns downloads and uploads. No provider fallback. */
 export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
   constructor(private readonly deps: NativeWorkflowExecutorDeps) {}
 
@@ -38,8 +38,8 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
     if (!binding) return false;
     const resolvedText = binding.kind === "text" && this.deps.ai ? this.deps.ai.resolveExecution(binding.operation) : undefined;
     return isWorkflowProfileRuntimeAvailable(profile, {
-      imageProviders: this.deps.images ? this.deps.imageProviders : new Set(),
-      videoAvailable: model => this.deps.videos?.getModelAvailability(model).available === true,
+      imageProviders: this.deps.models ? this.deps.imageProviders : new Set(),
+      videoAvailable: model => Boolean(this.deps.models) && this.deps.videos?.getModelAvailability(model).available === true,
       textAvailable: Boolean(
         resolvedText &&
           (this.deps.ai?.getAvailableClients?.().includes(resolvedText.client) ?? false),
@@ -51,6 +51,7 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
   }
 
   async execute(request: AcceptedRequest, slot: RequestSlot, profile: CapabilityProfile, sentInstructions: string): Promise<NativeOutput> {
+    try { assertNoLegacyApiKeyData(request.ownerId); } catch { throw new WorkflowPreflightError("This action owner is unavailable."); }
     if (!this.available(profile) || request.snapshot.action !== profile.action) throw new WorkflowPreflightError("This exact adapter is unavailable");
     const spendGuard = this.deps.spendGuard;
     if (!spendGuard) throw new WorkflowPreflightError("This action is unavailable during bounded free testing.");
@@ -64,31 +65,31 @@ export class NativeWorkflowExecutor implements WorkflowNativeExecutor {
     };
     const binding = resolveWorkflowAdapterBinding(profile);
     if (!binding) throw new WorkflowPreflightError("This action has no supported adapter");
-    if (binding.kind === "image" && this.deps.images) {
-      const picture = binding.requiresPrimaryImage ? await input("primary") : undefined;
-      if (binding.requiresPrimaryImage && !picture) throw new WorkflowPreflightError("The picture to edit is unavailable");
-      const options: ImageGenerationOptions = {
-        userId: request.ownerId, provider: binding.providerId,
-        aspectRatio: z.string().parse(parameters.aspectRatio),
-        ...(picture ? { inputImageUrl: picture, speedMode: z.enum(["Lightly Juiced", "Juiced", "Extra Juiced", "Real Time"]).parse(parameters.speedMode), outputQuality: z.number().int().min(1).max(100).parse(parameters.outputQuality) } : {}),
-        ...(slot.seed !== undefined ? { seed: slot.seed } : {}),
-      };
-      await reserve();
-      const result = await this.deps.images.generatePreview(sentInstructions, options);
-      return NativeOutputSchema.parse({ kind: "image", storagePath: result.storagePath, model: result.metadata.model, provider: "replicate" });
-    }
-    if (binding.kind === "video" && this.deps.videos) {
-      const startImage = binding.requiresStartFrame ? await input("start-frame") : undefined;
-      if (binding.requiresStartFrame && !startImage) throw new WorkflowPreflightError("The start frame is unavailable");
-      const options: VideoGenerationOptions = { model: binding.endpoint, negativePrompt: z.string().parse(parameters.negativePrompt), promptExtend: z.boolean().parse(parameters.promptExpansion), ...(slot.seed === undefined ? {} : { seed: slot.seed }) };
-      if (startImage) Object.assign(options, { startImage, seconds: String(z.number().parse(parameters.durationSeconds)), size: z.string().parse(parameters.resolution) });
-      else {
-        const aspectRatio = z.enum(["16:9", "9:16"]).parse(parameters.aspectRatio);
-        Object.assign(options, { aspectRatio, size: z.string().parse(parameters.resolution), numFrames: z.number().int().parse(parameters.numFrames), fps: z.number().positive().parse(parameters.framesPerSecond) });
+    if ((binding.kind === "image" || binding.kind === "video") && this.deps.models) {
+      let providerInput: Record<string, unknown>;
+      if (binding.kind === "image") {
+        const picture = binding.requiresPrimaryImage ? await input("primary") : undefined;
+        if (binding.requiresPrimaryImage && !picture) throw new WorkflowPreflightError("The picture to edit is unavailable");
+        providerInput = { prompt: stripPreviewSections(sentInstructions.trim()), aspect_ratio: z.string().parse(parameters.aspectRatio), output_format: "webp", output_quality: 80,
+          ...(picture ? { img_cond_path: picture, speed_mode: z.string().parse(parameters.speedMode), output_quality: z.number().parse(parameters.outputQuality) } : {}),
+          ...(slot.seed === undefined ? {} : { seed: slot.seed }) };
+      } else {
+        const startImage = binding.requiresStartFrame ? await input("start-frame") : undefined;
+        if (binding.requiresStartFrame && !startImage) throw new WorkflowPreflightError("The start frame is unavailable");
+        providerInput = buildReplicateInput(profile.endpoint, sentInstructions, {
+          negativePrompt: z.string().parse(parameters.negativePrompt), promptExtend: z.boolean().parse(parameters.promptExpansion),
+          size: z.string().parse(parameters.resolution), ...(slot.seed === undefined ? {} : { seed: slot.seed }),
+          ...(startImage ? { startImage, seconds: z.enum(["5", "10"]).parse(String(parameters.durationSeconds)) } : { aspectRatio: z.enum(["16:9", "9:16"]).parse(parameters.aspectRatio), numFrames: z.number().int().parse(parameters.numFrames), fps: z.number().positive().parse(parameters.framesPerSecond) }),
+        });
+      }
+      if (binding.kind === "video" && typeof providerInput.image === "string") {
+        try { if (!this.deps.prepareVideoInput) throw new Error("Start-frame preparation is unavailable"); providerInput.image = await this.deps.prepareVideoInput(providerInput.image, AbortSignal.timeout(120000)); }
+        catch { throw new WorkflowPreflightError("The selected start frame could not be prepared."); }
       }
       await reserve();
-      const result = await this.deps.videos.generateVideo(sentInstructions, options);
-      return NativeOutputSchema.parse({ kind: "video", assetId: result.assetId, model: binding.endpoint, provider: profile.provider });
+      const result = await this.deps.models.runner.run({ model: profile.endpoint, input: providerInput, userId: request.ownerId, timeoutMs: profile.recovery.deadlineSeconds * 1000, pollIntervalMs: 1000 });
+      const sourceUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+      return NativeOutputSchema.parse({ kind: "provider-media", mediaKind: binding.kind, sourceUrl, predictionId: result.predictionId, model: profile.endpoint, provider: profile.provider });
     }
     if (binding.kind === "text" && this.deps.ai) {
       const instruction = binding.action === "ask" ? "Answer the creator's question using only the supplied conversation context. Do not claim that you made or changed media." : binding.action === "expand-description" ? "Expand the creator's description into clear visual instructions. Return only the proposed description. Do not make media or claim the draft was changed." : "Improve the creator's wording while preserving their intent. Return only the proposed wording. Do not make media or claim the draft was changed.";

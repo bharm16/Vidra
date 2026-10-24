@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { VideoEditorApi } from "../api/videoEditorApi";
 import { VideoCaptionValidationError } from "../api/VideoCaptionValidationError";
-import { WorkflowApiError } from "@/features/project-workspace/api/workflowApi";
+import { WorkflowApiError } from "@/features/project-workspace/api";
 import { CreateVideoExportSchema, VideoCaptionValidationDetailsSchema } from "@shared/schemas/workflow/video-edit.schemas";
 import { EMPTY_COMPOSITION } from "../state/editorState";
 
@@ -135,5 +135,5 @@ it("reads a 30 fps editor preview for a source version and rejects other frame r
 });
 it("maps an unreadable export failure to an unconfirmed error without a code", async () => {
   const api = new VideoEditorApi("creator", "project_one", { rawRequest: vi.fn(async () => new Response("gateway down", { status: 503 })) });
-  await expect(api.resume("export_one")).rejects.toMatchObject({ name: "WorkflowApiError", message: "This change was not confirmed (503).", status: 503, code: undefined });
+  await expect(api.resume("export_one")).rejects.toMatchObject({ name: "OwnedRequestError", message: "The request was not confirmed (503).", status: 503, code: undefined });
 });

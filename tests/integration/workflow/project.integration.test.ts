@@ -93,3 +93,20 @@ describe("owner library", () => {
     await expect(conversations.create("library-intruder", library.id, { id: "conversation_stolen", name: "Stolen" })).rejects.toMatchObject({ code: "access_denied" });
   });
 });
+
+it("keeps every owned project reachable after the first 200 records", async () => {
+  const tied = new ProjectStore(database, () => "2026-10-24T00:00:00.000Z");
+  await Promise.all(Array.from({ length: 205 }, (_, index) => tied.create("large-library-owner", { id: `project_page_${String(index).padStart(3, "0")}`, name: `Project ${index}` })));
+  const records = await store.list("large-library-owner");
+  expect(records).toHaveLength(205);
+  expect(records.some(row => row.id === "project_page_204")).toBe(true);
+});
+
+it("binds a continuation to its owner and lists tied timestamps without omissions", async () => {
+  const first = await store.page("large-library-owner", { limit: 100 });
+  expect(first.items).toHaveLength(100); expect(first.nextCursor).toBeTruthy();
+  const next = await store.page("large-library-owner", { cursor: first.nextCursor, limit: 100 });
+  expect(next.items).toHaveLength(100);
+  expect(new Set([...first.items, ...next.items].map(row => row.id)).size).toBe(200);
+  await expect(store.page("other-owner", { cursor: first.nextCursor })).rejects.toMatchObject({ code: "invalid_settings" });
+});

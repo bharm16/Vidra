@@ -1,3 +1,5 @@
+import { getFirestore } from "@infrastructure/firebaseAdmin";
+import { DeadLetterStore } from "@services/video-generation/runtime/DeadLetterStore";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
@@ -10,7 +12,7 @@ export function registerVideoJobServices(container: DIContainer): void {
       firestoreCircuitExecutor: FirestoreCircuitExecutor,
       config: ServiceConfig,
     ) =>
-      new VideoJobStore(firestoreCircuitExecutor, config.videoJobs.maxAttempts),
+      new VideoJobStore(getFirestore(), new DeadLetterStore(getFirestore(), firestoreCircuitExecutor), firestoreCircuitExecutor, config.videoJobs.maxAttempts),
     ["firestoreCircuitExecutor", "config"],
   );
 }

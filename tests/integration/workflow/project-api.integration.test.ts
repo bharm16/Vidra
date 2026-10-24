@@ -56,9 +56,20 @@ it("lists conversations with their media counts when request history is availabl
   counted.use("/projects", createProjectRoutes({ projects, conversations, drafts, history: new RequestHistoryStore(database, projects) })); counted.use(errorHandler);
   await projects.create("creator", { id: "project_counts", name: "Counts" });
   await conversations.create("creator", "project_counts", { id: "conversation_counts", name: "First ideas" });
-  const withCounts = await request(counted).get("/projects/project_counts/conversations").set("x-test-owner", "creator");
-  expect(withCounts.status).toBe(200); expect(withCounts.body.data).toMatchObject([{ id: "conversation_counts", media: { pictures: 0, clips: 0 } }]);
-  const withoutCounts = await request(app).get("/projects/project_counts/conversations").set("x-test-owner", "creator");
-  expect(withoutCounts.body.data[0]).not.toHaveProperty("media");
-  expect((await request(counted).get("/projects/project_counts/conversations").set("x-test-owner", "intruder")).status).toBe(403);
+  const withCounts = await request(counted).get("/projects/project_counts/conversations?page=true").set("x-test-owner", "creator");
+  expect(withCounts.status).toBe(200); expect(withCounts.body.data.items).toMatchObject([{ id: "conversation_counts", media: { pictures: 0, clips: 0 } }]);
+  const withoutCounts = await request(app).get("/projects/project_counts/conversations?page=true").set("x-test-owner", "creator");
+  expect(withoutCounts.body.data.items[0]).not.toHaveProperty("media");
+  expect((await request(counted).get("/projects/project_counts/conversations?page=true").set("x-test-owner", "intruder")).status).toBe(403);
+});
+
+it("offers bounded continuation while preserving the complete-array contract for older clients", async () => {
+  await Promise.all(Array.from({ length: 5 }, (_, index) => projects.create("paged-http-owner", { id: `project_http_page_${index}`, name: `Project ${index}` })));
+  const first = await request(app).get("/projects?page=true&limit=2").set("x-test-owner", "paged-http-owner");
+  expect(first.status).toBe(200); expect(first.body.data.items).toHaveLength(2);
+  const second = await request(app).get("/projects").query({ page: "true", limit: 2, cursor: first.body.data.nextCursor }).set("x-test-owner", "paged-http-owner");
+  expect(second.status).toBe(200); expect(second.body.data.items).toHaveLength(2);
+  expect(new Set([...first.body.data.items, ...second.body.data.items].map((row: { id: string }) => row.id)).size).toBe(4);
+  expect((await request(app).get("/projects").set("x-test-owner", "paged-http-owner")).body.data).toHaveLength(5);
+  expect((await request(app).get("/projects").query({ page: "true", cursor: first.body.data.nextCursor }).set("x-test-owner", "another-owner")).status).toBe(422);
 });

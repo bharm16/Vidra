@@ -20,3 +20,5 @@ packages/
 **Tests through entry points.** Files under `<name>/tests/` exercise behavior through root entry points, including other packages' entry points for integration tests. They may import their own `tests/` fixtures, but never implementation in any package's subfolders, including their own.
 
 **No cycles.** Dependency cycles are errors. Run `npm run lint:boundaries` to check packages and their callers, including type-only imports. `npm run verify` and CI run this alongside typecheck, lint and unit tests. Layering between packages is a separate concern; add project-specific rules at the commented stub in `.dependency-cruiser.cjs` when needed.
+
+The application also enforces named root entry points for `client/src/features/project-workspace/` and `server/src/services/creation-requests/`. Their subfolders are private to the owning module, including for external tests and type-only imports. These modules stay in their current layers; moving them into packages is not required.

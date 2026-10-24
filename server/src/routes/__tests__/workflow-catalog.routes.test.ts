@@ -4,8 +4,8 @@ import type { Firestore } from "firebase-admin/firestore";
 import { describe, expect, it } from "vitest";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import { createPublicWorkflowCatalogRoutes, createWorkflowCatalogRoutes } from "../creation-requests.routes";
-import { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
-import { StudioWorkflowSpendGuard } from "@services/creation-requests/execution/StudioWorkflowSpendGuard";
+import { WorkflowCapabilityCatalog } from "@services/creation-requests/catalog";
+import { StudioWorkflowSpendGuard } from "@services/creation-requests/spend";
 import { errorHandler } from "@middleware/errorHandler";
 
 describe("workflow model list", () => {

@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import type { AcceptedRequest, RequestSlot } from "@shared/schemas/workflow/request.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { FreshButton } from "@/components/fresh/FreshButton";
-import { MediaThumbnail } from "./MediaThumbnail";
+import { MediaThumbnail } from "@/components/media/MediaThumbnail";
 import { actionEntry } from "@shared/workflow/actionRegistry";
 import "./request-results.css";
 

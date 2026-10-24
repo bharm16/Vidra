@@ -41,7 +41,7 @@ describe("OwnedSharesApi access", () => {
     const rawRequest = vi.fn(async (_path: string, _options?: unknown) => success({ url: "https://media.example.test/picture.png", expiresAt: at }));
     const abort = new AbortController();
     expect(await new OwnedSharesApi("creator", { rawRequest }).access(share.projectId, share.versionId, abort.signal)).toEqual({ url: "https://media.example.test/picture.png", expiresAt: at });
-    expect(rawRequest).toHaveBeenCalledWith("/projects/project_share/media/version_picture/access", { signal: abort.signal, fetchOptions: { cache: "no-store" } });
+    expect(rawRequest).toHaveBeenCalledWith("/projects/project_share/media/version_picture/access", { method: "GET", signal: abort.signal });
   });
 
   it("rejects non-web access URLs and an unreadable failure body", async () => {
@@ -49,6 +49,6 @@ describe("OwnedSharesApi access", () => {
     const api = new OwnedSharesApi("creator", { rawRequest });
     await expect(api.access(share.projectId, share.versionId)).rejects.toThrow();
     rawRequest.mockResolvedValueOnce(new Response("unavailable", { status: 503 }));
-    await expect(api.access(share.projectId, share.versionId)).rejects.toMatchObject({ name: "SharingApiError", message: "The sharing request was not confirmed.", status: 503 });
+    await expect(api.access(share.projectId, share.versionId)).rejects.toMatchObject({ name: "OwnedRequestError", message: "The request was not confirmed (503).", status: 503 });
   });
 });

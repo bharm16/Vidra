@@ -1,3 +1,5 @@
+import { allPages, listPage, allDocuments, type ListOptions } from "@services/firestore/WorkflowLists";
+import type { WorkflowPage } from "@shared/schemas/workflow/page.schemas";
 import type { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
 import { CreationDraftSchema, CreateDraftCommandSchema, DraftConflictSchema, RestoreDraftCommandSchema, SaveDraftCommandSchema, type CreationDraft, type DraftConflict, type SaveDraftResult } from "@shared/schemas/workflow/draft.schemas";
@@ -55,17 +57,17 @@ export class CreationDraftStore {
   }
 
   async list(ownerId: string, project: string, conversationId: string): Promise<CreationDraft[]> {
+    return (await allPages(options => this.page(ownerId, project, conversationId, options))).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  async page(ownerId: string, project: string, conversationId: string, options: ListOptions = {}): Promise<WorkflowPage<CreationDraft>> {
     await this.conversations.get(ownerId, project, conversationId);
-    const rows = await this.database.collection("creation_projects").doc(ProjectIdSchema.parse(project)).collection("drafts").where("conversationId", "==", conversationId).limit(200).get();
-    const records = rows.docs.map(row => this.owned(ownerId, project, row.id, row.data()));
-    if (records.length) {
-      const identities = await this.database.getAll(...records.map(draft => this.identityRef(ownerId, draft.id)));
-      identities.forEach((identity, index) => {
-        const draft = records[index];
-        if (identity.exists && draft) this.requireIdentityBinding(draft, identity.data());
-      });
+    const page = await listPage(this.database.collection("creation_projects").doc(ProjectIdSchema.parse(project)).collection("drafts").where("conversationId", "==", conversationId), `drafts:${ownerId}:${project}:${conversationId}`, row => this.owned(ownerId, project, row.id, row.data()), options);
+    if (page.items.length) {
+      const identities = await this.database.getAll(...page.items.map(draft => this.identityRef(ownerId, draft.id)));
+      identities.forEach((identity, index) => { const draft = page.items[index]; if (identity.exists && draft) this.requireIdentityBinding(draft, identity.data()); });
     }
-    return records.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return page;
   }
 
   async save(ownerId: string, project: string, id: string, input: unknown): Promise<SaveDraftResult> {
@@ -121,13 +123,13 @@ export class CreationDraftStore {
 
   async revisions(ownerId: string, project: string, id: string): Promise<CreationDraft[]> {
     const current = await this.get(ownerId, project, id);
-    const rows = await this.ref(project, id).collection("revisions").limit(1000).get();
+    const rows = { docs: await allDocuments(this.ref(project, id).collection("revisions")) };
     return rows.docs.map(row => this.ownedRevision(current, row.id, row.data())).sort((a, b) => a.revision - b.revision);
   }
 
   async conflicts(ownerId: string, project: string, id: string): Promise<DraftConflict[]> {
     const current = await this.get(ownerId, project, id);
-    const rows = await this.ref(project, id).collection("conflicts").limit(200).get();
+    const rows = { docs: await allDocuments(this.ref(project, id).collection("conflicts")) };
     return rows.docs.map(row => this.ownedConflict(current, row.id, row.data()));
   }
 

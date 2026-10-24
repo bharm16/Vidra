@@ -1,3 +1,4 @@
+import { openRemoteMedia, type PublicNetworkDependencies } from "@services/owned-media";
 import { Readable } from "node:stream";
 import { ReadableStream } from "node:stream/web";
 import type { StoredVideoAsset, VideoAssetStore } from "./types";
@@ -22,23 +23,10 @@ export async function storeVideoFromUrl(
   url: string,
   log?: LogSink,
   signal?: AbortSignal,
+  network: PublicNetworkDependencies = {},
 ): Promise<StoredVideoAsset> {
-  signal?.throwIfAborted();
-  log?.info("Downloading provider video for storage", { url });
-  const response = await fetch(url, { method: "GET", redirect: "follow", ...(signal ? { signal } : {}) });
-  signal?.throwIfAborted();
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `Video download failed (${response.status}): ${text.slice(0, 400)}`,
-    );
-  }
-
-  const contentType = response.headers.get("content-type") || "video/mp4";
-  const stream = toNodeReadableStream(
-    response.body as ReadableStream<Uint8Array> | null,
-    signal,
-  );
-  return await assetStore.storeFromStream(stream, contentType);
+  const remote = await openRemoteMedia({ sourceUrl: url, fieldName: "provider video", allowedContentTypes: ["video/mp4", "video/webm"], maxBytes: 500 * 1024 * 1024, ...(signal ? { signal } : {}) }, network);
+  log?.info("Storing provider video", { contentType: remote.contentType });
+  try { return await assetStore.storeFromStream(remote.stream, remote.contentType); }
+  finally { remote.cancel(); }
 }

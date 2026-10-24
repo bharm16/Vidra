@@ -1,3 +1,4 @@
+import { allDocuments } from "@services/firestore/WorkflowLists";
 import { randomUUID } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
@@ -32,7 +33,7 @@ export class WorkflowManagementService {
 
   async shares(owner: string, projectId: string): Promise<VersionShare[]> {
     const project = await this.projects.get(owner, projectId);
-    const rows = await this.database.collection("creation_projects").doc(project.id).collection("shares").limit(200).get();
+    const rows = { docs: await allDocuments(this.database.collection("creation_projects").doc(project.id).collection("shares")) };
     return rows.docs.map(row => { const share = StoredShareSchema.parse(row.data()); if (share.ownerId !== owner || share.projectId !== project.id || share.id !== row.id) throw new WorkflowError("access_denied", "This publication is unavailable."); return VersionShareSchema.strip().parse({ ...share, revoked: share.revoked || share.sharingEpoch !== project.sharingEpoch || project.status !== "active" }); });
   }
 

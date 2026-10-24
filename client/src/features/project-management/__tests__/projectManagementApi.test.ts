@@ -57,14 +57,14 @@ describe("Project management reads", () => {
     const rawRequest = vi.fn().mockResolvedValue(response([{ ...conversation, media: { pictures: 2, clips: 1 } }]));
     const api = new ProjectManagementApi("creator", { rawRequest });
     expect((await api.listConversations(project.id))[0]?.media).toEqual({ pictures: 2, clips: 1 });
-    expect(rawRequest).toHaveBeenCalledWith(`/projects/${project.id}/conversations`, { method: "GET" });
+    expect(rawRequest).toHaveBeenCalledWith(`/projects/${project.id}/conversations?page=true`, { method: "GET" });
     rawRequest.mockResolvedValue(response([conversation, { ...conversation, id: "conversation_two", projectId: "project_other" }]));
     await expect(api.listConversations(project.id)).rejects.toThrow("requested project and account");
   });
   it("maps an unreadable read failure to a retryable message and rejects a malformed project id before sending", async () => {
     const rawRequest = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => { throw new SyntaxError("Unexpected token"); } });
     const api = new ProjectManagementApi("creator", { rawRequest });
-    await expect(api.getProject(project.id)).rejects.toMatchObject({ name: "WorkflowApiError", status: 500, code: undefined, message: expect.stringContaining("not confirmed") });
+    await expect(api.getProject(project.id)).rejects.toMatchObject({ name: "OwnedRequestError", status: 500, code: undefined, message: expect.stringContaining("not confirmed") });
     expect(() => api.listConversations("not-a-project")).toThrow();
     expect(rawRequest).toHaveBeenCalledTimes(1);
   });
