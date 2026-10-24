@@ -1,8 +1,14 @@
+import { z } from "zod";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
-import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
+import { StructuredOutputEnforcer, createStructuredOutputCodec } from "@utils/StructuredOutputEnforcer";
 import type { ShotPlan } from "../types";
+
+const ShotPlanCodec = createStructuredOutputCodec(z.object({
+  shot_type: z.string(), core_intent: z.string(),
+  subject: z.string().nullish(), action: z.string().nullish(), visual_focus: z.string().nullish(), setting: z.string().nullish(), time: z.string().nullish(), mood: z.string().nullish(), style: z.string().nullish(), camera_move: z.string().nullish(), camera_angle: z.string().nullish(), lighting: z.string().nullish(), audio: z.string().nullish(), duration_hint: z.string().nullish(), risks: z.array(z.string()).optional(), confidence: z.number().optional(),
+}).passthrough().transform((value): ShotPlan => value as ShotPlan));
 
 /**
  * ShotInterpreterService
@@ -76,37 +82,13 @@ export class ShotInterpreterService {
     // received with user-role trust, never as system instructions.
     const systemPrompt = this._buildSystemPrompt();
 
-    // Lightweight schema to keep output predictable without blocking optional fields
-    const schema = {
-      type: "object" as const,
-      required: ["shot_type", "core_intent"],
-      properties: {
-        shot_type: { type: "string" },
-        core_intent: { type: "string" },
-        subject: { type: ["string", "null"] },
-        action: { type: ["string", "null"] },
-        visual_focus: { type: ["string", "null"] },
-        setting: { type: ["string", "null"] },
-        time: { type: ["string", "null"] },
-        mood: { type: ["string", "null"] },
-        style: { type: ["string", "null"] },
-        camera_move: { type: ["string", "null"] },
-        camera_angle: { type: ["string", "null"] },
-        lighting: { type: ["string", "null"] },
-        audio: { type: ["string", "null"] },
-        duration_hint: { type: ["string", "null"] },
-        risks: { type: "array" },
-        confidence: { type: "number" },
-      },
-    };
-
     try {
-      const parsed = await StructuredOutputEnforcer.enforceJSON<ShotPlan>(
+      const parsed = await StructuredOutputEnforcer.enforceJSON(
         this.ai,
         systemPrompt,
         {
           operation: "optimize_shot_interpreter",
-          schema,
+          codec: ShotPlanCodec,
           maxRetries: 1,
           temperature: 0,
           maxTokens: 400,
@@ -125,8 +107,8 @@ export class ShotInterpreterService {
         confidence: parsed.confidence,
       });
 
-      this.setCached(cacheKey, parsed as ShotPlan);
-      return parsed as ShotPlan;
+      this.setCached(cacheKey, parsed);
+      return parsed;
     } catch (error) {
       this.log.warn("Operation failed; continuing without structured plan.", {
         operation,

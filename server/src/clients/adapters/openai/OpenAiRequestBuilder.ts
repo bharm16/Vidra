@@ -66,12 +66,12 @@ export class OpenAiRequestBuilder {
     }
 
     if (options.schema) {
-      const { name, schema } = normalizeOpenAiSchema(options.schema);
+      const { name, schema, strict } = normalizeOpenAiSchema(options.schema);
       payload.response_format = {
         type: "json_schema",
         json_schema: {
           name,
-          strict: true,
+          strict,
           schema,
         },
       };

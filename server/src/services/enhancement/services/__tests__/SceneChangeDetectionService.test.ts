@@ -67,6 +67,16 @@ const createService = (
 };
 
 describe("SceneChangeDetectionService", () => {
+  it("rejects invalid fields before caching a scene-change result", async () => {
+    const invalid = JSON.stringify({ isSceneChange: true, confidence: "high", reasoning: "x", suggestedUpdates: null });
+    const valid = JSON.stringify({ isSceneChange: false, confidence: "low", reasoning: "no change", suggestedUpdates: {} });
+    const { service, cacheService } = createService([invalid, invalid, invalid, valid]);
+    const input = { ownerId: "creator", changedField: "setting", newValue: "beach", fullPrompt: "A walk" };
+    await expect(service.detectSceneChange(input)).rejects.toThrow();
+    expect(cacheService.set).not.toHaveBeenCalled();
+    await expect(service.detectSceneChange(input)).resolves.toMatchObject({ suggestedUpdates: {} });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -166,7 +176,7 @@ describe("SceneChangeDetectionService", () => {
   it("reuses identical same-owner requests without exposing inputs in keys", async () => {
     const { service, execute, cacheService } = createService([modelResult]);
     const first = await service.detectSceneChange(privateRequest);
-    expect(await service.detectSceneChange({ ...privateRequest })).toBe(first);
+    expect(await service.detectSceneChange({ ...privateRequest })).toEqual(first);
     expect(execute).toHaveBeenCalledTimes(1);
     const key = vi.mocked(cacheService.set).mock.calls[0]?.[0];
     expect(key).toMatch(/^scene-detection:private-v3:[a-f0-9]{64}$/);

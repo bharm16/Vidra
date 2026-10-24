@@ -1,7 +1,8 @@
+import { z } from "zod";
 import { describe, expect, it, vi } from "vitest";
 
 // Silence structured logging only. Every collaborator under test —
-// parse, validate, unwrapper, promptEnhancers, ProviderDetector — runs for real.
+// parsing, decoding and provider selection run for real.
 vi.mock("@infrastructure/Logger", () => ({
   logger: {
     debug: vi.fn(),
@@ -11,18 +12,10 @@ vi.mock("@infrastructure/Logger", () => ({
   },
 }));
 
+import { createStructuredOutputCodec } from "../codec";
 import { StructuredOutputEnforcer } from "../StructuredOutputEnforcer";
 
-/**
- * Interface-level tests for StructuredOutputEnforcer.
- *
- * The sibling StructuredOutputEnforcer.test.ts mocks every collaborator, so it
- * can only prove control flow ("retry fires"). It cannot see the orchestration
- * invariant that actually breaks: schema validation runs on the WRAPPED wire
- * shape BEFORE auto-unwrapping (StructuredOutputEnforcer.ts:156-161). These
- * tests cross the real interface via an in-memory adapter so that calling order
- * is the thing under test.
- */
+/** Real parsing and decoding with only the external execution port scripted. */
 function inMemoryAdapter(...wireTexts: string[]): {
   execute: ReturnType<typeof vi.fn>;
 } {
@@ -34,6 +27,19 @@ function inMemoryAdapter(...wireTexts: string[]): {
 }
 
 describe("StructuredOutputEnforcer (interface)", () => {
+  it("sends its codec schema and rejects invalid values before returning", async () => {
+    const adapter = inMemoryAdapter('{"count":"wrong"}');
+    const codec = createStructuredOutputCodec(z.strictObject({ count: z.number().int() }));
+    await expect(StructuredOutputEnforcer.enforceJSON(adapter, "sys", { operation: "enhance_suggestions", codec, maxRetries: 0 })).rejects.toThrow();
+    expect(adapter.execute.mock.calls[0]?.[1].schema).toMatchObject({ type: "object", properties: { count: { type: "integer" } } });
+  });
+
+  it.each(['[null,17]', '[{"text":7}]', '[{"text":"ok","mode":"bad"}]'])("rejects invalid nested output %s", async wire => {
+    const adapter = inMemoryAdapter(wire);
+    const codec = createStructuredOutputCodec(z.array(z.object({ text: z.string(), mode: z.enum(["keep"]).optional() })));
+    await expect(StructuredOutputEnforcer.enforceJSON(adapter, "sys", { operation: "enhance_suggestions", codec, maxRetries: 0 })).rejects.toThrow();
+  });
+
   it("validates the wrapped {suggestions:[...]} shape before unwrapping", async () => {
     const adapter = inMemoryAdapter(
       '{"suggestions":[{"text":"a"},{"text":"b"}]}',
@@ -44,8 +50,7 @@ describe("StructuredOutputEnforcer (interface)", () => {
     // see an array and throw "Expected object but got array".
     const result = await StructuredOutputEnforcer.enforceJSON(adapter, "sys", {
       operation: "enhance_suggestions",
-      isArray: true,
-      schema: { type: "object", required: ["suggestions"] },
+      codec: createStructuredOutputCodec(z.object({ suggestions: z.array(z.object({ text: z.string() })) }).transform(wire => wire.suggestions)),
     });
 
     expect(result).toEqual([{ text: "a" }, { text: "b" }]);
@@ -57,28 +62,22 @@ describe("StructuredOutputEnforcer (interface)", () => {
 
     const result = await StructuredOutputEnforcer.enforceJSON(adapter, "sys", {
       operation: "enhance_suggestions",
-      isArray: true,
       maxRetries: 1,
-      schema: { type: "array", items: { required: ["text"] } },
+      codec: createStructuredOutputCodec(z.array(z.object({ text: z.string() }))),
     });
 
     expect(result).toEqual([{ text: "ok" }]);
     expect(adapter.execute).toHaveBeenCalledTimes(2);
   });
 
-  it("captures siblings alongside the unwrapped array (real unwrapper)", async () => {
+  it("captures siblings alongside the decoded array", async () => {
     const adapter = inMemoryAdapter(
       '{"suggestions":[{"text":"a"}],"meta":{"model":"x"}}',
     );
 
-    const result = await StructuredOutputEnforcer.enforceJSON<{
-      value: unknown;
-      siblings: Record<string, unknown>;
-    }>(adapter, "sys", {
+    const result = await StructuredOutputEnforcer.enforceJSON(adapter, "sys", {
       operation: "enhance_suggestions",
-      isArray: true,
-      captureSiblings: true,
-      schema: { type: "object", required: ["suggestions"] },
+      codec: createStructuredOutputCodec(z.object({ suggestions: z.array(z.object({ text: z.string() })) }).passthrough().transform(({ suggestions, ...siblings }) => ({ value: suggestions, siblings }))),
     });
 
     expect(result.value).toEqual([{ text: "a" }]);
@@ -94,7 +93,7 @@ describe("StructuredOutputEnforcer (interface)", () => {
       StructuredOutputEnforcer.enforceJSON(adapter, "sys", {
         operation: "enhance_suggestions",
         maxRetries: 0,
-        schema: { type: "object", required: ["needed"] },
+        codec: createStructuredOutputCodec(z.object({ needed: z.string() })),
       }),
     ).rejects.toThrow(/needed/);
   });

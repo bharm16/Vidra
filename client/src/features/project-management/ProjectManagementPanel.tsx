@@ -10,6 +10,7 @@ import { isLibraryProject, type Project, type Conversation, type Folder } from "
 import { ConversationFolderMenu } from "./components/ConversationFolderMenu";
 import { ProjectManagementApi } from "./api/projectManagementApi";
 import "./project-management.css";
+import { useProjectTargetEdit } from "./hooks/useProjectTargetEdit";
 
 export interface ProjectManagementPanelProps {
   ownerId: string; project: Project; conversations: Conversation[];
@@ -27,8 +28,8 @@ export function ProjectManagementPanel({ ownerId, project, conversations: allCon
   const conversations = filing ? allConversations.filter(conversation => conversation.folderId === filing.id) : allConversations;
   const api = useMemo(() => new ProjectManagementApi(ownerId), [ownerId]);
   const [panel, setPanel] = useState<Panel>("menu");
-  const [name, setName] = useState(target.name);
-  const [baseRevision, setBaseRevision] = useState(target.revision);
+  const editing = useProjectTargetEdit(ownerId, filing ? { kind: "folder", record: filing, observe: onFolderChange } : { kind: "project", record: project, observe: onProjectChange }, api);
+  const { name, setName } = editing;
   const [editingConversation, setEditingConversation] = useState<{ id: string; name: string; revision: number }>();
   // The last archive or restore, so a row that leaves the list can be put back; focus lands on the row after it.
   const [moved, setMoved] = useState<Conversation>();
@@ -43,34 +44,32 @@ export function ProjectManagementPanel({ ownerId, project, conversations: allCon
   const operation = useRef(0);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-  const scope = useRef(`${ownerId}:${project.id}`); scope.current = `${ownerId}:${project.id}`;
+  const scope = useRef(editing.identity); scope.current = editing.identity;
   const locked = useRef(false);
-  useEffect(() => { operation.current += 1; locked.current = false; setPanel("menu"); setEditingConversation(undefined); setBusy(false); setError(undefined); return () => { operation.current += 1; }; }, [ownerId, project.id]);
+  useEffect(() => { operation.current += 1; locked.current = false; setPanel("menu"); setEditingConversation(undefined); setBusy(false); setError(undefined); return () => { operation.current += 1; }; }, [editing.identity]);
   const owned = project.ownerId === ownerId && conversations.every(conversation => conversation.ownerId === ownerId && conversation.projectId === project.id);
   const editable = project.status === "active" && (project.origin.kind === "new" || project.origin.authority === "workflow") && target.status === "active";
-  const begin = (next: Panel): void => { setError(undefined); setEditingConversation(undefined); setMoved(undefined); setName(target.name); setBaseRevision(target.revision); setPanel(next); };
+  const begin = (next: Panel): void => { setError(undefined); setEditingConversation(undefined); setMoved(undefined); editing.begin(); setPanel(next); };
   const perform = async (action: () => Promise<void>): Promise<void> => {
     if (locked.current || !owned) return;
-    const capturedScope = `${ownerId}:${project.id}`;
+    const capturedScope = editing.identity;
     const token = ++operation.current;
     locked.current = true; setBusy(true); setError(undefined);
     try { await action(); }
     catch (failure) { if (token === operation.current && scope.current === capturedScope) setError(failure instanceof Error ? failure.message : "The change was not confirmed. Try again."); }
     finally { if (token === operation.current && scope.current === capturedScope) { locked.current = false; setBusy(false); } }
   };
-  const active = (): boolean => mounted.current && scope.current === `${ownerId}:${project.id}` && getAuthRepository().getCurrentUser()?.uid === ownerId;
+  const active = (): boolean => mounted.current && scope.current === editing.identity && getAuthRepository().getCurrentUser()?.uid === ownerId;
   const save = (event: FormEvent): void => {
     event.preventDefault();
     const parsed = z.string().trim().min(1).max(200).safeParse(name);
     if (!parsed.success) { setError("Enter a project name from 1 to 200 characters."); return; }
     void perform(async () => {
-      if (filing) { const next = await api.changeFolder(filing.id, { expectedRevision: baseRevision, name: parsed.data }); if (active()) { onFolderChange?.(next); setPanel("menu"); } return; }
-      const next = await api.changeProject(project.id, { expectedRevision: baseRevision, name: parsed.data }); if (active()) { onProjectChange(next); setPanel("menu"); }
+      if (await editing.save()) setPanel("menu");
     });
   };
   const setStatus = (status: "active" | "trashed"): void => { void perform(async () => {
-    if (filing) { const next = await api.changeFolder(filing.id, { expectedRevision: filing.revision, status }); if (active()) { onFolderChange?.(next); onClose(); } return; }
-    const next = await api.changeProject(project.id, { expectedRevision: project.revision, status }); if (active()) { onProjectChange(next); onClose(); }
+    if (await editing.changeStatus(status)) onClose();
   }); };
   const renamable = !library || filing !== undefined;
   const displayed = conversations.filter(conversation => panel === "archived" ? conversation.status === "archived" : conversation.status === "active");
@@ -107,7 +106,7 @@ export function ProjectManagementPanel({ ownerId, project, conversations: allCon
   return <Dialog open onOpenChange={open => { if (!open && !busy) onClose(); }}><DialogContent hideClose={owned && panel === "menu"} className={`vf vf-dialog vf-project-management-panel${owned && panel === "menu" ? " vf-project-options-sheet" : ""}`}><DialogTitle className={owned && panel === "menu" ? "sr-only" : undefined}>{owned ? titles[panel] : "Project unavailable"}</DialogTitle><DialogDescription className={owned ? "sr-only" : undefined}>{owned ? target.name : "Sign in to the original account to view this project."}</DialogDescription>
     {!owned ? null : <>{error ? <div className="vf-notice" role="alert">{error}</div> : null}{!editable && target.status !== "trashed" ? <p className="vf-notice">This project is read only. Its saved work remains available.</p> : null}
     {panel === "menu" ? <><div className="vf-project-options-sheet-header"><DialogClose asChild><FreshIconButton icon="close" label="Close project options" /></DialogClose></div>{menu}</> : null}
-    {panel === "rename" ? <form className="vf-project-management-form" noValidate onSubmit={save}><label htmlFor="project-change-value">Project name</label><input id="project-change-value" className="vf-field" value={name} onChange={event => setName(event.target.value)} maxLength={201} disabled={busy} autoFocus /><div className="vf-project-management-actions"><FreshButton type="submit" tone="primary" disabled={busy || !editable}>{busy ? "Saving…" : "Save changes"}</FreshButton><FreshButton type="button" disabled={busy} onClick={() => begin("menu")}>Cancel</FreshButton></div>{error ? <FreshButton type="button" disabled={busy} onClick={() => { void perform(async () => { const latest = await api.getProject(project.id); if (active()) { onProjectChange(latest); setBaseRevision(latest.revision); } }); }}>Load latest project and keep my edits</FreshButton> : null}</form> : null}
+    {panel === "rename" ? <form className="vf-project-management-form" noValidate onSubmit={save}><label htmlFor="project-change-value">Project name</label><input id="project-change-value" className="vf-field" value={name} onChange={event => setName(event.target.value)} maxLength={201} disabled={busy} autoFocus /><div className="vf-project-management-actions"><FreshButton type="submit" tone="primary" disabled={busy || !editable}>{busy ? "Saving…" : "Save changes"}</FreshButton><FreshButton type="button" disabled={busy} onClick={() => begin("menu")}>Cancel</FreshButton></div>{error ? <FreshButton type="button" disabled={busy} onClick={() => { void perform(async () => { await editing.refresh(); }); }}>Load latest project and keep my edits</FreshButton> : null}</form> : null}
     {panel === "conversations" || panel === "archived" ? <><div className="vf-project-management-conversations">{displayed.length ? displayed.map(conversation => <article key={conversation.id} className="vf-project-conversation-row"><img src="/design-assets/project-conversation.svg" alt="" /><div>{editingConversation?.id === conversation.id ? <form onSubmit={event => { event.preventDefault(); const value = editingConversation.name.trim(); if (!value || value.length > 200) { setError("Enter a conversation name from 1 to 200 characters."); return; } changeConversation(conversation, { name: value }, editingConversation.revision); }}><label className="sr-only" htmlFor={`conversation-name-${conversation.id}`}>Conversation name</label><input className="vf-field" id={`conversation-name-${conversation.id}`} value={editingConversation.name} onChange={event => setEditingConversation(current => current ? { ...current, name: event.target.value } : undefined)} maxLength={201} disabled={busy} autoFocus onFocus={event => event.currentTarget.select()} /><div><FreshButton type="submit" tone="primary" disabled={busy}>Save name</FreshButton><FreshButton type="button" disabled={busy} onClick={() => { setEditingConversation(undefined); setFocusAfter({ id: conversation.id }); }}>Cancel</FreshButton></div></form> : <><FreshButton id={`conversation-open-${conversation.id}`} tone="quiet" onClick={() => { onOpenConversation(conversation.id); onClose(); }}>{conversation.name}</FreshButton><p>Edited {new Date(conversation.updatedAt).toLocaleDateString()}</p><div className="vf-project-conversation-actions">{onOpenDraft ? <ConversationDraftMenu ownerId={ownerId} projectId={project.id} conversation={conversation} disabled={busy} onOpenDraft={onOpenDraft} /> : null}<FreshButton disabled={busy || !editable} aria-label={`Rename ${conversation.name}`} onClick={() => { setError(undefined); setMoved(undefined); setEditingConversation({ id: conversation.id, name: conversation.name, revision: conversation.revision }); }}>Rename</FreshButton><FreshButton disabled={busy || !editable} aria-label={`${conversation.status === "archived" ? "Restore" : "Archive"} ${conversation.name}`} onClick={() => changeConversation(conversation, { status: conversation.status === "archived" ? "active" : "archived" })}>{conversation.status === "archived" ? "Restore" : "Archive"}</FreshButton>{library ? <ConversationFolderMenu ownerId={ownerId} conversation={conversation} folderName={conversation.folderId ? filing?.id === conversation.folderId ? filing.name : folderNames[conversation.folderId] : undefined} disabled={busy || project.status !== "active"} onFile={folderId => changeConversation(conversation, { folderId })} /> : null}</div></>}</div></article>) : <p className="vf-secondary">{panel === "archived" ? "No archived conversations." : "No conversations yet."}</p>}</div>{moved ? <div className="vf-project-conversation-moved" role="status"><p>{moved.status === "archived" ? "Conversation archived" : "Conversation restored"}</p><FreshButton tone="quiet" disabled={busy || !editable} aria-label={`Undo: ${moved.status === "archived" ? "restore" : "archive"} ${moved.name}`} onClick={() => { const target = moved; setMoved(undefined); void perform(async () => { const next = await api.changeConversation(project.id, target.id, { expectedRevision: target.revision, status: target.status === "archived" ? "active" : "archived" }); if (active()) { onConversationChange(next); setFocusAfter({ id: target.id }); } }); }}>Undo</FreshButton></div> : null}<FreshButton id="conversation-list-back" tone="quiet" onClick={() => begin("menu")}>{renamable ? "Back to project options" : "Back to conversation options"}</FreshButton></> : null}
     {panel === "trash" ? <div className="vf-project-management-form"><p>This project becomes read only until you restore it. Its conversations, media and edits are kept.</p><div className="vf-project-management-actions"><FreshButton tone="primary" disabled={busy} onClick={() => setStatus("trashed")}>{busy ? "Moving…" : "Move to Trash"}</FreshButton><FreshButton disabled={busy} onClick={() => begin("menu")}>Keep project</FreshButton></div></div> : null}</>}
   </DialogContent></Dialog>;

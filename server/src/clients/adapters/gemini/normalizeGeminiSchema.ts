@@ -5,6 +5,8 @@ const GEMINI_UNSUPPORTED_KEYS = new Set([
   "additionalProperties",
   "$schema",
   "$id",
+  "name",
+  "strict",
 ]);
 
 export function normalizeGeminiSchema(

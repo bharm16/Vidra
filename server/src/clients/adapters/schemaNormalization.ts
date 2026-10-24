@@ -92,7 +92,14 @@ export function walkSchema(
     if (options.drop.has(key)) {
       continue;
     }
-    normalized[key] = walkSchema(nestedValue, options);
+    if (["properties", "patternProperties", "$defs", "definitions", "dependentSchemas"].includes(key) && isRecord(nestedValue)) {
+      normalized[key] = Object.fromEntries(Object.entries(nestedValue).map(([property, schema]) => [property, walkSchema(schema, options)]));
+    } else if (["items", "additionalProperties", "contains", "not", "if", "then", "else", "propertyNames", "anyOf", "oneOf", "allOf", "prefixItems"].includes(key)) {
+      normalized[key] = walkSchema(nestedValue, options);
+    } else {
+      // Property names and literal values are data, not schema keywords.
+      normalized[key] = nestedValue as JsonValue;
+    }
   }
 
   if (options.onObjectNode && isObjectSchemaNode(normalized)) {

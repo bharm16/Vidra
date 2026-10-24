@@ -8,10 +8,15 @@ set -euo pipefail
 #   scripts/ops/firestore-restore.sh --source gs://bucket/path --target emulator
 #   scripts/ops/firestore-restore.sh --source gs://bucket/path --target <PROJECT_ID>
 #
-# The "emulator" target requires the Firestore emulator to be running on localhost:8080.
+# Emulator restores start a fresh, temporary Firestore instance using Firebase CLI --import.
+# Pass --project demo-<name> --expect <acceptance.json>; an occupied port fails closed.
 
 SOURCE=""
 TARGET=""
+EMULATOR_PROJECT=""
+EXPECTATIONS=""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -21,6 +26,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --target)
       TARGET="$2"
+      shift 2
+      ;;
+    --project)
+      EMULATOR_PROJECT="$2"
+      shift 2
+      ;;
+    --expect)
+      EXPECTATIONS="$2"
       shift 2
       ;;
     *)
@@ -47,40 +60,38 @@ echo "Target: $TARGET"
 echo ""
 
 if [[ "$TARGET" == "emulator" ]]; then
-  EMULATOR_HOST="${FIRESTORE_EMULATOR_HOST:-localhost:8080}"
-  echo "Restoring to emulator at $EMULATOR_HOST"
-  echo ""
-
-  # Download export to temp directory
+  if [[ -z "$EMULATOR_PROJECT" || -z "$EXPECTATIONS" ]]; then
+    echo "Emulator restore requires --project demo-<name> and --expect <acceptance.json>" >&2
+    exit 1
+  fi
   TEMP_DIR="$(mktemp -d)"
   trap 'rm -rf "$TEMP_DIR"' EXIT
+  export VIDRA_RESTORE_PROJECT="$EMULATOR_PROJECT"
+  export VIDRA_RESTORE_EXPECTATIONS="$(cd "$(dirname "$EXPECTATIONS")" && pwd)/$(basename "$EXPECTATIONS")"
+  export VIDRA_RESTORE_HOST="${FIRESTORE_EMULATOR_HOST:-127.0.0.1:8080}"
+  export VIDRA_RESTORE_CONFIG="$TEMP_DIR/firebase.json"
+  export VIDRA_RESTORE_PROOF="$TEMP_DIR/verified.json"
+  export VIDRA_RESTORE_TOKEN="$(basename "$TEMP_DIR")"
+  export VIDRA_RESTORE_VERIFIER="$SCRIPT_DIR/firestore-restore-verify.ts"
+  export VIDRA_RESTORE_TSX="$REPO_DIR/node_modules/.bin/tsx"
+  "$VIDRA_RESTORE_TSX" "$VIDRA_RESTORE_VERIFIER" --validate
 
+  [[ "$SOURCE" == gs://* ]] || { echo "Source must be a GCS export URI" >&2; exit 1; }
   echo "Downloading export artifact..."
-  gsutil -m cp -r "$SOURCE" "$TEMP_DIR/"
-
-  EXPORT_DIR="$TEMP_DIR/$(basename "$SOURCE")"
-
-  if [[ ! -f "$EXPORT_DIR/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata" ]] && \
-     [[ ! -f "$EXPORT_DIR/all_namespaces/all_kinds/output-0" ]]; then
-    # Try one level deeper (some exports nest differently)
-    EXPORT_DIR="$(find "$TEMP_DIR" -name "*.export_metadata" -print -quit 2>/dev/null | xargs dirname 2>/dev/null || echo "")"
-    if [[ -z "$EXPORT_DIR" ]]; then
-      echo "Error: Could not find export metadata in downloaded artifact" >&2
-      exit 1
-    fi
+  mkdir "$TEMP_DIR/export"
+  gsutil -m cp -r "$SOURCE" "$TEMP_DIR/export/"
+  IMPORTS=()
+  while IFS= read -r metadata; do IMPORTS+=("$(dirname "$metadata")"); done < <(find "$TEMP_DIR/export" -name firebase-export-metadata.json -type f)
+  if [[ ${#IMPORTS[@]} -eq 0 ]]; then
+    while IFS= read -r metadata; do IMPORTS+=("$(dirname "$metadata")"); done < <(find "$TEMP_DIR/export" -name '*.overall_export_metadata' -type f)
   fi
+  [[ ${#IMPORTS[@]} -eq 1 ]] || { echo "Expected one Firebase or managed Firestore export root" >&2; exit 1; }
+  echo "Importing into a fresh emulator for $EMULATOR_PROJECT; acceptance is still pending."
+  firebase emulators:exec --only firestore --project "$EMULATOR_PROJECT" --config "$VIDRA_RESTORE_CONFIG" --import "${IMPORTS[0]}" '
+    "$VIDRA_RESTORE_TSX" "$VIDRA_RESTORE_VERIFIER"
+  '
+  "$VIDRA_RESTORE_TSX" "$VIDRA_RESTORE_VERIFIER" --proof
 
-  echo "Importing to emulator..."
-  # Use the Firebase emulator import endpoint
-  curl -s -X POST "http://$EMULATOR_HOST/emulator/v1/projects/demo-project:import" \
-    -H "Content-Type: application/json" \
-    -d "{\"database\": \"projects/demo-project/databases/(default)\", \"export_directory\": \"$EXPORT_DIR\"}" \
-    && echo "Import request sent" \
-    || echo "Note: Direct import may not be supported. Copy export to emulator data directory instead."
-
-  echo ""
-  echo "Emulator restore complete. Run smoke test to verify:"
-  echo "  See docs/operations/DR_RUNBOOK.md for current data-integrity acceptance"
 else
   echo "WARNING: Restoring to live project '$TARGET'"
   echo "This will OVERWRITE existing documents with matching IDs."

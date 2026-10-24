@@ -1,10 +1,11 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ProjectManagementPanel } from "../ProjectManagementPanel";
+import { FolderIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { project, conversation, folder } from "./fixtures";
-const calls = vi.hoisted(() => ({ changeProject: vi.fn(), changeConversation: vi.fn(), getProject: vi.fn(), changeFolder: vi.fn(), listFolders: vi.fn() }));
-vi.mock("../api/projectManagementApi", () => ({ ProjectManagementApi: class { changeProject = calls.changeProject; changeConversation = calls.changeConversation; getProject = calls.getProject; changeFolder = calls.changeFolder; listFolders = calls.listFolders; } }));
+const calls = vi.hoisted(() => ({ changeProject: vi.fn(), changeConversation: vi.fn(), getProject: vi.fn(), getFolder: vi.fn(), changeFolder: vi.fn(), listFolders: vi.fn() }));
+vi.mock("../api/projectManagementApi", () => ({ ProjectManagementApi: class { changeProject = calls.changeProject; changeConversation = calls.changeConversation; getProject = calls.getProject; getFolder = calls.getFolder; changeFolder = calls.changeFolder; listFolders = calls.listFolders; } }));
 vi.mock("@/repositories/index", () => ({ getAuthRepository: () => ({ getCurrentUser: () => ({ uid: "creator" }) }) }));
 const callbacks = { onProjectChange: vi.fn(), onConversationChange: vi.fn(), onOpenConversation: vi.fn(), onClose: vi.fn() };
 beforeEach(() => { vi.clearAllMocks(); calls.changeProject.mockResolvedValue({ ...project, revision: 2 }); calls.changeConversation.mockResolvedValue({ ...conversation, revision: 2, status: "archived" }); });
@@ -23,6 +24,38 @@ describe("Project and conversation management", () => {
     expect(calls.changeFolder).toHaveBeenCalledWith(folder.id, { expectedRevision: 1, name: "Summer launch" });
     expect(calls.changeProject).not.toHaveBeenCalled();
   });
+  it("refreshes a conflicted folder while preserving the name and its own revision", async () => {
+    const onFolderChange = vi.fn();
+    calls.changeFolder.mockRejectedValueOnce(new Error("This project changed.")).mockResolvedValue({ ...folder, revision: 5, name: "My edits" });
+    calls.getFolder.mockResolvedValue({ ...folder, revision: 4 });
+    calls.getProject.mockResolvedValue({ ...project, revision: 9 });
+    panel({ project: { ...project, role: "library" }, folder, conversations: [], onFolderChange });
+    fireEvent.click(screen.getByRole("button", { name: /Rename project/ }));
+    fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "My edits" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Load latest project and keep my edits" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Save changes" })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onFolderChange).toHaveBeenCalledWith(expect.objectContaining({ name: "My edits" })));
+    expect(calls.changeFolder).toHaveBeenLastCalledWith(folder.id, { expectedRevision: 4, name: "My edits" });
+    expect(calls.getProject).not.toHaveBeenCalled();
+  });
+
+  it("does not publish an old folder rename after leaving and reopening its target", async () => {
+    let complete: (value: typeof folder) => void = () => undefined;
+    calls.changeFolder.mockImplementationOnce(() => new Promise<typeof folder>(resolve => { complete = resolve; }));
+    const onFolderChange = vi.fn();
+    const library = { ...project, role: "library" as const };
+    const props = { ownerId: "creator", project: library, folder, conversations: [], onFolderChange, ...callbacks };
+    const view = panel(props);
+    fireEvent.click(screen.getByRole("button", { name: /Rename project/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    view.rerender(<ProjectManagementPanel {...props} folder={{ ...folder, id: FolderIdSchema.parse("folder_other") }} />);
+    view.rerender(<ProjectManagementPanel {...props} />);
+    await act(async () => { complete({ ...folder, revision: 2 }); });
+    expect(onFolderChange).not.toHaveBeenCalled();
+  });
+
   it("files a library conversation into a project and takes it out again", async () => {
     const library = { ...project, role: "library" as const };
     calls.listFolders.mockResolvedValue([folder]);

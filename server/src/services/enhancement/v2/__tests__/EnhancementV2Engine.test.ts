@@ -165,8 +165,8 @@ describe("EnhancementV2Engine", () => {
     const { engine, execute } = createEngine([
       llmJson({
         suggestions: [
-          { text: "poetic hush of rain", category: "environment.weather" },
-          { text: "gentle morning drizzle", category: "environment.weather" },
+          { text: "poetic hush of rain", category: "environment.weather", explanation: "Keeps the weather visible" },
+          { text: "gentle morning drizzle", category: "environment.weather", explanation: "Keeps the weather visible" },
         ],
         scene_summary: "weather scene — keep precipitation theme",
       }),
@@ -174,9 +174,9 @@ describe("EnhancementV2Engine", () => {
         suggestions: [
           {
             text: "heavy snowfall under grey skies",
-            category: "environment.weather",
+            category: "environment.weather", explanation: "Keeps the weather visible",
           },
-          { text: "wind-driven rain curtain", category: "environment.weather" },
+          { text: "wind-driven rain curtain", category: "environment.weather", explanation: "Keeps the weather visible" },
         ],
         scene_summary: "weather scene — keep precipitation theme",
       }),
@@ -197,15 +197,15 @@ describe("EnhancementV2Engine", () => {
           suggestions: [
             {
               text: "heavy snowfall under grey skies",
-              category: "environment.weather",
+              category: "environment.weather", explanation: "Keeps the weather visible",
             },
             {
               text: "wind-driven rain curtain",
-              category: "environment.weather",
+              category: "environment.weather", explanation: "Keeps the weather visible",
             },
             {
               text: "torrential downpour at dawn",
-              category: "environment.weather",
+              category: "environment.weather", explanation: "Keeps the weather visible",
             },
           ],
         }),

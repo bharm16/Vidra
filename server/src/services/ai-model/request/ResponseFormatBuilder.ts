@@ -19,7 +19,7 @@ export function buildResponseFormat(
       type: "json_schema",
       json_schema: {
         name: "video_prompt_response",
-        strict: capabilities.strictJsonSchema,
+        strict: capabilities.strictJsonSchema && params.schema.strict !== false,
         schema: params.schema,
       },
     };

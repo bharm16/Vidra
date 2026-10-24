@@ -159,6 +159,12 @@ describe("Storage Routes (integration)", () => {
     );
   });
 
+  it.each(["0", "-1", "201", "1.5", "25junk"])("refuses an invalid listing limit %s", async (limit) => {
+    const response = await request(createApp()).get(`/api/storage/list?limit=${limit}`).set("x-api-key", TEST_API_KEY);
+    expect(response.status).toBe(400);
+    expect(storageServiceMock.listFiles).not.toHaveBeenCalled();
+  });
+
   it("supports list/usage/delete/delete-batch operations", async () => {
     const app = createApp();
 

@@ -171,3 +171,9 @@ describe("extractAndParse", () => {
     });
   });
 });
+
+it("repairs punctuation without changing JSON string content", () => {
+  const input = String.raw`{"text":"move,] steadily — “quoted” \"word\"",}`;
+  expect(extractAndParse(input, false)).toEqual({ text: 'move,] steadily — “quoted” "word"' });
+  expect(extractAndParse('{"text":"```json code ```"}', false)).toEqual({ text: "```json code ```" });
+});

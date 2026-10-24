@@ -3,6 +3,7 @@ import { asyncHandler } from "@middleware/asyncHandler";
 import { z } from "zod";
 import { handle, requireCreatorId } from "@middleware/intake";
 import { respond } from "@middleware/respond";
+import { StorageListLimitSchema } from "@services/storage/services/RetentionService";
 import {
   STORAGE_TYPES,
   type StorageType,
@@ -196,15 +197,14 @@ export function createStorageRoutes(
     "/list",
     asyncHandler(async (req, res) => {
       const type = normalizeStorageType(req.query.type);
-      const limitValue =
-        typeof req.query.limit === "string"
-          ? Number.parseInt(req.query.limit, 10)
-          : NaN;
+      const parsedLimit = StorageListLimitSchema.safeParse(req.query.limit === undefined ? 50 : typeof req.query.limit === "string" ? Number(req.query.limit) : NaN);
       const cursor =
         typeof req.query.cursor === "string" ? req.query.cursor : undefined;
       const userId = requireCreatorId(req, res);
 
       if (!userId) return;
+
+      if (!parsedLimit.success) return respond.fail(res, req, 400, { error: "Limit must be an integer from 1 to 200", code: "INVALID_REQUEST" });
 
       if (req.query.type !== undefined && !type) {
         return respond.fail(res, req, 400, {
@@ -213,7 +213,7 @@ export function createStorageRoutes(
         });
       }
       const listOptions = {
-        limit: Number.isFinite(limitValue) ? limitValue : 50,
+        limit: parsedLimit.data,
         ...(type ? { type } : {}),
         ...(cursor ? { pageToken: cursor } : {}),
       };
